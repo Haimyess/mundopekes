@@ -15,10 +15,9 @@
     "format": "prettier --write .",
     "test:web": "npm run test --workspace=apps/web",
     "test:admin": "npm run test --workspace=apps/admin",
-    "prepare": "husky"
+    "prepare": "node -e \"const{execSync}=require('child_process');if(process.env.CI!=='1')execSync('husky',{stdio:'inherit'})\""
   },
-  "engines": {
-    "node": ">=20.0.0",
-    "npm": ">=10.0.0"
-  }
+   "engines": {
+    "node": "22.x"
+   }
 }
