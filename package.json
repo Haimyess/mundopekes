@@ -15,7 +15,7 @@
     "format": "prettier --write .",
     "test:web": "npm run test --workspace=apps/web",
     "test:admin": "npm run test --workspace=apps/admin",
-    "prepare": "node -e \"const{execSync}=require('child_process');if(process.env.CI!=='1')execSync('husky',{stdio:'inherit'})\""
+    "prepare": "node --eval \"try{require('child_process').execSync('npx husky',{stdio:'inherit'})}catch(e){}\""
   },
    "engines": {
     "node": "22.x"
