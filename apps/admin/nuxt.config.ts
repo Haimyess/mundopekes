@@ -1,10 +1,10 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
-  extends: [                    // ← agregar esto
-    '../../layers/core',        // ← agregar esto
-    '../../layers/ui',          // ← agregar esto
-    '../../layers/domain',      // ← agregar esto
-  ],   
+  // extends: [                    
+  //   '../../layers/core',        
+  //   '../../layers/ui',          
+  //   '../../layers/domain',     
+  // ],   
   modules: [
     '@nuxt/eslint',
     '@nuxt/ui',
