@@ -1,0 +1,97 @@
+{
+  "nav": {
+    "home": "בית",
+    "search": "חיפוש",
+    "categories": "קטגוריות",
+    "suggest": "הצע פעילות",
+    "contact": "צור קשר"
+  },
+  "hero": {
+    "title": "גלה פעילויות מדהימות לילדים",
+    "subtitle": "אלפי חוויות משפחתיות בישראל",
+    "search_placeholder": "מה אתה מחפש? (לדוגמה מוזיאון, פארק)",
+    "badge": "ישראל · משפחות · ילדים",
+    "title_start": "גלו פעילויות",
+    "title_accent": "מדהימות",
+    "title_end": "לילדים"
+  },
+  "search": {
+    "age": "גיל",
+    "city": "עיר",
+    "season": "עונה",
+    "free": "חינם",
+    "search_button": "חפש",
+    "clear_filters": "נקה מסננים",
+    "active_filters": "מסננים פעילים",
+    "results": "{count} פעילויות נמצאו",
+    "season_spring": "אביב",
+"season_summer": "קיץ",
+"season_fall": "סתיו",
+"season_winter": "חורף",
+"apply": "החל",
+"cities_selected": "ערים", 
+"filters": "מסננים",
+"extras": "נוספים",
+"page_title": "חיפוש פעילויות",
+"page_description": "מצא את הפעילות המושלמת למשפחתך",
+"title": "חיפוש פעילויות",
+"subtitle": "מצא חוויות לכל המשפחה",
+"try_different_filters": "נסה מסננים אחרים"
+  },
+  "activity": {
+    "free": "חינם",
+    "stroller_friendly": "מתאים לעגלות",
+    "open_weekends": "פתוח בסופי שבוע",
+    "location": "מיקום",
+    "schedule": "שעות פתיחה",
+    "description": "תיאור",
+    "age_range": "גיל מומלץ",
+    "best_season": "עונה מומלצת"
+  },
+  "carousels": {
+    "recent": "נוספו לאחרונה",
+    "nearby": "קרוב אליך",
+    "popular": "פופולרי",
+    "recommended": "מומלץ"
+  },
+  "cta": {
+    "title": "מכיר מקום מדהים?",
+    "description": "עזור לנו לצמוח על ידי הצעת פעילויות",
+    "button": "הצע פעילות"
+  },
+  "footer": {
+    "about": "אודות",
+    "privacy": "פרטיות",
+    "terms": "תנאים",
+    "rights": "כל הזכויות שמורות"
+  },
+  "suggest": {
+    "title": "הצע פעילות",
+    "name": "שם",
+    "name_placeholder": "לדוגמה: פארק האורנים",
+    "description": "תיאור",
+    "description_placeholder": "מה אפשר לעשות שם?",
+    "city": "עיר",
+    "city_placeholder": "לדוגמה: תל אביב",
+    "address": "כתובת",
+    "address_placeholder": "לדוגמה: רחוב הירקון 1",
+    "age_min": "גיל מינימלי (חודשים)",
+    "age_max": "גיל מקסימלי (חודשים)",
+    "types": "סוג פעילות",
+    "seasons": "עונה מומלצת",
+    "schedule": "שעות פתיחה",
+    "schedule_placeholder": "לדוגמה: ב-ו 9:00-18:00",
+    "features": "מאפיינים",
+    "cancel": "ביטול",
+    "submit": "שלח הצעה",
+    "success": "תודה על ההצעה!",
+    "error_name": "שם הוא שדה חובה",
+    "error_city": "עיר היא שדה חובה"
+  },
+  "common": {
+    "loading": "טוען...",
+    "error": "אירעה שגיאה",
+    "no_results": "לא נמצאו תוצאות",
+    "back": "חזור"
+  }
+}

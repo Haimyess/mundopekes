@@ -1,0 +1,74 @@
+/**
+* Main CSS Entry Point
+* Importa el design system y estilos adicionales
+*/
+
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+@import './design-system.css';
+@import "tailwindcss";
+@import "@nuxt/ui";
+
+/* ── Container ───────────────────────────────────────────────── */
+.container {
+  width: 100%;
+  max-width: var(--container-xl);
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: var(--space-4);
+  padding-right: var(--space-4);
+}
+
+@media (min-width: 640px) {
+  .container {
+    padding-left: var(--space-6);
+    padding-right: var(--space-6);
+  }
+}
+
+@media (min-width: 1024px) {
+  .container {
+    padding-left: var(--space-8);
+    padding-right: var(--space-8);
+  }
+}
+
+/* ── Animaciones ─────────────────────────────────────────────── */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { transform: translateY(20px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+
+.fade-in  { animation: fadeIn  var(--transition-base); }
+.slide-up { animation: slideUp var(--transition-base); }
+
+/* ── Scroll y accesibilidad ──────────────────────────────────── */
+html {
+  scroll-behavior: smooth;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-primary-500);
+  outline-offset: 2px;
+}
+
+/* ── Leaflet z-index fix ─────────────────────────────────────── */
+/*
+  Leaflet usa z-index muy altos por defecto (400+) que pueden
+  quedar por encima del navbar, modales y otros elementos del layout.
+  Lo reseteamos a valores bajos para que conviva con Nuxt UI.
+*/
+.leaflet-pane         { z-index: 1 !important; }
+.leaflet-tile-pane    { z-index: 1 !important; }
+.leaflet-overlay-pane { z-index: 2 !important; }
+.leaflet-shadow-pane  { z-index: 3 !important; }
+.leaflet-marker-pane  { z-index: 4 !important; }
+.leaflet-tooltip-pane { z-index: 5 !important; }
+.leaflet-popup-pane   { z-index: 6 !important; }
+.leaflet-top,
+.leaflet-bottom       { z-index: 7 !important; }
+.leaflet-control      { z-index: 8 !important; }

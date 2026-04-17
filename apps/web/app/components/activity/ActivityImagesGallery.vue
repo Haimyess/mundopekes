@@ -1,0 +1,202 @@
+<script setup lang="ts">
+/**
+ * ActivityImageGallery
+ * - Mobile: carrusel con swipe (VueUse useSwipe) + indicadores línea
+ * - Desktop: imagen principal + thumbnails clickeables
+ * - Fallback: SharedNoImage si images[] está vacío
+ */
+
+interface Props {
+  images: string[]
+  altText: string
+}
+
+const props = defineProps<Props>()
+
+const { isMobile } = useResponsive()
+
+// Índice activo
+const activeIndex = ref(0)
+
+const hasImages = computed(() => props.images.length > 0)
+const totalImages = computed(() => props.images.length)
+
+// ─── Swipe (mobile) ──────────────────────────────────────────
+const carouselEl = ref<HTMLElement | null>(null)
+
+const { isSwiping, direction } = useSwipe(carouselEl, {
+  threshold: 50,
+  onSwipeEnd() {
+    if (direction.value === 'left') goNext()
+    if (direction.value === 'right') goPrev()
+  }
+})
+
+const goNext = () => {
+  activeIndex.value = (activeIndex.value + 1) % totalImages.value
+}
+
+const goPrev = () => {
+  activeIndex.value = (activeIndex.value - 1 + totalImages.value) % totalImages.value
+}
+
+const goTo = (index: number) => {
+  activeIndex.value = index
+}
+
+// ─── Keyboard navigation ─────────────────────────────────────
+onMounted(() => {
+  window.addEventListener('keydown', handleKeydown)
+})
+onUnmounted(() => {
+  window.removeEventListener('keydown', handleKeydown)
+})
+
+const handleKeydown = (e: KeyboardEvent) => {
+  if (!hasImages.value) return
+  if (e.key === 'ArrowRight') goNext()
+  if (e.key === 'ArrowLeft') goPrev()
+}
+</script>
+
+<template>
+  <div class="w-full">
+
+    <!-- ─── FALLBACK: sin imágenes ─────────────────────────── -->
+    <div
+      v-if="!hasImages"
+      class="w-full aspect-video rounded-xl overflow-hidden bg-gray-100"
+    >
+      <SharedNoImage class="w-full h-full" />
+    </div>
+
+    <!-- ─── MOBILE: carrusel con swipe ────────────────────── -->
+    <template v-else-if="isMobile">
+      <div class="relative">
+        <!-- Carrusel -->
+        <div
+          ref="carouselEl"
+          class="w-full aspect-video overflow-hidden rounded-xl select-none"
+          :class="{ 'cursor-grabbing': isSwiping }"
+        >
+          <div
+            class="flex h-full transition-transform duration-300 ease-out will-change-transform"
+            :style="{ transform: `translateX(-${activeIndex * 100}%)` }"
+          >
+            <div
+              v-for="(img, index) in images"
+              :key="index"
+              class="min-w-full h-full flex-shrink-0"
+            >
+              <NuxtImg
+                :src="img"
+                :alt="`${altText} ${index + 1}`"
+                class="w-full h-full object-cover"
+                loading="lazy"
+                sizes="100vw"
+              />
+            </div>
+          </div>
+
+          <!-- Flechas (si hay más de 1 imagen) -->
+          <template v-if="totalImages > 1">
+            <button
+              class="absolute left-3 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/60 text-white rounded-full w-8 h-8 flex items-center justify-center transition-colors"
+              aria-label="Previous image"
+              @click.stop="goPrev"
+            >
+              <UIcon name="i-heroicons-chevron-left" class="w-4 h-4" />
+            </button>
+            <button
+              class="absolute right-3 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/60 text-white rounded-full w-8 h-8 flex items-center justify-center transition-colors"
+              aria-label="Next image"
+              @click.stop="goNext"
+            >
+              <UIcon name="i-heroicons-chevron-right" class="w-4 h-4" />
+            </button>
+          </template>
+
+          <!-- Counter badge -->
+          <div
+            v-if="totalImages > 1"
+            class="absolute top-3 right-3 bg-black/50 text-white text-xs px-2 py-1 rounded-full"
+          >
+            {{ activeIndex + 1 }} / {{ totalImages }}
+          </div>
+        </div>
+
+        <!-- Indicadores de línea -->
+        <div
+          v-if="totalImages > 1"
+          class="flex gap-1.5 justify-center mt-3 px-2"
+        >
+          <button
+            v-for="(_, index) in images"
+            :key="index"
+            class="h-1 rounded-full transition-all duration-300 focus:outline-none"
+            :class="[
+              index === activeIndex
+                ? 'bg-primary-500 flex-[2]'
+                : 'bg-gray-300 flex-1'
+            ]"
+            :aria-label="`Go to image ${index + 1}`"
+            @click="goTo(index)"
+          />
+        </div>
+      </div>
+    </template>
+
+    <!-- ─── DESKTOP: imagen principal + thumbnails ──────────── -->
+    <template v-else>
+      <div class="flex flex-col gap-3">
+        <!-- Imagen principal -->
+        <div class="w-full aspect-video rounded-xl overflow-hidden bg-gray-100">
+          <NuxtImg
+            :src="images[activeIndex]"
+            :alt="`${altText} ${activeIndex + 1}`"
+            class="w-full h-full object-cover transition-opacity duration-200"
+            sizes="(max-width: 1024px) 100vw, 60vw"
+          />
+        </div>
+
+        <!-- Thumbnails (solo si hay más de 1) -->
+        <div
+          v-if="totalImages > 1"
+          class="flex gap-2 overflow-x-auto scrollbar-hide"
+        >
+          <button
+            v-for="(img, index) in images"
+            :key="index"
+            class="flex-shrink-0 w-20 h-16 rounded-lg overflow-hidden border-2 transition-all duration-150 focus:outline-none"
+            :class="[
+              index === activeIndex
+                ? 'border-primary-500 opacity-100'
+                : 'border-transparent opacity-60 hover:opacity-90'
+            ]"
+            :aria-label="`View image ${index + 1}`"
+            @click="goTo(index)"
+          >
+            <NuxtImg
+              :src="img"
+              :alt="`${altText} thumbnail ${index + 1}`"
+              class="w-full h-full object-cover"
+              loading="lazy"
+              sizes="80px"
+            />
+          </button>
+        </div>
+      </div>
+    </template>
+
+  </div>
+</template>
+
+<style scoped>
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+</style>

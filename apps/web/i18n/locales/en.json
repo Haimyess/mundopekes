@@ -1,0 +1,109 @@
+{
+  "nav": {
+    "home": "Home",
+    "search": "Search",
+    "categories": "Categories",
+    "suggest": "Suggest Activity",
+    "contact": "Contact"
+  },
+  "hero": {
+    "title": "Discover amazing activities for kids",
+    "subtitle": "Thousands of family experiences in Israel",
+    "search_placeholder": "What are you looking for? (e.g. museum, park)",
+    "badge": "Israel · Families · Kids",
+    "title_start": "Discover",
+    "title_accent": "amazing",
+    "title_end": "activities for kids"
+  },
+  "search": {
+    "age": "Age",
+    "city": "City",
+    "season": "Season",
+    "free": "Free",
+    "search_button": "Search",
+    "clear_filters": "Clear filters",
+    "active_filters": "Active filters",
+    "results": "{count} activities found",
+    "season_spring": "Spring",
+"season_summer": "Summer",
+"season_fall": "Fall",
+"season_winter": "Winter", 
+"apply": "Apply", 
+"cities_selected": "Cities", 
+"filters": "Filters",
+"extras": "Extras",
+"page_title": "Search activities",
+"page_description": "Find the perfect activity for your family",
+"title": "Search activities",
+"subtitle": "Find experiences for the whole family",
+"try_different_filters": "Try different filters",
+"category": "Category"
+
+  },
+  "activity": {
+    "free": "Free",
+    "stroller_friendly": "Stroller friendly",
+    "open_weekends": "Open weekends",
+    "location": "Location",
+    "schedule": "Schedule",
+    "description": "Description",
+    "age_range": "Recommended age",
+    "best_season": "Best season",
+    "types": "Categories",
+  "open_weekends_label": "Open on weekends"
+ 
+  },
+  "age": {
+    "months": "{count} months",
+    "years": "{count} years",
+    "years_months": "{years} years {months} months",
+    "short_months": "m",
+    "short_years": "y"
+  },
+  "carousels": {
+    "recent": "Recently added",
+    "nearby": "Near you",
+    "popular": "Popular",
+    "recommended": "Recommended"
+  },
+  "cta": {
+    "title": "Know an amazing place?",
+    "description": "Help us grow by suggesting activities",
+    "button": "Suggest activity"
+  },
+  "footer": {
+    "about": "About us",
+    "privacy": "Privacy",
+    "terms": "Terms",
+    "rights": "All rights reserved"
+  },
+  "suggest": {
+    "title": "Suggest an activity",
+    "name": "Name",
+    "name_placeholder": "E.g. Pine Park",
+    "description": "Description",
+    "description_placeholder": "What can you do there?",
+    "city": "City",
+    "city_placeholder": "E.g. Tel Aviv",
+    "address": "Address",
+    "address_placeholder": "E.g. HaYarkon St 1",
+    "age_min": "Min age (months)",
+    "age_max": "Max age (months)",
+    "types": "Activity type",
+    "seasons": "Best season",
+    "schedule": "Schedule",
+    "schedule_placeholder": "E.g. Mon-Fri 9:00-18:00",
+    "features": "Features",
+    "cancel": "Cancel",
+    "submit": "Send suggestion",
+    "success": "Thanks for your suggestion!",
+    "error_name": "Name is required",
+    "error_city": "City is required"
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "An error occurred",
+    "no_results": "No results found",
+    "back": "Back"
+  }
+}
