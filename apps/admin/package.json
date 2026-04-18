@@ -11,7 +11,8 @@
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
     "lint": "eslint .",
-    "typecheck": "nuxt typecheck"
+    "typecheck": "nuxt typecheck",
+    "test": "vitest run"
   },
   "dependencies": {
     "@iconify-json/lucide": "^1.2.98",
@@ -34,10 +35,14 @@
   },
   "devDependencies": {
     "@nuxt/eslint": "^1.15.2",
+    "@nuxt/test-utils": "^4.0.2",
+    "@vue/test-utils": "^2.4.6",
     "eslint": "^10.0.3",
-    "typescript": "^5.9.3",
-    "vue-tsc": "^3.2.5",
+    "happy-dom": "^20.9.0",
     "oxc-parser": "*",
-    "oxc-walker": "*"
+    "oxc-walker": "*",
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.4",
+    "vue-tsc": "^3.2.5"
   }
-  }
+}
