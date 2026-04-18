@@ -1,4 +1,5 @@
 import { serverSupabaseClient } from '#supabase/server'
+import { logError, logInfo } from '~/server/utils/logger'
 
 interface ScheduleDay {
   open: boolean
@@ -60,15 +61,16 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, statusMessage: 'El tipo de actividad es requerido' })
   }
 
+  await logInfo(event, 'suggestions/create', 'Creating suggestion', { name: body.name })
+
   // Construir schedule como texto legible también
-  const DAYS = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday']
-  const DAY_ES = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado']
-  const scheduleText = DAYS
-    .map((d, i) => {
-      const day = body.schedule_structured?.[d as keyof typeof body.schedule_structured]
-      if (!day?.open) return null
-      return `${DAY_ES[i]}: ${day.start}–${day.end}`
-    })
+  const DAYS = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday']
+  const DAY_ES = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado']
+  const scheduleText = DAYS.map((d, i) => {
+    const day = body.schedule_structured?.[d as keyof typeof body.schedule_structured]
+    if (!day?.open) return null
+    return `${DAY_ES[i]}: ${day.start}–${day.end}`
+  })
     .filter(Boolean)
     .join(', ')
 
@@ -103,6 +105,10 @@ export default defineEventHandler(async (event) => {
     .single()
 
   if (error) {
+    await logError(event, 'suggestions/create', 'Failed to insert suggestion', {
+      name: body.name,
+      error: error.message,
+    })
     throw createError({ statusCode: 500, statusMessage: error.message })
   }
 
