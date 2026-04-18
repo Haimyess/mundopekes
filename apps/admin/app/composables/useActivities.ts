@@ -36,7 +36,7 @@ export const useActivities = (options: UseActivitiesOptions = {}) => {
     place_id: options.placeId,
     is_free: undefined,
     page: 1,
-    pageSize: options.pageSize ?? 20,
+    pageSize: options.pageSize ?? 20
   })
 
   // Debounce sólo del search para no martillar el server al teclear
@@ -47,29 +47,27 @@ export const useActivities = (options: UseActivitiesOptions = {}) => {
     try {
       const params: Record<string, any> = {
         page: filters.page,
-        pageSize: filters.pageSize,
+        pageSize: filters.pageSize
       }
-      if (debouncedQ.value)             params.q = debouncedQ.value
-      if (filters.category_id)          params.category_id = filters.category_id
-      if (filters.status !== 'all')     params.status = filters.status
-      if (filters.place_id)             params.place_id = filters.place_id
+      if (debouncedQ.value) params.q = debouncedQ.value
+      if (filters.category_id) params.category_id = filters.category_id
+      if (filters.status !== 'all') params.status = filters.status
+      if (filters.place_id) params.place_id = filters.place_id
       if (filters.is_free !== undefined) params.is_free = filters.is_free
 
-      const res = await $fetch<{ data: Activity[]; count: number }>(
+      const res = await $fetch<{ data: Activity[], count: number }>(
         '/api/activities',
         { params }
       )
       activities.value = res.data
       total.value = res.count
-    }
-    catch (e: any) {
+    } catch (e: any) {
       toast.add({
         title: 'Error cargando actividades',
         description: e.message,
-        color: 'error',
+        color: 'error'
       })
-    }
-    finally {
+    } finally {
       loading.value = false
     }
   }
@@ -80,12 +78,10 @@ export const useActivities = (options: UseActivitiesOptions = {}) => {
       await $fetch('/api/activities', { method: 'POST', body: data })
       toast.add({ title: 'Actividad creada', color: 'success' })
       await fetch()
-    }
-    catch (e: any) {
+    } catch (e: any) {
       toast.add({ title: 'Error al crear', description: e.message, color: 'error' })
       throw e
-    }
-    finally {
+    } finally {
       saving.value = false
     }
   }
@@ -96,12 +92,10 @@ export const useActivities = (options: UseActivitiesOptions = {}) => {
       await $fetch(`/api/activities/${id}`, { method: 'PUT', body: data })
       toast.add({ title: 'Actividad actualizada', color: 'success' })
       await fetch()
-    }
-    catch (e: any) {
+    } catch (e: any) {
       toast.add({ title: 'Error al actualizar', description: e.message, color: 'error' })
       throw e
-    }
-    finally {
+    } finally {
       saving.value = false
     }
   }
@@ -112,12 +106,10 @@ export const useActivities = (options: UseActivitiesOptions = {}) => {
       await $fetch(`/api/activities/${id}`, { method: 'DELETE' })
       toast.add({ title: 'Actividad eliminada', color: 'neutral' })
       await fetch()
-    }
-    catch (e: any) {
+    } catch (e: any) {
       toast.add({ title: 'Error al eliminar', description: e.message, color: 'error' })
       throw e
-    }
-    finally {
+    } finally {
       saving.value = false
     }
   }
@@ -130,15 +122,13 @@ export const useActivities = (options: UseActivitiesOptions = {}) => {
       )
       toast.add({
         title: `${ids.length} actividad${ids.length > 1 ? 'es' : ''} eliminada${ids.length > 1 ? 's' : ''}`,
-        color: 'neutral',
+        color: 'neutral'
       })
       await fetch()
-    }
-    catch (e: any) {
+    } catch (e: any) {
       toast.add({ title: 'Error al eliminar', description: e.message, color: 'error' })
       throw e
-    }
-    finally {
+    } finally {
       saving.value = false
     }
   }
@@ -170,6 +160,6 @@ export const useActivities = (options: UseActivitiesOptions = {}) => {
     create,
     update,
     remove,
-    removeMany,
+    removeMany
   }
 }

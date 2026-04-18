@@ -2,7 +2,7 @@
 import type { Tables } from '~/types/database.types'
 
 export type Faq = Tables<'faqs'> & {
-  faq_category?: { id: string; name: string; slug: string } | null
+  faq_category?: { id: string, name: string, slug: string } | null
 }
 export type FaqCategory = Tables<'faq_categories'>
 
@@ -18,15 +18,13 @@ export const useFaqs = () => {
     faqCategories.value = data
   }
 
-  const fetch = async (filters?: { status?: string; faq_category_id?: string }) => {
+  const fetch = async (filters?: { status?: string, faq_category_id?: string }) => {
     loading.value = true
     try {
       faqs.value = await $fetch<Faq[]>('/api/faqs', { params: filters })
-    }
-    catch (e: any) {
+    } catch (e: any) {
       toast.add({ title: 'Error cargando FAQs', description: e.message, color: 'error' })
-    }
-    finally {
+    } finally {
       loading.value = false
     }
   }
@@ -37,11 +35,9 @@ export const useFaqs = () => {
       await $fetch('/api/faqs', { method: 'POST', body: data })
       toast.add({ title: 'FAQ creada', color: 'success' })
       await fetch()
-    }
-    catch (e: any) {
+    } catch (e: any) {
       toast.add({ title: 'Error al crear', description: e.message, color: 'error' })
-    }
-    finally {
+    } finally {
       saving.value = false
     }
   }
@@ -52,11 +48,9 @@ export const useFaqs = () => {
       await $fetch(`/api/faqs/${id}`, { method: 'PUT', body: data })
       toast.add({ title: 'FAQ actualizada', color: 'success' })
       await fetch()
-    }
-    catch (e: any) {
+    } catch (e: any) {
       toast.add({ title: 'Error al actualizar', description: e.message, color: 'error' })
-    }
-    finally {
+    } finally {
       saving.value = false
     }
   }
@@ -67,11 +61,9 @@ export const useFaqs = () => {
       await $fetch(`/api/faqs/${id}`, { method: 'DELETE' })
       toast.add({ title: 'FAQ eliminada', color: 'neutral' })
       await fetch()
-    }
-    catch (e: any) {
+    } catch (e: any) {
       toast.add({ title: 'Error al eliminar', description: e.message, color: 'error' })
-    }
-    finally {
+    } finally {
       saving.value = false
     }
   }
@@ -91,6 +83,6 @@ export const useFaqs = () => {
     create,
     update,
     remove,
-    reorder,
+    reorder
   }
 }

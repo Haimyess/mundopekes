@@ -25,9 +25,9 @@ export default defineEventHandler(async (event) => {
     )
     .order('created_at', { ascending: false })
 
-  if (query.place_id)    req = req.eq('place_id', query.place_id)
+  if (query.place_id) req = req.eq('place_id', query.place_id)
   if (query.category_id) req = req.eq('category_id', query.category_id)
-  if (query.status)      req = req.eq('status', query.status)
+  if (query.status) req = req.eq('status', query.status)
   if (query.is_free !== undefined && query.is_free !== '') {
     req = req.eq('is_free', query.is_free === 'true')
   }

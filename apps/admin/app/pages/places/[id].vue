@@ -19,12 +19,12 @@ const {
   activities,
   loading: activitiesLoading,
   fetch: fetchActivities,
-  remove: removeActivity,
+  remove: removeActivity
 } = useActivities({ placeId: id })
 
 const openEditPlace = async () => {
   const slideover = overlay.create(PlacesSlideover, {
-    props: { place: place.value },
+    props: { place: place.value }
   })
   await slideover.open()
   refreshPlace()
@@ -32,7 +32,7 @@ const openEditPlace = async () => {
 
 const openCreateActivity = async () => {
   const slideover = overlay.create(ActivitiesSlideover, {
-    props: { placeId: id },
+    props: { placeId: id }
   })
   await slideover.open()
   fetchActivities()
@@ -40,7 +40,7 @@ const openCreateActivity = async () => {
 
 const openEditActivity = async (activity: Activity) => {
   const slideover = overlay.create(ActivitiesSlideover, {
-    props: { activity, placeId: id },
+    props: { activity, placeId: id }
   })
   await slideover.open()
   fetchActivities()
@@ -49,24 +49,24 @@ const openEditActivity = async (activity: Activity) => {
 const statusColor = {
   approved: 'success',
   pending: 'warning',
-  rejected: 'error',
+  rejected: 'error'
 } as const
 
 const statusLabel = {
   approved: 'Aprobada',
   pending: 'Pendiente',
-  rejected: 'Rechazada',
+  rejected: 'Rechazada'
 }
 
 const columns: TableColumn<Activity>[] = [
   {
     accessorKey: 'title',
-    header: 'Título',
+    header: 'Título'
   },
   {
     accessorKey: 'category',
     header: 'Categoría',
-    cell: ({ row }) => row.original.category?.name ?? '—',
+    cell: ({ row }) => row.original.category?.name ?? '—'
   },
   {
     accessorKey: 'price',
@@ -74,7 +74,7 @@ const columns: TableColumn<Activity>[] = [
     cell: ({ row }) =>
       row.original.is_free
         ? h(UBadge, { variant: 'subtle', color: 'success' }, () => 'Gratis')
-        : `₪${row.original.price}`,
+        : `₪${row.original.price}`
   },
   {
     accessorKey: 'status',
@@ -84,7 +84,7 @@ const columns: TableColumn<Activity>[] = [
         UBadge,
         { variant: 'subtle', color: statusColor[row.original.status] },
         () => statusLabel[row.original.status]
-      ),
+      )
   },
   {
     id: 'actions',
@@ -100,27 +100,27 @@ const columns: TableColumn<Activity>[] = [
               {
                 label: 'Editar',
                 icon: 'i-lucide-pencil',
-                onSelect: () => openEditActivity(row.original),
+                onSelect: () => openEditActivity(row.original)
               },
               { type: 'separator' as const },
               {
                 label: 'Eliminar',
                 icon: 'i-lucide-trash',
                 color: 'error' as const,
-                onSelect: () => removeActivity(row.original.id),
-              },
-            ],
+                onSelect: () => removeActivity(row.original.id)
+              }
+            ]
           },
           () =>
             h(UButton, {
               icon: 'i-lucide-ellipsis-vertical',
               color: 'neutral',
               variant: 'ghost',
-              class: 'ml-auto',
+              class: 'ml-auto'
             })
         )
-      ),
-  },
+      )
+  }
 ]
 
 // Fetch inicial de actividades (sin paginación, usa el composable con placeId fijo)
@@ -167,7 +167,9 @@ await fetchActivities()
         <p v-if="place?.description" class="text-muted text-sm">
           {{ place.description }}
         </p>
-        <p v-else class="text-muted text-sm italic">Sin descripción</p>
+        <p v-else class="text-muted text-sm italic">
+          Sin descripción
+        </p>
       </div>
 
       <!-- Actividades -->
@@ -192,7 +194,7 @@ await fetchActivities()
           thead: '[&>tr]:bg-elevated/50 [&>tr]:after:content-none',
           tbody: '[&>tr]:last:[&>td]:border-b-0',
           th: 'py-2 first:rounded-l-lg last:rounded-r-lg border-y border-default first:border-l last:border-r',
-          td: 'border-b border-default',
+          td: 'border-b border-default'
         }"
       />
     </template>

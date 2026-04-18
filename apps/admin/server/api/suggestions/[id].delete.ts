@@ -1,7 +1,6 @@
 // server/api/suggestions/[id].delete.ts
 // CAMBIAR A SOFT DELETE
 
-
 import { serverSupabaseClient } from '#supabase/server'
 
 export default defineEventHandler(async (event) => {

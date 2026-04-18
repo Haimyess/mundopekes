@@ -23,11 +23,11 @@ const links = [[
     onSelect: () => { open.value = false }
   },
   {
-  label: 'Sugerencias',
-  icon: 'i-lucide-lightbulb',
-  to: '/suggestions',
-  onSelect: () => { open.value = false },
-},
+    label: 'Sugerencias',
+    icon: 'i-lucide-lightbulb',
+    to: '/suggestions',
+    onSelect: () => { open.value = false }
+  },
   {
     label: 'Categorías',
     icon: 'i-lucide-tag',
@@ -35,25 +35,25 @@ const links = [[
     onSelect: () => { open.value = false }
   },
   {
-  label: 'Soporte',
-  icon: 'i-lucide-life-buoy',
-  to: '/support',
-  defaultOpen: false,
-  type: 'trigger',
-  children: [
-    {
-      label: 'Help Desk',
-      to: '/support',
-      exact: true,
-      onSelect: () => { open.value = false },
-    },
-    {
-      label: 'FAQs',
-      to: '/support/faqs',
-      onSelect: () => { open.value = false },
-    },
-  ],
-},
+    label: 'Soporte',
+    icon: 'i-lucide-life-buoy',
+    to: '/support',
+    defaultOpen: false,
+    type: 'trigger',
+    children: [
+      {
+        label: 'Help Desk',
+        to: '/support',
+        exact: true,
+        onSelect: () => { open.value = false }
+      },
+      {
+        label: 'FAQs',
+        to: '/support/faqs',
+        onSelect: () => { open.value = false }
+      }
+    ]
+  },
   {
     label: 'Settings',
     to: '/settings',

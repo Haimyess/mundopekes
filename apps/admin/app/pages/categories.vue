@@ -38,7 +38,7 @@ const saveEdit = async () => {
   await update(editingId.value, {
     name: editForm.name,
     slug: editForm.slug || toSlug(editForm.name),
-    icon: editForm.icon || null,
+    icon: editForm.icon || null
   })
   editingId.value = null
 }
@@ -52,7 +52,7 @@ const createParent = async () => {
     name: newParentForm.name,
     slug: toSlug(newParentForm.name),
     icon: newParentForm.icon || null,
-    parent_id: null,
+    parent_id: null
   })
   newParentForm.name = ''
   newParentForm.icon = ''
@@ -66,7 +66,7 @@ const createChild = async (parentId: string) => {
     name: newChildForm.name,
     slug: toSlug(newChildForm.name),
     icon: newChildForm.icon || null,
-    parent_id: parentId,
+    parent_id: parentId
   })
   newChildForm.name = ''
   newChildForm.icon = ''
@@ -105,7 +105,6 @@ await fetch()
     </template>
 
     <div class="p-4 flex flex-col gap-3">
-
       <!-- Loading -->
       <div v-if="loading" class="flex justify-center py-12">
         <UIcon name="i-lucide-loader-2" class="animate-spin size-6 text-muted" />
@@ -174,8 +173,19 @@ await fetch()
                   @keyup.enter="saveEdit"
                   @keyup.esc="cancelEdit"
                 />
-                <UButton size="xs" icon="i-lucide-check" :loading="saving" @click="saveEdit" />
-                <UButton size="xs" color="neutral" variant="ghost" icon="i-lucide-x" @click="cancelEdit" />
+                <UButton
+                  size="xs"
+                  icon="i-lucide-check"
+                  :loading="saving"
+                  @click="saveEdit"
+                />
+                <UButton
+                  size="xs"
+                  color="neutral"
+                  variant="ghost"
+                  icon="i-lucide-x"
+                  @click="cancelEdit"
+                />
               </template>
 
               <!-- Modo vista -->
@@ -236,8 +246,19 @@ await fetch()
                       @keyup.enter="saveEdit"
                       @keyup.esc="cancelEdit"
                     />
-                    <UButton size="xs" icon="i-lucide-check" :loading="saving" @click="saveEdit" />
-                    <UButton size="xs" color="neutral" variant="ghost" icon="i-lucide-x" @click="cancelEdit" />
+                    <UButton
+                      size="xs"
+                      icon="i-lucide-check"
+                      :loading="saving"
+                      @click="saveEdit"
+                    />
+                    <UButton
+                      size="xs"
+                      color="neutral"
+                      variant="ghost"
+                      icon="i-lucide-x"
+                      @click="cancelEdit"
+                    />
                   </template>
 
                   <template v-else>
@@ -272,8 +293,19 @@ await fetch()
                   class="flex-1"
                   @keyup.enter="createChild(parent.id)"
                 />
-                <UButton size="xs" icon="i-lucide-check" :loading="saving" @click="createChild(parent.id)" />
-                <UButton size="xs" color="neutral" variant="ghost" icon="i-lucide-x" @click="showNewChild = null" />
+                <UButton
+                  size="xs"
+                  icon="i-lucide-check"
+                  :loading="saving"
+                  @click="createChild(parent.id)"
+                />
+                <UButton
+                  size="xs"
+                  color="neutral"
+                  variant="ghost"
+                  icon="i-lucide-x"
+                  @click="showNewChild = null"
+                />
               </div>
 
               <button

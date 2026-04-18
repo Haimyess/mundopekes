@@ -23,7 +23,7 @@ export const useCategories = () => {
       ...parent,
       children: categories.value
         .filter(c => c.parent_id === parent.id)
-        .sort((a, b) => a.order - b.order),
+        .sort((a, b) => a.order - b.order)
     }))
   })
 
@@ -31,11 +31,9 @@ export const useCategories = () => {
     loading.value = true
     try {
       categories.value = await $fetch<Category[]>('/api/categories')
-    }
-    catch (e: any) {
+    } catch (e: any) {
       toast.add({ title: 'Error cargando categorías', description: e.message, color: 'error' })
-    }
-    finally {
+    } finally {
       loading.value = false
     }
   }
@@ -46,11 +44,9 @@ export const useCategories = () => {
       await $fetch('/api/categories', { method: 'POST', body: data })
       toast.add({ title: 'Categoría creada', color: 'success' })
       await fetch()
-    }
-    catch (e: any) {
+    } catch (e: any) {
       toast.add({ title: 'Error al crear', description: e.message, color: 'error' })
-    }
-    finally {
+    } finally {
       saving.value = false
     }
   }
@@ -61,11 +57,9 @@ export const useCategories = () => {
       await $fetch(`/api/categories/${id}`, { method: 'PUT', body: data })
       toast.add({ title: 'Categoría actualizada', color: 'success' })
       await fetch()
-    }
-    catch (e: any) {
+    } catch (e: any) {
       toast.add({ title: 'Error al actualizar', description: e.message, color: 'error' })
-    }
-    finally {
+    } finally {
       saving.value = false
     }
   }
@@ -76,11 +70,9 @@ export const useCategories = () => {
       await $fetch(`/api/categories/${id}`, { method: 'DELETE' })
       toast.add({ title: 'Categoría eliminada', color: 'neutral' })
       await fetch()
-    }
-    catch (e: any) {
+    } catch (e: any) {
       toast.add({ title: 'Error al eliminar', description: e.message, color: 'error' })
-    }
-    finally {
+    } finally {
       saving.value = false
     }
   }
@@ -106,6 +98,6 @@ export const useCategories = () => {
     update,
     remove,
     reorderParents,
-    reorderChildren,
+    reorderChildren
   }
 }

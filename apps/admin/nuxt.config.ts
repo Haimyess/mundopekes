@@ -1,17 +1,11 @@
 export default defineNuxtConfig({
-  future: {
-    compatibilityVersion: 4
-  },
+
   modules: [
     '@nuxt/eslint',
     '@nuxt/ui',
     '@vueuse/nuxt',
     '@nuxtjs/supabase'
   ],
-  supabase: {
-    redirect: false,
-    types: '~/types/database.types.ts',
-  },
   devtools: {
     enabled: true
   },
@@ -20,6 +14,8 @@ export default defineNuxtConfig({
     '/api/**': {
       cors: true
     }
+  }, future: {
+    compatibilityVersion: 4
   },
   compatibilityDate: '2024-07-11',
   eslint: {
@@ -29,17 +25,20 @@ export default defineNuxtConfig({
         braceStyle: '1tbs'
       }
     }
+  },
+  supabase: {
+    redirect: false,
+    types: '~/types/database.types.ts'
   }
 })
 
-
 // // https://nuxt.com/docs/api/configuration/nuxt-config
 // export default defineNuxtConfig({
-//   // extends: [                    
-//   //   '../../layers/core',        
-//   //   '../../layers/ui',          
-//   //   '../../layers/domain',     
-//   // ],   
+//   // extends: [
+//   //   '../../layers/core',
+//   //   '../../layers/ui',
+//   //   '../../layers/domain',
+//   // ],
 //   modules: [
 //     '@nuxt/eslint',
 //     '@nuxt/ui',

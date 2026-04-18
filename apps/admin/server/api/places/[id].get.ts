@@ -2,8 +2,8 @@ import { serverSupabaseClient } from '#supabase/server' // ← agregar
 
 export default defineEventHandler(async (event) => {
   const id = getRouterParam(event, 'id')
-   if (!id) throw createError({ statusCode: 400, message: 'ID requerido' })
-const supabase = await serverSupabaseClient(event)
+  if (!id) throw createError({ statusCode: 400, message: 'ID requerido' })
+  const supabase = await serverSupabaseClient(event)
 
   const { data, error } = await supabase
     .from('places')

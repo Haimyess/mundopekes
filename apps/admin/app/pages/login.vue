@@ -1,17 +1,18 @@
 <!-- app/pages/login.vue -->
 <script setup lang="ts">
 import { useAuth
-    
- } from '~/composables/useAuth'
+
+} from '~/composables/useAuth'
+
 definePageMeta({
-  layout: false, // Sin layout del dashboard
+  layout: false // Sin layout del dashboard
 })
 
 const { login, loading } = useAuth()
 
 const form = reactive({
   email: '',
-  password: '',
+  password: ''
 })
 
 const showPassword = ref(false)
@@ -24,7 +25,6 @@ const handleSubmit = async () => {
 <template>
   <div class="min-h-screen flex items-center justify-center bg-(--ui-bg-elevated)">
     <div class="w-full max-w-sm px-4">
-
       <!-- Logo / Brand -->
       <div class="text-center mb-8">
         <div class="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-primary mb-4">
@@ -41,7 +41,6 @@ const handleSubmit = async () => {
       <!-- Card del form -->
       <UCard class="shadow-lg">
         <div class="flex flex-col gap-5 p-1">
-
           <UFormField label="Email" required>
             <UInput
               v-model="form.email"

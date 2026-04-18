@@ -24,7 +24,7 @@ const form = reactive({
   stroller_friendly: false,
   open_weekends: false,
   schedule: '',
-  status: 'approved' as 'pending' | 'approved' | 'rejected',
+  status: 'approved' as 'pending' | 'approved' | 'rejected'
 })
 
 const { data: categories } = await useFetch<Category[]>('/api/categories')
@@ -35,7 +35,7 @@ const { data: places } = props.placeId
 const placeOptions = computed(() =>
   (places.value ?? []).map(p => ({
     label: p.city?.name ? `${p.name} — ${p.city.name}` : p.name,
-    value: p.id,
+    value: p.id
   }))
 )
 
@@ -87,13 +87,13 @@ const save = async () => {
     if (props.activity?.id) {
       await $fetch(`/api/activities/${props.activity.id}`, {
         method: 'PUT',
-        body: form,
+        body: form
       })
       toast.add({ title: 'Actividad actualizada', color: 'success' })
     } else {
       await $fetch('/api/activities', {
         method: 'POST',
-        body: form,
+        body: form
       })
       toast.add({ title: 'Actividad creada', color: 'success' })
     }
@@ -130,7 +130,12 @@ const save = async () => {
         </UFormField>
 
         <UFormField label="Descripción">
-          <UTextarea v-model="form.description" placeholder="Descripción de la actividad..." :rows="3" class="w-full" />
+          <UTextarea
+            v-model="form.description"
+            placeholder="Descripción de la actividad..."
+            :rows="3"
+            class="w-full"
+          />
         </UFormField>
 
         <UFormField label="Categoría">
@@ -148,7 +153,7 @@ const save = async () => {
             :items="[
               { label: 'Aprobada', value: 'approved' },
               { label: 'Pendiente', value: 'pending' },
-              { label: 'Rechazada', value: 'rejected' },
+              { label: 'Rechazada', value: 'rejected' }
             ]"
             class="w-full"
           />

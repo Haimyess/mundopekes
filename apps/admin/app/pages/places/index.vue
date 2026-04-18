@@ -50,7 +50,7 @@ const filtered = computed(() =>
 const columns: TableColumn<Place>[] = [
   {
     accessorKey: 'name',
-    header: 'Nombre',
+    header: 'Nombre'
   },
   {
     accessorKey: 'city',
@@ -122,36 +122,36 @@ const columns: TableColumn<Place>[] = [
         />
       </div>
 
-<UTable
-  :data="filtered"
-  :columns="columns"
-  :loading="status === 'pending'"
-  :ui="{
-    base: 'table-fixed border-separate border-spacing-0',
-    thead: '[&>tr]:bg-elevated/50 [&>tr]:after:content-none',
-    tbody: '[&>tr]:last:[&>td]:border-b-0 [&>tr]:hover:bg-elevated/50 [&>tr]:cursor-pointer [&>tr]:transition-colors',
-    th: 'py-2 first:rounded-l-lg last:rounded-r-lg border-y border-default first:border-l last:border-r',
-    td: 'border-b border-default',
-  }"
-  @click.native="(e: MouseEvent) => {
-    const target = e.target as HTMLElement
+      <UTable
+        :data="filtered"
+        :columns="columns"
+        :loading="status === 'pending'"
+        :ui="{
+          base: 'table-fixed border-separate border-spacing-0',
+          thead: '[&>tr]:bg-elevated/50 [&>tr]:after:content-none',
+          tbody: '[&>tr]:last:[&>td]:border-b-0 [&>tr]:hover:bg-elevated/50 [&>tr]:cursor-pointer [&>tr]:transition-colors',
+          th: 'py-2 first:rounded-l-lg last:rounded-r-lg border-y border-default first:border-l last:border-r',
+          td: 'border-b border-default'
+        }"
+        @click.native="(e: MouseEvent) => {
+          const target = e.target as HTMLElement
 
-    // Si el click viene del dropdown o sus hijos, ignorar
-    if (target.closest('[data-radix-popper-content-wrapper]')) return
-    if (target.closest('button')) return
+          // Si el click viene del dropdown o sus hijos, ignorar
+          if (target.closest('[data-radix-popper-content-wrapper]')) return
+          if (target.closest('button')) return
 
-    const tr = target.closest('tbody tr')
-    if (!tr) return
+          const tr = target.closest('tbody tr')
+          if (!tr) return
 
-    // Buscar el id directamente del DOM data attribute
-    const tbody = tr.closest('tbody')
-    if (!tbody) return
-    const rows = Array.from(tbody.querySelectorAll('tr'))
-    const index = rows.indexOf(tr as HTMLTableRowElement)
-    const place = filtered[index]
-    if (place) router.push(`/places/${place.id}`)
-  }"
-/>
+          // Buscar el id directamente del DOM data attribute
+          const tbody = tr.closest('tbody')
+          if (!tbody) return
+          const rows = Array.from(tbody.querySelectorAll('tr'))
+          const index = rows.indexOf(tr as HTMLTableRowElement)
+          const place = filtered[index]
+          if (place) router.push(`/places/${place.id}`)
+        }"
+      />
     </template>
   </UDashboardPanel>
 </template>

@@ -32,7 +32,7 @@ export default defineEventHandler(async (event) => {
     slug,
     icon: body.icon ?? null,
     parent_id: body.parent_id ?? null,
-    order: nextOrder,
+    order: nextOrder
   }
 
   const { data, error } = await supabase

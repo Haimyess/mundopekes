@@ -108,7 +108,7 @@ export function slugify(text: string): string {
     .trim()
     .replace(/\s+/g, '-')     // Espacios a guiones
     .replace(/[^\w\-]+/g, '') // Remover caracteres especiales
-    .replace(/\-\-+/g, '-')   // Múltiples guiones a uno solo
+    .replace(/-{2,}/g, '-')   // Múltiples guiones a uno solo
 }
 
 /**

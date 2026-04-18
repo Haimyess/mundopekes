@@ -1,12 +1,12 @@
 // types/database.types.ts
 
-export type Json =
-  | string
-  | number
-  | boolean
-  | null
-  | { [key: string]: Json | undefined }
-  | Json[]
+export type Json
+  = | string
+    | number
+    | boolean
+    | null
+    | { [key: string]: Json | undefined }
+    | Json[]
 
 export type Database = {
   public: {
@@ -128,7 +128,7 @@ export type Database = {
           id: string
           name: string
           description: string | null
-          location: { city?: string; region?: string; address?: string } | null
+          location: { city?: string, region?: string, address?: string } | null
           age_range: Json | null
           type: string[]
           best_season: string[]
@@ -146,7 +146,7 @@ export type Database = {
           id?: string
           name: string
           description?: string | null
-          location?: { city?: string; region?: string; address?: string } | null
+          location?: { city?: string, region?: string, address?: string } | null
           age_range?: Json | null
           type?: string[]
           best_season?: string[]
@@ -163,7 +163,7 @@ export type Database = {
         Update: {
           name?: string
           description?: string | null
-          location?: { city?: string; region?: string; address?: string } | null
+          location?: { city?: string, region?: string, address?: string } | null
           age_range?: Json | null
           type?: string[]
           best_season?: string[]
@@ -177,59 +177,59 @@ export type Database = {
           reviewed_at?: string | null
         }
         Relationships: []
-      },
+      }
       faq_categories: {
-  Row: {
-    id: string
-    name: string
-    slug: string
-    order: number
-    created_at: string
-  }
-  Insert: {
-    id?: string
-    name: string
-    slug: string
-    order?: number
-    created_at?: string
-  }
-  Update: {
-    name?: string
-    slug?: string
-    order?: number
-  }
-  Relationships: []
-}
-faqs: {
-  Row: {
-    id: string
-    question: string
-    answer: string
-    faq_category_id: string | null
-    order: number
-    status: 'published' | 'draft'
-    created_at: string
-    updated_at: string
-  }
-  Insert: {
-    id?: string
-    question: string
-    answer: string
-    faq_category_id?: string | null
-    order?: number
-    status?: 'published' | 'draft'
-    created_at?: string
-    updated_at?: string
-  }
-  Update: {
-    question?: string
-    answer?: string
-    faq_category_id?: string | null
-    order?: number
-    status?: 'published' | 'draft'
-  }
-  Relationships: []
-}
+        Row: {
+          id: string
+          name: string
+          slug: string
+          order: number
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          slug: string
+          order?: number
+          created_at?: string
+        }
+        Update: {
+          name?: string
+          slug?: string
+          order?: number
+        }
+        Relationships: []
+      }
+      faqs: {
+        Row: {
+          id: string
+          question: string
+          answer: string
+          faq_category_id: string | null
+          order: number
+          status: 'published' | 'draft'
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          question: string
+          answer: string
+          faq_category_id?: string | null
+          order?: number
+          status?: 'published' | 'draft'
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          question?: string
+          answer?: string
+          faq_category_id?: string | null
+          order?: number
+          status?: 'published' | 'draft'
+        }
+        Relationships: []
+      }
     }
     Views: Record<string, never>
     Functions: Record<string, never>
@@ -238,11 +238,11 @@ faqs: {
 }
 
 // Helpers de conveniencia — úsalos en tus composables y server routes
-export type Tables<T extends keyof Database['public']['Tables']> =
-  Database['public']['Tables'][T]['Row']
+export type Tables<T extends keyof Database['public']['Tables']>
+  = Database['public']['Tables'][T]['Row']
 
-export type TablesInsert<T extends keyof Database['public']['Tables']> =
-  Database['public']['Tables'][T]['Insert']
+export type TablesInsert<T extends keyof Database['public']['Tables']>
+  = Database['public']['Tables'][T]['Insert']
 
-export type TablesUpdate<T extends keyof Database['public']['Tables']> =
-  Database['public']['Tables'][T]['Update']
+export type TablesUpdate<T extends keyof Database['public']['Tables']>
+  = Database['public']['Tables'][T]['Update']

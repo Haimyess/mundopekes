@@ -71,7 +71,7 @@ const toggleManual = () => {
                     v-if="place.photo_url"
                     :src="place.photo_url"
                     :alt="place.name"
-                  />
+                  >
                   <UiIcon v-else name="i-lucide-map-pin" size="sm" />
                 </div>
                 <div class="step-lugar__result-info">

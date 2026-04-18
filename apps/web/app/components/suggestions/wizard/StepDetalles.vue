@@ -90,7 +90,7 @@ const TOGGLES = [
             class="step-detalles__time-input"
             :class="{ 'step-detalles__time-input--disabled': !wizard.state.value.schedule[day.key].open }"
             :disabled="!wizard.state.value.schedule[day.key].open"
-          />
+          >
           <span class="step-detalles__time-sep">–</span>
           <input
             v-model="wizard.state.value.schedule[day.key].end"
@@ -98,7 +98,7 @@ const TOGGLES = [
             class="step-detalles__time-input"
             :class="{ 'step-detalles__time-input--disabled': !wizard.state.value.schedule[day.key].open }"
             :disabled="!wizard.state.value.schedule[day.key].open"
-          />
+          >
         </div>
       </div>
     </div>

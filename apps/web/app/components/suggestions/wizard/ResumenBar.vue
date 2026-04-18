@@ -49,7 +49,7 @@ const badges = computed(() => {
         :src="wizard.placePhoto.value"
         :alt="wizard.placeName.value"
         class="resumen-bar__img"
-      />
+      >
       <div v-else class="resumen-bar__img-placeholder">
         <UiIcon name="i-lucide-map-pin" size="sm" />
       </div>

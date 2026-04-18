@@ -1,5 +1,4 @@
 <script setup lang="ts">
-
 import type { DropdownMenuItem } from '@nuxt/ui'
 
 defineProps<{ collapsed?: boolean }>()
@@ -22,7 +21,7 @@ const logout = async () => {
 const items = computed<DropdownMenuItem[][]>(() => ([[
   {
     type: 'label',
-    label: user.value.name,
+    label: user.value.name
   }
 ], [
   {

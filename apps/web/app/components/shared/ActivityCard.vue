@@ -56,7 +56,7 @@ const hasMeta = computed(() => !!(cityName.value || categoryName.value))
           :alt="activity.title"
           class="activity-card__image"
           loading="lazy"
-        />
+        >
         <SharedNoImage v-else />
       </div>
 

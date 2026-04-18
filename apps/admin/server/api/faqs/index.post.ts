@@ -21,7 +21,7 @@ export default defineEventHandler(async (event) => {
     answer: body.answer,
     faq_category_id: body.faq_category_id ?? null,
     status: body.status ?? 'draft',
-    order: (last?.order ?? -1) + 1,
+    order: (last?.order ?? -1) + 1
   }
 
   const { data, error } = await supabase

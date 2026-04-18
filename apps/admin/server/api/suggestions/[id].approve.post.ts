@@ -2,7 +2,7 @@ import { serverSupabaseClient } from '#supabase/server'
 import type { Database, Json, TablesInsert, TablesUpdate, Tables } from '~/types/database.types'
 
 type Suggestion = Tables<'suggestions'>
-type SuggestionLocation = { city?: string; region?: string; address?: string }
+type SuggestionLocation = { city?: string, region?: string, address?: string }
 
 export default defineEventHandler(async (event) => {
   const id = getRouterParam(event, 'id')
@@ -58,7 +58,7 @@ export default defineEventHandler(async (event) => {
     stroller_friendly: suggestion.stroller_friendly,
     open_weekends: suggestion.open_weekends,
     is_free: suggestion.is_free,
-    schedule: suggestion.schedule,
+    schedule: suggestion.schedule
   }
 
   const placeInsert: TablesInsert<'places'> = {
@@ -67,7 +67,7 @@ export default defineEventHandler(async (event) => {
     city_id: cityId,
     images: suggestion.images,
     status: 'active',
-    metadata,
+    metadata
   }
 
   const { data: place, error: placeError } = await supabase
@@ -82,7 +82,7 @@ export default defineEventHandler(async (event) => {
 
   const suggestionUpdate: TablesUpdate<'suggestions'> = {
     status: 'approved',
-    reviewed_at: new Date().toISOString(),
+    reviewed_at: new Date().toISOString()
   }
 
   const { error: updateError } = await supabase

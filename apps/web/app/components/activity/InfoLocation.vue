@@ -22,8 +22,8 @@ const hasCoords = computed(() =>
 
 // Leaflet espera [lat, lng] como tupla — parseFloat por si vienen como string de Supabase
 const mapCenter = computed<[number, number]>(() => [
-  parseFloat(String(props.place?.lat ?? 0)),
-  parseFloat(String(props.place?.lng ?? 0))
+  Number.parseFloat(String(props.place?.lat ?? 0)),
+  Number.parseFloat(String(props.place?.lng ?? 0))
 ])
 
 const wazeUrl = computed(() => {
@@ -81,7 +81,7 @@ const mapsUrl = computed(() => {
             <LMarker :lat-lng="mapCenter">
               <LPopup>
                 <strong>{{ place.name }}</strong>
-                <br v-if="place.city?.name" />
+                <br v-if="place.city?.name" >
                 <span v-if="place.city?.name">{{ place.city.name }}</span>
               </LPopup>
             </LMarker>

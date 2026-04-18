@@ -20,7 +20,7 @@ const {
   filters,
   fetch: fetchActivities,
   remove,
-  removeMany,
+  removeMany
 } = useActivities()
 
 // Datos para los filtros
@@ -29,15 +29,15 @@ const { data: places } = await useFetch<Place[]>('/api/places')
 
 const categoryOptions = computed(() => [
   { label: 'Todas', value: 'all' },
-  ...(categories.value ?? []).map(c => ({ label: c.name, value: c.id })),
+  ...(categories.value ?? []).map(c => ({ label: c.name, value: c.id }))
 ])
 
 const placeOptions = computed(() => [
   { label: 'Todos', value: 'all' },
   ...(places.value ?? []).map(p => ({
     label: p.city?.name ? `${p.name} — ${p.city.name}` : p.name,
-    value: p.id,
-  })),
+    value: p.id
+  }))
 ])
 
 // Selectores con 'all' → undefined
@@ -61,7 +61,7 @@ const selectedRows = computed(() => {
 // Slideover
 const openCreate = async () => {
   const slideover = overlay.create(ActivitiesSlideover, {
-    props: { place: null },
+    props: { place: null }
   })
   const result = await slideover.open()
   fetchActivities()
@@ -69,7 +69,7 @@ const openCreate = async () => {
 
 const openEdit = async (activity: Activity) => {
   const slideover = overlay.create(ActivitiesSlideover, {
-    props: { activity },
+    props: { activity }
   })
   await slideover.open()
   fetchActivities()
@@ -96,13 +96,13 @@ const handleDelete = async (ids: string[]) => {
 const statusColor = {
   approved: 'success',
   pending: 'warning',
-  rejected: 'error',
+  rejected: 'error'
 } as const
 
 const statusLabel = {
   approved: 'Aprobada',
   pending: 'Pendiente',
-  rejected: 'Rechazada',
+  rejected: 'Rechazada'
 }
 
 // Row dropdown items
@@ -111,20 +111,20 @@ function getRowItems(row: Row<Activity>) {
     {
       label: 'Editar',
       icon: 'i-lucide-pencil',
-      onSelect: () => openEdit(row.original),
+      onSelect: () => openEdit(row.original)
     },
     {
       label: 'Ver lugar',
       icon: 'i-lucide-map-pin',
-      onSelect: () => router.push(`/places/${row.original.place_id}`),
+      onSelect: () => router.push(`/places/${row.original.place_id}`)
     },
     { type: 'separator' as const },
     {
       label: 'Eliminar',
       icon: 'i-lucide-trash',
       color: 'error' as const,
-      onSelect: () => handleDelete([row.original.id]),
-    },
+      onSelect: () => handleDelete([row.original.id])
+    }
   ]
 }
 
@@ -139,19 +139,19 @@ const columns: TableColumn<Activity>[] = [
           : table.getIsAllPageRowsSelected(),
         'onUpdate:modelValue': (value: boolean | 'indeterminate') =>
           table.toggleAllPageRowsSelected(!!value),
-        'ariaLabel': 'Seleccionar todas',
+        'ariaLabel': 'Seleccionar todas'
       }),
     cell: ({ row }) =>
       h(UCheckbox, {
         'modelValue': row.getIsSelected(),
         'onUpdate:modelValue': (value: boolean | 'indeterminate') =>
           row.toggleSelected(!!value),
-        'ariaLabel': 'Seleccionar fila',
-      }),
+        'ariaLabel': 'Seleccionar fila'
+      })
   },
   {
     accessorKey: 'title',
-    header: 'Título',
+    header: 'Título'
   },
   {
     accessorKey: 'place',
@@ -161,14 +161,14 @@ const columns: TableColumn<Activity>[] = [
       if (!place) return '—'
       return h('div', undefined, [
         h('p', { class: 'font-medium text-highlighted' }, place.name),
-        h('p', { class: 'text-xs text-muted' }, place.city?.name ?? ''),
+        h('p', { class: 'text-xs text-muted' }, place.city?.name ?? '')
       ])
-    },
+    }
   },
   {
     accessorKey: 'category',
     header: 'Categoría',
-    cell: ({ row }) => row.original.category?.name ?? '—',
+    cell: ({ row }) => row.original.category?.name ?? '—'
   },
   {
     accessorKey: 'price',
@@ -176,7 +176,7 @@ const columns: TableColumn<Activity>[] = [
     cell: ({ row }) =>
       row.original.is_free
         ? h(UBadge, { variant: 'subtle', color: 'success' }, () => 'Gratis')
-        : `₪${row.original.price ?? 0}`,
+        : `₪${row.original.price ?? 0}`
   },
   {
     accessorKey: 'status',
@@ -186,7 +186,7 @@ const columns: TableColumn<Activity>[] = [
         UBadge,
         { variant: 'subtle', color: statusColor[row.original.status] },
         () => statusLabel[row.original.status]
-      ),
+      )
   },
   {
     id: 'actions',
@@ -198,18 +198,18 @@ const columns: TableColumn<Activity>[] = [
           UDropdownMenu,
           {
             content: { align: 'end' },
-            items: getRowItems(row),
+            items: getRowItems(row)
           },
           () =>
             h(UButton, {
               icon: 'i-lucide-ellipsis-vertical',
               color: 'neutral',
               variant: 'ghost',
-              class: 'ml-auto',
+              class: 'ml-auto'
             })
         )
-      ),
-  },
+      )
+  }
 ]
 
 // Total de páginas
@@ -282,7 +282,7 @@ await fetchActivities()
               { label: 'Todos los estados', value: 'all' },
               { label: 'Aprobada', value: 'approved' },
               { label: 'Pendiente', value: 'pending' },
-              { label: 'Rechazada', value: 'rejected' },
+              { label: 'Rechazada', value: 'rejected' }
             ]"
             class="min-w-36"
           />
@@ -317,7 +317,7 @@ await fetchActivities()
           tbody: '[&>tr]:last:[&>td]:border-b-0 [&>tr]:hover:bg-elevated/50 [&>tr]:cursor-pointer [&>tr]:transition-colors',
           th: 'py-2 first:rounded-l-lg last:rounded-r-lg border-y border-default first:border-l last:border-r',
           td: 'border-b border-default',
-          separator: 'h-0',
+          separator: 'h-0'
         }"
         @click.native="(e: MouseEvent) => {
           const target = e.target as HTMLElement

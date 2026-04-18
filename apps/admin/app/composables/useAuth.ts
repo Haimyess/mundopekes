@@ -18,19 +18,17 @@ export const useAuth = () => {
       toast.add({
         title: '¡Bienvenido!',
         color: 'success',
-        icon: 'i-lucide-check-circle',
+        icon: 'i-lucide-check-circle'
       })
       await router.push('/')
-    }
-    catch (error: any) {
+    } catch (error: any) {
       toast.add({
         title: 'Error al iniciar sesión',
         description: traducirError(error.message),
         color: 'error',
-        icon: 'i-lucide-alert-circle',
+        icon: 'i-lucide-alert-circle'
       })
-    }
-    finally {
+    } finally {
       loading.value = false
     }
   }
@@ -43,15 +41,13 @@ export const useAuth = () => {
     try {
       await supabase.auth.signOut()
       await router.push('/login')
-    }
-    catch (error: any) {
+    } catch (error: any) {
       toast.add({
         title: 'Error al cerrar sesión',
         description: error.message,
-        color: 'error',
+        color: 'error'
       })
-    }
-    finally {
+    } finally {
       loading.value = false
     }
   }
@@ -61,7 +57,7 @@ export const useAuth = () => {
       'Invalid login credentials': 'Email o contraseña incorrectos',
       'Email not confirmed': 'Confirmá tu email antes de continuar',
       'Too many requests': 'Demasiados intentos, esperá unos minutos',
-      'User not found': 'No existe un usuario con ese email',
+      'User not found': 'No existe un usuario con ese email'
     }
     return errores[message] ?? message
   }

@@ -9,7 +9,7 @@ export interface Place {
   metadata: Record<string, any>
   created_at: string
   updated_at: string
-  city?: { id: number; name: string; region: string }
+  city?: { id: number, name: string, region: string }
   activities?: { count: number }[]
 }
 
@@ -28,8 +28,8 @@ export interface Activity {
   status: 'pending' | 'approved' | 'rejected'
   created_at: string
   updated_at: string
-  place?: { id: string; name: string; city: { name: string } }
-  category?: { id: string; name: string; slug: string }
+  place?: { id: string, name: string, city: { name: string } }
+  category?: { id: string, name: string, slug: string }
 }
 
 export interface Category {

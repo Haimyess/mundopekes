@@ -18,7 +18,7 @@ const form = reactive({
   description: '',
   city_id: null as number | null,
   lat: null as number | null,
-  lng: null as number | null,
+  lng: null as number | null
 })
 
 const { data: cities } = await useFetch('/api/cities')
@@ -49,13 +49,13 @@ const save = async () => {
     if (props.place?.id) {
       await $fetch(`/api/places/${props.place.id}`, {
         method: 'PUT',
-        body: form,
+        body: form
       })
       toast.add({ title: 'Lugar actualizado', color: 'success' })
     } else {
       await $fetch('/api/places', {
         method: 'POST',
-        body: form,
+        body: form
       })
       toast.add({ title: 'Lugar creado', color: 'success' })
     }
@@ -69,7 +69,6 @@ const save = async () => {
 }
 </script>
 
-
 <template>
   <USlideover
     :title="place ? 'Editar lugar' : 'Nuevo lugar'"
@@ -82,7 +81,12 @@ const save = async () => {
         </UFormField>
 
         <UFormField label="Descripción">
-          <UTextarea v-model="form.description" placeholder="Descripción del lugar..." :rows="3" class="w-full" />
+          <UTextarea
+            v-model="form.description"
+            placeholder="Descripción del lugar..."
+            :rows="3"
+            class="w-full"
+          />
         </UFormField>
 
         <UFormField label="Ciudad">
@@ -96,10 +100,20 @@ const save = async () => {
 
         <div class="grid grid-cols-2 gap-3">
           <UFormField label="Latitud">
-            <UInput v-model="form.lat" type="number" placeholder="32.0853" class="w-full" />
+            <UInput
+              v-model="form.lat"
+              type="number"
+              placeholder="32.0853"
+              class="w-full"
+            />
           </UFormField>
           <UFormField label="Longitud">
-            <UInput v-model="form.lng" type="number" placeholder="34.7818" class="w-full" />
+            <UInput
+              v-model="form.lng"
+              type="number"
+              placeholder="34.7818"
+              class="w-full"
+            />
           </UFormField>
         </div>
       </div>

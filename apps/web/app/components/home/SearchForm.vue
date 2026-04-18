@@ -131,7 +131,7 @@ const seasonIcons: Record<string, string> = {
             class="sf-search-input"
             :placeholder="t('hero.search_placeholder')"
             type="text"
-          />
+          >
         </div>
 
         <!-- Pills con scroll horizontal -->
@@ -210,7 +210,7 @@ const seasonIcons: Record<string, string> = {
             class="sf-search-input"
             :placeholder="t('hero.search_placeholder')"
             type="text"
-          />
+          >
         </div>
 
         <!-- Selects en grid -->

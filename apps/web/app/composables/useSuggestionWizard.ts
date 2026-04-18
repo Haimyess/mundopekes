@@ -258,7 +258,7 @@ const editDraft = useState<Partial<WizardState> | null>('wizard-edit-draft', () 
       best_season:         s.selectedSeasons,
       type:                s.selectedCategories.map(c => c.name),
       is_free:             s.isFree,
-      price:               s.isFree ? undefined : (parseFloat(s.price) || undefined),
+      price:               s.isFree ? undefined : (Number.parseFloat(s.price) || undefined),
       stroller_friendly:   s.stroller,
       has_shadow:          s.shadow,
       has_bathrooms:       s.bathrooms,

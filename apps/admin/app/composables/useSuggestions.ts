@@ -6,7 +6,7 @@ export interface Suggestion {
   id: string
   name: string
   description?: string
-  location: { city?: string; region?: string; address?: string }
+  location: { city?: string, region?: string, address?: string }
   age_range: any
   type: string[]
   best_season: string[]
@@ -40,13 +40,11 @@ export const useSuggestions = () => {
         : {}
 
       suggestions.value = await $fetch<Suggestion[]>('/api/suggestions', {
-        params,
+        params
       })
-    }
-    catch (e: any) {
+    } catch (e: any) {
       toast.add({ title: 'Error cargando sugerencias', description: e.message, color: 'error' })
-    }
-    finally {
+    } finally {
       loading.value = false
     }
   }
@@ -56,20 +54,18 @@ export const useSuggestions = () => {
     actionLoading.value = true
     try {
       const result = await $fetch(`/api/suggestions/${id}/approve`, {
-        method: 'POST',
+        method: 'POST'
       })
       toast.add({
         title: 'Sugerencia aprobada',
         description: `Se creó el lugar "${(result as any).place.name}"`,
         color: 'success',
-        icon: 'i-lucide-check-circle',
+        icon: 'i-lucide-check-circle'
       })
       await fetch()
-    }
-    catch (e: any) {
+    } catch (e: any) {
       toast.add({ title: 'Error al aprobar', description: e.message, color: 'error' })
-    }
-    finally {
+    } finally {
       actionLoading.value = false
     }
   }
@@ -80,19 +76,17 @@ export const useSuggestions = () => {
     try {
       await $fetch(`/api/suggestions/${id}`, {
         method: 'PUT',
-        body: { status: 'rejected', rejection_reason: reason },
+        body: { status: 'rejected', rejection_reason: reason }
       })
       toast.add({
         title: 'Sugerencia rechazada',
         color: 'neutral',
-        icon: 'i-lucide-x-circle',
+        icon: 'i-lucide-x-circle'
       })
       await fetch()
-    }
-    catch (e: any) {
+    } catch (e: any) {
       toast.add({ title: 'Error al rechazar', description: e.message, color: 'error' })
-    }
-    finally {
+    } finally {
       actionLoading.value = false
     }
   }
@@ -104,11 +98,9 @@ export const useSuggestions = () => {
       await $fetch(`/api/suggestions/${id}`, { method: 'DELETE' })
       toast.add({ title: 'Sugerencia eliminada', color: 'neutral' })
       await fetch()
-    }
-    catch (e: any) {
+    } catch (e: any) {
       toast.add({ title: 'Error al eliminar', description: e.message, color: 'error' })
-    }
-    finally {
+    } finally {
       actionLoading.value = false
     }
   }
@@ -117,7 +109,7 @@ export const useSuggestions = () => {
   const counts = computed(() => ({
     pending: suggestions.value.filter(s => s.status === 'pending').length,
     approved: suggestions.value.filter(s => s.status === 'approved').length,
-    rejected: suggestions.value.filter(s => s.status === 'rejected').length,
+    rejected: suggestions.value.filter(s => s.status === 'rejected').length
   }))
 
   // Re-fetch cuando cambia el filtro
@@ -132,6 +124,6 @@ export const useSuggestions = () => {
     fetch,
     approve,
     reject,
-    remove,
+    remove
   }
 }

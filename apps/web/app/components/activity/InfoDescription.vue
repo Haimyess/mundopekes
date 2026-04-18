@@ -22,7 +22,7 @@ const isTruncatable = ref(false)
 onMounted(() => {
   if (!contentEl.value) return
   // Verificar si el contenido excede el límite de líneas
-  const lineHeight = parseInt(getComputedStyle(contentEl.value).lineHeight)
+  const lineHeight = Number.parseInt(getComputedStyle(contentEl.value).lineHeight)
   const maxHeight = lineHeight * props.maxLines
   isTruncatable.value = contentEl.value.scrollHeight > maxHeight + 4
 })

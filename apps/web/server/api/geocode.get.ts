@@ -32,8 +32,8 @@ export default defineEventHandler(async (event) => {
   const { lat, lon, display_name } = results[0]!
 
   return {
-    lat: parseFloat(lat),
-    lng: parseFloat(lon),
+    lat: Number.parseFloat(lat),
+    lng: Number.parseFloat(lon),
     display_name
   }
 })

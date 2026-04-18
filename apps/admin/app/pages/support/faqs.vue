@@ -12,7 +12,7 @@ const form = reactive({
   question: '',
   answer: '',
   faq_category_id: undefined as string | undefined,
-  status: 'draft' as 'published' | 'draft',
+  status: 'draft' as 'published' | 'draft'
 })
 
 const openCreate = () => {
@@ -41,8 +41,7 @@ const save = async () => {
   }
   if (editingFaq.value) {
     await update(editingFaq.value.id, form)
-  }
-  else {
+  } else {
     await create(form)
   }
   slideoverOpen.value = false
@@ -65,7 +64,7 @@ const onDragEnd = async () => {
 
 const categoryOptions = computed(() => [
   { label: 'Todas las categorías', value: 'all' },
-  ...faqCategories.value.map(c => ({ label: c.name, value: c.id })),
+  ...faqCategories.value.map(c => ({ label: c.name, value: c.id }))
 ])
 
 const statusColor = (status: string) =>
@@ -94,7 +93,6 @@ await Promise.all([fetch(), fetchCategories()])
     <!-- ✅ slot #body obligatorio -->
     <template #body>
       <div class="p-4 flex flex-col gap-4">
-
         <!-- Filtro por categoría -->
         <USelect
           v-model="selectedCategory"
@@ -132,12 +130,21 @@ await Promise.all([fetch(), fetchCategories()])
                     <UBadge :color="statusColor(faq.status)" variant="subtle" size="xs">
                       {{ faq.status === 'published' ? 'Publicada' : 'Borrador' }}
                     </UBadge>
-                    <UBadge v-if="faq.faq_category" color="neutral" variant="subtle" size="xs">
+                    <UBadge
+                      v-if="faq.faq_category"
+                      color="neutral"
+                      variant="subtle"
+                      size="xs"
+                    >
                       {{ faq.faq_category.name }}
                     </UBadge>
                   </div>
-                  <p class="text-sm font-medium">{{ faq.question }}</p>
-                  <p class="text-xs text-muted mt-0.5 line-clamp-2">{{ faq.answer }}</p>
+                  <p class="text-sm font-medium">
+                    {{ faq.question }}
+                  </p>
+                  <p class="text-xs text-muted mt-0.5 line-clamp-2">
+                    {{ faq.answer }}
+                  </p>
                 </div>
 
                 <div class="flex gap-1 shrink-0">
@@ -210,7 +217,7 @@ await Promise.all([fetch(), fetchCategories()])
             v-model="form.status"
             :items="[
               { label: 'Borrador', value: 'draft' },
-              { label: 'Publicada', value: 'published' },
+              { label: 'Publicada', value: 'published' }
             ]"
             class="w-full"
           />
