@@ -1,5 +1,6 @@
 // server/api/places/photo.get.ts
 import { defineEventHandler, getQuery, createError, setHeader } from 'h3'
+import { logError, logInfo } from '~/server/utils/logger'
 
 export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig()
@@ -15,6 +16,8 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 500, statusMessage: 'API key no configurada' })
   }
 
+  await logInfo(event, 'places/photo', 'Fetching place photo', { ref })
+
   const url = [
     'https://maps.googleapis.com/maps/api/place/photo',
     `?maxwidth=400`,
@@ -26,11 +29,18 @@ export default defineEventHandler(async (event) => {
 
   try {
     res = await fetch(url, { redirect: 'follow' })
-  } catch {
+  } catch (err) {
+    await logError(event, 'places/photo', 'Error conectando con Google Photos', {
+      error: String(err),
+    })
     throw createError({ statusCode: 502, statusMessage: 'Error conectando con Google Photos' })
   }
 
   if (!res.ok) {
+    await logError(event, 'places/photo', 'Google Photos returned error', {
+      status: res.status,
+      statusText: res.statusText,
+    })
     throw createError({
       statusCode: 502,
       statusMessage: `Google Photos error: ${res.status} ${res.statusText}`,
