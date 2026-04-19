@@ -16,6 +16,8 @@
     "test:web": "npm run test --workspace=apps/web",
     "test:admin": "npm run test --workspace=apps/admin",
     "commit": "cz",
+    "security:check": "snyk test --all-projects",
+    "security:monitor": "snyk monitor --all-projects",
     "prepare": "node -e \"const{execSync}=require('child_process');if(process.env.CI!=='1')execSync('husky',{stdio:'inherit'})\""
   },
   "engines": {
@@ -45,6 +47,7 @@
     "eslint-config-prettier": "^10.1.8",
     "husky": "^9.1.7",
     "lint-staged": "^16.4.0",
-    "prettier": "^3.8.3"
+    "prettier": "^3.8.3",
+    "snyk": "^1.1304.0"
   }
 }
