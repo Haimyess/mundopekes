@@ -1,6 +1,6 @@
 // server/api/places/photo.get.ts
 import { defineEventHandler, getQuery, createError, setHeader } from 'h3'
-import { logError, logInfo } from '~/server/utils/logger'
+import { logError, logInfo } from '../../utils/logger'
 
 export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig()

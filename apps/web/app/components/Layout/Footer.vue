@@ -1,13 +1,14 @@
 <script setup lang="ts">
 const { t } = useI18n()
 const { isMobile } = useResponsive()
+const { open: openContact } = useContactForm()
 
 const currentYear = new Date().getFullYear()
 
 const footerLinks = [
   { label: 'footer.about', to: '/about' },
   { label: 'footer.privacy', to: '/privacy' },
-  { label: 'footer.terms', to: '/terms' }
+  { label: 'footer.terms', to: '/terms' },
 ]
 </script>
 
@@ -29,6 +30,12 @@ const footerLinks = [
           >
             {{ t(link.label) }}
           </NuxtLink>
+          <button
+            class="text-gray-300 hover:text-white transition-colors text-sm"
+            @click="openContact('other')"
+          >
+            {{ t('nav.contact') }}
+          </button>
         </nav>
 
         <!-- Copyright -->
@@ -52,6 +59,12 @@ const footerLinks = [
           >
             {{ t(link.label) }}
           </NuxtLink>
+          <button
+            class="text-gray-300 hover:text-white transition-colors"
+            @click="openContact('other')"
+          >
+            {{ t('nav.contact') }}
+          </button>
         </nav>
 
         <!-- Copyright -->
@@ -63,5 +76,4 @@ const footerLinks = [
   </footer>
 </template>
 
-<style scoped>
-</style>
+<style scoped></style>

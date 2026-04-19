@@ -25,20 +25,19 @@
     "active_filters": "Active filters",
     "results": "{count} activities found",
     "season_spring": "Spring",
-"season_summer": "Summer",
-"season_fall": "Fall",
-"season_winter": "Winter", 
-"apply": "Apply", 
-"cities_selected": "Cities", 
-"filters": "Filters",
-"extras": "Extras",
-"page_title": "Search activities",
-"page_description": "Find the perfect activity for your family",
-"title": "Search activities",
-"subtitle": "Find experiences for the whole family",
-"try_different_filters": "Try different filters",
-"category": "Category"
-
+    "season_summer": "Summer",
+    "season_fall": "Fall",
+    "season_winter": "Winter",
+    "apply": "Apply",
+    "cities_selected": "Cities",
+    "filters": "Filters",
+    "extras": "Extras",
+    "page_title": "Search activities",
+    "page_description": "Find the perfect activity for your family",
+    "title": "Search activities",
+    "subtitle": "Find experiences for the whole family",
+    "try_different_filters": "Try different filters",
+    "category": "Category"
   },
   "activity": {
     "free": "Free",
@@ -50,8 +49,7 @@
     "age_range": "Recommended age",
     "best_season": "Best season",
     "types": "Categories",
-  "open_weekends_label": "Open on weekends"
- 
+    "open_weekends_label": "Open on weekends"
   },
   "age": {
     "months": "{count} months",
@@ -99,6 +97,25 @@
     "success": "Thanks for your suggestion!",
     "error_name": "Name is required",
     "error_city": "City is required"
+  },
+  "contact": {
+    "title": "Contact Us",
+    "intent_label": "How can we help?",
+    "intent_outdated": "🐛 Outdated information",
+    "intent_feedback": "💬 Website feedback",
+    "intent_provider": "🏢 I'm a provider",
+    "intent_other": "💡 Other inquiry",
+    "about": "About:",
+    "name": "Name",
+    "name_placeholder": "Your name",
+    "email": "Email",
+    "email_placeholder": "you{'@'}email.com",
+    "message": "Message",
+    "message_placeholder": "Tell us more...",
+    "submit": "Send",
+    "cancel": "Cancel",
+    "success_title": "Message sent!",
+    "error_title": "Failed to send message"
   },
   "common": {
     "loading": "Loading...",

@@ -1,5 +1,5 @@
 import { serverSupabaseClient } from '#supabase/server'
-import { logError, logInfo } from '~/server/utils/logger'
+import { logError, logInfo } from '../../utils/logger'
 
 interface ScheduleDay {
   open: boolean

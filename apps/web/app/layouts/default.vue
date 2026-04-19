@@ -1,6 +1,6 @@
 <script setup lang="ts">
 // Layout base con Container global
-import Container from '~/components/ui/Container.vue';
+import Container from '~/components/ui/Container.vue'
 // import Navbar from '~/components/Layout/Navbar.vue';
 // import Footer from '~/components/Layout/Footer.vue';
 </script>
@@ -19,8 +19,9 @@ import Container from '~/components/ui/Container.vue';
 
     <!-- Footer (fuera del container para full-width background) -->
     <LayoutFooter />
+
+    <ContactDrawer />
   </div>
 </template>
 
-<style scoped>
-</style>
+<style scoped></style>

@@ -58,7 +58,13 @@ export default defineNuxtConfig({
     '@nuxtjs/supabase',
     '@nuxt/ui',
     '@sentry/nuxt/module',
+    'nuxt-gtag',
   ],
+
+  gtag: {
+    id: process.env.NUXT_PUBLIC_GA4_ID,
+    initCommands: [['consent', 'default', { analytics_storage: 'granted' }]],
+  },
 
   // @ts-expect-error — type augmentation from @sentry/nuxt/module requires nuxt prepare
   sentry: {
