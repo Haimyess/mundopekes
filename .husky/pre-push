@@ -1,0 +1,9 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+echo "Running Snyk security check..."
+npm run security:check
+if [ $? -ne 0 ]; then
+  echo "Snyk found vulnerabilities. Push blocked."
+  exit 1
+fi
+echo "Snyk check passed"
