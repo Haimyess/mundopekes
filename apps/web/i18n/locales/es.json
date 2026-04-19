@@ -138,7 +138,7 @@
     "name": "Nombre",
     "name_placeholder": "Tu nombre",
     "email": "Email",
-    "email_placeholder": "tu@email.com",
+    "email_placeholder": "tu{'@'}email.com",
     "message": "Mensaje",
     "message_placeholder": "Cuéntanos más...",
     "submit": "Enviar",

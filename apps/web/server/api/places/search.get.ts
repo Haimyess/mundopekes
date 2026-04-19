@@ -1,6 +1,6 @@
 // server/api/places/search.get.ts
 import { defineEventHandler, getQuery, createError } from 'h3'
-import { logError, logInfo } from '~/server/utils/logger'
+import { logError, logInfo } from '../../utils/logger'
 
 const GOOGLE_TYPES_MAP: Record<string, { id: string; name: string }> = {
   beach: { id: '30d7ea34-bcf8-4209-b418-cdede2e431e6', name: 'Agua y playas' },

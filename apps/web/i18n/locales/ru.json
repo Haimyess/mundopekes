@@ -99,7 +99,7 @@
     "name": "Имя",
     "name_placeholder": "Ваше имя",
     "email": "Email",
-    "email_placeholder": "вы@email.com",
+    "email_placeholder": "вы{'@'}email.com",
     "message": "Сообщение",
     "message_placeholder": "Расскажите подробнее...",
     "submit": "Отправить",

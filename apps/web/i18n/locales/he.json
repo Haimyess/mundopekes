@@ -99,7 +99,7 @@
     "name": "שם",
     "name_placeholder": "השם שלך",
     "email": "אימייל",
-    "email_placeholder": "you@email.com",
+    "email_placeholder": "you{'@'}email.com",
     "message": "הודעה",
     "message_placeholder": "ספר לנו יותר...",
     "submit": "שלח",

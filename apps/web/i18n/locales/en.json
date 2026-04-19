@@ -109,7 +109,7 @@
     "name": "Name",
     "name_placeholder": "Your name",
     "email": "Email",
-    "email_placeholder": "you@email.com",
+    "email_placeholder": "you{'@'}email.com",
     "message": "Message",
     "message_placeholder": "Tell us more...",
     "submit": "Send",
