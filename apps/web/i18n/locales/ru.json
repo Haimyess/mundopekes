@@ -46,7 +46,8 @@
     "schedule": "Расписание",
     "description": "Описание",
     "age_range": "Рекомендуемый возраст",
-    "best_season": "Лучший сезон"
+    "best_season": "Лучший сезон",
+    "report_outdated": "Устаревшая информация?"
   },
   "carousels": {
     "recent": "Недавно добавленные",

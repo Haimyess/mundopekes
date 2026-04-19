@@ -1,4 +1,3 @@
-
 <script setup lang="ts">
 /**
  * pages/activity/[id].vue
@@ -9,7 +8,7 @@
  * - Layout: mobile stack | desktop dos columnas
  */
 
- import ActivityImagesGallery from '~/components/activity/ActivityImagesGallery.vue'
+import ActivityImagesGallery from '~/components/activity/ActivityImagesGallery.vue'
 
 const route = useRoute()
 const { t } = useI18n()
@@ -18,9 +17,8 @@ const { getActivityById } = useActivities()
 const id = computed(() => route.params.id as string)
 
 // ─── Fetch SSR ────────────────────────────────────────────────
-const { data: activity, status } = await useAsyncData(
-  `activity-${id.value}`,
-  () => getActivityById(id.value)
+const { data: activity, status } = await useAsyncData(`activity-${id.value}`, () =>
+  getActivityById(id.value)
 )
 
 // 404 si no encontró la actividad
@@ -28,15 +26,13 @@ if (!activity.value) {
   throw createError({
     statusCode: 404,
     statusMessage: 'Activity not found',
-    fatal: true
+    fatal: true,
   })
 }
 
 // ─── SEO ──────────────────────────────────────────────────────
 useSeoMeta({
-  title: () => activity.value
-    ? `${activity.value.title} · MundoPekes`
-    : 'MundoPekes',
+  title: () => (activity.value ? `${activity.value.title} · MundoPekes` : 'MundoPekes'),
   description: () => activity.value?.description ?? '',
   ogTitle: () => activity.value?.title ?? '',
   ogDescription: () => activity.value?.description ?? '',
@@ -60,7 +56,6 @@ useSeoMeta({
 
     <!-- ─── Contenido ──────────────────────────────────────── -->
     <div v-else-if="activity" class="max-w-6xl mx-auto px-4 py-6 md:py-10">
-
       <!-- Botón volver -->
       <div class="mb-5">
         <UButton
@@ -75,22 +70,19 @@ useSeoMeta({
 
       <!-- Layout: mobile stack / desktop dos columnas -->
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 lg:items-start">
-
         <!-- Columna izquierda: galería -->
         <!-- En mobile queda arriba, en desktop queda sticky -->
         <div class="lg:sticky lg:top-6">
-          <ActivityImagesGallery
-            :images="activity.images ?? []"
-            :alt-text="activity.title"
-          />
+          <ActivityImagesGallery :images="activity.images ?? []" :alt-text="activity.title" />
         </div>
 
         <!-- Columna derecha: info -->
         <div>
           <ActivityInfo :activity="activity" />
         </div>
-
       </div>
+
+      <ActivityReportActivityButton :activity-id="activity.id" :activity-title="activity.title" />
     </div>
   </div>
 </template>

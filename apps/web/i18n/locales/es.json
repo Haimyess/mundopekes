@@ -58,7 +58,8 @@
     "schedule": "Horario",
     "description": "Descripción",
     "age_range": "Edad recomendada",
-    "best_season": "Mejor temporada"
+    "best_season": "Mejor temporada",
+    "report_outdated": "¿Información desactualizada?"
   },
   "carousels": {
     "recent": "Agregadas recientemente",
