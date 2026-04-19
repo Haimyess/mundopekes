@@ -15,6 +15,15 @@ definitions:
           - apps/web/node_modules/**
           - apps/admin/node_modules/**
 
+    - step: &prepare
+        name: Prepare Nuxt
+        script:
+          - cd apps/admin && npx nuxt prepare
+          - cd ../web && npx nuxt prepare
+        artifacts:
+          - apps/admin/.nuxt/**
+          - apps/web/.nuxt/**
+
     - step: &lint
         name: Lint
         script:
@@ -35,39 +44,36 @@ definitions:
     - step: &deploy-web-preview
         name: Deploy Web Preview
         script:
+          - export VERCEL_ORG_ID=$VERCEL_ORG_ID
+          - export VERCEL_PROJECT_ID=$VERCEL_PROJECT_ID_WEB
           - npx vercel --token=$VERCEL_TOKEN --yes
-        environment:
-          VERCEL_ORG_ID: $VERCEL_ORG_ID
-          VERCEL_PROJECT_ID: $VERCEL_PROJECT_ID_WEB
 
     - step: &deploy-admin-preview
         name: Deploy Admin Preview
         script:
+          - export VERCEL_ORG_ID=$VERCEL_ORG_ID
+          - export VERCEL_PROJECT_ID=$VERCEL_PROJECT_ID_ADMIN
           - npx vercel --token=$VERCEL_TOKEN --yes
-        environment:
-          VERCEL_ORG_ID: $VERCEL_ORG_ID
-          VERCEL_PROJECT_ID: $VERCEL_PROJECT_ID_ADMIN
 
     - step: &deploy-web-prod
         name: Deploy Web Production
         script:
+          - export VERCEL_ORG_ID=$VERCEL_ORG_ID
+          - export VERCEL_PROJECT_ID=$VERCEL_PROJECT_ID_WEB
           - npx vercel --prod --token=$VERCEL_TOKEN --yes
-        environment:
-          VERCEL_ORG_ID: $VERCEL_ORG_ID
-          VERCEL_PROJECT_ID: $VERCEL_PROJECT_ID_WEB
 
     - step: &deploy-admin-prod
         name: Deploy Admin Production
         script:
+          - export VERCEL_ORG_ID=$VERCEL_ORG_ID
+          - export VERCEL_PROJECT_ID=$VERCEL_PROJECT_ID_ADMIN
           - npx vercel --prod --token=$VERCEL_TOKEN --yes
-        environment:
-          VERCEL_ORG_ID: $VERCEL_ORG_ID
-          VERCEL_PROJECT_ID: $VERCEL_PROJECT_ID_ADMIN
 
 pipelines:
   branches:
     main:
       - step: *install
+      - step: *prepare
       - step: *lint
       - step: *test-web
       - step:
@@ -79,6 +85,7 @@ pipelines:
 
     dev:
       - step: *install
+      - step: *prepare
       - step: *lint
       - step: *test-web
       - parallel:
@@ -88,5 +95,6 @@ pipelines:
   pull-requests:
     '**':
       - step: *install
+      - step: *prepare
       - step: *lint
       - step: *test-web
