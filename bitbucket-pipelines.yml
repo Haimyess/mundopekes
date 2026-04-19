@@ -1,0 +1,92 @@
+image: node:22
+
+definitions:
+  caches:
+    npm: ~/.npm
+  steps:
+    - step: &install
+        name: Install dependencies
+        caches:
+          - npm
+        script:
+          - npm ci --legacy-peer-deps
+        artifacts:
+          - node_modules/**
+          - apps/web/node_modules/**
+          - apps/admin/node_modules/**
+
+    - step: &lint
+        name: Lint
+        script:
+          - npm run lint
+
+    - step: &test-web
+        name: Test Web
+        script:
+          - npm run test:web -- --run
+
+    - step: &security
+        name: Security scan
+        script:
+          - npx snyk test --all-projects --severity-threshold=critical
+        after-script:
+          - echo "Security scan complete"
+
+    - step: &deploy-web-preview
+        name: Deploy Web Preview
+        script:
+          - npx vercel --token=$VERCEL_TOKEN --yes
+        environment:
+          VERCEL_ORG_ID: $VERCEL_ORG_ID
+          VERCEL_PROJECT_ID: $VERCEL_PROJECT_ID_WEB
+
+    - step: &deploy-admin-preview
+        name: Deploy Admin Preview
+        script:
+          - npx vercel --token=$VERCEL_TOKEN --yes
+        environment:
+          VERCEL_ORG_ID: $VERCEL_ORG_ID
+          VERCEL_PROJECT_ID: $VERCEL_PROJECT_ID_ADMIN
+
+    - step: &deploy-web-prod
+        name: Deploy Web Production
+        script:
+          - npx vercel --prod --token=$VERCEL_TOKEN --yes
+        environment:
+          VERCEL_ORG_ID: $VERCEL_ORG_ID
+          VERCEL_PROJECT_ID: $VERCEL_PROJECT_ID_WEB
+
+    - step: &deploy-admin-prod
+        name: Deploy Admin Production
+        script:
+          - npx vercel --prod --token=$VERCEL_TOKEN --yes
+        environment:
+          VERCEL_ORG_ID: $VERCEL_ORG_ID
+          VERCEL_PROJECT_ID: $VERCEL_PROJECT_ID_ADMIN
+
+pipelines:
+  branches:
+    main:
+      - step: *install
+      - step: *lint
+      - step: *test-web
+      - step:
+          <<: *security
+          trigger: manual
+      - parallel:
+          - step: *deploy-web-prod
+          - step: *deploy-admin-prod
+
+    dev:
+      - step: *install
+      - step: *lint
+      - step: *test-web
+      - parallel:
+          - step: *deploy-web-preview
+          - step: *deploy-admin-preview
+
+  pull-requests:
+    '**':
+      - step: *install
+      - step: *lint
+      - step: *test-web
