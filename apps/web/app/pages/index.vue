@@ -50,5 +50,6 @@ onMounted(async () => {
       />
     </div>
     <HomeCTA />
+    <HomeProviderCTA />
   </div>
 </template>

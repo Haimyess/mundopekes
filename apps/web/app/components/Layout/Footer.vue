@@ -9,6 +9,7 @@ const footerLinks = [
   { label: 'footer.about', to: '/about' },
   { label: 'footer.privacy', to: '/privacy' },
   { label: 'footer.terms', to: '/terms' },
+  { label: 'provider.footer_link', to: '/become-provider' },
 ]
 </script>
 

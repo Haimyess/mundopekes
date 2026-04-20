@@ -17,6 +17,20 @@ const selectedIntent = computed({
     intent.value = v as ContactIntent
   },
 })
+
+const isProviderIntent = computed(() => intent.value === 'provider_inquiry')
+
+const businessName = ref('')
+const briefDesc = ref('')
+
+const providerSubmitDisabled = computed(() => !form.name || !form.email || !businessName.value)
+
+const handleSubmit = () => {
+  if (isProviderIntent.value) {
+    form.message = `Negocio: ${businessName.value}\n${briefDesc.value}`
+  }
+  submit()
+}
 </script>
 
 <template>
@@ -52,8 +66,35 @@ const selectedIntent = computed({
           />
         </div>
 
-        <!-- Message -->
-        <div class="contact-drawer__field">
+        <!-- Provider intent: business fields -->
+        <template v-if="isProviderIntent">
+          <div class="contact-drawer__field">
+            <label class="contact-drawer__label">{{ t('provider.drawer_business_name') }}</label>
+            <UiInput
+              v-model="businessName"
+              :placeholder="t('provider.drawer_business_placeholder')"
+              required
+            />
+          </div>
+          <div class="contact-drawer__field">
+            <label class="contact-drawer__label">{{ t('provider.drawer_brief_desc') }}</label>
+            <textarea
+              v-model="briefDesc"
+              class="contact-drawer__textarea"
+              :placeholder="t('provider.drawer_brief_placeholder')"
+              rows="3"
+              maxlength="200"
+            />
+          </div>
+          <div class="contact-drawer__provider-link">
+            <NuxtLink to="/become-provider" class="contact-drawer__register-link" @click="close">
+              {{ t('provider.drawer_register_link') }} →
+            </NuxtLink>
+          </div>
+        </template>
+
+        <!-- Generic intent: message textarea -->
+        <div v-else class="contact-drawer__field">
           <label class="contact-drawer__label">{{ t('contact.message') }}</label>
           <textarea
             v-model="form.message"
@@ -68,8 +109,10 @@ const selectedIntent = computed({
         <div class="contact-drawer__actions">
           <UiButton
             :loading="isLoading"
-            :disabled="!form.name || !form.email || !form.message"
-            @click="submit"
+            :disabled="
+              isProviderIntent ? providerSubmitDisabled : !form.name || !form.email || !form.message
+            "
+            @click="handleSubmit"
           >
             {{ t('contact.submit') }}
           </UiButton>
@@ -142,6 +185,21 @@ const selectedIntent = computed({
   outline: none;
   border-color: var(--color-primary-500, #3b82f6);
   box-shadow: 0 0 0 2px var(--color-primary-100, #dbeafe);
+}
+
+.contact-drawer__provider-link {
+  padding: var(--spacing-2, 0.5rem) 0;
+}
+
+.contact-drawer__register-link {
+  font-size: 0.875rem;
+  color: var(--color-primary-600, #2563eb);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.contact-drawer__register-link:hover {
+  text-decoration: underline;
 }
 
 .contact-drawer__actions {
