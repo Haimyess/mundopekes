@@ -10,6 +10,7 @@ export const useLogs = () => {
   const total = ref(0)
   const page = ref(1)
   const isLoading = ref(false)
+  const errorsLast24h = ref(0)
 
   const level = ref('')
   const context = ref('')
@@ -41,6 +42,15 @@ export const useLogs = () => {
     }
   }
 
+  const fetchErrorCount = async () => {
+    try {
+      const result = await $fetch<{ count: number }>('/api/logs/error-count')
+      errorsLast24h.value = result.count
+    } catch {
+      errorsLast24h.value = 0
+    }
+  }
+
   const getRowClass = (logLevel: string) => {
     if (logLevel === 'error') return 'bg-red-50 dark:bg-red-950/20'
     if (logLevel === 'warn') return 'bg-yellow-50 dark:bg-yellow-950/20'
@@ -60,10 +70,12 @@ export const useLogs = () => {
     page,
     totalPages,
     isLoading,
+    errorsLast24h,
     level,
     context,
     searchRaw,
     fetch,
+    fetchErrorCount,
     getRowClass,
   }
 }

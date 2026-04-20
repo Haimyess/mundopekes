@@ -2,6 +2,14 @@ import type { Tables } from '~/types/database.types'
 
 export type ContactRequest = Tables<'contact_requests'>
 
+export interface FeedbackStats {
+  total: number
+  thisMonth: number
+  pending: number
+  resolved: number
+  byMonth: { month: string; count: number }[]
+}
+
 export const useContactRequests = () => {
   const toast = useToast()
 
@@ -9,6 +17,7 @@ export const useContactRequests = () => {
   const total = ref(0)
   const page = ref(1)
   const isLoading = ref(false)
+  const feedbackStats = ref<FeedbackStats | null>(null)
 
   const intent = ref('')
   const status = ref('pending')
@@ -35,6 +44,14 @@ export const useContactRequests = () => {
       toast.add({ title: 'Error cargando consultas', description: msg, color: 'error' })
     } finally {
       isLoading.value = false
+    }
+  }
+
+  const fetchFeedbackStats = async () => {
+    try {
+      feedbackStats.value = await $fetch<FeedbackStats>('/api/contact-requests/feedback-stats')
+    } catch {
+      feedbackStats.value = null
     }
   }
 
@@ -65,9 +82,11 @@ export const useContactRequests = () => {
     page,
     totalPages,
     isLoading,
+    feedbackStats,
     intent,
     status,
     fetch,
+    fetchFeedbackStats,
     updateStatus,
   }
 }

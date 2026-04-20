@@ -17,6 +17,14 @@ interface AnalyticsSummary {
     created_at: string
     metadata: unknown
   }>
+  recentFeedbacks: Array<{
+    id: string
+    name: string
+    email: string
+    message: string
+    created_at: string
+    status: string
+  }>
 }
 
 const summary = ref<AnalyticsSummary | null>(null)
@@ -127,6 +135,31 @@ await load()
               <span class="text-xs text-(--ui-text-muted)">{{ card.label }}</span>
             </div>
             <span class="text-2xl font-bold">{{ card.value }}</span>
+          </div>
+        </div>
+
+        <!-- Feedbacks recientes -->
+        <div v-if="summary && summary.recentFeedbacks.length > 0">
+          <h2 class="text-sm font-semibold mb-3 text-(--ui-text-muted) uppercase tracking-wider">
+            Feedbacks recientes
+          </h2>
+          <div class="flex flex-col gap-2">
+            <div
+              v-for="fb in summary.recentFeedbacks"
+              :key="fb.id"
+              class="bg-elevated border border-default rounded-lg p-3 flex flex-col gap-1"
+            >
+              <div class="flex items-center gap-2">
+                <span class="text-sm font-medium">{{ fb.name }}</span>
+                <span class="text-xs text-(--ui-text-muted)">{{ fb.email }}</span>
+                <span class="text-xs text-(--ui-text-muted) ml-auto">{{
+                  formatDate(fb.created_at)
+                }}</span>
+              </div>
+              <p class="text-sm text-(--ui-text-muted) line-clamp-2">
+                {{ fb.message }}
+              </p>
+            </div>
           </div>
         </div>
 

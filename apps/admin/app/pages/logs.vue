@@ -6,7 +6,18 @@ import type { AppLog } from '~/composables/useLogs'
 const UBadge = resolveComponent('UBadge')
 const UButton = resolveComponent('UButton')
 
-const { logs, total, page, totalPages, isLoading, level, context, fetch: loadLogs } = useLogs()
+const {
+  logs,
+  total,
+  page,
+  totalPages,
+  isLoading,
+  errorsLast24h,
+  level,
+  context,
+  fetch: loadLogs,
+  fetchErrorCount,
+} = useLogs()
 
 const contexts = ref<string[]>([])
 const metadataModal = ref(false)
@@ -102,7 +113,7 @@ const columns: TableColumn<AppLog>[] = [
 onMounted(async () => {
   const ctxList = await $fetch<string[]>('/api/logs/contexts')
   contexts.value = ctxList
-  await loadLogs()
+  await Promise.all([loadLogs(), fetchErrorCount()])
 })
 </script>
 
@@ -115,6 +126,9 @@ onMounted(async () => {
         </template>
         <template #right>
           <UBadge color="neutral" variant="subtle"> {{ total }} registros </UBadge>
+          <UBadge v-if="errorsLast24h > 0" color="error" variant="subtle">
+            {{ errorsLast24h }} errores (24h)
+          </UBadge>
           <UButton
             icon="i-lucide-refresh-cw"
             color="neutral"

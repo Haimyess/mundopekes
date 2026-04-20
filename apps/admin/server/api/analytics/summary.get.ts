@@ -16,6 +16,7 @@ export default defineEventHandler(async (event) => {
     totalLogs,
     errorLogs,
     recentErrors,
+    recentFeedbacks,
   ] = await Promise.all([
     supabase.from('activities').select('*', { count: 'exact', head: true }),
     supabase.from('places').select('*', { count: 'exact', head: true }),
@@ -41,6 +42,12 @@ export default defineEventHandler(async (event) => {
       .eq('level', 'error')
       .order('created_at', { ascending: false })
       .limit(5),
+    supabase
+      .from('contact_requests')
+      .select('id, name, email, message, created_at, status')
+      .eq('intent', 'feedback' as 'feedback' | 'outdated_activity' | 'provider_inquiry' | 'other')
+      .order('created_at', { ascending: false })
+      .limit(5),
   ])
 
   return {
@@ -53,5 +60,6 @@ export default defineEventHandler(async (event) => {
     totalLogs: totalLogs.count ?? 0,
     errorLogs: errorLogs.count ?? 0,
     recentErrors: recentErrors.data ?? [],
+    recentFeedbacks: recentFeedbacks.data ?? [],
   }
 })
