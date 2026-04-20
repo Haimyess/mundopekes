@@ -1,0 +1,7 @@
+# Ignorar archivos innecesarios en el deploy
+tests/
+**/*.test.ts
+**/*.spec.ts
+.nuxt/
+coverage/
+*.log

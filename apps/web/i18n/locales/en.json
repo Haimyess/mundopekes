@@ -49,7 +49,8 @@
     "age_range": "Recommended age",
     "best_season": "Best season",
     "types": "Categories",
-    "open_weekends_label": "Open on weekends"
+    "open_weekends_label": "Open on weekends",
+    "report_outdated": "Outdated information?"
   },
   "age": {
     "months": "{count} months",

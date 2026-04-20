@@ -46,7 +46,8 @@
     "schedule": "שעות פתיחה",
     "description": "תיאור",
     "age_range": "גיל מומלץ",
-    "best_season": "עונה מומלצת"
+    "best_season": "עונה מומלצת",
+    "report_outdated": "מידע לא מעודכן?"
   },
   "carousels": {
     "recent": "נוספו לאחרונה",

@@ -3,11 +3,17 @@ image: node:22
 definitions:
   caches:
     npm: ~/.npm
+    node-modules-root: node_modules
+    node-modules-web: apps/web/node_modules
+    node-modules-admin: apps/admin/node_modules
   steps:
     - step: &install
         name: Install dependencies
         caches:
           - npm
+          - node-modules-root
+          - node-modules-web
+          - node-modules-admin
         script:
           - npm ci --legacy-peer-deps
         artifacts:
