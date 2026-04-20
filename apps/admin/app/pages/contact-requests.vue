@@ -15,9 +15,14 @@ const {
   isLoading,
   intent,
   status,
+  feedbackStats,
   fetch: loadRequests,
+  fetchFeedbackStats,
   updateStatus,
 } = useContactRequests()
+
+const selectedRequest = ref<ContactRequest | null>(null)
+const slideoverOpen = ref(false)
 
 const formatDate = (date: string) => {
   const d = new Date(date)
@@ -52,8 +57,8 @@ const statusLabel = (s: string) =>
     resolved: 'Resuelto',
   })[s] ?? s
 
-const intentOptions = [
-  { label: 'Todos los intents', value: '' },
+const tabs = [
+  { label: 'Todos', value: '' },
   { label: '🐛 Desactualizado', value: 'outdated_activity' },
   { label: '💬 Feedback', value: 'feedback' },
   { label: '🏢 Proveedor', value: 'provider_inquiry' },
@@ -67,8 +72,20 @@ const statusOptions = [
   { label: 'Resuelto', value: 'resolved' },
 ]
 
+const isFeedbackTab = computed(() => intent.value === 'feedback')
+
+const openDetail = (row: ContactRequest) => {
+  selectedRequest.value = row
+  slideoverOpen.value = true
+}
+
 const getActionItems = (row: ContactRequest): DropdownMenuItem[][] => [
   [
+    {
+      label: 'Ver detalle',
+      icon: 'i-lucide-eye',
+      onSelect: () => openDetail(row),
+    },
     {
       label: 'Marcar como leído',
       icon: 'i-lucide-eye',
@@ -104,11 +121,7 @@ const columns: TableColumn<ContactRequest>[] = [
     cell: ({ row }) =>
       h(
         UBadge,
-        {
-          color: 'neutral',
-          variant: 'subtle',
-          size: 'sm',
-        },
+        { color: 'neutral', variant: 'subtle', size: 'sm' },
         () =>
           `${intentEmoji[row.original.intent] ?? ''} ${intentLabel[row.original.intent] ?? row.original.intent}`
       ),
@@ -133,21 +146,23 @@ const columns: TableColumn<ContactRequest>[] = [
     cell: ({ row }) => {
       const msg = row.original.message
       const truncated = msg.length > 50 ? msg.slice(0, 50) + '…' : msg
-      return h('span', { class: 'text-sm', title: msg }, truncated)
+      return h(
+        'span',
+        {
+          class: 'text-sm cursor-pointer hover:text-primary',
+          title: msg,
+          onClick: () => openDetail(row.original),
+        },
+        truncated
+      )
     },
   },
   {
     accessorKey: 'status',
     header: 'Estado',
     cell: ({ row }) =>
-      h(
-        UBadge,
-        {
-          color: statusColor(row.original.status),
-          variant: 'subtle',
-          size: 'sm',
-        },
-        () => statusLabel(row.original.status)
+      h(UBadge, { color: statusColor(row.original.status), variant: 'subtle', size: 'sm' }, () =>
+        statusLabel(row.original.status)
       ),
   },
   {
@@ -155,9 +170,7 @@ const columns: TableColumn<ContactRequest>[] = [
     cell: ({ row }) =>
       h(
         UDropdownMenu,
-        {
-          items: getActionItems(row.original),
-        },
+        { items: getActionItems(row.original) },
         {
           default: () =>
             h(UButton, {
@@ -171,7 +184,7 @@ const columns: TableColumn<ContactRequest>[] = [
   },
 ]
 
-await loadRequests()
+await Promise.all([loadRequests(), fetchFeedbackStats()])
 </script>
 
 <template>
@@ -196,16 +209,59 @@ await loadRequests()
     </template>
 
     <template #body>
-      <!-- Filtros -->
-      <div class="flex gap-3 px-4 pt-4 flex-wrap">
-        <USelect
-          v-model="intent"
-          :items="intentOptions"
-          value-key="value"
-          label-key="label"
-          placeholder="Intent"
-          class="w-52"
-        />
+      <!-- Feedback Analytics Panel -->
+      <Transition name="fade">
+        <div
+          v-if="isFeedbackTab && feedbackStats"
+          class="mx-4 mt-4 p-4 rounded-xl border border-default bg-elevated flex flex-col gap-4"
+        >
+          <h3 class="text-xs font-semibold text-(--ui-text-muted) uppercase tracking-wider">
+            Analytics de Feedback
+          </h3>
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div class="flex flex-col gap-0.5">
+              <span class="text-xs text-(--ui-text-muted)">Total</span>
+              <span class="text-2xl font-bold">{{ feedbackStats.total }}</span>
+            </div>
+            <div class="flex flex-col gap-0.5">
+              <span class="text-xs text-(--ui-text-muted)">Este mes</span>
+              <span class="text-2xl font-bold text-primary">{{ feedbackStats.thisMonth }}</span>
+            </div>
+            <div class="flex flex-col gap-0.5">
+              <span class="text-xs text-(--ui-text-muted)">Pendientes</span>
+              <span class="text-2xl font-bold text-warning-500">{{ feedbackStats.pending }}</span>
+            </div>
+            <div class="flex flex-col gap-0.5">
+              <span class="text-xs text-(--ui-text-muted)">Resueltos</span>
+              <span class="text-2xl font-bold text-success-500">{{ feedbackStats.resolved }}</span>
+            </div>
+          </div>
+          <ContactFeedbackBarChart
+            v-if="feedbackStats.byMonth.length"
+            :data="feedbackStats.byMonth"
+          />
+        </div>
+      </Transition>
+
+      <!-- Intent Tabs -->
+      <div class="flex gap-1 px-4 pt-4 flex-wrap">
+        <button
+          v-for="tab in tabs"
+          :key="tab.value"
+          class="px-3 py-1.5 text-sm rounded-lg transition-colors"
+          :class="
+            intent === tab.value
+              ? 'bg-primary text-white font-medium'
+              : 'text-(--ui-text-muted) hover:bg-elevated'
+          "
+          @click="intent = tab.value"
+        >
+          {{ tab.label }}
+        </button>
+      </div>
+
+      <!-- Status Filter -->
+      <div class="flex gap-3 px-4 pt-3 flex-wrap">
         <USelect
           v-model="status"
           :items="statusOptions"
@@ -240,4 +296,17 @@ await loadRequests()
       </div>
     </template>
   </UDashboardPanel>
+
+  <ContactContactRequestSlideover v-model:open="slideoverOpen" :request="selectedRequest" />
 </template>
+
+<style scoped>
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.2s ease;
+}
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+</style>
