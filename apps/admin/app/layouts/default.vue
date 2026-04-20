@@ -46,6 +46,14 @@ const links = [
       },
     },
     {
+      label: 'Proveedores',
+      icon: 'i-lucide-store',
+      to: '/providers',
+      onSelect: () => {
+        open.value = false
+      },
+    },
+    {
       label: 'Monitoreo',
       icon: 'i-lucide-activity',
       to: '/analytics',

@@ -243,6 +243,29 @@ await Promise.all([loadRequests(), fetchFeedbackStats()])
         </div>
       </Transition>
 
+      <!-- Provider tab banner -->
+      <Transition name="fade">
+        <div
+          v-if="intent === 'provider_inquiry'"
+          class="mx-4 mt-4 p-4 rounded-xl border border-default bg-elevated flex items-center gap-4"
+        >
+          <UIcon name="i-lucide-store" class="size-5 text-(--ui-text-muted) flex-shrink-0" />
+          <div class="flex-1 text-sm text-(--ui-text-muted)">
+            Los registros completos de proveedores se gestionan en la página de Proveedores
+          </div>
+          <UButton
+            size="sm"
+            color="primary"
+            variant="outline"
+            icon="i-lucide-arrow-right"
+            trailing
+            @click="navigateTo('/providers')"
+          >
+            Ir a Proveedores
+          </UButton>
+        </div>
+      </Transition>
+
       <!-- Intent Tabs -->
       <div class="flex gap-1 px-4 pt-4 flex-wrap">
         <button

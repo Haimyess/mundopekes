@@ -288,6 +288,60 @@ export type Database = {
         }
         Relationships: []
       }
+      providers: {
+        Row: {
+          id: string
+          name: string
+          email: string
+          phone: string | null
+          website: string | null
+          description: string
+          activity_types: string[]
+          address: string | null
+          city_id: string | null
+          schedule: Json
+          price_range: Json
+          status: 'pending' | 'active' | 'suspended' | 'rejected'
+          notes: string | null
+          metadata: Json
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          email: string
+          phone?: string | null
+          website?: string | null
+          description: string
+          activity_types?: string[]
+          address?: string | null
+          city_id?: string | null
+          schedule?: Json
+          price_range?: Json
+          status?: 'pending' | 'active' | 'suspended' | 'rejected'
+          notes?: string | null
+          metadata?: Json
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          name?: string
+          email?: string
+          phone?: string | null
+          website?: string | null
+          description?: string
+          activity_types?: string[]
+          address?: string | null
+          city_id?: string | null
+          schedule?: Json
+          price_range?: Json
+          status?: 'pending' | 'active' | 'suspended' | 'rejected'
+          notes?: string | null
+          metadata?: Json
+        }
+        Relationships: []
+      }
     }
     Views: Record<string, never>
     Functions: Record<string, never>
