@@ -162,7 +162,7 @@
     "name": "Nombre del negocio",
     "name_placeholder": "Ej: Studio Arte Kids",
     "email": "Email de contacto",
-    "email_placeholder": "negocio@email.com",
+    "email_placeholder": "negocio{'@'}email.com",
     "phone": "Teléfono (opcional)",
     "phone_placeholder": "+972 50 000 0000",
     "website": "Sitio web (opcional)",
