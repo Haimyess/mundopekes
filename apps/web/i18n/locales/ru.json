@@ -123,7 +123,7 @@
     "name": "Название бизнеса",
     "name_placeholder": "Напр.: Studio Arte Kids",
     "email": "Контактный email",
-    "email_placeholder": "business@email.com",
+    "email_placeholder": "business{'@'}email.com",
     "phone": "Телефон (необязательно)",
     "phone_placeholder": "+972 50 000 0000",
     "website": "Сайт (необязательно)",

@@ -1,6 +1,5 @@
 <script setup lang="ts">
 // Layout base con Container global
-import Container from '~/components/ui/Container.vue'
 // import Navbar from '~/components/Layout/Navbar.vue';
 // import Footer from '~/components/Layout/Footer.vue';
 </script>
@@ -12,9 +11,9 @@ import Container from '~/components/ui/Container.vue'
 
     <!-- Main content con Container -->
     <main class="flex-1">
-      <Container>
+      <UiContainer>
         <slot />
-      </Container>
+      </UiContainer>
     </main>
 
     <!-- Footer (fuera del container para full-width background) -->

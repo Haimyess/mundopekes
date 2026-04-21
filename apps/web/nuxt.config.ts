@@ -1,10 +1,6 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
-  // extends: [
-  //   '../../layers/core',
-  //   '../../layers/ui',
-  //   '../../layers/domain',
-  // ],
+  extends: ['../../layers/core', '../../layers/ui', '../../layers/domain'],
   runtimeConfig: {
     googlePlacesApiKey: process.env.GOOGLE_PLACES_API_KEY,
   },

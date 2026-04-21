@@ -1,1 +1,5 @@
-export default defineNuxtConfig({})
+export default defineNuxtConfig({
+  imports: {
+    dirs: ['composables', 'utils', 'types'],
+  },
+})

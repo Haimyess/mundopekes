@@ -133,7 +133,7 @@
     "name": "Business name",
     "name_placeholder": "E.g.: Studio Arte Kids",
     "email": "Contact email",
-    "email_placeholder": "business@email.com",
+    "email_placeholder": "business{'@'}email.com",
     "phone": "Phone (optional)",
     "phone_placeholder": "+972 50 000 0000",
     "website": "Website (optional)",
