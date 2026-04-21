@@ -1,22 +1,24 @@
-<!-- app/pages/login.vue -->
 <script setup lang="ts">
-import { useAuth } from '~/composables/useAuth'
-
 definePageMeta({
-  layout: false, // Sin layout del dashboard
+  layout: false,
 })
 
-const { login, loading } = useAuth()
+const { login, verifyMfa, loading, mfaRequired } = useAuth()
 
 const form = reactive({
   email: '',
   password: '',
 })
 
+const mfaCode = ref('')
 const showPassword = ref(false)
 
 const handleSubmit = async () => {
   await login(form.email, form.password)
+}
+
+const handleMfa = async () => {
+  await verifyMfa(mfaCode.value)
 }
 </script>
 
@@ -29,11 +31,17 @@ const handleSubmit = async () => {
           <UIcon name="i-lucide-shield-check" class="text-white text-2xl" />
         </div>
         <h1 class="text-2xl font-bold text-(--ui-text)">Pekes Admin</h1>
-        <p class="text-sm text-(--ui-text-muted) mt-1">Ingresá con tu cuenta de administrador</p>
+        <p class="text-sm text-(--ui-text-muted) mt-1">
+          {{
+            mfaRequired
+              ? 'Ingresá el código de tu app autenticadora'
+              : 'Ingresá con tu cuenta de administrador'
+          }}
+        </p>
       </div>
 
-      <!-- Card del form -->
-      <UCard class="shadow-lg">
+      <!-- Paso 1: Email + Password -->
+      <UCard v-if="!mfaRequired" class="shadow-lg">
         <div class="flex flex-col gap-5 p-1">
           <UFormField label="Email" required>
             <UInput
@@ -73,6 +81,48 @@ const handleSubmit = async () => {
           <UButton size="lg" block :loading="loading" icon="i-lucide-log-in" @click="handleSubmit">
             Iniciar sesión
           </UButton>
+        </div>
+      </UCard>
+
+      <!-- Paso 2: Código MFA -->
+      <UCard v-else class="shadow-lg">
+        <div class="flex flex-col gap-5 p-1">
+          <div
+            class="flex items-center justify-center w-12 h-12 rounded-xl bg-(--ui-bg-accented) mx-auto"
+          >
+            <UIcon name="i-lucide-smartphone" class="text-(--ui-text) text-2xl" />
+          </div>
+
+          <UFormField label="Código de verificación" required>
+            <UInput
+              v-model="mfaCode"
+              placeholder="123456"
+              icon="i-lucide-key-round"
+              size="lg"
+              class="w-full"
+              maxlength="6"
+              autocomplete="one-time-code"
+              inputmode="numeric"
+              @keyup.enter="handleMfa"
+            />
+          </UFormField>
+
+          <UButton
+            size="lg"
+            block
+            :loading="loading"
+            icon="i-lucide-shield-check"
+            @click="handleMfa"
+          >
+            Verificar
+          </UButton>
+
+          <button
+            class="text-xs text-(--ui-text-muted) text-center hover:underline"
+            @click="mfaRequired = false"
+          >
+            ← Volver al login
+          </button>
         </div>
       </UCard>
 

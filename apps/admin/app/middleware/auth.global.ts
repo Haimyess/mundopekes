@@ -3,8 +3,6 @@ export default defineNuxtRouteMiddleware(async (to) => {
   if (publicRoutes.includes(to.path)) return
 
   const supabase = useSupabaseClient()
-
-  // getUser() valida contra el servidor, no usa caché local
   const {
     data: { user },
     error,
@@ -14,10 +12,17 @@ export default defineNuxtRouteMiddleware(async (to) => {
     return navigateTo('/login')
   }
 
-  // Verificar rol admin en app_metadata (no modificable por el usuario)
   const isAdmin = user.app_metadata?.role === 'admin'
   if (!isAdmin) {
     await supabase.auth.signOut()
+    return navigateTo('/login')
+  }
+
+  // Verificar que completó el segundo factor si tiene MFA activo
+  const { data: aalData } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel()
+  const needsMfa = aalData?.nextLevel === 'aal2' && aalData?.nextLevel !== aalData?.currentLevel
+
+  if (needsMfa) {
     return navigateTo('/login')
   }
 })
