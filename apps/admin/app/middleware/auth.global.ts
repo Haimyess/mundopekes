@@ -3,9 +3,21 @@ export default defineNuxtRouteMiddleware(async (to) => {
   if (publicRoutes.includes(to.path)) return
 
   const supabase = useSupabaseClient()
-  const { data: { session } } = await supabase.auth.getSession()
 
-  if (!session) {
+  // getUser() valida contra el servidor, no usa caché local
+  const {
+    data: { user },
+    error,
+  } = await supabase.auth.getUser()
+
+  if (error || !user) {
+    return navigateTo('/login')
+  }
+
+  // Verificar rol admin en app_metadata (no modificable por el usuario)
+  const isAdmin = user.app_metadata?.role === 'admin'
+  if (!isAdmin) {
+    await supabase.auth.signOut()
     return navigateTo('/login')
   }
 })

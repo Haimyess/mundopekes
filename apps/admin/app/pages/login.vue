@@ -1,18 +1,16 @@
 <!-- app/pages/login.vue -->
 <script setup lang="ts">
-import { useAuth
-
-} from '~/composables/useAuth'
+import { useAuth } from '~/composables/useAuth'
 
 definePageMeta({
-  layout: false // Sin layout del dashboard
+  layout: false, // Sin layout del dashboard
 })
 
 const { login, loading } = useAuth()
 
 const form = reactive({
   email: '',
-  password: ''
+  password: '',
 })
 
 const showPassword = ref(false)
@@ -30,12 +28,8 @@ const handleSubmit = async () => {
         <div class="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-primary mb-4">
           <UIcon name="i-lucide-shield-check" class="text-white text-2xl" />
         </div>
-        <h1 class="text-2xl font-bold text-(--ui-text)">
-          Pekes Admin
-        </h1>
-        <p class="text-sm text-(--ui-text-muted) mt-1">
-          Ingresá con tu cuenta de administrador
-        </p>
+        <h1 class="text-2xl font-bold text-(--ui-text)">Pekes Admin</h1>
+        <p class="text-sm text-(--ui-text-muted) mt-1">Ingresá con tu cuenta de administrador</p>
       </div>
 
       <!-- Card del form -->
@@ -63,19 +57,20 @@ const handleSubmit = async () => {
               size="lg"
               class="w-full"
               autocomplete="current-password"
-              :trailing-icon="showPassword ? 'i-lucide-eye-off' : 'i-lucide-eye'"
-              @click-trailing="showPassword = !showPassword"
               @keyup.enter="handleSubmit"
-            />
+            >
+              <template #trailing>
+                <button type="button" class="cursor-pointer" @click="showPassword = !showPassword">
+                  <UIcon
+                    :name="showPassword ? 'i-lucide-eye-off' : 'i-lucide-eye'"
+                    class="text-(--ui-text-muted)"
+                  />
+                </button>
+              </template>
+            </UInput>
           </UFormField>
 
-          <UButton
-            size="lg"
-            block
-            :loading="loading"
-            icon="i-lucide-log-in"
-            @click="handleSubmit"
-          >
+          <UButton size="lg" block :loading="loading" icon="i-lucide-log-in" @click="handleSubmit">
             Iniciar sesión
           </UButton>
         </div>

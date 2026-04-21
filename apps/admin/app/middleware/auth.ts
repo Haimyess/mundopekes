@@ -1,12 +1,14 @@
-// app/middleware/auth.ts
-// Protege todas las rutas del admin.
-// Si no hay sesión activa, redirige al login.
+// Este middleware ya no es necesario — auth.global.ts cubre todo.
+// Se mantiene por si alguna página lo referencia explícitamente,
+// pero delega en el global.
 
 export default defineNuxtRouteMiddleware(async () => {
   const supabase = useSupabaseClient()
-  const { data: { session } } = await supabase.auth.getSession()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
 
-  if (!session) {
+  if (!user) {
     return navigateTo('/login')
   }
 })

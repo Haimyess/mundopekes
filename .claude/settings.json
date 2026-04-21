@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node -e \"require\\('@stylistic/eslint-plugin'\\); console.log\\('available'\\)\")",
+      "Bash(python3 -c ' *)",
+      "Bash(sort -k5 -rh)",
+      "Bash(grep -rn 'app_logs\\\\|contact_requests' 'c:\\\\Users\\\\Witch\\\\Desktop\\\\Haim_projects\\\\mundopekes-monorepo\\\\apps\\\\web\\\\app\\\\types\" 2>/dev/null | head -20 *)",
+      "Read(//c/c/Users/Witch/Desktop/Haim_projects/mundopekes-monorepo/apps/admin/**)",
+      "Read(//c/c/Users/Witch/Desktop/Haim_projects/mundopekes-monorepo/apps/web/**)",
+      "Bash(Remove-Item -Recurse -Force apps/web/.nuxt -ErrorAction SilentlyContinue)",
+      "Bash(Remove-Item -Recurse -Force apps/admin/.nuxt -ErrorAction SilentlyContinue)",
+      "Bash(git add *)"
+    ]
+  }
+}

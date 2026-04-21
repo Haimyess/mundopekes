@@ -3,9 +3,11 @@
 
 export default defineNuxtRouteMiddleware(async () => {
   const supabase = useSupabaseClient()
-  const { data: { session } } = await supabase.auth.getSession()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
 
-  if (session) {
+  if (user && user.app_metadata?.role === 'admin') {
     return navigateTo('/')
   }
 })

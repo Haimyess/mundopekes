@@ -9,22 +9,22 @@ export default defineEventHandler(async (event) => {
   if (!user) {
     throw createError({
       statusCode: 401,
-      message: 'No autenticado'
+      message: 'No autenticado',
     })
   }
 
-  // Verificar que tiene rol admin en metadata
-  const isAdmin = user.user_metadata?.role === 'admin'
+  // app_metadata solo es modificable por service role — es seguro
+  const isAdmin = user.app_metadata?.role === 'admin'
   if (!isAdmin) {
     throw createError({
       statusCode: 403,
-      message: 'Acceso denegado'
+      message: 'Acceso denegado',
     })
   }
 
   return {
     id: user.id,
     email: user.email,
-    role: user.user_metadata?.role
+    role: user.app_metadata?.role,
   }
 })
