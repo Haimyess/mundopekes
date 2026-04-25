@@ -1,7 +1,7 @@
 export default defineNuxtConfig({
   extends: ['../../layers/core', '../../layers/ui', '../../layers/domain'],
 
-  modules: ['@nuxt/eslint', '@nuxt/ui', '@vueuse/nuxt', '@nuxtjs/supabase'],
+  modules: ['@vercel/analytics', '@nuxt/eslint', '@nuxt/ui', '@vueuse/nuxt', '@nuxtjs/supabase'],
   devtools: {
     enabled: true,
   },

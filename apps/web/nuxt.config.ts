@@ -27,6 +27,14 @@ export default defineNuxtConfig({
     },
   },
 
+  // Forzar siempre Modo Claro — bloquea dark mode del OS en Android e iOS
+  // Para revertir: cambiar preference/fallback a 'system' o eliminar este bloque
+  colorMode: {
+    preference: 'light',
+    fallback: 'light',
+    classSuffix: '',
+  },
+
   // App Config
   app: {
     head: {
@@ -34,6 +42,8 @@ export default defineNuxtConfig({
       meta: [
         { charset: 'utf-8' },
         { name: 'viewport', content: 'width=device-width, initial-scale=1' },
+        // Señal al browser: renderizar siempre en modo claro (Android + iOS)
+        { name: 'color-scheme', content: 'light' },
         {
           name: 'description',
           content:
@@ -45,6 +55,7 @@ export default defineNuxtConfig({
   },
 
   modules: [
+    '@vercel/analytics',
     '@nuxtjs/leaflet',
     '@pinia/nuxt',
     '@nuxt/image',
@@ -62,7 +73,6 @@ export default defineNuxtConfig({
     initCommands: [['consent', 'default', { analytics_storage: 'granted' }]],
   },
 
-  // @ts-expect-error — type augmentation from @sentry/nuxt/module requires nuxt prepare
   sentry: {
     sourceMapsUploadOptions: {
       org: 'huvi-ol',
