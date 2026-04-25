@@ -6,6 +6,9 @@
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
 @import './design-system.css';
 @import "tailwindcss";
+/* dark: solo activa con clase .dark en un ancestro — nunca por prefers-color-scheme.
+   Esto es la base correcta para cuando se implemente dark mode propio en el futuro. */
+@custom-variant dark (&:is(.dark *));
 @import "@nuxt/ui";
 
 /* ── Container ───────────────────────────────────────────────── */
@@ -72,3 +75,26 @@ html {
 .leaflet-top,
 .leaflet-bottom       { z-index: 7 !important; }
 .leaflet-control      { z-index: 8 !important; }
+
+/* ── Forzar Modo Claro — Android (Chromium) + iOS (Safari) ──────
+   Para revertir/adaptar cuando se añada dark mode real:
+   eliminar este bloque y ajustar colorMode en nuxt.config.ts       */
+:root,
+html {
+  color-scheme: light;
+}
+
+/*
+  Chrome en Android puede aplicar filtros de inversión automáticos
+  cuando detecta prefers-color-scheme: dark ("Force Dark Mode").
+  Forzamos la anulación explícita con -webkit-filter para Chromium.
+  En Safari/iOS no tiene efecto negativo (Safari no aplica estos filtros).
+*/
+@media (prefers-color-scheme: dark) {
+  :root,
+  html {
+    color-scheme: light;
+    filter: none !important;
+    -webkit-filter: none !important;
+  }
+}

@@ -3,6 +3,8 @@ definePageMeta({
   layout: false,
 })
 
+useHead({ title: 'Admin Login' })
+
 const { login, verifyMfa, loading, mfaRequired } = useAuth()
 
 const form = reactive({
@@ -30,7 +32,7 @@ const handleMfa = async () => {
         <div class="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-primary mb-4">
           <UIcon name="i-lucide-shield-check" class="text-white text-2xl" />
         </div>
-        <h1 class="text-2xl font-bold text-(--ui-text)">Pekes Admin</h1>
+        <h1 class="text-2xl font-bold text-(--ui-text)">MundoPekes Admin</h1>
         <p class="text-sm text-(--ui-text-muted) mt-1">
           {{
             mfaRequired
@@ -127,7 +129,7 @@ const handleMfa = async () => {
       </UCard>
 
       <p class="text-center text-xs text-(--ui-text-muted) mt-6">
-        Pekes Admin · Solo acceso autorizado
+        MundoPekes Admin · Solo acceso autorizado
       </p>
     </div>
   </div>
