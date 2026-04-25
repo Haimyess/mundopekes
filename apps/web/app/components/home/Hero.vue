@@ -5,7 +5,6 @@ const { t } = useI18n()
 <template>
   <section class="hero">
     <div class="hero__text">
-
       <div class="hero__badge">
         <span class="hero__badge-dot" />
         {{ t('hero.badge') }}
@@ -42,7 +41,7 @@ const { t } = useI18n()
   border: 1px solid var(--color-secondary-200);
   border-radius: 9999px;
   padding: 4px 12px;
-  font-size: var(--font-size-xs);
+  font-size: var(--font-size-sm);
   font-weight: var(--font-weight-medium);
   margin-bottom: var(--space-4);
 }
@@ -75,7 +74,7 @@ const { t } = useI18n()
 }
 
 .hero__subtitle {
-  font-size: var(--font-size-base);
+  font-size: var(--font-size-lg);
   color: var(--color-text-secondary);
   line-height: var(--line-height-relaxed);
   max-width: 36ch;

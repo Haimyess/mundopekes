@@ -27,7 +27,6 @@ onMounted(async () => {
   <nav class="navbar">
     <UContainer>
       <div class="navbar__inner">
-
         <NuxtLink to="/" class="navbar__logo">MundoPekes</NuxtLink>
 
         <!-- Desktop -->
@@ -35,11 +34,13 @@ onMounted(async () => {
           <UDropdownMenu
             v-for="cat in navCategories"
             :key="cat.slug"
-            :items="cat.children.map(sub => ({
-              label: sub.name,
-              icon: sub.icon ?? undefined,
-              to: `/search?category=${sub.slug}`
-            }))"
+            :items="
+              cat.children.map((sub) => ({
+                label: sub.name,
+                icon: sub.icon ?? undefined,
+                to: `/search?category=${sub.slug}`,
+              }))
+            "
           >
             <UButton
               variant="ghost"
@@ -72,13 +73,12 @@ onMounted(async () => {
           <LanguageSelector />
           <UButton
             variant="ghost"
-            size="sm"
+            size="md"
             icon="i-lucide-align-justify"
             class="navbar__burger"
             @click="isMobileMenuOpen = !isMobileMenuOpen"
           />
         </div>
-
       </div>
     </UContainer>
 
@@ -117,7 +117,9 @@ onMounted(async () => {
   flex-shrink: 0;
   transition: opacity 0.2s ease;
 }
-.navbar__logo:hover { opacity: 0.8; }
+.navbar__logo:hover {
+  opacity: 0.8;
+}
 
 .navbar__desktop {
   display: none;
@@ -164,7 +166,11 @@ onMounted(async () => {
 }
 
 @media (min-width: 768px) {
-  .navbar__desktop { display: flex; }
-  .navbar__mobile-controls { display: none; }
+  .navbar__desktop {
+    display: flex;
+  }
+  .navbar__mobile-controls {
+    display: none;
+  }
 }
 </style>
