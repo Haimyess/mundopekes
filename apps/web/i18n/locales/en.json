@@ -37,7 +37,16 @@
     "title": "Search activities",
     "subtitle": "Find experiences for the whole family",
     "try_different_filters": "Try different filters",
-    "category": "Category"
+    "category": "Category",
+    "cancel": "Cancel",
+    "see_results": "See results",
+    "age_babies": "Babies (0-11m)",
+    "age_toddlers": "Toddlers (1-3 years)",
+    "age_preschool": "Preschool (3-6 years)",
+    "age_school": "School age (6-12 years)",
+    "age_teens": "Teens (12+)",
+    "age_all": "All ages",
+    "no_results": "No results found"
   },
   "activity": {
     "free": "Free",
@@ -97,7 +106,33 @@
     "submit": "Send suggestion",
     "success": "Thanks for your suggestion!",
     "error_name": "Name is required",
-    "error_city": "City is required"
+    "error_city": "City is required",
+    "place_search": "Search for the place",
+    "place_search_placeholder": "E.g. Carmel Park, Israel Museum...",
+    "manual_entry": "Can't find the place? Enter it manually",
+    "search_automatic": "Search automatically",
+    "activity_type": "Activity type",
+    "change_type": "Change type",
+    "select_type": "Select type",
+    "season": "Best season",
+    "ages": "Recommended ages",
+    "price": "Approximate price",
+    "add_type": "Add type",
+    "selected": "Selected",
+    "add_more": "Add more",
+    "what_to_do": "What can you do here?",
+    "change_activity": "Tap another to change it",
+    "activity_not_found": "Can't find the activity, I want to describe it",
+    "activity_custom_placeholder": "E.g. Paintball, Climbing, Yoga...",
+    "activity_add": "Add",
+    "all_seasons_selected": "All seasons selected",
+    "all_ages_selected": "All ages selected",
+    "edit_title": "Edit selection",
+    "edit_empty": "Nothing selected yet",
+    "custom_activity": "Custom activity",
+    "success_title": "Suggestion sent!",
+    "success_desc": "We'll review it and publish it soon on MundoPekes",
+    "error_title": "Error sending"
   },
   "contact": {
     "title": "Contact Us",
@@ -122,6 +157,9 @@
     "loading": "Loading...",
     "error": "An error occurred",
     "no_results": "No results found",
-    "back": "Back"
+    "back": "Back",
+    "done": "Done",
+    "edit": "Edit",
+    "continue": "Continue"
   }
 }

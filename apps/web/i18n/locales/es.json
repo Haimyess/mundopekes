@@ -59,7 +59,16 @@
     "description": "Descripción",
     "age_range": "Edad recomendada",
     "best_season": "Mejor temporada",
-    "report_outdated": "¿Información desactualizada?"
+    "report_outdated": "¿Información desactualizada?",
+    "types": "Categorías",
+    "open_weekends_label": "Abierto los fines de semana"
+  },
+  "age": {
+    "months": "{count} meses",
+    "years": "{count} años",
+    "years_months": "{years} años {months} meses",
+    "short_months": "m",
+    "short_years": "a"
   },
   "carousels": {
     "recent": "Agregadas recientemente",

@@ -36,7 +36,17 @@
     "page_description": "Найдите идеальное занятие для вашей семьи",
     "title": "Поиск занятий",
     "subtitle": "Найдите впечатления для всей семьи",
-    "try_different_filters": "Попробуйте другие фильтры"
+    "try_different_filters": "Попробуйте другие фильтры",
+    "cancel": "Отмена",
+    "see_results": "Показать результаты",
+    "age_babies": "Младенцы (0-11 мес)",
+    "age_toddlers": "Малыши (1-3 года)",
+    "age_preschool": "Дошкольники (3-6 лет)",
+    "age_school": "Школьники (6-12 лет)",
+    "age_teens": "Подростки (12+)",
+    "age_all": "Все возрасты",
+    "no_results": "Результатов не найдено",
+    "category": "Категория"
   },
   "activity": {
     "free": "Бесплатно",
@@ -47,7 +57,16 @@
     "description": "Описание",
     "age_range": "Рекомендуемый возраст",
     "best_season": "Лучший сезон",
-    "report_outdated": "Устаревшая информация?"
+    "report_outdated": "Устаревшая информация?",
+    "types": "Категории",
+    "open_weekends_label": "Открыто в выходные дни"
+  },
+  "age": {
+    "months": "{count} мес.",
+    "years": "{count} лет",
+    "years_months": "{years} лет {months} мес.",
+    "short_months": "мес",
+    "short_years": "лет"
   },
   "carousels": {
     "recent": "Недавно добавленные",
@@ -87,7 +106,33 @@
     "submit": "Отправить предложение",
     "success": "Спасибо за ваше предложение!",
     "error_name": "Название обязательно",
-    "error_city": "Город обязателен"
+    "error_city": "Город обязателен",
+    "place_search": "Поиск места",
+    "place_search_placeholder": "Напр.: Парк Кармель, Музей Израиля...",
+    "manual_entry": "Не нашли место? Введите вручную",
+    "search_automatic": "Искать автоматически",
+    "activity_type": "Тип активности",
+    "change_type": "Изменить тип",
+    "select_type": "Выбрать тип",
+    "season": "Лучший сезон",
+    "ages": "Рекомендуемый возраст",
+    "price": "Примерная цена",
+    "add_type": "Добавить тип",
+    "selected": "Выбранные",
+    "add_more": "Добавить ещё",
+    "what_to_do": "Что здесь можно делать?",
+    "change_activity": "Нажмите другую, чтобы изменить",
+    "activity_not_found": "Не нашёл активность, хочу описать",
+    "activity_custom_placeholder": "Напр.: Пейнтбол, Скалолазание, Йога...",
+    "activity_add": "Добавить",
+    "all_seasons_selected": "Выбраны все сезоны",
+    "all_ages_selected": "Выбраны все возрасты",
+    "edit_title": "Редактировать выбор",
+    "edit_empty": "Ничего не выбрано",
+    "custom_activity": "Своя активность",
+    "success_title": "Предложение отправлено!",
+    "success_desc": "Мы рассмотрим его и скоро опубликуем на MundoPekes",
+    "error_title": "Ошибка отправки"
   },
   "contact": {
     "title": "Связаться с нами",
@@ -112,6 +157,9 @@
     "loading": "Загрузка...",
     "error": "Произошла ошибка",
     "no_results": "Результатов не найдено",
-    "back": "Назад"
+    "back": "Назад",
+    "done": "Готово",
+    "edit": "Редактировать",
+    "continue": "Продолжить"
   }
 }
