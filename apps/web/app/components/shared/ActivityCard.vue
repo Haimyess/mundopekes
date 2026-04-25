@@ -7,14 +7,14 @@ interface Props {
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  variant: 'compact'
+  variant: 'compact',
 })
 
 const { t } = useI18n()
 
 // images: primero las de la actividad, fallback a las del place
-const imageUrl = computed(() =>
-  props.activity?.images?.[0] ?? props.activity?.place?.images?.[0] ?? null
+const imageUrl = computed(
+  () => props.activity?.images?.[0] ?? props.activity?.place?.images?.[0] ?? null
 )
 
 const showBadges = computed(() => {
@@ -47,7 +47,6 @@ const hasMeta = computed(() => !!(cityName.value || categoryName.value))
     :class="`activity-card--${variant}`"
   >
     <UiCard class="activity-card__card">
-
       <!-- Imagen -->
       <div class="activity-card__image-wrap">
         <img
@@ -56,13 +55,12 @@ const hasMeta = computed(() => !!(cityName.value || categoryName.value))
           :alt="activity.title"
           class="activity-card__image"
           loading="lazy"
-        >
+        />
         <SharedNoImage v-else />
       </div>
 
       <!-- Contenido -->
       <div class="activity-card__body">
-
         <!-- title (antes: activity.name) -->
         <h3 class="activity-card__title">{{ activity.title }}</h3>
 
@@ -78,10 +76,7 @@ const hasMeta = computed(() => !!(cityName.value || categoryName.value))
           </template>
         </div>
 
-        <p
-          v-if="variant === 'detailed' && activity.description"
-          class="activity-card__description"
-        >
+        <p v-if="variant === 'detailed' && activity.description" class="activity-card__description">
           {{ activity.description }}
         </p>
 
@@ -95,7 +90,6 @@ const hasMeta = computed(() => !!(cityName.value || categoryName.value))
             {{ badge.label }}
           </UiBadge>
         </div>
-
       </div>
     </UiCard>
   </NuxtLink>
@@ -110,7 +104,9 @@ const hasMeta = computed(() => !!(cityName.value || categoryName.value))
 /* ── Card ────────────────────────────────────────────────────── */
 .activity-card__card {
   height: 100%;
-  transition: box-shadow var(--transition-slow), transform var(--transition-slow);
+  transition:
+    box-shadow var(--transition-slow),
+    transform var(--transition-slow);
 }
 
 .activity-card :deep(.rounded-lg) {
@@ -198,16 +194,21 @@ const hasMeta = computed(() => !!(cityName.value || categoryName.value))
 }
 
 /* ══ VARIANT COMPACT en mobile: layout horizontal ══════════════ */
-.activity-card--compact .activity-card__card {
+
+/* Apuntamos al body-wrapper interno de UCard (primer div hijo del root) */
+.activity-card--compact :deep(.activity-card__card > div:first-child) {
   display: flex;
   flex-direction: row;
   align-items: stretch;
+  padding: 0;
+  gap: 0;
 }
 
 .activity-card--compact .activity-card__image-wrap {
   width: 7rem;
   aspect-ratio: 1 / 1;
   border-radius: var(--border-radius-lg) 0 0 var(--border-radius-lg);
+  flex-shrink: 0;
 }
 
 .activity-card--compact .activity-card__body {
@@ -231,10 +232,11 @@ const hasMeta = computed(() => !!(cityName.value || categoryName.value))
   margin-top: 0;
 }
 
-/* En desktop, compact vuelve al layout vertical normal */
+/* En tablet/desktop (≥768px): compact vuelve al layout vertical normal */
 @media (min-width: 768px) {
-  .activity-card--compact .activity-card__card {
+  .activity-card--compact :deep(.activity-card__card > div:first-child) {
     flex-direction: column;
+    padding: 0;
   }
 
   .activity-card--compact .activity-card__image-wrap {
