@@ -7,18 +7,15 @@ const props = defineProps<{
   activities: Activity[]
   loading: boolean
   total: number
-  filters?: ActivityFilters   // para mostrar contexto en el empty state
+  filters?: ActivityFilters // para mostrar contexto en el empty state
 }>()
 
 const emit = defineEmits<{
-  'clear': []
+  clear: []
 }>()
 
 // Texto descriptivo del query activo
-const queryText = computed(() => props.filters?.search
-  ? `"${props.filters.search}"`
-  : null
-)
+const queryText = computed(() => (props.filters?.search ? `"${props.filters.search}"` : null))
 
 // Hay algún filtro activo (además del search)
 const hasActiveFilters = computed(() => {
@@ -28,19 +25,13 @@ const hasActiveFilters = computed(() => {
 })
 
 // Hay algo activo (search o filtros)
-const hasAnything = computed(() =>
-  !!props.filters?.search || hasActiveFilters.value
-)
+const hasAnything = computed(() => !!props.filters?.search || hasActiveFilters.value)
 </script>
 
 <template>
   <div class="grid-wrapper">
-
     <!-- ── Skeleton de carga ──────────────────────────────────── -->
-    <div
-      v-if="loading"
-      class="grid-wrapper__grid"
-    >
+    <div v-if="loading" class="grid-wrapper__grid">
       <div v-for="n in 8" :key="n" class="grid-wrapper__skeleton-item">
         <USkeleton class="grid-wrapper__skeleton-img" />
         <USkeleton class="grid-wrapper__skeleton-title" />
@@ -49,16 +40,10 @@ const hasAnything = computed(() =>
     </div>
 
     <!-- ── Empty state ────────────────────────────────────────── -->
-    <div
-      v-else-if="!activities.length"
-      class="empty-state"
-    >
+    <div v-else-if="!activities.length" class="empty-state">
       <!-- Ícono — telescopio para "no encontramos nada" -->
       <div class="empty-state__icon-wrap">
-        <UIcon
-          name="i-heroicons-face-frown"
-          class="empty-state__icon"
-        />
+        <UIcon name="i-heroicons-face-frown" class="empty-state__icon" />
       </div>
 
       <!-- Título dinámico según si hay query o no -->
@@ -80,11 +65,7 @@ const hasAnything = computed(() =>
       </p>
 
       <!-- Botón limpiar — solo si hay algo que limpiar -->
-      <button
-        v-if="hasAnything"
-        class="empty-state__clear-btn"
-        @click="emit('clear')"
-      >
+      <button v-if="hasAnything" class="empty-state__clear-btn" @click="emit('clear')">
         <UIcon name="i-heroicons-arrow-path" class="empty-state__clear-icon" />
         {{ t('search.clear_and_show_all') }}
       </button>
@@ -100,10 +81,10 @@ const hasAnything = computed(() =>
           v-for="activity in activities"
           :key="activity.id"
           :activity="activity"
+          variant="compact"
         />
       </div>
     </template>
-
   </div>
 </template>
 
@@ -122,13 +103,19 @@ const hasAnything = computed(() =>
 }
 
 @media (min-width: 640px) {
-  .grid-wrapper__grid { grid-template-columns: repeat(2, 1fr); }
+  .grid-wrapper__grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 @media (min-width: 1024px) {
-  .grid-wrapper__grid { grid-template-columns: repeat(3, 1fr); }
+  .grid-wrapper__grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
 }
 @media (min-width: 1280px) {
-  .grid-wrapper__grid { grid-template-columns: repeat(4, 1fr); }
+  .grid-wrapper__grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
 }
 
 /* ── Skeleton ──────────────────────────────────────────────────── */

@@ -52,28 +52,28 @@ definitions:
         script:
           - export VERCEL_ORG_ID=$VERCEL_ORG_ID
           - export VERCEL_PROJECT_ID=$VERCEL_PROJECT_ID_WEB
-          - cd apps/web && npx vercel --token=$VERCEL_TOKEN --yes
+          - npx vercel --token=$VERCEL_TOKEN --yes
 
     - step: &deploy-admin-preview
         name: Deploy Admin Preview
         script:
           - export VERCEL_ORG_ID=$VERCEL_ORG_ID
           - export VERCEL_PROJECT_ID=$VERCEL_PROJECT_ID_ADMIN
-          - cd apps/admin && npx vercel --token=$VERCEL_TOKEN --yes
+          - npx vercel --token=$VERCEL_TOKEN --yes
 
     - step: &deploy-web-prod
         name: Deploy Web Production
         script:
           - export VERCEL_ORG_ID=$VERCEL_ORG_ID
           - export VERCEL_PROJECT_ID=$VERCEL_PROJECT_ID_WEB
-          - cd apps/web && npx vercel --prod --token=$VERCEL_TOKEN --yes
+          - npx vercel --prod --token=$VERCEL_TOKEN --yes
 
     - step: &deploy-admin-prod
         name: Deploy Admin Production
         script:
           - export VERCEL_ORG_ID=$VERCEL_ORG_ID
           - export VERCEL_PROJECT_ID=$VERCEL_PROJECT_ID_ADMIN
-          - cd apps/admin && npx vercel --prod --token=$VERCEL_TOKEN --yes
+          - npx vercel --prod --token=$VERCEL_TOKEN --yes
 
 pipelines:
   branches:
