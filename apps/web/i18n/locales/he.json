@@ -36,7 +36,17 @@
     "page_description": "מצא את הפעילות המושלמת למשפחתך",
     "title": "חיפוש פעילויות",
     "subtitle": "מצא חוויות לכל המשפחה",
-    "try_different_filters": "נסה מסננים אחרים"
+    "try_different_filters": "נסה מסננים אחרים",
+    "cancel": "ביטול",
+    "see_results": "הצג תוצאות",
+    "age_babies": "תינוקות (0-11 חודשים)",
+    "age_toddlers": "פעוטות (1-3 שנים)",
+    "age_preschool": "גן ילדים (3-6 שנים)",
+    "age_school": "גיל בית ספר (6-12 שנים)",
+    "age_teens": "מתבגרים (12+)",
+    "age_all": "כל הגילאים",
+    "no_results": "לא נמצאו תוצאות",
+    "category": "קטגוריה"
   },
   "activity": {
     "free": "חינם",
@@ -47,7 +57,16 @@
     "description": "תיאור",
     "age_range": "גיל מומלץ",
     "best_season": "עונה מומלצת",
-    "report_outdated": "מידע לא מעודכן?"
+    "report_outdated": "מידע לא מעודכן?",
+    "types": "קטגוריות",
+    "open_weekends_label": "פתוח בסופי שבוע"
+  },
+  "age": {
+    "months": "{count} חודשים",
+    "years": "{count} שנים",
+    "years_months": "{years} שנים {months} חודשים",
+    "short_months": "ח׳",
+    "short_years": "ש׳"
   },
   "carousels": {
     "recent": "נוספו לאחרונה",
@@ -87,7 +106,33 @@
     "submit": "שלח הצעה",
     "success": "תודה על ההצעה!",
     "error_name": "שם הוא שדה חובה",
-    "error_city": "עיר היא שדה חובה"
+    "error_city": "עיר היא שדה חובה",
+    "place_search": "חפש את המקום",
+    "place_search_placeholder": "לדוגמה: פארק הכרמל, מוזיאון ישראל...",
+    "manual_entry": "לא מצאת את המקום? הזן ידנית",
+    "search_automatic": "חפש אוטומטית",
+    "activity_type": "סוג פעילות",
+    "change_type": "שנה סוג",
+    "select_type": "בחר סוג",
+    "season": "עונה מומלצת",
+    "ages": "גילאים מומלצים",
+    "price": "מחיר משוער",
+    "add_type": "הוסף סוג",
+    "selected": "נבחרו",
+    "add_more": "הוסף עוד",
+    "what_to_do": "מה אפשר לעשות כאן?",
+    "change_activity": "לחץ על אחרת כדי לשנות",
+    "activity_not_found": "לא מצאתי את הפעילות, אני רוצה לתאר אותה",
+    "activity_custom_placeholder": "לדוגמה: פיינטבול, טיפוס, יוגה...",
+    "activity_add": "הוסף",
+    "all_seasons_selected": "כל העונות נבחרו",
+    "all_ages_selected": "כל הגילאים נבחרו",
+    "edit_title": "ערוך בחירה",
+    "edit_empty": "עדיין לא נבחר דבר",
+    "custom_activity": "פעילות מותאמת אישית",
+    "success_title": "ההצעה נשלחה!",
+    "success_desc": "נבדוק אותה ונפרסם בקרוב ב-MundoPekes",
+    "error_title": "שגיאה בשליחה"
   },
   "contact": {
     "title": "צור קשר",
@@ -188,6 +233,9 @@
     "loading": "טוען...",
     "error": "אירעה שגיאה",
     "no_results": "לא נמצאו תוצאות",
-    "back": "חזור"
+    "back": "חזור",
+    "done": "סיום",
+    "edit": "ערוך",
+    "continue": "המשך"
   }
 }
