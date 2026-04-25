@@ -5,10 +5,11 @@
 import type { Activity } from '~/types'
 import { useGeolocation } from '@vueuse/core'
 import { calculateDistance } from '~/utils/helpers'
+import { ACTIVITY_SELECT, normalizeActivity } from '~/composables/useActivities'
 
 export const useActivityLocation = () => {
   const client = useSupabaseClient()
-  
+
   // VueUse geolocation
   const { coords, error: geoError, resume, pause } = useGeolocation()
 
@@ -19,7 +20,10 @@ export const useActivityLocation = () => {
    * Obtener actividades cercanas basado en ciudad
    * TODO: Implementar con coordenadas y radio
    */
-  const getNearbyActivitiesByCity = async (city: string, limit: number = 10): Promise<Activity[]> => {
+  const getNearbyActivitiesByCity = async (
+    city: string,
+    limit: number = 10
+  ): Promise<Activity[]> => {
     const { data, error } = await client
       .from('activities')
       .select('*')
@@ -46,38 +50,27 @@ export const useActivityLocation = () => {
     radiusKm: number = 10,
     limit: number = 10
   ): Promise<Activity[]> => {
-    // Fetch todas las actividades con coordenadas
     const { data, error } = await client
       .from('activities')
-      .select('*')
+      .select(ACTIVITY_SELECT)
       .eq('status', 'approved')
-      .not('location->coordinates', 'is', null)
 
     if (error) {
       console.error('Error fetching activities for location:', error)
       return []
     }
 
-    const activities = data as Activity[]
+    const activities = (data ?? []).map(normalizeActivity)
 
-    // Calcular distancia y filtrar
     const withDistance = activities
-      .map(activity => {
-        if (!activity.location.coordinates) return null
+      .map((activity) => {
+        if (!activity.place?.lat || !activity.place?.lng) return null
 
-        const distance = calculateDistance(
-          lat,
-          lng,
-          activity.location.coordinates.lat,
-          activity.location.coordinates.lng
-        )
+        const distance = calculateDistance(lat, lng, activity.place.lat, activity.place.lng)
 
-        return {
-          ...activity,
-          distance
-        }
+        return { ...activity, distance }
       })
-      .filter(item => item !== null && item.distance <= radiusKm)
+      .filter((item) => item !== null && item.distance <= radiusKm)
       .sort((a, b) => a!.distance - b!.distance)
       .slice(0, limit) as (Activity & { distance: number })[]
 
@@ -93,16 +86,16 @@ export const useActivityLocation = () => {
     }
 
     const withDistance = activities
-      .map(activity => {
-        if (!activity.location.coordinates) {
+      .map((activity) => {
+        if (!activity.place?.lat || !activity.place?.lng) {
           return { ...activity, distance: Infinity }
         }
 
         const distance = calculateDistance(
           coords.value.latitude!,
           coords.value.longitude!,
-          activity.location.coordinates.lat,
-          activity.location.coordinates.lng
+          activity.place.lat,
+          activity.place.lng
         )
 
         return { ...activity, distance }
@@ -120,15 +113,15 @@ export const useActivityLocation = () => {
       return null
     }
 
-    if (!activity.location.coordinates) {
+    if (!activity.place?.lat || !activity.place?.lng) {
       return null
     }
 
     return calculateDistance(
       coords.value.latitude,
       coords.value.longitude,
-      activity.location.coordinates.lat,
-      activity.location.coordinates.lng
+      activity.place.lat,
+      activity.place.lng
     )
   }
 
@@ -144,17 +137,17 @@ export const useActivityLocation = () => {
     latitude: computed(() => coords.value.latitude),
     longitude: computed(() => coords.value.longitude),
     accuracy: computed(() => coords.value.accuracy),
-    
+
     // Estados
     loading: readonly(loading),
     error,
-    
+
     // Funciones
     getNearbyActivitiesByCity,
     getNearbyActivities,
     sortByDistance,
     getDistanceToActivity,
     requestLocation,
-    pause
+    pause,
   }
 }

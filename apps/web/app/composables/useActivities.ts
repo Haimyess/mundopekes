@@ -8,7 +8,7 @@
 import type { Activity } from '~/types'
 
 // Select reutilizable con todos los joins
-const ACTIVITY_SELECT = `
+export const ACTIVITY_SELECT = `
   id,
   title,
   description,
@@ -46,7 +46,7 @@ const ACTIVITY_SELECT = `
  * Los joins anidados devuelven objetos con una capa extra que hay que aplanar.
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const normalizeActivity = (raw: any): Activity => ({
+export const normalizeActivity = (raw: any): Activity => ({
   id: raw.id,
   title: raw.title,
   description: raw.description ?? null,
@@ -69,9 +69,7 @@ const normalizeActivity = (raw: any): Activity => ({
     .map((r: { age_range: unknown }) => r.age_range)
     .filter(Boolean),
   // seasons viene como array de { season: Season } — hay que aplanar
-  seasons: (raw.seasons ?? [])
-    .map((r: { season: unknown }) => r.season)
-    .filter(Boolean)
+  seasons: (raw.seasons ?? []).map((r: { season: unknown }) => r.season).filter(Boolean),
 })
 
 export const useActivities = () => {
@@ -133,19 +131,14 @@ export const useActivities = () => {
     }
 
     const normalized = (data ?? []).map(normalizeActivity)
-    return normalized
-      .sort(() => Math.random() - 0.5)
-      .slice(0, limit)
+    return normalized.sort(() => Math.random() - 0.5).slice(0, limit)
   }
 
   /**
    * Actividades recomendadas — filtradas por rango de edad si se proporciona.
    * El filtro se hace en memoria sobre los age_ranges del join (array de objetos).
    */
-  const getRecommendedActivities = async (
-    ageMonths?: number,
-    limit = 10
-  ): Promise<Activity[]> => {
+  const getRecommendedActivities = async (ageMonths?: number, limit = 10): Promise<Activity[]> => {
     const { data, error } = await client
       .from('activities')
       .select(ACTIVITY_SELECT)
@@ -161,16 +154,12 @@ export const useActivities = () => {
 
     // Filtrar por edad si se proporcionó — usando min_months/max_months del join
     if (ageMonths !== undefined) {
-      normalized = normalized.filter(activity =>
-        activity.age_ranges.some(
-          ar => ar.min_months <= ageMonths && ar.max_months >= ageMonths
-        )
+      normalized = normalized.filter((activity) =>
+        activity.age_ranges.some((ar) => ar.min_months <= ageMonths && ar.max_months >= ageMonths)
       )
     }
 
-    return normalized
-      .sort(() => Math.random() - 0.5)
-      .slice(0, limit)
+    return normalized.sort(() => Math.random() - 0.5).slice(0, limit)
   }
 
   /**
@@ -196,6 +185,6 @@ export const useActivities = () => {
     getRecentActivities,
     getPopularActivities,
     getRecommendedActivities,
-    getAllActivities
+    getAllActivities,
   }
 }
