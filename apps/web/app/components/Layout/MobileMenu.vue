@@ -12,14 +12,22 @@ const emit = defineEmits<{
   suggest: []
 }>()
 
-const slideoverSide = computed(() => locale.value === 'he' ? 'right' : 'left')
+const slideoverSide = computed(() => (locale.value === 'he' ? 'right' : 'left'))
 
 const isOpenModel = computed({
   get: () => props.isOpen,
-  set: (val: boolean) => { if (!val) emit('close') }
+  set: (val: boolean) => {
+    if (!val) emit('close')
+  },
 })
 
 const navigateAndClose = () => emit('close')
+
+const { open: openContact } = useContactForm()
+const openContactDrawer = () => {
+  emit('close')
+  openContact('other')
+}
 
 // Acordeón principal — cerrado por defecto
 const categoriesOpen = ref(false)
@@ -37,14 +45,9 @@ const isCatOpen = (slug: string) => openCats.value.includes(slug)
 </script>
 
 <template>
-  <USlideover
-    v-model:open="isOpenModel"
-    :side="slideoverSide"
-    :ui="{ content: 'w-72' }"
-  >
+  <USlideover v-model:open="isOpenModel" :side="slideoverSide" :ui="{ content: 'w-72' }">
     <template #content>
       <div class="mobile-menu">
-
         <!-- Header -->
         <div class="mobile-menu__header">
           <NuxtLink to="/" class="mobile-menu__logo" @click="navigateAndClose">
@@ -60,7 +63,6 @@ const isCatOpen = (slug: string) => openCats.value.includes(slug)
 
         <!-- Nav -->
         <nav class="mobile-menu__nav">
-
           <!-- Inicio -->
           <NuxtLink
             to="/"
@@ -90,26 +92,17 @@ const isCatOpen = (slug: string) => openCats.value.includes(slug)
 
             <!-- Lista de categorías padre -->
             <div v-if="categoriesOpen" class="mobile-menu__accordion-body">
-              <div
-                v-for="cat in navCategories"
-                :key="cat.slug"
-                class="mobile-menu__cat-group"
-              >
+              <div v-for="cat in navCategories" :key="cat.slug" class="mobile-menu__cat-group">
                 <!-- Categoría padre — toggle -->
-                <button
-                  class="mobile-menu__cat-trigger"
-                  @click="toggleCat(cat.slug)"
-                >
+                <button class="mobile-menu__cat-trigger" @click="toggleCat(cat.slug)">
                   <div class="mobile-menu__cat-trigger-left">
-                    <UIcon
-                      v-if="cat.icon"
-                      :name="cat.icon"
-                      class="mobile-menu__icon"
-                    />
+                    <UIcon v-if="cat.icon" :name="cat.icon" class="mobile-menu__icon" />
                     <span>{{ cat.name }}</span>
                   </div>
                   <UIcon
-                    :name="isCatOpen(cat.slug) ? 'i-heroicons-chevron-up' : 'i-heroicons-chevron-down'"
+                    :name="
+                      isCatOpen(cat.slug) ? 'i-heroicons-chevron-up' : 'i-heroicons-chevron-down'
+                    "
                     class="mobile-menu__chevron"
                   />
                 </button>
@@ -133,23 +126,20 @@ const isCatOpen = (slug: string) => openCats.value.includes(slug)
           <!-- Sugerir actividad -->
           <button
             class="mobile-menu__link mobile-menu__link--button"
-            @click="emit('suggest'); emit('close')"
+            @click="
+              emit('suggest')
+              emit('close')
+            "
           >
             <UIcon name="i-heroicons-light-bulb" class="mobile-menu__icon" />
             <span>{{ t('nav.suggest') }}</span>
           </button>
 
           <!-- Contacto -->
-          <NuxtLink
-            to="/contact"
-            class="mobile-menu__link"
-            active-class="mobile-menu__link--active"
-            @click="navigateAndClose"
-          >
+          <button class="mobile-menu__link mobile-menu__link--button" @click="openContactDrawer">
             <UIcon name="i-heroicons-envelope" class="mobile-menu__icon" />
             <span>{{ t('nav.contact') }}</span>
-          </NuxtLink>
-
+          </button>
         </nav>
       </div>
     </template>
@@ -196,7 +186,9 @@ const isCatOpen = (slug: string) => openCats.value.includes(slug)
   font-weight: 500;
   color: var(--color-gray-700);
   text-decoration: none;
-  transition: background-color 0.15s ease, color 0.15s ease;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
   width: 100%;
   background: none;
   border: none;
@@ -296,7 +288,9 @@ const isCatOpen = (slug: string) => openCats.value.includes(slug)
   font-size: 0.875rem;
   color: var(--color-gray-500);
   text-decoration: none;
-  transition: background-color 0.15s ease, color 0.15s ease;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
 }
 .mobile-menu__sublink:hover {
   background-color: var(--color-secondary-50);
