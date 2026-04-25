@@ -6,7 +6,6 @@ const { t } = useI18n()
 const store = useActivitiesStore()
 const { getNavCategories } = useCategories()
 
-
 const props = defineProps<{
   modelValue: ActivityFilters
   baseActivities: Activity[]
@@ -14,60 +13,58 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  'apply': [filters: ActivityFilters]
-  'clear': []
+  apply: [filters: ActivityFilters]
+  clear: []
 }>()
 
 const isOpen = defineModel<boolean>('open', { default: false })
 
 const localFilters = ref<ActivityFilters>({ ...props.modelValue })
 
-  onMounted(async () => {
+onMounted(async () => {
   const cats = await getNavCategories()
-  CATEGORY_OPTIONS.value = cats.map(c => ({ label: c.name, value: c.slug }))
+  CATEGORY_OPTIONS.value = cats.map((c) => ({ label: c.name, value: c.slug }))
 })
 
-watch(() => props.modelValue, (val) => {
-  localFilters.value = { ...val }
-}, { deep: true })
+watch(
+  () => props.modelValue,
+  (val) => {
+    localFilters.value = { ...val }
+  },
+  { deep: true }
+)
 
 // ── Opciones desde el store ───────────────────────────────────────
 const AGE_OPTIONS = computed(() =>
   store.filterOptions.ageRanges
-    .filter(r => r.label_key.startsWith('age.') && r.label_key !== 'age.all')
-    .map(r => ({
+    .filter((r) => r.label_key.startsWith('age.') && r.label_key !== 'age.all')
+    .map((r) => ({
       label: t(`search.${r.label_key.replace('.', '_')}`),
       value: r.id,
-      min:   r.min_months,
-      max:   r.max_months,
+      min: r.min_months,
+      max: r.max_months,
     }))
 )
 
 const CITY_OPTIONS: SelectOption[] = [
-  { label: 'Tel Aviv',  value: 'Tel Aviv'  },
+  { label: 'Tel Aviv', value: 'Tel Aviv' },
   { label: 'Jerusalem', value: 'Jerusalem' },
-  { label: 'Haifa',     value: 'Haifa'     },
-  { label: 'Hadera',    value: 'Hadera'    },
-  { label: 'Eilat',     value: 'Eilat'     },
+  { label: 'Haifa', value: 'Haifa' },
+  { label: 'Hadera', value: 'Hadera' },
+  { label: 'Eilat', value: 'Eilat' },
 ]
 
 const SEASON_OPTIONS: SelectOption[] = [
   { label: t('search.season_spring'), value: 'spring' },
   { label: t('search.season_summer'), value: 'summer' },
-  { label: t('search.season_fall'),   value: 'fall'   },
+  { label: t('search.season_fall'), value: 'fall' },
   { label: t('search.season_winter'), value: 'winter' },
 ]
 
 const CATEGORY_OPTIONS = ref<{ label: string; value: string }[]>([])
 
 // ── Conteos dinámicos via composable compartido ───────────────────
-const {
-  countForAge,
-  countForCity,
-  countForSeason,
-  countForExtra,
-  previewCount,
-} = useFilterCounts(
+const { countForAge, countForCity, countForSeason, countForExtra, previewCount } = useFilterCounts(
   computed(() => props.baseActivities),
   localFilters
 )
@@ -76,12 +73,12 @@ const {
 const selectedAgeKey = computed({
   get: () => {
     if (localFilters.value.age_id === undefined) return undefined
-    return AGE_OPTIONS.value.find(o => o.value === localFilters.value.age_id)?.value
+    return AGE_OPTIONS.value.find((o) => o.value === localFilters.value.age_id)?.value
   },
   set: (id: number | undefined) => {
-    const option = AGE_OPTIONS.value.find(o => o.value === id)
+    const option = AGE_OPTIONS.value.find((o) => o.value === id)
     if (option) {
-      localFilters.value.age_id  = option.value
+      localFilters.value.age_id = option.value
       localFilters.value.age_min = option.min
       localFilters.value.age_max = option.max
     } else {
@@ -89,15 +86,15 @@ const selectedAgeKey = computed({
       delete localFilters.value.age_min
       delete localFilters.value.age_max
     }
-  }
+  },
 })
 
 const selectedCities = computed({
-  get: () => localFilters.value.city ? localFilters.value.city.split(',') : [],
+  get: () => (localFilters.value.city ? localFilters.value.city.split(',') : []),
   set: (cities: string[]) => {
     if (cities.length) localFilters.value.city = cities.join(',')
     else delete localFilters.value.city
-  }
+  },
 })
 
 const selectedSeason = computed({
@@ -105,15 +102,13 @@ const selectedSeason = computed({
   set: (s: SeasonValue | undefined) => {
     if (s) localFilters.value.season = s
     else delete localFilters.value.season
-  }
+  },
 })
 
 const toggleCity = (city: string) => {
   const current = selectedCities.value
   const idx = current.indexOf(city)
-  selectedCities.value = idx === -1
-    ? [...current, city]
-    : current.filter(c => c !== city)
+  selectedCities.value = idx === -1 ? [...current, city] : current.filter((c) => c !== city)
 }
 
 const toggleSeason = (s: string) => {
@@ -125,7 +120,7 @@ const isFree = computed({
   set: (v: boolean) => {
     if (v) localFilters.value.is_free = true
     else delete localFilters.value.is_free
-  }
+  },
 })
 
 const isStrollerFriendly = computed({
@@ -133,7 +128,7 @@ const isStrollerFriendly = computed({
   set: (v: boolean) => {
     if (v) localFilters.value.stroller_friendly = true
     else delete localFilters.value.stroller_friendly
-  }
+  },
 })
 
 const isOpenWeekends = computed({
@@ -141,7 +136,7 @@ const isOpenWeekends = computed({
   set: (v: boolean) => {
     if (v) localFilters.value.open_weekends = true
     else delete localFilters.value.open_weekends
-  }
+  },
 })
 
 const selectedCategory = computed({
@@ -149,7 +144,7 @@ const selectedCategory = computed({
   set: (v: string | undefined) => {
     if (v) localFilters.value.category = v
     else delete localFilters.value.category
-  }
+  },
 })
 
 // Cuenta todos los filtros activos incluyendo search
@@ -188,11 +183,7 @@ const clearAll = () => {
     <template #header>
       <div class="drawer-header">
         <h2 class="drawer-header__title">{{ t('search.filters') }}</h2>
-        <button
-          v-if="activeCount > 0"
-          class="drawer-header__clear"
-          @click="clearAll"
-        >
+        <button v-if="activeCount > 0" class="drawer-header__clear" @click="clearAll">
           {{ t('search.clear_filters') }}
         </button>
       </div>
@@ -201,7 +192,6 @@ const clearAll = () => {
     <!-- Body scrolleable -->
     <template #body>
       <div class="drawer-body" data-vaul-no-drag>
-
         <!-- Skeleton mientras cargan las baseActivities -->
         <template v-if="loadingBase">
           <div v-for="n in 4" :key="n" class="drawer-section">
@@ -213,22 +203,21 @@ const clearAll = () => {
         </template>
 
         <template v-else>
-
           <!-- ── Categoría ────────────────────────────────────────────────── -->
-<section class="drawer-section">
-  <h3 class="drawer-section__title">{{ t('search.category') }}</h3>
-  <div class="drawer-section__grid">
-    <button
-      v-for="opt in CATEGORY_OPTIONS"
-      :key="opt.value"
-      class="option-btn"
-      :class="{ 'option-btn--selected': selectedCategory === opt.value }"
-      @click="selectedCategory = selectedCategory === opt.value ? undefined : opt.value"
-    >
-      <span>{{ opt.label }}</span>
-    </button>
-  </div>
-</section>
+          <section class="drawer-section">
+            <h3 class="drawer-section__title">{{ t('search.category') }}</h3>
+            <div class="drawer-section__grid">
+              <button
+                v-for="opt in CATEGORY_OPTIONS"
+                :key="opt.value"
+                class="option-btn"
+                :class="{ 'option-btn--selected': selectedCategory === opt.value }"
+                @click="selectedCategory = selectedCategory === opt.value ? undefined : opt.value"
+              >
+                <span>{{ opt.label }}</span>
+              </button>
+            </div>
+          </section>
 
           <!-- ── Edad ─────────────────────────────────────────────── -->
           <section class="drawer-section">
@@ -267,18 +256,23 @@ const clearAll = () => {
                 :key="opt.value"
                 class="city-btn"
                 :class="{
-                  'city-btn--disabled': countForCity(opt.value as string) === 0
-                    && !selectedCities.includes(opt.value as string),
+                  'city-btn--disabled':
+                    countForCity(opt.value as string) === 0 &&
+                    !selectedCities.includes(opt.value as string),
                 }"
-                :disabled="countForCity(opt.value as string) === 0
-                  && !selectedCities.includes(opt.value as string)"
+                :disabled="
+                  countForCity(opt.value as string) === 0 &&
+                  !selectedCities.includes(opt.value as string)
+                "
                 @click="toggleCity(opt.value as string)"
               >
                 <div
                   class="city-btn__checkbox"
-                  :class="selectedCities.includes(opt.value as string)
-                    ? 'city-btn__checkbox--checked'
-                    : 'city-btn__checkbox--unchecked'"
+                  :class="
+                    selectedCities.includes(opt.value as string)
+                      ? 'city-btn__checkbox--checked'
+                      : 'city-btn__checkbox--unchecked'
+                  "
                 >
                   <UIcon
                     v-if="selectedCities.includes(opt.value as string)"
@@ -288,7 +282,10 @@ const clearAll = () => {
                 </div>
                 <span class="city-btn__label">{{ opt.label }}</span>
                 <span
-                  v-if="!selectedCities.includes(opt.value as string) && countForCity(opt.value as string) > 0"
+                  v-if="
+                    !selectedCities.includes(opt.value as string) &&
+                    countForCity(opt.value as string) > 0
+                  "
                   class="city-btn__count"
                 >
                   {{ countForCity(opt.value as string) }}
@@ -309,10 +306,12 @@ const clearAll = () => {
                 class="option-btn"
                 :class="{
                   'option-btn--selected': selectedSeason === opt.value,
-                  'option-btn--disabled': countForSeason(opt.value as string) === 0
-                    && selectedSeason !== opt.value,
+                  'option-btn--disabled':
+                    countForSeason(opt.value as string) === 0 && selectedSeason !== opt.value,
                 }"
-                :disabled="countForSeason(opt.value as string) === 0 && selectedSeason !== opt.value"
+                :disabled="
+                  countForSeason(opt.value as string) === 0 && selectedSeason !== opt.value
+                "
                 @click="toggleSeason(opt.value as string)"
               >
                 <span>{{ opt.label }}</span>
@@ -332,7 +331,6 @@ const clearAll = () => {
           <section class="drawer-section">
             <h3 class="drawer-section__title">{{ t('search.extras') }}</h3>
             <div class="drawer-section__extras">
-
               <label
                 class="extra-btn"
                 :class="{ 'extra-btn--disabled': !isFree && countForExtra('is_free') === 0 }"
@@ -346,29 +344,44 @@ const clearAll = () => {
 
               <label
                 class="extra-btn"
-                :class="{ 'extra-btn--disabled': !isStrollerFriendly && countForExtra('stroller_friendly') === 0 }"
+                :class="{
+                  'extra-btn--disabled':
+                    !isStrollerFriendly && countForExtra('stroller_friendly') === 0,
+                }"
               >
-                <UCheckbox v-model="isStrollerFriendly" :disabled="!isStrollerFriendly && countForExtra('stroller_friendly') === 0" />
+                <UCheckbox
+                  v-model="isStrollerFriendly"
+                  :disabled="!isStrollerFriendly && countForExtra('stroller_friendly') === 0"
+                />
                 <span class="extra-btn__label">{{ t('activity.stroller_friendly') }}</span>
-                <span v-if="!isStrollerFriendly && countForExtra('stroller_friendly') > 0" class="extra-btn__count">
+                <span
+                  v-if="!isStrollerFriendly && countForExtra('stroller_friendly') > 0"
+                  class="extra-btn__count"
+                >
                   {{ countForExtra('stroller_friendly') }}
                 </span>
               </label>
 
               <label
                 class="extra-btn"
-                :class="{ 'extra-btn--disabled': !isOpenWeekends && countForExtra('open_weekends') === 0 }"
+                :class="{
+                  'extra-btn--disabled': !isOpenWeekends && countForExtra('open_weekends') === 0,
+                }"
               >
-                <UCheckbox v-model="isOpenWeekends" :disabled="!isOpenWeekends && countForExtra('open_weekends') === 0" />
+                <UCheckbox
+                  v-model="isOpenWeekends"
+                  :disabled="!isOpenWeekends && countForExtra('open_weekends') === 0"
+                />
                 <span class="extra-btn__label">{{ t('activity.open_weekends') }}</span>
-                <span v-if="!isOpenWeekends && countForExtra('open_weekends') > 0" class="extra-btn__count">
+                <span
+                  v-if="!isOpenWeekends && countForExtra('open_weekends') > 0"
+                  class="extra-btn__count"
+                >
                   {{ countForExtra('open_weekends') }}
                 </span>
               </label>
-
             </div>
           </section>
-
         </template>
       </div>
     </template>
@@ -376,10 +389,10 @@ const clearAll = () => {
     <!-- Footer con preview de resultados -->
     <template #footer>
       <div class="drawer-footer">
-        <UButton block variant="outline" @click="cancel">
+        <UButton block size="lg" variant="outline" @click="cancel">
           {{ t('search.cancel') }}
         </UButton>
-        <UButton block :disabled="loadingBase" @click="applyFilters">
+        <UButton block size="lg" :disabled="loadingBase" @click="applyFilters">
           <template v-if="loadingBase">
             <UIcon name="i-heroicons-arrow-path" class="animate-spin w-4 h-4 mr-1" />
             {{ t('search.loading') }}
@@ -404,14 +417,14 @@ const clearAll = () => {
 }
 
 .drawer-header__title {
-  font-size: var(--font-size-lg);
+  font-size: var(--font-size-xl);
   font-weight: var(--font-weight-semibold);
   color: var(--color-text-primary);
 }
 
 /* Botón limpiar — verde secondary */
 .drawer-header__clear {
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-base);
   font-weight: var(--font-weight-medium);
   color: var(--color-secondary-600);
   background: none;
@@ -444,7 +457,7 @@ const clearAll = () => {
 }
 
 .drawer-section__title {
-  font-size: var(--font-size-xs);
+  font-size: var(--font-size-sm);
   font-weight: var(--font-weight-semibold);
   color: var(--color-text-tertiary);
   text-transform: uppercase;
@@ -477,7 +490,7 @@ const clearAll = () => {
   padding: var(--space-2) var(--space-3);
   border-radius: var(--border-radius-lg);
   border: 1px solid var(--color-neutral-200);
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-base);
   font-weight: var(--font-weight-medium);
   color: var(--color-text-primary);
   background: var(--color-bg-primary);
@@ -526,8 +539,8 @@ const clearAll = () => {
   cursor: not-allowed;
 }
 .city-btn__checkbox {
-  width: 1.25rem;
-  height: 1.25rem;
+  width: 1.5rem;
+  height: 1.5rem;
   border-radius: var(--border-radius-sm);
   border-width: 2px;
   border-style: solid;
@@ -546,12 +559,12 @@ const clearAll = () => {
   background-color: var(--color-primary-500);
 }
 .city-btn__check-icon {
-  width: 0.75rem;
-  height: 0.75rem;
+  width: 0.875rem;
+  height: 0.875rem;
   color: white;
 }
 .city-btn__label {
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-base);
   color: var(--color-text-primary);
   flex: 1;
 }
@@ -573,7 +586,7 @@ const clearAll = () => {
   cursor: not-allowed;
 }
 .extra-btn__label {
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-base);
   color: var(--color-text-primary);
   flex: 1;
 }

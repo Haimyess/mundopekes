@@ -8,7 +8,7 @@ const availableLocales = computed(() =>
   (locales.value as { code: string; name?: string }[]).map((l) => ({
     code: l.code,
     name: l.name ?? l.code,
-    label: l.code.toUpperCase()
+    label: l.code.toUpperCase(),
   }))
 )
 
@@ -25,10 +25,12 @@ async function selectLocale(code: string) {
     <!-- Desktop: DropdownMenu -->
     <UDropdownMenu
       v-if="!isMobile"
-      :items="availableLocales.map((l) => ({
-        label: l.name,
-        onSelect: () => selectLocale(l.code)
-      }))"
+      :items="
+        availableLocales.map((l) => ({
+          label: l.name,
+          onSelect: () => selectLocale(l.code),
+        }))
+      "
     >
       <UButton color="neutral" variant="ghost" size="sm">
         <div class="flex items-center gap-1.5">
@@ -39,11 +41,17 @@ async function selectLocale(code: string) {
     </UDropdownMenu>
 
     <!-- Mobile: Drawer con v-model:open -->
-    <UDrawer v-else v-model:open="drawerOpen" direction="bottom" :handle="true" :ui="{ content: 'max-h-[40vh]', body: 'p-0' }">
+    <UDrawer
+      v-else
+      v-model:open="drawerOpen"
+      direction="bottom"
+      :handle="true"
+      :ui="{ content: 'max-h-[40vh]', body: 'p-0' }"
+    >
       <UButton color="neutral" variant="ghost" size="sm" @click="drawerOpen = true">
         <div class="flex items-center gap-1.5">
-          <UIcon name="i-heroicons-globe-alt" class="w-4 h-4" />
-          <span class="text-sm font-medium">{{ currentLabel }}</span>
+          <UIcon name="i-heroicons-globe-alt" class="w-5 h-5" />
+          <span class="text-base font-medium">{{ currentLabel }}</span>
         </div>
       </UButton>
 
@@ -58,7 +66,9 @@ async function selectLocale(code: string) {
           >
             <span
               class="text-xs font-bold w-7 text-center rounded px-1 py-0.5 shrink-0"
-              :class="l.code === locale ? 'bg-primary-100 text-primary-700' : 'bg-gray-100 text-gray-600'"
+              :class="
+                l.code === locale ? 'bg-primary-100 text-primary-700' : 'bg-gray-100 text-gray-600'
+              "
             >
               {{ l.label }}
             </span>
@@ -76,8 +86,8 @@ async function selectLocale(code: string) {
     <template #fallback>
       <UButton color="neutral" variant="ghost" size="sm">
         <div class="flex items-center gap-1.5">
-          <UIcon name="i-heroicons-globe-alt" class="w-4 h-4" />
-          <span class="text-sm font-medium">{{ currentLabel }}</span>
+          <UIcon name="i-heroicons-globe-alt" class="w-5 h-5" />
+          <span class="text-base font-medium">{{ currentLabel }}</span>
         </div>
       </UButton>
     </template>
