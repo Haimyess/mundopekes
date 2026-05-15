@@ -3,7 +3,7 @@ import { mount } from '@vue/test-utils'
 import { __resetStore } from '../__mocks__/nuxt-state'
 
 vi.mock('vue-i18n', () => ({ useI18n: () => ({ t: (k: string) => k }) }))
-vi.stubGlobal('useAnalytics', () => ({ trackContactFormSend: vi.fn() }))
+vi.stubGlobal('useTracking', () => ({ trackContactSend: vi.fn() }))
 vi.stubGlobal('$fetch', vi.fn().mockResolvedValue({}))
 
 const mockOpen = vi.fn()

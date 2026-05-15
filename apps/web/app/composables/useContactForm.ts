@@ -38,7 +38,7 @@ export function useContactForm() {
 
   async function submit() {
     const toast = useToast()
-    const { trackContactFormSend } = useAnalytics()
+    const { trackContactSend } = useTracking()
 
     isLoading.value = true
     try {
@@ -55,7 +55,7 @@ export function useContactForm() {
         },
       })
 
-      trackContactFormSend(intent.value)
+      trackContactSend(intent.value)
       toast.add({ title: t('contact.success_title'), color: 'success' }) // ✅
       close()
     } catch {

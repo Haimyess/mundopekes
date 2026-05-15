@@ -3,7 +3,7 @@ import { __resetStore } from '../__mocks__/nuxt-state'
 import { useContactForm } from '~/app/composables/useContactForm'
 
 vi.stubGlobal('$fetch', vi.fn().mockResolvedValue({}))
-vi.stubGlobal('useAnalytics', () => ({ trackContactFormSend: vi.fn() }))
+vi.stubGlobal('useTracking', () => ({ trackContactSend: vi.fn() }))
 
 beforeEach(() => {
   __resetStore()
