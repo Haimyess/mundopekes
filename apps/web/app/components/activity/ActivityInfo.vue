@@ -19,11 +19,11 @@ interface Props {
 }
 
 defineProps<Props>()
+const { tc } = useI18nContent()
 </script>
 
 <template>
   <div class="activity-info">
-
     <!-- ① Header: título, ciudad, badges rápidos -->
     <ActivityInfoHeader :activity="activity" />
 
@@ -31,23 +31,16 @@ defineProps<Props>()
     <!-- <ActivityInfoFeatures :activity="activity" /> -->
 
     <!-- ③ Horario -->
-    <ActivityInfoSchedule
-      v-if="activity.schedule"
-      :schedule="activity.schedule"
-    />
+    <ActivityInfoSchedule v-if="activity.schedule" :schedule="activity.schedule" />
 
     <!-- ④ Descripción -->
     <ActivityInfoDescription
-      v-if="activity.description"
-      :description="activity.description"
+      v-if="activity.description_i18n && Object.keys(activity.description_i18n).length"
+      :description="tc(activity.description_i18n)"
     />
 
     <!-- ⑤ Ubicación + navegación -->
-    <ActivityInfoLocation
-      v-if="activity.place"
-      :place="activity.place"
-    />
-
+    <ActivityInfoLocation v-if="activity.place" :place="activity.place" />
   </div>
 </template>
 

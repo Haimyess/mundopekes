@@ -1,6 +1,3 @@
-// server/api/suggestions/[id].delete.ts
-// CAMBIAR A SOFT DELETE
-
 import { serverSupabaseClient } from '#supabase/server'
 
 export default defineEventHandler(async (event) => {
@@ -8,10 +5,7 @@ export default defineEventHandler(async (event) => {
   if (!id) throw createError({ statusCode: 400, message: 'ID requerido' })
 
   const supabase = await serverSupabaseClient(event)
-  const { error } = await supabase
-    .from('suggestions')
-    .delete()
-    .eq('id', id)
+  const { error } = await supabase.from('suggestions').delete().eq('id', id)
 
   if (error) throw createError({ statusCode: 500, message: error.message })
   return { success: true }

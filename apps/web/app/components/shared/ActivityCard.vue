@@ -11,6 +11,7 @@ const props = withDefaults(defineProps<Props>(), {
 })
 
 const { t } = useI18n()
+const { tc } = useI18nContent()
 
 // images: primero las de la actividad, fallback a las del place
 const imageUrl = computed(
@@ -35,7 +36,9 @@ const showBadges = computed(() => {
 const cityName = computed(() => props.activity?.place?.city?.name ?? null)
 
 // tipo/categoría: viene del join con categories
-const categoryName = computed(() => props.activity?.category?.name ?? null)
+const categoryName = computed(() =>
+  props.activity?.category ? tc(props.activity.category.name_i18n) : null
+)
 
 const hasMeta = computed(() => !!(cityName.value || categoryName.value))
 </script>
@@ -52,7 +55,7 @@ const hasMeta = computed(() => !!(cityName.value || categoryName.value))
         <img
           v-if="imageUrl"
           :src="imageUrl"
-          :alt="activity.title"
+          :alt="tc(activity.title_i18n)"
           class="activity-card__image"
           loading="lazy"
         />
@@ -62,7 +65,7 @@ const hasMeta = computed(() => !!(cityName.value || categoryName.value))
       <!-- Contenido -->
       <div class="activity-card__body">
         <!-- title (antes: activity.name) -->
-        <h3 class="activity-card__title">{{ activity.title }}</h3>
+        <h3 class="activity-card__title">{{ tc(activity.title_i18n) }}</h3>
 
         <!-- ciudad + categoría (antes: location.city + type[0]) -->
         <div class="activity-card__meta">
@@ -76,8 +79,11 @@ const hasMeta = computed(() => !!(cityName.value || categoryName.value))
           </template>
         </div>
 
-        <p v-if="variant === 'detailed' && activity.description" class="activity-card__description">
-          {{ activity.description }}
+        <p
+          v-if="variant === 'detailed' && tc(activity.description_i18n ?? {})"
+          class="activity-card__description"
+        >
+          {{ tc(activity.description_i18n ?? {}) }}
         </p>
 
         <div class="activity-card__badges">

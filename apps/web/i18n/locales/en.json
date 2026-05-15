@@ -46,7 +46,10 @@
     "age_school": "School age (6-12 years)",
     "age_teens": "Teens (12+)",
     "age_all": "All ages",
-    "no_results": "No results found"
+    "no_results": "No results found",
+    "no_results_for": "No results found for {query}",
+    "no_results_hint": "Try adjusting or removing the active filters",
+    "clear_and_show_all": "Clear and show all"
   },
   "activity": {
     "free": "Free",
@@ -71,6 +74,7 @@
   "carousels": {
     "recent": "Recently added",
     "nearby": "Near you",
+    "nearby_blocked": "Enable location to see activities near you",
     "popular": "Popular",
     "recommended": "Recommended"
   },

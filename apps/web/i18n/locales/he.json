@@ -46,6 +46,9 @@
     "age_teens": "מתבגרים (12+)",
     "age_all": "כל הגילאים",
     "no_results": "לא נמצאו תוצאות",
+    "no_results_for": "לא נמצאו תוצאות עבור {query}",
+    "no_results_hint": "נסה לשנות או להסיר את המסננים הפעילים",
+    "clear_and_show_all": "נקה והצג הכל",
     "category": "קטגוריה"
   },
   "activity": {
@@ -71,6 +74,7 @@
   "carousels": {
     "recent": "נוספו לאחרונה",
     "nearby": "קרוב אליך",
+    "nearby_blocked": "אפשר מיקום כדי לראות פעילויות קרוב אליך",
     "popular": "פופולרי",
     "recommended": "מומלץ"
   },

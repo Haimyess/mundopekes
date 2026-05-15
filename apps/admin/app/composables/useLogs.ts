@@ -12,8 +12,8 @@ export const useLogs = () => {
   const isLoading = ref(false)
   const errorsLast24h = ref(0)
 
-  const level = ref('')
-  const context = ref('')
+  const level = ref<string | undefined>(undefined)
+  const context = ref<string | undefined>(undefined)
   const searchRaw = ref('')
   const search = refDebounced(searchRaw, 300)
 

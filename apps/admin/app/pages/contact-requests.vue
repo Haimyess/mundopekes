@@ -24,7 +24,8 @@ const {
 const selectedRequest = ref<ContactRequest | null>(null)
 const slideoverOpen = ref(false)
 
-const formatDate = (date: string) => {
+const formatDate = (date: string | null) => {
+  if (!date) return '—'
   const d = new Date(date)
   return `${d.getDate().toString().padStart(2, '0')}/${(d.getMonth() + 1).toString().padStart(2, '0')} ${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`
 }
@@ -58,7 +59,7 @@ const statusLabel = (s: string) =>
   })[s] ?? s
 
 const tabs = [
-  { label: 'Todos', value: '' },
+  { label: 'Todos', value: undefined },
   { label: '🐛 Desactualizado', value: 'outdated_activity' },
   { label: '💬 Feedback', value: 'feedback' },
   { label: '🏢 Proveedor', value: 'provider_inquiry' },
@@ -66,7 +67,7 @@ const tabs = [
 ]
 
 const statusOptions = [
-  { label: 'Todos', value: '' },
+  { label: 'Todos', value: undefined },
   { label: 'Pendiente', value: 'pending' },
   { label: 'Leído', value: 'read' },
   { label: 'Resuelto', value: 'resolved' },
@@ -270,7 +271,7 @@ await Promise.all([loadRequests(), fetchFeedbackStats()])
       <div class="flex gap-1 px-4 pt-4 flex-wrap">
         <button
           v-for="tab in tabs"
-          :key="tab.value"
+          :key="tab.value ?? 'all'"
           class="px-3 py-1.5 text-sm rounded-lg transition-colors"
           :class="
             intent === tab.value
@@ -320,7 +321,7 @@ await Promise.all([loadRequests(), fetchFeedbackStats()])
     </template>
   </UDashboardPanel>
 
-  <ContactContactRequestSlideover v-model:open="slideoverOpen" :request="selectedRequest" />
+  <ContactRequestSlideover v-model:open="slideoverOpen" :request="selectedRequest" />
 </template>
 
 <style scoped>

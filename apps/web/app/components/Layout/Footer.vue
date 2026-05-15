@@ -22,17 +22,17 @@ const footerLinks = [
         <span class="text-xl font-bold text-primary-400">MundoPekes</span>
 
         <!-- Links -->
-        <nav class="flex flex-wrap justify-center gap-4 md:justify-start md:gap-6">
+        <nav class="flex items-center flex-wrap justify-center gap-4 md:justify-start md:gap-6">
           <NuxtLink
             v-for="link in footerLinks"
             :key="link.to"
             :to="link.to"
-            class="text-gray-300 hover:text-white transition-colors text-sm"
+            class="text-gray-300 hover:text-white transition-colors text-sm link"
           >
             {{ t(link.label) }}
           </NuxtLink>
           <button
-            class="text-gray-300 hover:text-white transition-colors text-sm"
+            class="link text-gray-300 hover:text-white transition-colors text-sm"
             @click="openContact('other')"
           >
             {{ t('nav.contact') }}
@@ -48,4 +48,18 @@ const footerLinks = [
   </footer>
 </template>
 
-<style scoped></style>
+<style scoped>
+footer button {
+  /* font-family: var(--font-family-base); */
+  color: inherit;
+}
+
+.link {
+  font-size: var(--font-size-sm);
+}
+
+.link::hover {
+  text-decoration: underline wavy red 2px;
+  cursor: pointer;
+}
+</style>

@@ -6,6 +6,13 @@ export default defineNuxtConfig({
     enabled: true,
   },
   css: ['~/assets/css/main.css'],
+  runtimeConfig: {
+    deeplApiKey: process.env.DEEPL_API_KEY ?? '',
+    supabaseServiceKey: process.env.SUPABASE_SECRET_KEY ?? '',
+    public: {
+      supabaseUrl: process.env.SUPABASE_URL ?? '',
+    },
+  },
   routeRules: {
     '/api/**': {
       cors: true,

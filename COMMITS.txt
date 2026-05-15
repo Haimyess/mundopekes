@@ -1,0 +1,119 @@
+====================================================
+  GUIA DE COMMITS - mundopekes-monorepo
+====================================================
+
+Este proyecto usa el estandar "Conventional Commits" con
+validacion automatica via Husky + CommitLint.
+
+----------------------------------------------------
+FORMATO OBLIGATORIO
+----------------------------------------------------
+
+  tipo(scope): descripcion breve
+
+  - tipo   : categoria del cambio (ver tabla abajo)
+  - scope  : area afectada, opcional (admin, web, api, etc.)
+  - desc.  : imperativo, minusculas, sin punto final
+
+Ejemplos validos:
+  feat(admin): add suggestions approval flow
+  fix(web): correct activity filter count
+  chore: update dependencies
+  refactor(api): extract places query logic
+  docs: add commit guide
+  style(web): fix navbar spacing
+
+----------------------------------------------------
+TIPOS VALIDOS
+----------------------------------------------------
+
+  feat      Nueva funcionalidad visible para el usuario
+  fix       Correccion de bug
+  chore     Mantenimiento, actualizacion de deps, config
+  refactor  Refactor sin cambio de funcionalidad externa
+  style     Cambios de formato/estilo (no logica)
+  docs      Documentacion
+  test      Agregar o corregir tests
+  ci        Cambios en pipeline / CI-CD
+  perf      Mejoras de rendimiento
+  revert    Revertir un commit anterior
+
+----------------------------------------------------
+PIPELINE AUTOMATICO AL HACER COMMIT
+----------------------------------------------------
+
+  1. pre-commit
+     Corre lint-staged sobre los archivos en staging:
+       - *.ts / *.vue  -> ESLint --fix + Prettier --write
+       - *.json / *.md -> Prettier --write
+
+  2. commit-msg
+     Valida el mensaje con CommitLint.
+     Si el formato no es correcto, el commit es rechazado.
+
+  3. pre-push
+     Corre Snyk para detectar vulnerabilidades criticas.
+     Bloquea el push si encuentra problemas de seguridad.
+
+----------------------------------------------------
+COMO HACER UN COMMIT
+----------------------------------------------------
+
+OPCION A - Asistente interactivo (recomendado):
+
+  npm run commit
+    o
+  npm run cz
+
+  Te guia paso a paso: tipo, scope, descripcion, etc.
+
+OPCION B - Directo si ya conoces el formato:
+
+  git commit -m "fix(admin): correct suggestions slideover"
+
+----------------------------------------------------
+SCOPES COMUNES EN ESTE REPO
+----------------------------------------------------
+
+  admin     App de administracion (apps/admin)
+  web       App publica (apps/web)
+  api       Endpoints del servidor
+  i18n      Traducciones / internacionalizacion
+  shared    Paquetes compartidos (packages/)
+  ci        Pipeline / Bitbucket Pipelines
+
+----------------------------------------------------
+RAMAS Y DESPLIEGUE
+----------------------------------------------------
+
+  main  ->  deploy automatico a produccion (Vercel)
+  dev   ->  deploy automatico a preview (Vercel)
+  PRs   ->  lint + tests se ejecutan automaticamente
+
+----------------------------------------------------
+COMMITS PARCIALES (solo web o solo admin)
+----------------------------------------------------
+
+Para commitear solo los cambios de una app, controla
+que archivos agregas al staging con git add <ruta>:
+
+  Solo app web:
+    git add apps/web/
+    git commit -m "feat(web): descripcion del cambio"
+
+  Solo app admin:
+    git add apps/admin/
+    git commit -m "fix(admin): descripcion del cambio"
+
+  Un archivo especifico:
+    git add apps/web/app/components/search/FilterDrawer.vue
+    git commit -m "fix(web): correct filter drawer behavior"
+
+NOTA: lint-staged (pre-commit) solo corre sobre los
+archivos que estan en staging, no sobre todo el repo.
+Si solo agregas archivos de web, solo esos se lintean.
+
+Evita usar "git add ." si quieres separar los cambios
+entre apps en commits distintos.
+
+====================================================

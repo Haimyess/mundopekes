@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import type { CategoryWithChildren } from '~/composables/useCategories'
+
 const { t, locale } = useI18n()
+const { tc } = useI18nContent()
 
 const props = defineProps<{
   isOpen: boolean
@@ -12,6 +14,8 @@ const emit = defineEmits<{
   suggest: []
 }>()
 
+// ── Computed ──────────────────────────────────────────────────────────────────
+
 const slideoverSide = computed(() => (locale.value === 'he' ? 'right' : 'left'))
 
 const isOpenModel = computed({
@@ -21,18 +25,9 @@ const isOpenModel = computed({
   },
 })
 
-const navigateAndClose = () => emit('close')
+// ── Acordeón ─────────────────────────────────────────────────────────────────
 
-const { open: openContact } = useContactForm()
-const openContactDrawer = () => {
-  emit('close')
-  openContact('other')
-}
-
-// Acordeón principal — cerrado por defecto
 const categoriesOpen = ref(false)
-
-// Categorías padre — ninguna abierta por defecto
 const openCats = ref<string[]>([])
 
 const toggleCat = (slug: string) => {
@@ -42,6 +37,22 @@ const toggleCat = (slug: string) => {
 }
 
 const isCatOpen = (slug: string) => openCats.value.includes(slug)
+
+// ── Handlers ─────────────────────────────────────────────────────────────────
+
+const navigateAndClose = () => emit('close')
+
+const handleSuggest = () => {
+  emit('suggest')
+  emit('close')
+}
+
+const { open: openContact } = useContactForm()
+
+const openContactDrawer = () => {
+  emit('close')
+  openContact('other')
+}
 </script>
 
 <template>
@@ -97,7 +108,7 @@ const isCatOpen = (slug: string) => openCats.value.includes(slug)
                 <button class="mobile-menu__cat-trigger" @click="toggleCat(cat.slug)">
                   <div class="mobile-menu__cat-trigger-left">
                     <UIcon v-if="cat.icon" :name="cat.icon" class="mobile-menu__icon" />
-                    <span>{{ cat.name }}</span>
+                    <span>{{ tc(cat.name_i18n) }}</span>
                   </div>
                   <UIcon
                     :name="
@@ -107,7 +118,7 @@ const isCatOpen = (slug: string) => openCats.value.includes(slug)
                   />
                 </button>
 
-                <!-- Subcategorías — sin iconos -->
+                <!-- Subcategorías -->
                 <div v-if="isCatOpen(cat.slug)" class="mobile-menu__sublist">
                   <NuxtLink
                     v-for="sub in cat.children"
@@ -116,7 +127,7 @@ const isCatOpen = (slug: string) => openCats.value.includes(slug)
                     class="mobile-menu__sublink"
                     @click="navigateAndClose"
                   >
-                    {{ sub.name }}
+                    {{ tc(sub.name_i18n) }}
                   </NuxtLink>
                 </div>
               </div>
@@ -124,13 +135,7 @@ const isCatOpen = (slug: string) => openCats.value.includes(slug)
           </div>
 
           <!-- Sugerir actividad -->
-          <button
-            class="mobile-menu__link mobile-menu__link--button"
-            @click="
-              emit('suggest')
-              emit('close')
-            "
-          >
+          <button class="mobile-menu__link mobile-menu__link--button" @click="handleSuggest">
             <UIcon name="i-heroicons-light-bulb" class="mobile-menu__icon" />
             <span>{{ t('nav.suggest') }}</span>
           </button>
@@ -204,7 +209,6 @@ const isCatOpen = (slug: string) => openCats.value.includes(slug)
   color: var(--color-secondary-700);
 }
 
-/* Acordeón principal */
 .mobile-menu__accordion-trigger {
   display: flex;
   align-items: center;
@@ -243,7 +247,6 @@ const isCatOpen = (slug: string) => openCats.value.includes(slug)
   padding: 0.25rem 0 0.25rem 0.75rem;
 }
 
-/* Categoría padre — trigger secundario */
 .mobile-menu__cat-group {
   display: flex;
   flex-direction: column;
@@ -273,7 +276,6 @@ const isCatOpen = (slug: string) => openCats.value.includes(slug)
   gap: 0.625rem;
 }
 
-/* Subcategorías */
 .mobile-menu__sublist {
   display: flex;
   flex-direction: column;

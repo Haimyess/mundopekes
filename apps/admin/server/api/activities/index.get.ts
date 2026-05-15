@@ -16,8 +16,8 @@ export default defineEventHandler(async (event) => {
     .select(
       `
       *,
-      place:places(id, name, city:cities(name)),
-      category:categories(id, name, slug),
+      place:places(id, name_i18n, city:cities(name)),
+      category:categories(id, name_i18n, slug),
       activity_age_ranges(age_range:age_ranges(*)),
       activity_seasons(season:seasons(*))
     `,
@@ -31,7 +31,7 @@ export default defineEventHandler(async (event) => {
   if (query.is_free !== undefined && query.is_free !== '') {
     req = req.eq('is_free', query.is_free === 'true')
   }
-  if (query.q) req = req.ilike('title', `%${query.q}%`)
+  if (query.q) req = req.ilike('title_i18n->es', `%${query.q}%`)
 
   if (hasPagination) {
     req = req.range(from, to)

@@ -11,9 +11,12 @@ interface Props {
 
 const props = defineProps<Props>()
 const { t } = useI18n()
+const { tc } = useI18nContent()
 
-const cityName  = computed(() => props.activity?.place?.city?.name ?? null)
-const placeName = computed(() => props.activity?.place?.name ?? null)
+const cityName = computed(() => props.activity?.place?.city?.name ?? null)
+const placeName = computed(() =>
+  props.activity?.place ? tc(props.activity.place.name_i18n) : null
+)
 
 const badges = computed(() => {
   if (!props.activity) return []
@@ -24,7 +27,7 @@ const badges = computed(() => {
       label: t('activity.free'),
       variant: 'success' as const,
       icon: 'i-heroicons-banknotes',
-      color: 'success' as const
+      color: 'success' as const,
     })
   }
   if (props.activity.stroller_friendly) {
@@ -32,7 +35,7 @@ const badges = computed(() => {
       label: t('activity.stroller_friendly'),
       variant: 'info' as const,
       icon: 'i-heroicons-heart',
-      color: 'info' as const
+      color: 'info' as const,
     })
   }
   if (props.activity.open_weekends) {
@@ -40,7 +43,7 @@ const badges = computed(() => {
       label: t('activity.open_weekends'),
       variant: 'warning' as const,
       icon: 'i-heroicons-calendar-days',
-      color: 'warning' as const
+      color: 'warning' as const,
     })
   }
 
@@ -50,11 +53,10 @@ const badges = computed(() => {
 
 <template>
   <div class="space-y-4">
-
     <!-- Título + ubicación -->
     <div>
       <h1 class="text-2xl md:text-3xl font-bold text-gray-900 leading-tight mb-2">
-        {{ activity.title }}
+        {{ tc(activity.title_i18n) }}
       </h1>
 
       <div v-if="cityName || placeName" class="flex items-center gap-1.5 text-gray-500">
@@ -81,6 +83,5 @@ const badges = computed(() => {
         {{ badge.label }}
       </UBadge>
     </div>
-
   </div>
 </template>

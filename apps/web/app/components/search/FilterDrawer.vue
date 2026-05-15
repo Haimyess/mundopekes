@@ -3,6 +3,7 @@ import type { Activity, ActivityFilters, SeasonValue } from '~/types'
 import type { SelectOption } from '~/types/ui'
 
 const { t } = useI18n()
+const { tc } = useI18nContent()
 const store = useActivitiesStore()
 const { getNavCategories } = useCategories()
 
@@ -23,7 +24,7 @@ const localFilters = ref<ActivityFilters>({ ...props.modelValue })
 
 onMounted(async () => {
   const cats = await getNavCategories()
-  CATEGORY_OPTIONS.value = cats.map((c) => ({ label: c.name, value: c.slug }))
+  CATEGORY_OPTIONS.value = cats.map((c) => ({ label: tc(c.name_i18n), value: c.slug }))
 })
 
 watch(
@@ -46,13 +47,9 @@ const AGE_OPTIONS = computed(() =>
     }))
 )
 
-const CITY_OPTIONS: SelectOption[] = [
-  { label: 'Tel Aviv', value: 'Tel Aviv' },
-  { label: 'Jerusalem', value: 'Jerusalem' },
-  { label: 'Haifa', value: 'Haifa' },
-  { label: 'Hadera', value: 'Hadera' },
-  { label: 'Eilat', value: 'Eilat' },
-]
+const CITY_OPTIONS = computed(() =>
+  store.filterOptions.cities.map((c) => ({ label: c.name, value: c.name }))
+)
 
 const SEASON_OPTIONS: SelectOption[] = [
   { label: t('search.season_spring'), value: 'spring' },

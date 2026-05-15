@@ -8,6 +8,7 @@ const UButton = resolveComponent('UButton')
 const UBadge = resolveComponent('UBadge')
 const UDropdownMenu = resolveComponent('UDropdownMenu')
 
+const { tc } = useI18nContent()
 const route = useRoute()
 const overlay = useOverlay()
 
@@ -19,12 +20,12 @@ const {
   activities,
   loading: activitiesLoading,
   fetch: fetchActivities,
-  remove: removeActivity
+  remove: removeActivity,
 } = useActivities({ placeId: id })
 
 const openEditPlace = async () => {
   const slideover = overlay.create(PlacesSlideover, {
-    props: { place: place.value }
+    props: { place: place.value },
   })
   await slideover.open()
   refreshPlace()
@@ -32,7 +33,7 @@ const openEditPlace = async () => {
 
 const openCreateActivity = async () => {
   const slideover = overlay.create(ActivitiesSlideover, {
-    props: { placeId: id }
+    props: { placeId: id },
   })
   await slideover.open()
   fetchActivities()
@@ -40,7 +41,7 @@ const openCreateActivity = async () => {
 
 const openEditActivity = async (activity: Activity) => {
   const slideover = overlay.create(ActivitiesSlideover, {
-    props: { activity, placeId: id }
+    props: { activity, placeId: id },
   })
   await slideover.open()
   fetchActivities()
@@ -49,24 +50,25 @@ const openEditActivity = async (activity: Activity) => {
 const statusColor = {
   approved: 'success',
   pending: 'warning',
-  rejected: 'error'
+  rejected: 'error',
 } as const
 
 const statusLabel = {
   approved: 'Aprobada',
   pending: 'Pendiente',
-  rejected: 'Rechazada'
+  rejected: 'Rechazada',
 }
 
 const columns: TableColumn<Activity>[] = [
   {
-    accessorKey: 'title',
-    header: 'Título'
+    accessorKey: 'title_i18n',
+    header: 'Título',
+    cell: ({ row }) => tc(row.original.title_i18n ?? {}),
   },
   {
     accessorKey: 'category',
     header: 'Categoría',
-    cell: ({ row }) => row.original.category?.name ?? '—'
+    cell: ({ row }) => (row.original.category ? tc(row.original.category.name_i18n ?? {}) : '—'),
   },
   {
     accessorKey: 'price',
@@ -74,7 +76,7 @@ const columns: TableColumn<Activity>[] = [
     cell: ({ row }) =>
       row.original.is_free
         ? h(UBadge, { variant: 'subtle', color: 'success' }, () => 'Gratis')
-        : `₪${row.original.price}`
+        : `₪${row.original.price}`,
   },
   {
     accessorKey: 'status',
@@ -84,7 +86,7 @@ const columns: TableColumn<Activity>[] = [
         UBadge,
         { variant: 'subtle', color: statusColor[row.original.status] },
         () => statusLabel[row.original.status]
-      )
+      ),
   },
   {
     id: 'actions',
@@ -100,27 +102,27 @@ const columns: TableColumn<Activity>[] = [
               {
                 label: 'Editar',
                 icon: 'i-lucide-pencil',
-                onSelect: () => openEditActivity(row.original)
+                onSelect: () => openEditActivity(row.original),
               },
               { type: 'separator' as const },
               {
                 label: 'Eliminar',
                 icon: 'i-lucide-trash',
                 color: 'error' as const,
-                onSelect: () => removeActivity(row.original.id)
-              }
-            ]
+                onSelect: () => removeActivity(row.original.id),
+              },
+            ],
           },
           () =>
             h(UButton, {
               icon: 'i-lucide-ellipsis-vertical',
               color: 'neutral',
               variant: 'ghost',
-              class: 'ml-auto'
+              class: 'ml-auto',
             })
         )
-      )
-  }
+      ),
+  },
 ]
 
 // Fetch inicial de actividades (sin paginación, usa el composable con placeId fijo)
@@ -130,23 +132,13 @@ await fetchActivities()
 <template>
   <UDashboardPanel :id="`place-${id}`">
     <template #header>
-      <UDashboardNavbar :title="place?.name ?? '...'">
+      <UDashboardNavbar :title="place ? tc(place.name_i18n ?? {}) : '...'">
         <template #leading>
           <UDashboardSidebarCollapse />
-          <UButton
-            icon="i-lucide-arrow-left"
-            color="neutral"
-            variant="ghost"
-            to="/places"
-          />
+          <UButton icon="i-lucide-arrow-left" color="neutral" variant="ghost" to="/places" />
         </template>
         <template #right>
-          <UButton
-            icon="i-lucide-pencil"
-            color="neutral"
-            variant="outline"
-            @click="openEditPlace"
-          >
+          <UButton icon="i-lucide-pencil" color="neutral" variant="outline" @click="openEditPlace">
             Editar lugar
           </UButton>
         </template>
@@ -164,12 +156,13 @@ await fetchActivities()
             {{ place.lat }}, {{ place.lng }}
           </UBadge>
         </div>
-        <p v-if="place?.description" class="text-muted text-sm">
-          {{ place.description }}
+        <p
+          v-if="place?.description_i18n && Object.keys(place.description_i18n).length"
+          class="text-muted text-sm"
+        >
+          {{ tc(place.description_i18n) }}
         </p>
-        <p v-else class="text-muted text-sm italic">
-          Sin descripción
-        </p>
+        <p v-else class="text-muted text-sm italic">Sin descripción</p>
       </div>
 
       <!-- Actividades -->
@@ -194,7 +187,7 @@ await fetchActivities()
           thead: '[&>tr]:bg-elevated/50 [&>tr]:after:content-none',
           tbody: '[&>tr]:last:[&>td]:border-b-0',
           th: 'py-2 first:rounded-l-lg last:rounded-r-lg border-y border-default first:border-l last:border-r',
-          td: 'border-b border-default'
+          td: 'border-b border-default',
         }"
       />
     </template>

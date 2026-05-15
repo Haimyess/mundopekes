@@ -48,6 +48,9 @@
     "age_teens": "Adolescentes (12+)",
     "age_all": "Todas las edades",
     "no_results": "No encontramos resultados",
+    "no_results_for": "No encontramos resultados para {query}",
+    "no_results_hint": "Intenta ajustar o eliminar los filtros activos",
+    "clear_and_show_all": "Limpiar y ver todo",
     "category": "Categoría"
   },
   "activity": {
@@ -73,6 +76,7 @@
   "carousels": {
     "recent": "Agregadas recientemente",
     "nearby": "Cerca de ti",
+    "nearby_blocked": "Activa la ubicación para ver actividades cerca tuyo",
     "popular": "Populares",
     "recommended": "Recomendadas"
   },

@@ -1,4 +1,6 @@
-import type { PlaceSearchResult } from '~/composables/usePlacesSearch'
+import type { PlaceSearchResult, PlaceDetails } from '~/composables/usePlacesSearch'
+
+export type { PlaceDetails }
 
 export interface ScheduleDay {
   open: boolean
@@ -7,13 +9,13 @@ export interface ScheduleDay {
 }
 
 export interface WizardSchedule {
-  sunday:    ScheduleDay
-  monday:    ScheduleDay
-  tuesday:   ScheduleDay
+  sunday: ScheduleDay
+  monday: ScheduleDay
+  tuesday: ScheduleDay
   wednesday: ScheduleDay
-  thursday:  ScheduleDay
-  friday:    ScheduleDay
-  saturday:  ScheduleDay
+  thursday: ScheduleDay
+  friday: ScheduleDay
+  saturday: ScheduleDay
 }
 
 export interface WizardCategory {
@@ -22,24 +24,27 @@ export interface WizardCategory {
 }
 
 export interface WizardState {
-  placeResult:        PlaceSearchResult | null
-  manualName:         string
-  manualCity:         string
-  manualAddress:      string
-  description:        string
-  isManual:           boolean
-  customActivity:     string
+  placeResult: PlaceSearchResult | null
+  placeDetails: PlaceDetails | null
+  name_i18n: Record<string, string>
+  description_i18n: Record<string, string>
+  manualName: string
+  manualCity: string
+  manualAddress: string
+  description: string
+  isManual: boolean
+  customActivity: string
   selectedCategories: WizardCategory[]
-  selectedSeasons:    string[]
-  selectedAgeIds:     number[]
-  selectedAgeLabels:  string[]
-  isFree:             boolean
-  price:              string
-  stroller:           boolean
-  shadow:             boolean
-  bathrooms:          boolean
-  weekends:           boolean
-  schedule:           WizardSchedule
+  selectedSeasons: string[]
+  selectedAgeIds: number[]
+  selectedAgeLabels: string[]
+  isFree: boolean
+  price: string
+  stroller: boolean
+  shadow: boolean
+  bathrooms: boolean
+  weekends: boolean
+  schedule: WizardSchedule
 }
 
 export const WIZARD_STEPS = [
@@ -50,50 +55,53 @@ export const WIZARD_STEPS = [
 ]
 
 const defaultSchedule = (): WizardSchedule => ({
-  sunday:    { open: false, start: '09:00', end: '17:00' },
-  monday:    { open: true,  start: '09:00', end: '17:00' },
-  tuesday:   { open: true,  start: '09:00', end: '17:00' },
-  wednesday: { open: true,  start: '09:00', end: '17:00' },
-  thursday:  { open: true,  start: '09:00', end: '17:00' },
-  friday:    { open: false, start: '09:00', end: '14:00' },
-  saturday:  { open: false, start: '10:00', end: '16:00' },
+  sunday: { open: false, start: '09:00', end: '17:00' },
+  monday: { open: true, start: '09:00', end: '17:00' },
+  tuesday: { open: true, start: '09:00', end: '17:00' },
+  wednesday: { open: true, start: '09:00', end: '17:00' },
+  thursday: { open: true, start: '09:00', end: '17:00' },
+  friday: { open: false, start: '09:00', end: '14:00' },
+  saturday: { open: false, start: '10:00', end: '16:00' },
 })
 
 const defaultState = (): WizardState => ({
-  placeResult:        null,
-  manualName:         '',
-  manualCity:         '',
-  manualAddress:      '',
-  description:        '',
-  isManual:           false,
-  customActivity:     '',
+  placeResult: null,
+  placeDetails: null,
+  name_i18n: {},
+  description_i18n: {},
+  manualName: '',
+  manualCity: '',
+  manualAddress: '',
+  description: '',
+  isManual: false,
+  customActivity: '',
   selectedCategories: [],
-  selectedSeasons:    [],
-  selectedAgeIds:     [],
-  selectedAgeLabels:  [],
-  isFree:             true,
-  price:              '',
-  stroller:           false,
-  shadow:             false,
-  bathrooms:          false,
-  weekends:           false,
-  schedule:           defaultSchedule(),
+  selectedSeasons: [],
+  selectedAgeIds: [],
+  selectedAgeLabels: [],
+  isFree: true,
+  price: '',
+  stroller: false,
+  shadow: false,
+  bathrooms: false,
+  weekends: false,
+  schedule: defaultSchedule(),
 })
 
 export function useSuggestionWizard() {
-  const state     = useState<WizardState>('suggestion-wizard', defaultState)
-  const editOpen  = useState<boolean>('wizard-edit-open', () => false)
-const editDraft = useState<Partial<WizardState> | null>('wizard-edit-draft', () => null)
+  const state = useState<WizardState>('suggestion-wizard', defaultState)
+  const editOpen = useState<boolean>('wizard-edit-open', () => false)
+  const editDraft = useState<Partial<WizardState> | null>('wizard-edit-draft', () => null)
 
   // ─── Edit draft ───────────────────────────────────────────────
   const openEdit = () => {
     const s = state.value
     editDraft.value = {
       selectedCategories: [...s.selectedCategories],
-      selectedSeasons:    [...s.selectedSeasons],
-      selectedAgeIds:     [...s.selectedAgeIds],
-      selectedAgeLabels:  [...s.selectedAgeLabels],
-      customActivity:     s.customActivity,
+      selectedSeasons: [...s.selectedSeasons],
+      selectedAgeIds: [...s.selectedAgeIds],
+      selectedAgeLabels: [...s.selectedAgeLabels],
+      customActivity: s.customActivity,
     }
     editOpen.value = true
   }
@@ -101,18 +109,18 @@ const editDraft = useState<Partial<WizardState> | null>('wizard-edit-draft', () 
   const confirmEdit = () => {
     if (editDraft.value) {
       state.value.selectedCategories = editDraft.value.selectedCategories ?? []
-      state.value.selectedSeasons    = editDraft.value.selectedSeasons    ?? []
-      state.value.selectedAgeIds     = editDraft.value.selectedAgeIds     ?? []
-      state.value.selectedAgeLabels  = editDraft.value.selectedAgeLabels  ?? []
-      state.value.customActivity     = editDraft.value.customActivity     ?? ''
+      state.value.selectedSeasons = editDraft.value.selectedSeasons ?? []
+      state.value.selectedAgeIds = editDraft.value.selectedAgeIds ?? []
+      state.value.selectedAgeLabels = editDraft.value.selectedAgeLabels ?? []
+      state.value.customActivity = editDraft.value.customActivity ?? ''
     }
     editDraft.value = null
-    editOpen.value  = false
+    editOpen.value = false
   }
 
   const closeEdit = () => {
     editDraft.value = null
-    editOpen.value  = false
+    editOpen.value = false
   }
 
   const toggleEdit = () => {
@@ -128,7 +136,7 @@ const editDraft = useState<Partial<WizardState> | null>('wizard-edit-draft', () 
 
   const draftToggleCategory = (cat: WizardCategory) => {
     if (!editDraft.value) return
-    const idx = editDraft.value.selectedCategories!.findIndex(c => c.id === cat.id)
+    const idx = editDraft.value.selectedCategories!.findIndex((c) => c.id === cat.id)
     if (idx === -1) editDraft.value.selectedCategories = [cat]
     else editDraft.value.selectedCategories!.splice(idx, 1)
   }
@@ -159,36 +167,27 @@ const editDraft = useState<Partial<WizardState> | null>('wizard-edit-draft', () 
 
   // ─── Computed ─────────────────────────────────────────────────
   const placeName = computed(() =>
-    state.value.isManual
-      ? state.value.manualName
-      : state.value.placeResult?.name ?? ''
+    state.value.isManual ? state.value.manualName : (state.value.placeResult?.name ?? '')
   )
 
   const placeAddress = computed(() =>
     state.value.isManual
       ? [state.value.manualCity, state.value.manualAddress].filter(Boolean).join(', ')
-      : state.value.placeResult?.address ?? ''
+      : (state.value.placeResult?.address ?? '')
   )
 
-  const placePhoto = computed(() =>
-    state.value.placeResult?.photo_url ?? null
-  )
+  const placePhoto = computed(() => state.value.placeResult?.photo_url ?? null)
 
   const hasPlace = computed(() =>
-    state.value.isManual
-      ? !!state.value.manualName.trim()
-      : !!state.value.placeResult
+    state.value.isManual ? !!state.value.manualName.trim() : !!state.value.placeResult
   )
 
-  const hasActivity = computed(() =>
-    state.value.selectedCategories.length > 0 ||
-    !!state.value.customActivity
+  const hasActivity = computed(
+    () => state.value.selectedCategories.length > 0 || !!state.value.customActivity
   )
 
   const generatedTitle = computed(() => {
-    const cat  = state.value.selectedCategories[0]?.name
-              ?? state.value.customActivity
-              ?? ''
+    const cat = state.value.selectedCategories[0]?.name ?? state.value.customActivity ?? ''
     const name = placeName.value
     if (!cat && !name) return ''
     if (!cat) return name
@@ -197,19 +196,30 @@ const editDraft = useState<Partial<WizardState> | null>('wizard-edit-draft', () 
   })
 
   // ─── Actions ──────────────────────────────────────────────────
-  const setPlace = (place: PlaceSearchResult) => {
-    state.value.placeResult        = place
-    state.value.isManual           = false
+  const setPlace = (place: PlaceSearchResult, details?: PlaceDetails) => {
+    state.value.placeResult = place
+    state.value.isManual = false
     state.value.selectedCategories = place.suggested_categories
+    state.value.name_i18n = { ...place.name_i18n }
+    state.value.description_i18n = {}
+
+    if (details) {
+      state.value.name_i18n = { ...details.name_i18n }
+      state.value.description_i18n = { ...details.description_i18n }
+      state.value.placeDetails = details
+    }
   }
 
   const clearPlace = () => {
-    state.value.placeResult        = null
+    state.value.placeResult = null
+    state.value.placeDetails = null
+    state.value.name_i18n = {}
+    state.value.description_i18n = {}
     state.value.selectedCategories = []
   }
 
   const toggleCategory = (cat: WizardCategory) => {
-    const idx = state.value.selectedCategories.findIndex(c => c.id === cat.id)
+    const idx = state.value.selectedCategories.findIndex((c) => c.id === cat.id)
     if (idx === -1) state.value.selectedCategories.push(cat)
     else state.value.selectedCategories.splice(idx, 1)
   }
@@ -236,40 +246,54 @@ const editDraft = useState<Partial<WizardState> | null>('wizard-edit-draft', () 
   }
 
   const reset = () => {
-    state.value     = defaultState()
+    state.value = defaultState()
     editDraft.value = null
-    editOpen.value  = false
+    editOpen.value = false
   }
 
   // ─── Payload ──────────────────────────────────────────────────
   const buildPayload = () => {
     const s = state.value
+    const pd = s.placeDetails
+
+    const name_i18n = s.isManual ? { es: s.manualName } : { ...s.name_i18n }
+
+    const description_i18n = s.description.trim()
+      ? { ...s.description_i18n, es: s.description.trim() }
+      : { ...s.description_i18n }
+
     return {
-      name:        placeName.value,
-      description: s.description.trim() || undefined,
+      name_i18n,
+      description_i18n,
       location: {
         address: s.isManual ? s.manualAddress : (s.placeResult?.address ?? ''),
-        city:    s.isManual ? s.manualCity    : (s.placeResult?.address ?? ''),
-        lat:     s.isManual ? undefined       : (s.placeResult?.lat     ?? undefined),
-        lng:     s.isManual ? undefined       : (s.placeResult?.lng     ?? undefined),
+        city: s.isManual ? s.manualCity : (s.placeResult?.address ?? ''),
+        lat: s.isManual ? undefined : (s.placeResult?.lat ?? undefined),
+        lng: s.isManual ? undefined : (s.placeResult?.lng ?? undefined),
       },
-      category_id:         s.selectedCategories[0]?.id ?? '',
-      age_range_ids:       s.selectedAgeIds,
-      best_season:         s.selectedSeasons,
-      type:                s.selectedCategories.map(c => c.name),
-      is_free:             s.isFree,
-      price:               s.isFree ? undefined : (Number.parseFloat(s.price) || undefined),
-      stroller_friendly:   s.stroller,
-      has_shadow:          s.shadow,
-      has_bathrooms:       s.bathrooms,
-      open_weekends:       s.weekends,
+      category_id: s.selectedCategories[0]?.id ?? '',
+      age_range_ids: s.selectedAgeIds,
+      best_season: s.selectedSeasons,
+      type: s.selectedCategories.map((c) => c.name),
+      is_free: s.isFree,
+      price: s.isFree ? undefined : Number.parseFloat(s.price) || undefined,
+      stroller_friendly: s.stroller,
+      has_shadow: s.shadow,
+      has_bathrooms: s.bathrooms,
+      open_weekends: s.weekends,
       schedule_structured: s.schedule,
       metadata: {
         google_place_id: s.placeResult?.google_place_id ?? undefined,
-        place_photo_url: s.placeResult?.photo_url       ?? undefined,
-        google_types:    s.placeResult?.types           ?? undefined,
+        place_photo_url: s.placeResult?.photo_url ?? undefined,
+        google_types: s.placeResult?.types ?? undefined,
         generated_title: generatedTitle.value,
-        custom_activity: s.customActivity               || undefined,
+        custom_activity: s.customActivity || undefined,
+        google_url: pd?.google_url ?? undefined,
+        phone: pd?.phone ?? undefined,
+        website: pd?.website ?? undefined,
+        photos: pd?.photos?.length ? pd.photos : undefined,
+        wheelchair: pd?.wheelchair_accessible ?? undefined,
+        opening_hours_text: pd?.opening_hours?.weekday_text ?? undefined,
       },
     }
   }

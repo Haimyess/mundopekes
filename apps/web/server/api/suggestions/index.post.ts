@@ -9,8 +9,8 @@ interface ScheduleDay {
 
 interface SuggestionPayload {
   // Lugar
-  name: string
-  description?: string
+  name_i18n: Record<string, string>
+  description_i18n?: Record<string, string>
   location: {
     address: string
     city: string
@@ -51,8 +51,11 @@ export default defineEventHandler(async (event) => {
   const client = await serverSupabaseClient(event)
   const body = await readBody<SuggestionPayload>(event)
 
-  if (!body.name?.trim()) {
-    throw createError({ statusCode: 400, statusMessage: 'El nombre es requerido' })
+  if (!body.name_i18n || Object.keys(body.name_i18n).length === 0) {
+    throw createError({
+      statusCode: 400,
+      statusMessage: 'El nombre es requerido en al menos un idioma',
+    })
   }
   if (!body.location?.city?.trim() && !body.location?.address?.trim()) {
     throw createError({ statusCode: 400, statusMessage: 'La ubicación es requerida' })
@@ -61,7 +64,8 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, statusMessage: 'El tipo de actividad es requerido' })
   }
 
-  await logInfo(event, 'suggestions/create', 'Creating suggestion', { name: body.name })
+  const firstName = Object.values(body.name_i18n)[0] ?? 'unknown'
+  await logInfo(event, 'suggestions/create', 'Creating suggestion', { name: firstName })
 
   // Construir schedule como texto legible también
   const DAYS = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday']
@@ -77,8 +81,8 @@ export default defineEventHandler(async (event) => {
   const { data, error } = await client
     .from('suggestions')
     .insert({
-      name: body.name.trim(),
-      description: body.description?.trim() ?? '',
+      name_i18n: body.name_i18n,
+      description_i18n: body.description_i18n ?? {},
       location: body.location,
       category_id: body.category_id,
       age_range: {
@@ -106,7 +110,7 @@ export default defineEventHandler(async (event) => {
 
   if (error) {
     await logError(event, 'suggestions/create', 'Failed to insert suggestion', {
-      name: body.name,
+      name: firstName,
       error: error.message,
     })
     throw createError({ statusCode: 500, statusMessage: error.message })

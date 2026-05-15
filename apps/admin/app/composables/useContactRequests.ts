@@ -19,8 +19,8 @@ export const useContactRequests = () => {
   const isLoading = ref(false)
   const feedbackStats = ref<FeedbackStats | null>(null)
 
-  const intent = ref('')
-  const status = ref('pending')
+  const intent = ref<string | undefined>(undefined)
+  const status = ref<string | undefined>('pending') // mantiene el default 'pending'
 
   const totalPages = computed(() => Math.ceil(total.value / 20))
 

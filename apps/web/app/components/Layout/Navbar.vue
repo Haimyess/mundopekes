@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import SuggestionModal from '~/components/suggestions/SuggestionModal.vue'
 import LanguageSelector from './LanguageSelector.vue'
 
 const { t } = useI18n()
+const { tc } = useI18nContent()
 const { getNavCategoriesWithChildren } = useCategories()
 
 const wizardOpen = ref(false)
@@ -10,16 +10,18 @@ const isMobileMenuOpen = ref(false)
 
 type CategoryWithChildren = {
   id: string
-  name: string
+  name_i18n: Record<string, string>
   slug: string
   icon: string | null
-  children: { id: string; name: string; slug: string; icon: string | null }[]
+  children: { id: string; name_i18n: Record<string, string>; slug: string; icon: string | null }[]
 }
 
 const navCategories = ref<CategoryWithChildren[]>([])
+const loading = ref(true)
 
 onMounted(async () => {
   navCategories.value = await getNavCategoriesWithChildren()
+  loading.value = false
 })
 </script>
 
@@ -31,27 +33,32 @@ onMounted(async () => {
 
         <!-- Desktop -->
         <div class="navbar__desktop">
-          <UDropdownMenu
-            v-for="cat in navCategories"
-            :key="cat.slug"
-            :items="
-              cat.children.map((sub) => ({
-                label: sub.name,
-                icon: sub.icon ?? undefined,
-                to: `/search?category=${sub.slug}`,
-              }))
-            "
-          >
-            <UButton
-              variant="ghost"
-              size="sm"
-              :leading-icon="cat.icon ?? undefined"
-              trailing-icon="i-heroicons-chevron-down"
-              class="navbar__link"
+          <!-- Skeleton -->
+          <div v-if="loading" class="navbar__skeleton">
+            <div v-for="n in 4" :key="n" class="navbar__skeleton-pill" />
+          </div>
+
+          <template v-else>
+            <UDropdownMenu
+              v-for="cat in navCategories"
+              :key="cat.slug"
+              :items="
+                cat.children.map((sub) => ({
+                  label: tc(sub.name_i18n),
+                  to: `/search?category=${sub.slug}`,
+                }))
+              "
             >
-              {{ cat.name }}
-            </UButton>
-          </UDropdownMenu>
+              <UButton
+                variant="ghost"
+                size="sm"
+                trailing-icon="i-heroicons-chevron-down"
+                class="navbar__link"
+              >
+                {{ tc(cat.name_i18n) }}
+              </UButton>
+            </UDropdownMenu>
+          </template>
 
           <div class="navbar__divider" />
 
@@ -131,10 +138,39 @@ onMounted(async () => {
   color: var(--color-gray-800) !important;
   font-weight: 500;
   border-radius: 9999px;
+  cursor: pointer;
 }
 .navbar__link:hover {
   background-color: var(--color-secondary-50) !important;
   color: var(--color-secondary-800) !important;
+}
+
+.navbar__desktop :deep([role='menuitem']) {
+  cursor: pointer;
+}
+
+.navbar__skeleton {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.navbar__skeleton-pill {
+  height: 32px;
+  width: 90px;
+  background-color: var(--color-gray-200);
+  border-radius: 9999px;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
 }
 
 .navbar__suggest {

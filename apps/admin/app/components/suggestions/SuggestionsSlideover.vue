@@ -22,6 +22,15 @@ const emit = defineEmits<{
 const { approve, reject, remove, actionLoading } = useSuggestions()
 const toast = useToast()
 
+const LOCALES = [
+  { key: 'es', label: 'Español' },
+  { key: 'he', label: 'עברית' },
+  { key: 'en', label: 'English' },
+  { key: 'ru', label: 'Русский' },
+]
+
+const activeLocale = ref('he')
+
 const showRejectForm = ref(false)
 const rejectionReason = ref('')
 
@@ -51,27 +60,38 @@ const handleDelete = async () => {
 }
 
 // Reset cuando cambia la sugerencia
-watch(() => props.suggestion, () => {
-  showRejectForm.value = false
-  rejectionReason.value = ''
-})
+watch(
+  () => props.suggestion,
+  () => {
+    showRejectForm.value = false
+    rejectionReason.value = ''
+  }
+)
 
 // Helpers de display
-const statusColor = computed(() => ({
-  pending: 'warning' as const,
-  approved: 'success' as const,
-  rejected: 'error' as const
-}[props.suggestion?.status ?? 'pending']))
+const statusColor = computed(
+  () =>
+    ({
+      pending: 'warning' as const,
+      approved: 'success' as const,
+      rejected: 'error' as const,
+    })[props.suggestion?.status ?? 'pending']
+)
 
-const statusLabel = computed(() => ({
-  pending: 'Pendiente',
-  approved: 'Aprobada',
-  rejected: 'Rechazada'
-}[props.suggestion?.status ?? 'pending']))
+const statusLabel = computed(
+  () =>
+    ({
+      pending: 'Pendiente',
+      approved: 'Aprobada',
+      rejected: 'Rechazada',
+    })[props.suggestion?.status ?? 'pending']
+)
 
 const formatDate = (date: string) =>
   new Date(date).toLocaleDateString('es-AR', {
-    day: '2-digit', month: 'short', year: 'numeric'
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
   })
 
 // Modo edición
@@ -79,8 +99,8 @@ const isEditing = ref(false)
 
 // Copia editable del form
 const editForm = reactive({
-  name: '',
-  description: '',
+  name_i18n: {} as Record<string, string>,
+  description_i18n: {} as Record<string, string>,
   location: { city: '', address: '' },
   age_range: { min: 0, max: 216 },
   type: [] as string[],
@@ -88,12 +108,21 @@ const editForm = reactive({
   stroller_friendly: false,
   open_weekends: false,
   is_free: false,
-  schedule: ''
+  schedule: '',
 })
 
 const ACTIVITY_TYPES = [
-  'parque', 'museo', 'biblioteca', 'indoor', 'outdoor',
-  'acuático', 'cultural', 'deportivo', 'educativo', 'granja', 'playa'
+  'parque',
+  'museo',
+  'biblioteca',
+  'indoor',
+  'outdoor',
+  'acuático',
+  'cultural',
+  'deportivo',
+  'educativo',
+  'granja',
+  'playa',
 ]
 const SEASONS = ['primavera', 'verano', 'otoño', 'invierno', 'todo el año']
 
@@ -113,12 +142,12 @@ const toggleSeason = (v: string) => {
 const startEditing = () => {
   if (!props.suggestion) return
   const s = props.suggestion
-  editForm.name = s.name
-  editForm.description = s.description ?? ''
+  editForm.name_i18n = s.name_i18n ?? {}
+  editForm.description_i18n = s.description_i18n ?? {}
   editForm.location.city = s.location?.city ?? ''
   editForm.location.address = s.location?.address ?? ''
-  editForm.age_range.min = (s.age_range as any)?.min ?? 0
-  editForm.age_range.max = (s.age_range as any)?.max ?? 216
+  editForm.age_range.min = s.age_range?.min ?? 0
+  editForm.age_range.max = s.age_range?.max ?? 216
   editForm.type = [...(s.type ?? [])]
   editForm.best_season = [...(s.best_season ?? [])]
   editForm.stroller_friendly = s.stroller_friendly
@@ -136,8 +165,8 @@ const saveEdit = async () => {
   if (!props.suggestion) return
   const toast = useToast()
 
-  if (!editForm.name.trim()) {
-    toast.add({ title: 'El nombre es requerido', color: 'error' })
+  if (!Object.values(editForm.name_i18n).some((v) => v?.trim())) {
+    toast.add({ title: 'El nombre es requerido en al menos un idioma', color: 'error' })
     return
   }
 
@@ -146,8 +175,8 @@ const saveEdit = async () => {
     await $fetch(`/api/suggestions/${props.suggestion.id}`, {
       method: 'PUT',
       body: {
-        name: editForm.name,
-        description: editForm.description,
+        name_i18n: editForm.name_i18n,
+        description_i18n: editForm.description_i18n,
         location: editForm.location,
         age_range: editForm.age_range,
         type: editForm.type,
@@ -155,34 +184,52 @@ const saveEdit = async () => {
         stroller_friendly: editForm.stroller_friendly,
         open_weekends: editForm.open_weekends,
         is_free: editForm.is_free,
-        schedule: editForm.schedule
-      }
+        schedule: editForm.schedule,
+      },
     })
     toast.add({ title: 'Sugerencia actualizada', color: 'success' })
     isEditing.value = false
     emit('rejected') // reutilizamos para refrescar la lista
-  } catch (e: any) {
-    toast.add({ title: 'Error al guardar', description: e.message, color: 'error' })
+  } catch (e) {
+    toast.add({
+      title: 'Error al guardar',
+      description: e instanceof Error ? e.message : String(e),
+      color: 'error',
+    })
   } finally {
     actionLoading.value = false
   }
 }
 
 // Reset al cambiar sugerencia
-watch(() => props.suggestion, () => {
-  showRejectForm.value = false
-  rejectionReason.value = ''
-  isEditing.value = false
+watch(
+  () => props.suggestion,
+  () => {
+    showRejectForm.value = false
+    rejectionReason.value = ''
+    isEditing.value = false
+  }
+)
+
+const slideoverTitle = computed(() => {
+  if (!props.suggestion) return 'Sugerencia'
+  const nameI18n = props.suggestion.name_i18n
+  const name = nameI18n['he'] || nameI18n['es'] || Object.values(nameI18n)[0] || 'Sugerencia'
+  return isEditing.value ? `Editando: ${name}` : name
 })
 </script>
 
 <template>
   <USlideover
     :open="open"
-    :title="isEditing ? `Editando: ${suggestion?.name}` : suggestion?.name ?? 'Sugerencia'"
+    :title="slideoverTitle"
     :close="{ onClick: () => emit('close') }"
     :ui="{ content: 'sm:max-w-xl' }"
-    @update:open="(val) => { if (!val) emit('close') }"
+    @update:open="
+      (val) => {
+        if (!val) emit('close')
+      }
+    "
   >
     <template #body>
       <div v-if="suggestion" class="flex flex-col gap-5 p-4">
@@ -197,19 +244,23 @@ watch(() => props.suggestion, () => {
             </span>
           </div>
 
-          <div v-if="suggestion.description">
-            <p class="text-sm font-medium text-(--ui-text-muted) mb-1">
-              Descripción
-            </p>
+          <div
+            v-if="
+              (suggestion as any).description_i18n?.he || (suggestion as any).description_i18n?.es
+            "
+          >
+            <p class="text-sm font-medium text-(--ui-text-muted) mb-1">Descripción</p>
             <p class="text-sm">
-              {{ suggestion.description }}
+              {{
+                (suggestion as any).description_i18n?.he ||
+                (suggestion as any).description_i18n?.es ||
+                ''
+              }}
             </p>
           </div>
 
           <div>
-            <p class="text-sm font-medium text-(--ui-text-muted) mb-2">
-              Ubicación
-            </p>
+            <p class="text-sm font-medium text-(--ui-text-muted) mb-2">Ubicación</p>
             <div class="flex items-center gap-2">
               <UIcon name="i-lucide-map-pin" class="text-primary size-4 shrink-0" />
               <span class="text-sm">
@@ -222,41 +273,25 @@ watch(() => props.suggestion, () => {
           </div>
 
           <div v-if="suggestion.type?.length">
-            <p class="text-sm font-medium text-(--ui-text-muted) mb-2">
-              Tipo
-            </p>
+            <p class="text-sm font-medium text-(--ui-text-muted) mb-2">Tipo</p>
             <div class="flex flex-wrap gap-2">
-              <UBadge
-                v-for="t in suggestion.type"
-                :key="t"
-                color="neutral"
-                variant="subtle"
-              >
+              <UBadge v-for="t in suggestion.type" :key="t" color="neutral" variant="subtle">
                 {{ t }}
               </UBadge>
             </div>
           </div>
 
           <div v-if="suggestion.best_season?.length">
-            <p class="text-sm font-medium text-(--ui-text-muted) mb-2">
-              Mejor temporada
-            </p>
+            <p class="text-sm font-medium text-(--ui-text-muted) mb-2">Mejor temporada</p>
             <div class="flex flex-wrap gap-2">
-              <UBadge
-                v-for="s in suggestion.best_season"
-                :key="s"
-                color="info"
-                variant="subtle"
-              >
+              <UBadge v-for="s in suggestion.best_season" :key="s" color="info" variant="subtle">
                 {{ s }}
               </UBadge>
             </div>
           </div>
 
           <div>
-            <p class="text-sm font-medium text-(--ui-text-muted) mb-2">
-              Características
-            </p>
+            <p class="text-sm font-medium text-(--ui-text-muted) mb-2">Características</p>
             <div class="grid grid-cols-2 gap-2">
               <div class="flex items-center gap-2 text-sm">
                 <UIcon
@@ -269,7 +304,9 @@ watch(() => props.suggestion, () => {
               <div class="flex items-center gap-2 text-sm">
                 <UIcon
                   :name="suggestion.stroller_friendly ? 'i-lucide-check-circle' : 'i-lucide-circle'"
-                  :class="suggestion.stroller_friendly ? 'text-success-500' : 'text-(--ui-text-muted)'"
+                  :class="
+                    suggestion.stroller_friendly ? 'text-success-500' : 'text-(--ui-text-muted)'
+                  "
                   class="size-4"
                 />
                 Apto cochecito
@@ -286,18 +323,14 @@ watch(() => props.suggestion, () => {
           </div>
 
           <div v-if="suggestion.schedule">
-            <p class="text-sm font-medium text-(--ui-text-muted) mb-1">
-              Horario
-            </p>
+            <p class="text-sm font-medium text-(--ui-text-muted) mb-1">Horario</p>
             <p class="text-sm">
               {{ suggestion.schedule }}
             </p>
           </div>
 
           <div v-if="suggestion.status === 'rejected' && suggestion.rejection_reason">
-            <p class="text-sm font-medium text-(--ui-text-muted) mb-1">
-              Motivo de rechazo
-            </p>
+            <p class="text-sm font-medium text-(--ui-text-muted) mb-1">Motivo de rechazo</p>
             <UAlert
               color="error"
               variant="subtle"
@@ -335,11 +368,35 @@ watch(() => props.suggestion, () => {
         <!-- ── MODO EDICIÓN ──────────────────────────────── -->
         <template v-else>
           <UFormField label="Nombre" required>
-            <UInput v-model="editForm.name" class="w-full" />
+            <UTabs
+              v-model="activeLocale"
+              :items="LOCALES.map((l) => ({ label: l.label, value: l.key }))"
+              class="w-full"
+            >
+              <template #default="{ item }">
+                <span class="flex items-center gap-1">
+                  {{ item.label }}
+                  <span
+                    v-if="!editForm.name_i18n[item.value]?.trim()"
+                    class="w-2 h-2 rounded-full bg-orange-400 inline-block"
+                  />
+                </span>
+              </template>
+            </UTabs>
+            <UInput
+              v-model="editForm.name_i18n[activeLocale]"
+              :placeholder="`Nombre en ${LOCALES.find((l) => l.key === activeLocale)?.label}`"
+              class="w-full mt-2"
+            />
           </UFormField>
 
           <UFormField label="Descripción">
-            <UTextarea v-model="editForm.description" :rows="3" class="w-full" />
+            <UTextarea
+              v-model="editForm.description_i18n[activeLocale]"
+              :placeholder="`Descripción en ${LOCALES.find((l) => l.key === activeLocale)?.label}...`"
+              :rows="3"
+              class="w-full"
+            />
           </UFormField>
 
           <div class="grid grid-cols-2 gap-3">
@@ -406,23 +463,14 @@ watch(() => props.suggestion, () => {
     <template #footer>
       <!-- Footer modo edición -->
       <div v-if="isEditing" class="flex justify-between gap-3 w-full">
-        <UButton color="neutral" variant="outline" @click="cancelEditing">
-          Cancelar
-        </UButton>
-        <UButton
-          icon="i-lucide-save"
-          :loading="actionLoading"
-          @click="saveEdit"
-        >
+        <UButton color="neutral" variant="outline" @click="cancelEditing"> Cancelar </UButton>
+        <UButton icon="i-lucide-save" :loading="actionLoading" @click="saveEdit">
           Guardar cambios
         </UButton>
       </div>
 
       <!-- Footer modo vista — pendiente -->
-      <div
-        v-else-if="suggestion?.status === 'pending'"
-        class="flex justify-between gap-3 w-full"
-      >
+      <div v-else-if="suggestion?.status === 'pending'" class="flex justify-between gap-3 w-full">
         <div class="flex gap-2">
           <UButton
             color="error"
@@ -431,12 +479,7 @@ watch(() => props.suggestion, () => {
             :loading="actionLoading"
             @click="handleDelete"
           />
-          <UButton
-            color="neutral"
-            variant="outline"
-            icon="i-lucide-pencil"
-            @click="startEditing"
-          >
+          <UButton color="neutral" variant="outline" icon="i-lucide-pencil" @click="startEditing">
             Editar
           </UButton>
         </div>
@@ -464,12 +507,7 @@ watch(() => props.suggestion, () => {
 
       <!-- Footer modo vista — ya procesada -->
       <div v-else class="flex justify-between w-full">
-        <UButton
-          color="neutral"
-          variant="outline"
-          icon="i-lucide-pencil"
-          @click="startEditing"
-        >
+        <UButton color="neutral" variant="outline" icon="i-lucide-pencil" @click="startEditing">
           Editar
         </UButton>
         <UButton

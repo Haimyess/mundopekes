@@ -2,23 +2,43 @@
 import { useGeolocation } from '@vueuse/core'
 
 const activitiesStore = useActivitiesStore()
-const { coords, resume } = useGeolocation({ immediate: false })
+const {
+  coords,
+  resume,
+  error: geoError,
+  isSupported: geoSupported,
+} = useGeolocation({ immediate: false })
+const geoBlocked = ref(false)
 
 onMounted(async () => {
   await Promise.all([
     activitiesStore.loadRecentActivities(),
     activitiesStore.loadPopularActivities(),
     activitiesStore.loadRecommendedActivities(),
-    activitiesStore.loadFilterOptions(), // ← opciones para el SearchForm
+    activitiesStore.loadFilterOptions(),
   ])
 
+  console.log('📍 Geolocation supported:', geoSupported.value)
+  console.log('📍 Calling resume()...')
   resume()
+  console.log('📍 resume() called. Waiting for coords...')
+
   watchOnce(
     () => coords.value.latitude,
     async (lat) => {
-      if (lat && isFinite(lat)) {
-        await activitiesStore.loadNearbyActivities(lat, coords.value.longitude!)
+      const lng = coords.value.longitude
+      console.log('📍 coords changed → lat:', lat, 'lng:', lng)
+      if (lat && Number.isFinite(lat) && Number.isFinite(lng)) {
+        await activitiesStore.loadNearbyActivities(lat, lng)
       }
+    }
+  )
+
+  watchOnce(
+    () => geoError.value,
+    (err) => {
+      console.warn('📍 Geo error:', err?.message, '| code:', err?.code)
+      if (err) geoBlocked.value = true
     }
   )
 })
@@ -37,6 +57,7 @@ onMounted(async () => {
         :title="$t('carousels.nearby')"
         :activities="activitiesStore.nearbyActivities"
         :loading="activitiesStore.loading.nearby"
+        :empty-message="geoBlocked ? $t('carousels.nearby_blocked') : undefined"
       />
       <HomeActivityCarousel
         :title="$t('carousels.popular')"
@@ -50,6 +71,7 @@ onMounted(async () => {
       />
     </div>
     <HomeCTA />
-    <HomeProviderCTA />
+    <!-- AGREGAR CUANDO TENGAMOS FLUJO Y ESTADISTICAS Y QUERAMOS COMENZAR CON LAS SUSCRIPCIONES -->
+    <!-- <HomeProviderCTA /> -->
   </div>
 </template>

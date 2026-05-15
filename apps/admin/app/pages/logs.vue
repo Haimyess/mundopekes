@@ -23,7 +23,8 @@ const contexts = ref<string[]>([])
 const metadataModal = ref(false)
 const selectedMetadata = ref<unknown>(null)
 
-const formatDate = (date: string) => {
+const formatDate = (date: string | null) => {
+  if (!date) return '—'
   const d = new Date(date)
   return `${d.getDate().toString().padStart(2, '0')}/${(d.getMonth() + 1).toString().padStart(2, '0')} ${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`
 }
@@ -36,14 +37,14 @@ const levelColor = (lvl: string) =>
   })[lvl] ?? 'neutral'
 
 const levelOptions = [
-  { label: 'Todos los niveles', value: '' },
+  { label: 'Todos los niveles', value: undefined },
   { label: 'Error', value: 'error' },
   { label: 'Warn', value: 'warn' },
   { label: 'Info', value: 'info' },
 ]
 
 const contextOptions = computed(() => [
-  { label: 'Todos los contextos', value: '' },
+  { label: 'Todos los contextos', value: undefined },
   ...contexts.value.map((c) => ({ label: c, value: c })),
 ])
 

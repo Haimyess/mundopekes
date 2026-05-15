@@ -4,10 +4,10 @@ export type SuggestionStatus = 'pending' | 'approved' | 'rejected'
 
 export interface Suggestion {
   id: string
-  name: string
-  description?: string
-  location: { city?: string, region?: string, address?: string }
-  age_range: any
+  name_i18n: Record<string, string>
+  description_i18n?: Record<string, string>
+  location: { city?: string; region?: string; address?: string }
+  age_range: { min?: number; max?: number; ids?: number[] } | null
   type: string[]
   best_season: string[]
   stroller_friendly: boolean
@@ -35,15 +35,17 @@ export const useSuggestions = () => {
   const fetch = async () => {
     loading.value = true
     try {
-      const params = statusFilter.value !== 'all'
-        ? { status: statusFilter.value }
-        : {}
+      const params = statusFilter.value !== 'all' ? { status: statusFilter.value } : {}
 
       suggestions.value = await $fetch<Suggestion[]>('/api/suggestions', {
-        params
+        params,
       })
-    } catch (e: any) {
-      toast.add({ title: 'Error cargando sugerencias', description: e.message, color: 'error' })
+    } catch (e) {
+      toast.add({
+        title: 'Error cargando sugerencias',
+        description: e instanceof Error ? e.message : String(e),
+        color: 'error',
+      })
     } finally {
       loading.value = false
     }
@@ -53,18 +55,30 @@ export const useSuggestions = () => {
   const approve = async (id: string) => {
     actionLoading.value = true
     try {
-      const result = await $fetch(`/api/suggestions/${id}/approve`, {
-        method: 'POST'
-      })
+      const result = await $fetch<{ place?: { name_i18n?: Record<string, string> } }>(
+        `/api/suggestions/${id}/approve`,
+        {
+          method: 'POST',
+        }
+      )
+      const placeName =
+        result.place?.name_i18n?.['es'] ||
+        result.place?.name_i18n?.['he'] ||
+        Object.values(result.place?.name_i18n ?? {})[0] ||
+        'nuevo lugar'
       toast.add({
         title: 'Sugerencia aprobada',
-        description: `Se creó el lugar "${(result as any).place.name}"`,
+        description: `Se creó el lugar "${placeName}"`,
         color: 'success',
-        icon: 'i-lucide-check-circle'
+        icon: 'i-lucide-check-circle',
       })
       await fetch()
-    } catch (e: any) {
-      toast.add({ title: 'Error al aprobar', description: e.message, color: 'error' })
+    } catch (e) {
+      toast.add({
+        title: 'Error al aprobar',
+        description: e instanceof Error ? e.message : String(e),
+        color: 'error',
+      })
     } finally {
       actionLoading.value = false
     }
@@ -76,16 +90,20 @@ export const useSuggestions = () => {
     try {
       await $fetch(`/api/suggestions/${id}`, {
         method: 'PUT',
-        body: { status: 'rejected', rejection_reason: reason }
+        body: { status: 'rejected', rejection_reason: reason },
       })
       toast.add({
         title: 'Sugerencia rechazada',
         color: 'neutral',
-        icon: 'i-lucide-x-circle'
+        icon: 'i-lucide-x-circle',
       })
       await fetch()
-    } catch (e: any) {
-      toast.add({ title: 'Error al rechazar', description: e.message, color: 'error' })
+    } catch (e) {
+      toast.add({
+        title: 'Error al rechazar',
+        description: e instanceof Error ? e.message : String(e),
+        color: 'error',
+      })
     } finally {
       actionLoading.value = false
     }
@@ -98,8 +116,12 @@ export const useSuggestions = () => {
       await $fetch(`/api/suggestions/${id}`, { method: 'DELETE' })
       toast.add({ title: 'Sugerencia eliminada', color: 'neutral' })
       await fetch()
-    } catch (e: any) {
-      toast.add({ title: 'Error al eliminar', description: e.message, color: 'error' })
+    } catch (e) {
+      toast.add({
+        title: 'Error al eliminar',
+        description: e instanceof Error ? e.message : String(e),
+        color: 'error',
+      })
     } finally {
       actionLoading.value = false
     }
@@ -107,9 +129,9 @@ export const useSuggestions = () => {
 
   // Contadores por status
   const counts = computed(() => ({
-    pending: suggestions.value.filter(s => s.status === 'pending').length,
-    approved: suggestions.value.filter(s => s.status === 'approved').length,
-    rejected: suggestions.value.filter(s => s.status === 'rejected').length
+    pending: suggestions.value.filter((s) => s.status === 'pending').length,
+    approved: suggestions.value.filter((s) => s.status === 'approved').length,
+    rejected: suggestions.value.filter((s) => s.status === 'rejected').length,
   }))
 
   // Re-fetch cuando cambia el filtro
@@ -124,6 +146,6 @@ export const useSuggestions = () => {
     fetch,
     approve,
     reject,
-    remove
+    remove,
   }
 }

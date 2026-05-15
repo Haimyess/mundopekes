@@ -62,6 +62,13 @@ export const useActivityLocation = () => {
 
     const activities = (data ?? []).map(normalizeActivity)
 
+    const withoutCoords = activities.filter((a) => !a.place?.lat || !a.place?.lng)
+    if (withoutCoords.length > 0) {
+      console.warn(
+        `⚠️ ${withoutCoords.length} actividades sin coordenadas (lat/lng) en places — no aparecerán en "Cerca de ti"`
+      )
+    }
+
     const withDistance = activities
       .map((activity) => {
         if (!activity.place?.lat || !activity.place?.lng) return null
@@ -74,6 +81,9 @@ export const useActivityLocation = () => {
       .sort((a, b) => a!.distance - b!.distance)
       .slice(0, limit) as (Activity & { distance: number })[]
 
+    console.log(
+      `📍 getNearbyActivities: ${withDistance.length} actividades dentro de ${radiusKm}km`
+    )
     return withDistance
   }
 

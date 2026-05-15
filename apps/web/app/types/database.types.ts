@@ -1,8 +1,3 @@
-/**
- * Types para Supabase Database
- * Estructura compatible con GenericSchema de supabase-js
- */
-
 export type Json =
   | string
   | number
@@ -11,114 +6,244 @@ export type Json =
   | { [key: string]: Json | undefined }
   | Json[]
 
-export interface Database {
+export type Database = {
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  __InternalSupabase: {
+    PostgrestVersion: "14.4"
+  }
   public: {
     Tables: {
-
-      // ── activities ────────────────────────────────────────────
       activities: {
         Row: {
-          id: string
-          place_id: string
           category_id: string | null
-          title: string
-          description: string | null
-          price: number | null
-          is_free: boolean
-          stroller_friendly: boolean
-          open_weekends: boolean
-          schedule: string | null
-          images: string[]
-          status: 'pending' | 'approved' | 'rejected'
-          created_at: string
-          updated_at: string
-          metadata: Json
-        }
-        Insert: {
-          id?: string
-          place_id: string
-          category_id?: string | null
-          title: string
-          description?: string | null
-          price?: number | null
-          is_free?: boolean
-          stroller_friendly?: boolean
-          open_weekends?: boolean
-          schedule?: string | null
-          images?: string[]
-          status?: 'pending' | 'approved' | 'rejected'
-          created_at?: string
-          updated_at?: string
-          metadata?: Json
-        }
-        Update: {
-          id?: string
-          place_id?: string
-          category_id?: string | null
-          title?: string
-          description?: string | null
-          price?: number | null
-          is_free?: boolean
-          stroller_friendly?: boolean
-          open_weekends?: boolean
-          schedule?: string | null
-          images?: string[]
-          status?: 'pending' | 'approved' | 'rejected'
-          created_at?: string
-          updated_at?: string
-          metadata?: Json
-        }
-        Relationships: []
-      }
-
-      // ── places ───────────────────────────────────────────────
-      places: {
-        Row: {
+          created_at: string | null
+          description_i18n: Json
           id: string
-          name: string
-          description: string | null
-          city_id: number | null
-          lat: number | null
-          lng: number | null
-          images: string[]
-          metadata: Json
-          created_at: string
-          updated_at: string
-          provider_id: string | null
-          status: 'active' | 'inactive' | 'draft'
+          images: string[] | null
+          is_free: boolean | null
+          metadata: Json | null
+          open_weekends: boolean | null
+          place_id: string
+          price: number | null
+          schedule: string | null
+          status: string | null
+          stroller_friendly: boolean | null
+          title_i18n: Json
+          updated_at: string | null
         }
         Insert: {
+          category_id?: string | null
+          created_at?: string | null
+          description_i18n?: Json
           id?: string
-          name: string
-          description?: string | null
-          city_id?: number | null
-          lat?: number | null
-          lng?: number | null
-          images?: string[]
-          metadata?: Json
-          created_at?: string
-          updated_at?: string
-          provider_id?: string | null
-          status?: 'active' | 'inactive' | 'draft'
+          images?: string[] | null
+          is_free?: boolean | null
+          metadata?: Json | null
+          open_weekends?: boolean | null
+          place_id: string
+          price?: number | null
+          schedule?: string | null
+          status?: string | null
+          stroller_friendly?: boolean | null
+          title_i18n?: Json
+          updated_at?: string | null
         }
         Update: {
+          category_id?: string | null
+          created_at?: string | null
+          description_i18n?: Json
           id?: string
-          name?: string
-          description?: string | null
-          city_id?: number | null
-          lat?: number | null
-          lng?: number | null
-          images?: string[]
-          metadata?: Json
-          created_at?: string
-          updated_at?: string
-          provider_id?: string | null
-          status?: 'active' | 'inactive' | 'draft'
+          images?: string[] | null
+          is_free?: boolean | null
+          metadata?: Json | null
+          open_weekends?: boolean | null
+          place_id?: string
+          price?: number | null
+          schedule?: string | null
+          status?: string | null
+          stroller_friendly?: boolean | null
+          title_i18n?: Json
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "activities_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "activities_place_id_fkey"
+            columns: ["place_id"]
+            isOneToOne: false
+            referencedRelation: "places"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      activity_age_ranges: {
+        Row: {
+          activity_id: string
+          age_range_id: number
+        }
+        Insert: {
+          activity_id: string
+          age_range_id: number
+        }
+        Update: {
+          activity_id?: string
+          age_range_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "activity_age_ranges_activity_id_fkey"
+            columns: ["activity_id"]
+            isOneToOne: false
+            referencedRelation: "activities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "activity_age_ranges_age_range_id_fkey"
+            columns: ["age_range_id"]
+            isOneToOne: false
+            referencedRelation: "age_ranges"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      activity_seasons: {
+        Row: {
+          activity_id: string
+          season_id: number
+        }
+        Insert: {
+          activity_id: string
+          season_id: number
+        }
+        Update: {
+          activity_id?: string
+          season_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "activity_seasons_activity_id_fkey"
+            columns: ["activity_id"]
+            isOneToOne: false
+            referencedRelation: "activities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "activity_seasons_season_id_fkey"
+            columns: ["season_id"]
+            isOneToOne: false
+            referencedRelation: "seasons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      age_ranges: {
+        Row: {
+          id: number
+          label_key: string
+          max_months: number
+          min_months: number
+          sort_order: number
+        }
+        Insert: {
+          id?: number
+          label_key: string
+          max_months: number
+          min_months: number
+          sort_order?: number
+        }
+        Update: {
+          id?: number
+          label_key?: string
+          max_months?: number
+          min_months?: number
+          sort_order?: number
         }
         Relationships: []
       }
-
-      // ── cities ───────────────────────────────────────────────
+      app_logs: {
+        Row: {
+          app: string
+          context: string
+          created_at: string | null
+          id: string
+          level: string
+          message: string
+          metadata: Json | null
+        }
+        Insert: {
+          app?: string
+          context: string
+          created_at?: string | null
+          id?: string
+          level: string
+          message: string
+          metadata?: Json | null
+        }
+        Update: {
+          app?: string
+          context?: string
+          created_at?: string | null
+          id?: string
+          level?: string
+          message?: string
+          metadata?: Json | null
+        }
+        Relationships: []
+      }
+      categories: {
+        Row: {
+          created_at: string | null
+          icon: string | null
+          id: string
+          name_i18n: Json
+          nav_level: number
+          order: number
+          parent_id: string | null
+          section: string
+          slug: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          icon?: string | null
+          id?: string
+          name_i18n?: Json
+          nav_level?: number
+          order?: number
+          parent_id?: string | null
+          section?: string
+          slug: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          icon?: string | null
+          id?: string
+          name_i18n?: Json
+          nav_level?: number
+          order?: number
+          parent_id?: string | null
+          section?: string
+          slug?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "categories_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       cities: {
         Row: {
           id: number
@@ -137,237 +262,496 @@ export interface Database {
         }
         Relationships: []
       }
-
-      // ── categories ───────────────────────────────────────────
-      categories: {
+      contact_requests: {
         Row: {
+          activity_id: string | null
+          activity_title: string | null
+          created_at: string | null
+          email: string
           id: string
+          intent: string
+          locale: string | null
+          message: string
+          metadata: Json | null
           name: string
-          slug: string
-          order: number
-          parent_id: string | null
-          icon: string | null
-          created_at: string
-          updated_at: string
-            nav_level: number        // ← agregar
-    section: string   
+          status: string
         }
         Insert: {
+          activity_id?: string | null
+          activity_title?: string | null
+          created_at?: string | null
+          email: string
           id?: string
+          intent: string
+          locale?: string | null
+          message: string
+          metadata?: Json | null
           name: string
-          slug: string
-          order?: number
-          parent_id?: string | null
-          icon?: string | null
-          created_at?: string
-          updated_at?: string
-             nav_level?: number       // ← agregar
-    section?: string    
+          status?: string
         }
         Update: {
+          activity_id?: string | null
+          activity_title?: string | null
+          created_at?: string | null
+          email?: string
           id?: string
+          intent?: string
+          locale?: string | null
+          message?: string
+          metadata?: Json | null
           name?: string
-          slug?: string
-          order?: number
-          parent_id?: string | null
-          icon?: string | null
-          created_at?: string
-          updated_at?: string
-           nav_level?: number       // ← agregar
-    section?: string    
+          status?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "contact_requests_activity_id_fkey"
+            columns: ["activity_id"]
+            isOneToOne: false
+            referencedRelation: "activities"
+            referencedColumns: ["id"]
+          },
+        ]
       }
-
-      // ── age_ranges ───────────────────────────────────────────
-      age_ranges: {
+      faq_categories: {
         Row: {
-          id: number
-          label_key: string
-          min_months: number
-          max_months: number
-          sort_order: number
+          created_at: string | null
+          id: string
+          name_i18n: Json
+          order: number
+          slug: string
         }
         Insert: {
-          id?: number
-          label_key: string
-          min_months: number
-          max_months: number
-          sort_order?: number
+          created_at?: string | null
+          id?: string
+          name_i18n?: Json
+          order?: number
+          slug: string
         }
         Update: {
-          id?: number
-          label_key?: string
-          min_months?: number
-          max_months?: number
-          sort_order?: number
+          created_at?: string | null
+          id?: string
+          name_i18n?: Json
+          order?: number
+          slug?: string
         }
         Relationships: []
       }
-
-      // ── seasons ──────────────────────────────────────────────
+      faqs: {
+        Row: {
+          answer_i18n: Json
+          created_at: string | null
+          faq_category_id: string | null
+          id: string
+          order: number
+          question_i18n: Json
+          status: string
+          updated_at: string | null
+        }
+        Insert: {
+          answer_i18n?: Json
+          created_at?: string | null
+          faq_category_id?: string | null
+          id?: string
+          order?: number
+          question_i18n?: Json
+          status?: string
+          updated_at?: string | null
+        }
+        Update: {
+          answer_i18n?: Json
+          created_at?: string | null
+          faq_category_id?: string | null
+          id?: string
+          order?: number
+          question_i18n?: Json
+          status?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "faqs_faq_category_id_fkey"
+            columns: ["faq_category_id"]
+            isOneToOne: false
+            referencedRelation: "faq_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      places: {
+        Row: {
+          city_id: number | null
+          created_at: string | null
+          description_i18n: Json
+          id: string
+          images: string[] | null
+          lat: number | null
+          lng: number | null
+          metadata: Json | null
+          name_i18n: Json
+          provider_id: string | null
+          status: string
+          updated_at: string | null
+        }
+        Insert: {
+          city_id?: number | null
+          created_at?: string | null
+          description_i18n?: Json
+          id?: string
+          images?: string[] | null
+          lat?: number | null
+          lng?: number | null
+          metadata?: Json | null
+          name_i18n?: Json
+          provider_id?: string | null
+          status?: string
+          updated_at?: string | null
+        }
+        Update: {
+          city_id?: number | null
+          created_at?: string | null
+          description_i18n?: Json
+          id?: string
+          images?: string[] | null
+          lat?: number | null
+          lng?: number | null
+          metadata?: Json | null
+          name_i18n?: Json
+          provider_id?: string | null
+          status?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "places_city_id_fkey"
+            columns: ["city_id"]
+            isOneToOne: false
+            referencedRelation: "cities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "places_provider_id_fkey"
+            columns: ["provider_id"]
+            isOneToOne: false
+            referencedRelation: "providers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      providers: {
+        Row: {
+          activity_types: string[]
+          address: string | null
+          city_id: number | null
+          created_at: string | null
+          description: string
+          email: string
+          id: string
+          metadata: Json | null
+          name: string
+          notes: string | null
+          phone: string | null
+          price_range: Json
+          schedule: Json
+          status: Database["public"]["Enums"]["provider_status"]
+          updated_at: string
+          website: string | null
+        }
+        Insert: {
+          activity_types?: string[]
+          address?: string | null
+          city_id?: number | null
+          created_at?: string | null
+          description: string
+          email: string
+          id?: string
+          metadata?: Json | null
+          name: string
+          notes?: string | null
+          phone?: string | null
+          price_range?: Json
+          schedule?: Json
+          status?: Database["public"]["Enums"]["provider_status"]
+          updated_at?: string
+          website?: string | null
+        }
+        Update: {
+          activity_types?: string[]
+          address?: string | null
+          city_id?: number | null
+          created_at?: string | null
+          description?: string
+          email?: string
+          id?: string
+          metadata?: Json | null
+          name?: string
+          notes?: string | null
+          phone?: string | null
+          price_range?: Json
+          schedule?: Json
+          status?: Database["public"]["Enums"]["provider_status"]
+          updated_at?: string
+          website?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "providers_city_id_fkey"
+            columns: ["city_id"]
+            isOneToOne: false
+            referencedRelation: "cities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       seasons: {
         Row: {
           id: number
-          value: string
           label_key: string
           sort_order: number
+          value: string
         }
         Insert: {
           id?: number
-          value: string
           label_key: string
           sort_order?: number
+          value: string
         }
         Update: {
           id?: number
-          value?: string
           label_key?: string
           sort_order?: number
+          value?: string
         }
         Relationships: []
       }
-
-      // ── activity_age_ranges (pivot) ──────────────────────────
-      activity_age_ranges: {
-        Row: {
-          activity_id: string
-          age_range_id: number
-        }
-        Insert: {
-          activity_id: string
-          age_range_id: number
-        }
-        Update: {
-          activity_id?: string
-          age_range_id?: number
-        }
-        Relationships: []
-      }
-
-      // ── activity_seasons (pivot) ─────────────────────────────
-      activity_seasons: {
-        Row: {
-          activity_id: string
-          season_id: number
-        }
-        Insert: {
-          activity_id: string
-          season_id: number
-        }
-        Update: {
-          activity_id?: string
-          season_id?: number
-        }
-        Relationships: []
-      }
-
-      // ── providers ────────────────────────────────────────────
-      providers: {
-        Row: {
-          id: string
-          name: string
-          type: 'government' | 'business' | 'individual'
-          contact: Json
-          metadata: Json
-          created_at: string
-        }
-        Insert: {
-          id?: string
-          name: string
-          type: 'government' | 'business' | 'individual'
-          contact?: Json
-          metadata?: Json
-          created_at?: string
-        }
-        Update: {
-          id?: string
-          name?: string
-          type?: 'government' | 'business' | 'individual'
-          contact?: Json
-          metadata?: Json
-          created_at?: string
-        }
-        Relationships: []
-      }
-
-      // ── suggestions ──────────────────────────────────────────
       suggestions: {
         Row: {
-          id: string
-          name: string
-          description: string | null
-          location: Json
           age_range: Json
-          type: string[]
           best_season: string[]
-          stroller_friendly: boolean
-          open_weekends: boolean
-          is_free: boolean
-          schedule: string | null
-          images: string[]
-          status: 'pending' | 'approved' | 'rejected'
+          category_id: string | null
+          created_at: string | null
+          description_i18n: Json
+          id: string
+          images: string[] | null
+          is_free: boolean | null
+          location: Json
+          metadata: Json | null
+          name_i18n: Json
+          open_weekends: boolean | null
           rejection_reason: string | null
           reviewed_at: string | null
-          created_at: string
+          schedule: string | null
+          status: string | null
+          stroller_friendly: boolean | null
+          type: string[]
         }
         Insert: {
-          id?: string
-          name: string
-          description?: string | null
-          location: Json
           age_range: Json
-          type?: string[]
-          best_season?: string[]
-          stroller_friendly?: boolean
-          open_weekends?: boolean
-          is_free?: boolean
-          schedule?: string | null
-          images?: string[]
-          status?: 'pending' | 'approved' | 'rejected'
+          best_season: string[]
+          category_id?: string | null
+          created_at?: string | null
+          description_i18n?: Json
+          id?: string
+          images?: string[] | null
+          is_free?: boolean | null
+          location: Json
+          metadata?: Json | null
+          name_i18n?: Json
+          open_weekends?: boolean | null
           rejection_reason?: string | null
           reviewed_at?: string | null
-          created_at?: string
+          schedule?: string | null
+          status?: string | null
+          stroller_friendly?: boolean | null
+          type: string[]
         }
         Update: {
-          id?: string
-          name?: string
-          description?: string | null
-          location?: Json
           age_range?: Json
-          type?: string[]
           best_season?: string[]
-          stroller_friendly?: boolean
-          open_weekends?: boolean
-          is_free?: boolean
-          schedule?: string | null
-          images?: string[]
-          status?: 'pending' | 'approved' | 'rejected'
+          category_id?: string | null
+          created_at?: string | null
+          description_i18n?: Json
+          id?: string
+          images?: string[] | null
+          is_free?: boolean | null
+          location?: Json
+          metadata?: Json | null
+          name_i18n?: Json
+          open_weekends?: boolean | null
           rejection_reason?: string | null
           reviewed_at?: string | null
-          created_at?: string
+          schedule?: string | null
+          status?: string | null
+          stroller_friendly?: boolean | null
+          type?: string[]
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "suggestions_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
-    Views: Record<string, never>
-    Functions: Record<string, never>
-    Enums: Record<string, never>
-    CompositeTypes: Record<string, never>
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      categories_next_order: { Args: { parent?: string }; Returns: number }
+      get_i18n_text: { Args: { data: Json; locale: string }; Returns: string }
+      is_admin: { Args: never; Returns: boolean }
+    }
+    Enums: {
+      provider_status: "pending" | "active" | "suspended" | "rejected"
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
   }
 }
 
-// Typed helpers for jsonb columns in suggestions
-export interface SuggestionLocation {
-  address: string
-  city: string
-  coordinates?: {
-    lat: number
-    lng: number
+type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
+
+type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
+
+export type Tables<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
   }
+    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+      Row: infer R
+    }
+    ? R
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])
+    ? (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
+        Row: infer R
+      }
+      ? R
+      : never
+    : never
+
+export type TablesInsert<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Insert: infer I
+    }
+    ? I
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Insert: infer I
+      }
+      ? I
+      : never
+    : never
+
+export type TablesUpdate<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Update: infer U
+    }
+    ? U
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Update: infer U
+      }
+      ? U
+      : never
+    : never
+
+export type Enums<
+  DefaultSchemaEnumNameOrOptions extends
+    | keyof DefaultSchema["Enums"]
+    | { schema: keyof DatabaseWithoutInternals },
+  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
+    : never = never,
+> = DefaultSchemaEnumNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
+  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
+    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
+    : never
+
+export type CompositeTypes<
+  PublicCompositeTypeNameOrOptions extends
+    | keyof DefaultSchema["CompositeTypes"]
+    | { schema: keyof DatabaseWithoutInternals },
+  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+    : never = never,
+> = PublicCompositeTypeNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
+  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
+    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+    : never
+
+export const Constants = {
+  public: {
+    Enums: {
+      provider_status: ["pending", "active", "suspended", "rejected"],
+    },
+  },
+} as const
+
+/**
+ * Tipo para campos i18n JSONB
+ */
+export type I18nField = Record<string, string>
+
+export type PlaceResolved = Omit<Tables<'places'>, 'name_i18n' | 'description_i18n'> & {
+  name_i18n: I18nField
+  description_i18n: I18nField
 }
 
-export interface SuggestionAgeRange {
-  min: number
-  max: number
+export type ActivityResolved = Omit<Tables<'activities'>, 'title_i18n' | 'description_i18n'> & {
+  title_i18n: I18nField
+  description_i18n: I18nField
+}
+
+export type CategoryResolved = Omit<Tables<'categories'>, 'name_i18n'> & {
+  name_i18n: I18nField
 }

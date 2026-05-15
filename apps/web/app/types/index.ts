@@ -25,7 +25,7 @@ export type {
   SuggestionLocation,
   SuggestionAgeRange,
   CreateSuggestionInput,
-  SuggestionResponse
+  SuggestionResponse,
 } from './suggestion'
 
 // ── UI ────────────────────────────────────────────────────────────
@@ -35,7 +35,7 @@ export type {
   ComponentSize,
   DropdownItem,
   SelectOption,
-  BaseComponentProps
+  BaseComponentProps,
 } from './ui'
 
 // ── Filter options ────────────────────────────────────────────────
@@ -62,7 +62,7 @@ export interface SeasonOption {
 
 export interface CategoryOption {
   id: string
-  name: string
+  name_i18n: Record<string, string>
   slug: string
   icon: string | null
 }

@@ -14,17 +14,26 @@ const emit = defineEmits<{
 const toast = useToast()
 const loading = ref(false)
 
+const LOCALES = [
+  { key: 'es', label: 'Español' },
+  { key: 'he', label: 'עברית' },
+  { key: 'en', label: 'English' },
+  { key: 'ru', label: 'Русский' },
+]
+
+const activeLocale = ref('he')
+
 const form = reactive({
   place_id: props.placeId ?? '',
   category_id: undefined as string | undefined,
-  title: '',
-  description: '',
+  title_i18n: {} as Record<string, string>,
+  description_i18n: {} as Record<string, string>,
   price: null as number | null,
   is_free: true,
   stroller_friendly: false,
   open_weekends: false,
   schedule: '',
-  status: 'approved' as 'pending' | 'approved' | 'rejected'
+  status: 'approved' as 'pending' | 'approved' | 'rejected',
 })
 
 const { data: categories } = await useFetch<Category[]>('/api/categories')
@@ -33,49 +42,62 @@ const { data: places } = props.placeId
   : await useFetch<Place[]>('/api/places')
 
 const placeOptions = computed(() =>
-  (places.value ?? []).map(p => ({
-    label: p.city?.name ? `${p.name} — ${p.city.name}` : p.name,
-    value: p.id
-  }))
+  (places.value ?? []).map((p) => {
+    const name = p.name_i18n['he'] || p.name_i18n['es'] || ''
+    return {
+      label: p.city?.name ? `${name} — ${p.city.name}` : name,
+      value: p.id,
+    }
+  })
 )
 
 const categoryOptions = computed(() =>
-  (categories.value ?? []).map(c => ({ label: c.name, value: c.id }))
+  (categories.value ?? []).map((c) => ({
+    label: c.name_i18n['he'] || c.name_i18n['es'] || '',
+    value: c.id,
+  }))
 )
 
-watch(() => props.activity, (val) => {
-  if (val) {
-    form.place_id = val.place_id
-    form.category_id = val.category_id ?? undefined
-    form.title = val.title
-    form.description = val.description ?? ''
-    form.price = val.price
-    form.is_free = val.is_free
-    form.stroller_friendly = val.stroller_friendly
-    form.open_weekends = val.open_weekends
-    form.schedule = val.schedule ?? ''
-    form.status = val.status
-  } else {
-    form.place_id = props.placeId ?? ''
-    form.category_id = undefined
-    form.title = ''
-    form.description = ''
-    form.price = null
-    form.is_free = true
-    form.stroller_friendly = false
-    form.open_weekends = false
-    form.schedule = ''
-    form.status = 'approved'
-  }
-}, { immediate: true })
+watch(
+  () => props.activity,
+  (val) => {
+    if (val) {
+      form.place_id = val.place_id
+      form.category_id = val.category_id ?? undefined
+      form.title_i18n = (val.title_i18n as Record<string, string>) ?? {}
+      form.description_i18n = (val.description_i18n as Record<string, string>) ?? {}
+      form.price = val.price
+      form.is_free = val.is_free
+      form.stroller_friendly = val.stroller_friendly
+      form.open_weekends = val.open_weekends
+      form.schedule = val.schedule ?? ''
+      form.status = val.status
+    } else {
+      form.place_id = props.placeId ?? ''
+      form.category_id = undefined
+      form.title_i18n = {}
+      form.description_i18n = {}
+      form.price = null
+      form.is_free = true
+      form.stroller_friendly = false
+      form.open_weekends = false
+      form.schedule = ''
+      form.status = 'approved'
+    }
+  },
+  { immediate: true }
+)
 
-watch(() => form.is_free, (val) => {
-  if (val) form.price = null
-})
+watch(
+  () => form.is_free,
+  (val) => {
+    if (val) form.price = null
+  }
+)
 
 const save = async () => {
-  if (!form.title) {
-    toast.add({ title: 'El título es requerido', color: 'error' })
+  if (!Object.values(form.title_i18n).some((v) => v?.trim())) {
+    toast.add({ title: 'El título es requerido en al menos un idioma', color: 'error' })
     return
   }
   if (!form.place_id) {
@@ -87,20 +109,24 @@ const save = async () => {
     if (props.activity?.id) {
       await $fetch(`/api/activities/${props.activity.id}`, {
         method: 'PUT',
-        body: form
+        body: form,
       })
       toast.add({ title: 'Actividad actualizada', color: 'success' })
     } else {
       await $fetch('/api/activities', {
         method: 'POST',
-        body: form
+        body: form,
       })
       toast.add({ title: 'Actividad creada', color: 'success' })
     }
     emit('saved')
     emit('close')
-  } catch (e: any) {
-    toast.add({ title: 'Error', description: e.message, color: 'error' })
+  } catch (e) {
+    toast.add({
+      title: 'Error',
+      description: e instanceof Error ? e.message : String(e),
+      color: 'error',
+    })
   } finally {
     loading.value = false
   }
@@ -126,16 +152,38 @@ const save = async () => {
         </UFormField>
 
         <UFormField label="Título" required>
-          <UInput v-model="form.title" placeholder="Ej: Ski y snowboard" class="w-full" />
+          <UTabs
+            v-model="activeLocale"
+            :items="LOCALES.map((l) => ({ label: l.label, value: l.key }))"
+            class="w-full"
+          >
+            <template #default="{ item }">
+              <span class="flex items-center gap-1">
+                {{ item.label }}
+                <span
+                  v-if="!form.title_i18n[item.value]?.trim()"
+                  class="w-2 h-2 rounded-full bg-orange-400 inline-block"
+                />
+              </span>
+            </template>
+          </UTabs>
+          <UInput
+            v-model="form.title_i18n[activeLocale]"
+            :placeholder="`Título en ${LOCALES.find((l) => l.key === activeLocale)?.label}`"
+            class="w-full mt-2"
+          />
         </UFormField>
 
         <UFormField label="Descripción">
           <UTextarea
-            v-model="form.description"
-            placeholder="Descripción de la actividad..."
+            v-model="form.description_i18n[activeLocale]"
+            :placeholder="`Descripción en ${LOCALES.find((l) => l.key === activeLocale)?.label}...`"
             :rows="3"
             class="w-full"
           />
+          <p class="text-xs text-gray-400 mt-1">
+            El tab activo controla qué idioma estás editando.
+          </p>
         </UFormField>
 
         <UFormField label="Categoría">
@@ -153,7 +201,7 @@ const save = async () => {
             :items="[
               { label: 'Aprobada', value: 'approved' },
               { label: 'Pendiente', value: 'pending' },
-              { label: 'Rechazada', value: 'rejected' }
+              { label: 'Rechazada', value: 'rejected' },
             ]"
             class="w-full"
           />
@@ -191,9 +239,7 @@ const save = async () => {
 
     <template #footer>
       <div class="flex justify-end gap-3 w-full">
-        <UButton color="neutral" variant="outline" @click="emit('close')">
-          Cancelar
-        </UButton>
+        <UButton color="neutral" variant="outline" @click="emit('close')"> Cancelar </UButton>
         <UButton :loading="loading" @click="save">
           {{ activity ? 'Guardar cambios' : 'Crear actividad' }}
         </UButton>

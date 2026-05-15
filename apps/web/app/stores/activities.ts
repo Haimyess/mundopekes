@@ -5,66 +5,68 @@
 
 import { defineStore } from 'pinia'
 import type { Activity, FilterOptions } from '~/types'
+import { ACTIVITY_SELECT, normalizeActivity } from '~/composables/useActivities'
 
 export const useActivitiesStore = defineStore('activities', () => {
   // ========== STATE ==========
-  
+
   // Carruseles del home
   const recentActivities = ref<Activity[]>([])
   const nearbyActivities = ref<Activity[]>([])
   const popularActivities = ref<Activity[]>([])
   const recommendedActivities = ref<Activity[]>([])
-  
+
   // Actividad actual (para página de detalle)
   const currentActivity = ref<Activity | null>(null)
-  
+
   // Estados de carga
   const loading = ref({
     recent: false,
     nearby: false,
     popular: false,
     recommended: false,
-    current: false
+    current: false,
   })
-  
+
   // Errores
   const error = ref<string | null>(null)
 
   // ========== GETTERS ==========
-  
+
   /**
    * Verificar si los carruseles están cargados
    */
   const areCarouselsLoaded = computed(() => {
-    return recentActivities.value.length > 0 ||
-           popularActivities.value.length > 0
+    return recentActivities.value.length > 0 || popularActivities.value.length > 0
   })
-  
+
   /**
    * Verificar si algún carrusel está cargando
    */
   const isAnyCarouselLoading = computed(() => {
-    return loading.value.recent ||
-           loading.value.nearby ||
-           loading.value.popular ||
-           loading.value.recommended
+    return (
+      loading.value.recent ||
+      loading.value.nearby ||
+      loading.value.popular ||
+      loading.value.recommended
+    )
   })
-  
+
   /**
    * Total de actividades en cache (sin duplicados)
    */
   const totalActivitiesInCache = computed(() => {
     const unique = new Set([
-      ...recentActivities.value.map(a => a.id),
-      ...nearbyActivities.value.map(a => a.id),
-      ...popularActivities.value.map(a => a.id),
-      ...recommendedActivities.value.map(a => a.id)
+      ...recentActivities.value.map((a) => a.id),
+      ...nearbyActivities.value.map((a) => a.id),
+      ...popularActivities.value.map((a) => a.id),
+      ...recommendedActivities.value.map((a) => a.id),
     ])
     return unique.size
   })
 
   // ========== ACTIONS ==========
-  
+
   /**
    * Cargar actividades recientes
    * 📌 Trae las últimas actividades agregadas a Supabase
@@ -85,8 +87,8 @@ export const useActivitiesStore = defineStore('activities', () => {
       const activities = await getRecentActivities(limit)
       recentActivities.value = activities
       console.log('✅ Loaded recent activities:', activities.length)
-    } catch (e: any) {
-      error.value = e.message
+    } catch (e) {
+      error.value = e instanceof Error ? e.message : String(e)
       console.error('❌ Error loading recent activities:', e)
     } finally {
       loading.value.recent = false
@@ -97,7 +99,12 @@ export const useActivitiesStore = defineStore('activities', () => {
    * Cargar actividades cercanas por coordenadas GPS
    * 📌 Usa distancia en km desde la ubicación del usuario
    */
-  const loadNearbyActivities = async (lat: number, lng: number, radiusKm: number = 10, limit: number = 10) => {
+  const loadNearbyActivities = async (
+    lat: number,
+    lng: number,
+    radiusKm: number = 10,
+    limit: number = 10
+  ) => {
     loading.value.nearby = true
     error.value = null
 
@@ -105,8 +112,8 @@ export const useActivitiesStore = defineStore('activities', () => {
       const { getNearbyActivities } = useActivityLocation()
       const activities = await getNearbyActivities(lat, lng, radiusKm, limit)
       nearbyActivities.value = activities
-    } catch (e: any) {
-      error.value = e.message
+    } catch (e) {
+      error.value = e instanceof Error ? e.message : String(e)
       console.error('❌ Error loading nearby activities:', e)
     } finally {
       loading.value.nearby = false
@@ -134,8 +141,8 @@ export const useActivitiesStore = defineStore('activities', () => {
       const activities = await getPopularActivities(limit)
       popularActivities.value = activities
       console.log('✅ Loaded popular activities:', activities.length)
-    } catch (e: any) {
-      error.value = e.message
+    } catch (e) {
+      error.value = e instanceof Error ? e.message : String(e)
       console.error('❌ Error loading popular activities:', e)
     } finally {
       loading.value.popular = false
@@ -164,8 +171,8 @@ export const useActivitiesStore = defineStore('activities', () => {
       const activities = await getRecommendedActivities(ageMonths, limit)
       recommendedActivities.value = activities
       console.log('✅ Loaded recommended activities:', activities.length)
-    } catch (e: any) {
-      error.value = e.message
+    } catch (e) {
+      error.value = e instanceof Error ? e.message : String(e)
       console.error('❌ Error loading recommended activities:', e)
     } finally {
       loading.value.recommended = false
@@ -184,7 +191,7 @@ export const useActivitiesStore = defineStore('activities', () => {
     const promises = [
       loadRecentActivities(),
       loadPopularActivities(),
-      loadRecommendedActivities(ageMonths)
+      loadRecommendedActivities(ageMonths),
     ]
 
     // Solo cargar nearby si se proporcionan coordenadas
@@ -228,7 +235,7 @@ export const useActivitiesStore = defineStore('activities', () => {
     try {
       const { getActivityById } = useActivities()
       const activity = await getActivityById(id)
-      
+
       if (activity) {
         currentActivity.value = activity
         console.log('✅ Loaded activity:', id)
@@ -237,8 +244,8 @@ export const useActivitiesStore = defineStore('activities', () => {
         error.value = 'Actividad no encontrada'
         return null
       }
-    } catch (e: any) {
-      error.value = e.message
+    } catch (e) {
+      error.value = e instanceof Error ? e.message : String(e)
       console.error('❌ Error loading activity:', e)
       return null
     } finally {
@@ -257,10 +264,10 @@ export const useActivitiesStore = defineStore('activities', () => {
       ...recentActivities.value,
       ...nearbyActivities.value,
       ...popularActivities.value,
-      ...recommendedActivities.value
+      ...recommendedActivities.value,
     ]
 
-    return allActivities.find(activity => activity.id === id) || null
+    return allActivities.find((activity) => activity.id === id) || null
   }
 
   /**
@@ -309,99 +316,88 @@ export const useActivitiesStore = defineStore('activities', () => {
     recommendedActivities.value = []
     currentActivity.value = null
     error.value = null
-    
+
     loading.value = {
       recent: false,
       nearby: false,
       popular: false,
       recommended: false,
-      current: false
+      current: false,
     }
   }
 
-
   // ── Opciones de filtros ───────────────────────────────────────
-const filterOptions = ref<FilterOptions>({
-  cities: [],
-  ageRanges: [],
-  seasons: [],
-   categories: []
-})
+  const filterOptions = ref<FilterOptions>({
+    cities: [],
+    ageRanges: [],
+    seasons: [],
+    categories: [],
+  })
 
-const filterOptionsLoaded = ref(false)
-const loadingFilterOptions = ref(false)
+  const filterOptionsLoaded = ref(false)
+  const loadingFilterOptions = ref(false)
 
-const loadFilterOptions = async () => {
-  // Cache: no re-fetch si ya están cargadas
-  if (filterOptionsLoaded.value) return
+  const loadFilterOptions = async () => {
+    // Cache: no re-fetch si ya están cargadas
+    if (filterOptionsLoaded.value) return
 
-  loadingFilterOptions.value = true
+    loadingFilterOptions.value = true
 
-  try {
-    const client = useSupabaseClient()
+    try {
+      const client = useSupabaseClient()
 
-    const [citiesRes, ageRes, seasonsRes] = await Promise.all([
-      client.from('cities').select('*').order('name'),
-      client.from('age_ranges').select('*').order('sort_order'),
-      client.from('seasons').select('*').order('sort_order')
-    ])
+      const [citiesRes, ageRes, seasonsRes] = await Promise.all([
+        client.from('cities').select('*').order('name'),
+        client.from('age_ranges').select('*').order('sort_order'),
+        client.from('seasons').select('*').order('sort_order'),
+      ])
 
-    if (citiesRes.data)  filterOptions.value.cities    = citiesRes.data
-    if (ageRes.data)     filterOptions.value.ageRanges  = ageRes.data
-    if (seasonsRes.data) filterOptions.value.seasons    = seasonsRes.data
+      if (citiesRes.data) filterOptions.value.cities = citiesRes.data
+      if (ageRes.data) filterOptions.value.ageRanges = ageRes.data
+      if (seasonsRes.data) filterOptions.value.seasons = seasonsRes.data
 
-    filterOptionsLoaded.value = true
-  } catch (e: any) {
-    error.value = e.message
-    console.error('❌ Error loading filter options:', e)
-  } finally {
-    loadingFilterOptions.value = false
+      filterOptionsLoaded.value = true
+    } catch (e) {
+      error.value = e.message
+      console.error('❌ Error loading filter options:', e)
+    } finally {
+      loadingFilterOptions.value = false
+    }
   }
-}
 
+  // ── Todas las actividades (para conteos de filtros en drawer) ─────
+  // Se cargan lazy: solo cuando el usuario abre el drawer por primera vez
+  const allActivities = ref<Activity[]>([])
+  const allActivitiesLoaded = ref(false)
+  const loadingAllActivities = ref(false)
 
-// ── Todas las actividades (para conteos de filtros en drawer) ─────
-// Se cargan lazy: solo cuando el usuario abre el drawer por primera vez
-const allActivities = ref<Activity[]>([])
-const allActivitiesLoaded = ref(false)
-const loadingAllActivities = ref(false)
+  const loadAllActivities = async () => {
+    // Cache: no re-fetch si ya están cargadas
+    if (allActivitiesLoaded.value) return
 
-const loadAllActivities = async () => {
-  // Cache: no re-fetch si ya están cargadas
-  if (allActivitiesLoaded.value) return
+    loadingAllActivities.value = true
 
-  loadingAllActivities.value = true
+    try {
+      const client = useSupabaseClient()
+      const { data, error: err } = await client
+        .from('activities')
+        .select(ACTIVITY_SELECT)
+        .eq('status', 'approved')
 
-  try {
-    const client = useSupabaseClient()
-    const { data, error: err } = await client
-      .from('activities')
-      .select(`
-        *,
-        place:places(
-          id, name, description, lat, lng, images, status,
-          city:cities(id, name, region)
-        ),
-        category:categories(id, name, slug, icon, parent_id),
-        activity_age_ranges(age_range:age_ranges(id, label_key, min_months, max_months, sort_order)),
-        activity_seasons(season:seasons(id, value, label_key, sort_order))
-      `)
-      .eq('status', 'approved')
+      if (err) throw err
 
-    if (err) throw err
-
-    allActivities.value = (data ?? []) as Activity[]
-    allActivitiesLoaded.value = true
-    console.log('✅ Loaded all activities for filter counts:', allActivities.value.length)
-  } catch (e: any) {
-    error.value = e.message
-    console.error('❌ Error loading all activities:', e)
-  } finally {
-    loadingAllActivities.value = false
+      allActivities.value = (data ?? []).map(normalizeActivity)
+      allActivitiesLoaded.value = true
+      console.log('✅ Loaded all activities for filter counts:', allActivities.value.length)
+    } catch (e) {
+      error.value = e.message
+      console.error('❌ Error loading all activities:', e)
+    } finally {
+      loadingAllActivities.value = false
+    }
   }
-}
   // ========== RETURN ==========
-  
+
   return {
     // State (SIN readonly para evitar errores de tipos)
     recentActivities,
@@ -411,12 +407,12 @@ const loadAllActivities = async () => {
     currentActivity,
     loading,
     error,
-    
+
     // Getters
     areCarouselsLoaded,
     isAnyCarouselLoading,
     totalActivitiesInCache,
-    
+
     // Actions
     loadRecentActivities,
     loadNearbyActivities,
@@ -428,15 +424,15 @@ const loadAllActivities = async () => {
     setCurrentActivity,
     clearCurrentActivity,
     refreshCarousels,
-    clearStore, 
+    clearStore,
     filterOptions,
-filterOptionsLoaded,
-loadingFilterOptions,
-loadFilterOptions,
+    filterOptionsLoaded,
+    loadingFilterOptions,
+    loadFilterOptions,
 
-allActivities,
-allActivitiesLoaded,
-loadingAllActivities,
-loadAllActivities,
+    allActivities,
+    allActivitiesLoaded,
+    loadingAllActivities,
+    loadAllActivities,
   }
 })

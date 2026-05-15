@@ -1,14 +1,25 @@
 import { serverSupabaseClient } from '#supabase/server'
+import { enrichI18nField } from '../../utils/translate'
 
 export default defineEventHandler(async (event) => {
   const id = getRouterParam(event, 'id')
   if (!id) throw createError({ statusCode: 400, message: 'ID requerido' })
 
   const body = await readBody(event)
-  const client = await serverSupabaseClient(event)
-  const supabase = client as any
+  const config = useRuntimeConfig(event)
 
-  const { data, error } = await supabase
+  if (config.deeplApiKey) {
+    if (body.title_i18n && typeof body.title_i18n === 'object') {
+      body.title_i18n = await enrichI18nField(body.title_i18n, config.deeplApiKey)
+    }
+    if (body.description_i18n && typeof body.description_i18n === 'object') {
+      body.description_i18n = await enrichI18nField(body.description_i18n, config.deeplApiKey)
+    }
+  }
+
+  const client = await serverSupabaseClient(event)
+
+  const { data, error } = await client
     .from('activities')
     .update(body)
     .eq('id', id)

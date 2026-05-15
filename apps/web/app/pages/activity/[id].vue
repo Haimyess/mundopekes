@@ -12,6 +12,7 @@ import ActivityImagesGallery from '~/components/activity/ActivityImagesGallery.v
 
 const route = useRoute()
 const { t } = useI18n()
+const { tc } = useI18nContent()
 const { getActivityById } = useActivities()
 
 const id = computed(() => route.params.id as string)
@@ -32,10 +33,11 @@ if (!activity.value) {
 
 // ─── SEO ──────────────────────────────────────────────────────
 useSeoMeta({
-  title: () => (activity.value ? `${activity.value.title} · MundoPekes` : 'MundoPekes'),
-  description: () => activity.value?.description ?? '',
-  ogTitle: () => activity.value?.title ?? '',
-  ogDescription: () => activity.value?.description ?? '',
+  title: () => (activity.value ? `${tc(activity.value.title_i18n)} · MundoPekes` : 'MundoPekes'),
+  description: () => (activity.value?.description_i18n ? tc(activity.value.description_i18n) : ''),
+  ogTitle: () => (activity.value ? tc(activity.value.title_i18n) : ''),
+  ogDescription: () =>
+    activity.value?.description_i18n ? tc(activity.value.description_i18n) : '',
   ogImage: () => activity.value?.images?.[0] ?? '',
 })
 </script>
@@ -73,7 +75,10 @@ useSeoMeta({
         <!-- Columna izquierda: galería -->
         <!-- En mobile queda arriba, en desktop queda sticky -->
         <div class="lg:sticky lg:top-6">
-          <ActivityImagesGallery :images="activity.images ?? []" :alt-text="activity.title" />
+          <ActivityImagesGallery
+            :images="activity.images ?? []"
+            :alt-text="tc(activity.title_i18n)"
+          />
         </div>
 
         <!-- Columna derecha: info -->
@@ -82,7 +87,10 @@ useSeoMeta({
         </div>
       </div>
 
-      <ActivityReportActivityButton :activity-id="activity.id" :activity-title="activity.title" />
+      <ActivityReportActivityButton
+        :activity-id="activity.id"
+        :activity-title="tc(activity.title_i18n)"
+      />
     </div>
   </div>
 </template>

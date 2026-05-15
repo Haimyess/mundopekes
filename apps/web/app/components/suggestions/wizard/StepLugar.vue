@@ -2,11 +2,11 @@
 import { usePlacesSearch } from '~/composables/usePlacesSearch'
 import { useSuggestionWizard } from '~/composables/useSuggestionWizard'
 
-const wizard  = useSuggestionWizard()
-const search  = usePlacesSearch()
-const { t }   = useI18n()
+const wizard = useSuggestionWizard()
+const search = usePlacesSearch()
+const { t } = useI18n()
 
-const query      = ref('')
+const query = ref('')
 const showResults = computed(() => search.results.value.length > 0 && !wizard.hasPlace.value)
 
 const onInput = (val: string) => {
@@ -14,16 +14,15 @@ const onInput = (val: string) => {
   if (!wizard.state.value.isManual) search.search(val)
 }
 
-const selectPlace = (place: typeof search.results.value[0]) => {
+const selectPlace = async (place: (typeof search.results.value)[0]) => {
   wizard.setPlace(place)
   search.clear()
   query.value = place.name
-}
 
-const clearPlace = () => {
-  wizard.clearPlace()
-  query.value = ''
-  search.clear()
+  const details = await search.fetchDetails(place.google_place_id)
+  if (details) {
+    wizard.setPlace(place, details)
+  }
 }
 
 const toggleManual = () => {
@@ -38,10 +37,8 @@ const toggleManual = () => {
 
 <template>
   <div class="step-lugar">
-
     <!-- Búsqueda automática -->
     <template v-if="!wizard.state.value.isManual">
-
       <!-- Input visible solo si no hay lugar seleccionado -->
       <div v-if="!wizard.hasPlace.value" class="step-lugar__search">
         <UFormField :label="t('suggest.place_search')">
@@ -54,10 +51,7 @@ const toggleManual = () => {
             />
             <!-- Resultados -->
             <div v-if="showResults" class="step-lugar__results">
-              <div
-                v-if="search.loading.value"
-                class="step-lugar__results-loading"
-              >
+              <div v-if="search.loading.value" class="step-lugar__results-loading">
                 <UiIcon name="i-lucide-loader-2" size="sm" class="animate-spin" />
               </div>
               <button
@@ -67,11 +61,7 @@ const toggleManual = () => {
                 @click="selectPlace(place)"
               >
                 <div class="step-lugar__result-img">
-                  <img
-                    v-if="place.photo_url"
-                    :src="place.photo_url"
-                    :alt="place.name"
-                  >
+                  <img v-if="place.photo_url" :src="place.photo_url" :alt="place.name" />
                   <UiIcon v-else name="i-lucide-map-pin" size="sm" />
                 </div>
                 <div class="step-lugar__result-info">
@@ -99,7 +89,6 @@ const toggleManual = () => {
           />
         </UFormField>
       </div>
-
     </template>
 
     <!-- Entrada manual -->
@@ -138,7 +127,6 @@ const toggleManual = () => {
         </button>
       </div>
     </template>
-
   </div>
 </template>
 

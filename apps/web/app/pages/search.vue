@@ -3,7 +3,8 @@ import { useIntersectionObserver } from '@vueuse/core'
 import type { Activity, ActivityFilters } from '~/types'
 
 const { t } = useI18n()
-const route  = useRoute()
+const { tc } = useI18nContent()
+const route = useRoute()
 const router = useRouter()
 
 const store = useActivitiesStore()
@@ -29,7 +30,7 @@ onMounted(() => store.loadAllActivities())
 
 // ── Estado principal ──────────────────────────────────────────────
 const activities = ref<Activity[]>([])
-const loading    = ref(false)
+const loading = ref(false)
 const drawerOpen = ref(false)
 
 watch(drawerOpen, async (isOpen) => {
@@ -37,37 +38,38 @@ watch(drawerOpen, async (isOpen) => {
 })
 
 // ── Source of truth: filtros desde la URL ─────────────────────────
-const filtersFromUrl = computed<ActivityFilters>(() =>
-  buildFiltersFromQuery(route.query)
-)
+const filtersFromUrl = computed<ActivityFilters>(() => buildFiltersFromQuery(route.query))
 
-const activeFiltersCount = computed(() =>
-  countActiveFilters(filtersFromUrl.value)
-)
+const activeFiltersCount = computed(() => countActiveFilters(filtersFromUrl.value))
 
 // ── Estado local desktop ──────────────────────────────────────────
 // Estado local — junto a localAge, localCities, etc:
 const localCategory = ref<string | undefined>(undefined)
-const categoryOpts = ref<{ label: string; value: string }[]>([])
-const localAge      = ref<number | undefined>(undefined)
-const localCities   = ref<string[]>([])
-const localSeason   = ref<string | undefined>(undefined)
-const localFree     = ref(false)
+const rawCategoryOpts = ref<{ label: string; value: string; name_i18n: Record<string, string> }[]>(
+  []
+)
+const categoryOpts = computed(() =>
+  rawCategoryOpts.value.map((c) => ({ label: tc(c.name_i18n), value: c.value }))
+)
+const localAge = ref<number | undefined>(undefined)
+const localCities = ref<string[]>([])
+const localSeason = ref<string | undefined>(undefined)
+const localFree = ref(false)
 const localStroller = ref(false)
 const localWeekends = ref(false)
 
 onMounted(async () => {
-  categoryOpts.value = await categoryOptions()
+  rawCategoryOpts.value = await categoryOptions()
 })
 
 // Sincronizar local con URL — resuelve bug de filtros al venir del homepage
 watch(
   () => route.query,
   (q) => {
-    localAge.value      = q.age ? Number(q.age) : undefined
-    localCities.value   = q.city ? (q.city as string).split(',') : []
-    localSeason.value   = q.season as string | undefined
-    localFree.value     = q.free === 'true'
+    localAge.value = q.age ? Number(q.age) : undefined
+    localCities.value = q.city ? (q.city as string).split(',') : []
+    localSeason.value = q.season as string | undefined
+    localFree.value = q.free === 'true'
     localStroller.value = q.stroller_friendly === 'true'
     localWeekends.value = q.open_weekends === 'true'
     localCategory.value = q.category as string | undefined
@@ -79,17 +81,17 @@ watch(
 // Refleja el estado local actual (sin haber apretado Buscar)
 // para que los conteos sean reactivos mientras el usuario selecciona
 const localFiltersForCounts = computed<ActivityFilters>(() => {
-  const ageOption = ageOptions.value.find(o => o.value === localAge.value)
+  const ageOption = ageOptions.value.find((o) => o.value === localAge.value)
   return {
-    search:            filtersFromUrl.value.search, // preservar search activo de la URL
-    age_id:            localAge.value,
-    age_min:           ageOption?.min,
-    age_max:           ageOption?.max,
-    city:              localCities.value.length ? localCities.value.join(',') : undefined,
-    season:            localSeason.value as ActivityFilters['season'],
-    is_free:           localFree.value || undefined,
+    search: filtersFromUrl.value.search, // preservar search activo de la URL
+    age_id: localAge.value,
+    age_min: ageOption?.min,
+    age_max: ageOption?.max,
+    city: localCities.value.length ? localCities.value.join(',') : undefined,
+    season: localSeason.value as ActivityFilters['season'],
+    is_free: localFree.value || undefined,
     stroller_friendly: localStroller.value || undefined,
-    open_weekends:     localWeekends.value || undefined,
+    open_weekends: localWeekends.value || undefined,
     category: localCategory.value,
   }
 })
@@ -111,31 +113,31 @@ const {
 // ── Opciones con conteo inyectado en el label ─────────────────────
 // Solo mostramos el conteo si es > 0 para no mostrar "(0)" en opciones disabled
 const ageOptionsWithCount = computed(() =>
-  ageOptions.value.map(opt => ({
+  ageOptions.value.map((opt) => ({
     ...opt,
-    label:    countForAge(opt) > 0
-      ? `${opt.label} (${countForAge(opt)})`
-      : opt.label,
+    label: countForAge(opt) > 0 ? `${opt.label} (${countForAge(opt)})` : opt.label,
     disabled: isAgeDisabled(opt, localAge.value, opt.value),
   }))
 )
 
 const cityOptionsWithCount = computed(() =>
-  cityOptions.value.map(opt => ({
+  cityOptions.value.map((opt) => ({
     ...opt,
-    label:    countForCity(opt.value as string) > 0
-      ? `${opt.label} (${countForCity(opt.value as string)})`
-      : opt.label,
+    label:
+      countForCity(opt.value as string) > 0
+        ? `${opt.label} (${countForCity(opt.value as string)})`
+        : opt.label,
     disabled: isCityDisabled(opt.value as string, localCities.value),
   }))
 )
 
 const seasonOptionsWithCount = computed(() =>
-  seasonOptions.value.map(opt => ({
+  seasonOptions.value.map((opt) => ({
     ...opt,
-    label:    countForSeason(opt.value as string) > 0
-      ? `${opt.label} (${countForSeason(opt.value as string)})`
-      : opt.label,
+    label:
+      countForSeason(opt.value as string) > 0
+        ? `${opt.label} (${countForSeason(opt.value as string)})`
+        : opt.label,
     disabled: isSeasonDisabled(opt.value as string, localSeason.value),
   }))
 )
@@ -146,7 +148,7 @@ const showClearBtn = computed(() => activeFiltersCount.value > 0)
 
 // ── Sticky bar ────────────────────────────────────────────────────
 const filterBarRef = ref<HTMLElement | null>(null)
-const showSticky   = ref(false)
+const showSticky = ref(false)
 
 useIntersectionObserver(
   filterBarRef,
@@ -155,23 +157,23 @@ useIntersectionObserver(
     if (entry) showSticky.value = !entry.isIntersecting
   },
   {
-    threshold:  0,
+    threshold: 0,
     rootMargin: '-64px 0px 0px 0px', // 64px = altura navbar h-16
   }
 )
 
 // ── Aplicar filtros desktop → URL ─────────────────────────────────
 const applyDesktopFilters = () => {
-  const ageOption = ageOptions.value.find(o => o.value === localAge.value)
+  const ageOption = ageOptions.value.find((o) => o.value === localAge.value)
   const filters: ActivityFilters = {
-    age_id:            ageOption?.value,
-    age_min:           ageOption?.min,
-    age_max:           ageOption?.max,
-    city:              localCities.value.length ? localCities.value.join(',') : undefined,
-    season:            localSeason.value as ActivityFilters['season'],
-    is_free:           localFree.value || undefined,
+    age_id: ageOption?.value,
+    age_min: ageOption?.min,
+    age_max: ageOption?.max,
+    city: localCities.value.length ? localCities.value.join(',') : undefined,
+    season: localSeason.value as ActivityFilters['season'],
+    is_free: localFree.value || undefined,
     stroller_friendly: localStroller.value || undefined,
-    open_weekends:     localWeekends.value || undefined,
+    open_weekends: localWeekends.value || undefined,
     category: localCategory.value,
   }
   const query = buildQueryFromFilters(filters, route.query.q as string)
@@ -223,114 +225,69 @@ useSeoMeta({
 <template>
   <div class="search-page">
     <div class="search-page__container">
-
       <div class="search-page__header">
         <h1 class="search-page__title">{{ t('search.title') }}</h1>
         <p class="search-page__subtitle">{{ t('search.subtitle') }}</p>
       </div>
 
       <!-- Barra de filtros — oculta cuando no hay resultados y no carga -->
-      <div
-        v-if="loading || activities.length > 0"
-        class="search-page__filter-bar"
-      >
-
+      <div v-if="loading || activities.length > 0" class="search-page__filter-bar">
         <!-- ── DESKTOP ──────────────────────────────────────────── -->
         <div class="search-page__desktop-filters">
+          <UiSelect
+            v-model="localCategory"
+            :options="categoryOpts"
+            :placeholder="t('search.category')"
+            :ui="{ content: 'min-w-[12rem]' }"
+          />
 
           <UiSelect
-  v-model="localCategory"
-  :options="categoryOpts"
-  :placeholder="t('search.category')"
-/>
-
-          <!-- Edad — usa ID como value -->
-          <!-- <UiSelect
             v-model="localAge"
-            :options="ageOptions"
+            :options="ageOptionsWithCount"
             :placeholder="t('search.age')"
-          /> -->
-          <UiSelect
-  v-model="localAge"
-  :options="ageOptionsWithCount"
-  :placeholder="t('search.age')"
-/>
+            :ui="{ content: 'min-w-[14rem]' }"
+          />
 
-          <!-- Ciudad — multi select -->
-          <!-- <USelect
+          <USelect
             v-model="localCities"
-            :items="cityOptions"
+            :items="cityOptionsWithCount"
             :placeholder="t('search.city')"
             multiple
-          /> -->
-          <USelect
-  v-model="localCities"
-  :items="cityOptionsWithCount"
-  :placeholder="t('search.city')"
-  multiple
-/>
-
-          <!-- Temporada -->
-          <!-- <UiSelect
-            v-model="localSeason"
-            :options="seasonOptions"
-            :placeholder="t('search.season')"
-          /> -->
+            :ui="{ content: 'min-w-[12rem]' }"
+          />
 
           <UiSelect
-  v-model="localSeason"
-  :options="seasonOptionsWithCount"
-  :placeholder="t('search.season')"
-/>
+            v-model="localSeason"
+            :options="seasonOptionsWithCount"
+            :placeholder="t('search.season')"
+            :ui="{ content: 'min-w-[12rem]' }"
+          />
 
-          <!-- Gratis -->
-          <!-- <UiCheckbox v-model="localFree" :label="t('search.free')" /> -->
-           <UiCheckbox
-  v-model="localFree"
-  :label="t('search.free')"
-  :disabled="isExtraDisabled('is_free', localFree)"
-/>
+          <UiCheckbox
+            v-model="localFree"
+            :label="t('search.free')"
+            :disabled="isExtraDisabled('is_free', localFree)"
+          />
 
-          <!-- Apto cochecito -->
-          <!-- <UiCheckbox v-model="localStroller" :label="t('activity.stroller_friendly')" /> -->
-           <UiCheckbox
-  v-model="localStroller"
-  :label="t('activity.stroller_friendly')"
-  :disabled="isExtraDisabled('stroller_friendly', localStroller)"
-/>
+          <UiCheckbox
+            v-model="localStroller"
+            :label="t('activity.stroller_friendly')"
+            :disabled="isExtraDisabled('stroller_friendly', localStroller)"
+          />
 
-          <!-- Abre finde -->
-          <!-- <UiCheckbox v-model="localWeekends" :label="t('activity.open_weekends')" /> -->
-           <!-- Fin de semana -->
-<UiCheckbox
-  v-model="localWeekends"
-  :label="t('activity.open_weekends')"
-  :disabled="isExtraDisabled('open_weekends', localWeekends)"
-/>
+          <UiCheckbox
+            v-model="localWeekends"
+            :label="t('activity.open_weekends')"
+            :disabled="isExtraDisabled('open_weekends', localWeekends)"
+          />
 
           <div class="search-page__desktop-actions">
-            <!-- <button
-              v-if="localFiltersCount > 0"
-              class="search-page__btn-clear"
-              @click="clearFilters"
-            >
+            <button v-if="showClearBtn" class="search-page__btn-clear" @click="clearFilters">
               <UIcon name="i-heroicons-x-mark" class="search-page__btn-icon" />
               {{ t('search.clear_filters') }}
-            </button> -->
-            <!-- Botón limpiar — ahora usa showClearBtn -->
-<button
-  v-if="showClearBtn"
-  class="search-page__btn-clear"
-  @click="clearFilters"
->
-  <UIcon name="i-heroicons-x-mark" class="search-page__btn-icon" />
-  {{ t('search.clear_filters') }}
-</button>
+            </button>
 
-            <button
-              class="search-page__btn-search"
-              @click="applyDesktopFilters"
-            >
+            <button class="search-page__btn-search" @click="applyDesktopFilters">
               <UIcon name="i-heroicons-magnifying-glass" class="search-page__btn-icon" />
               {{ t('search.search_button') }}
             </button>
@@ -348,19 +305,10 @@ useSeoMeta({
 
         <!-- ── MOBILE ───────────────────────────────────────────── -->
         <div class="search-page__mobile-bar">
-          <button
-            class="search-page__filter-btn"
-            @click="drawerOpen = true"
-          >
-            <UIcon
-              name="i-heroicons-adjustments-horizontal"
-              class="search-page__filter-icon"
-            />
+          <button class="search-page__filter-btn" @click="drawerOpen = true">
+            <UIcon name="i-heroicons-adjustments-horizontal" class="search-page__filter-icon" />
             <span class="search-page__filter-label">{{ t('search.filters') }}</span>
-            <span
-              v-if="activeFiltersCount > 0"
-              class="search-page__filter-badge"
-            >
+            <span v-if="activeFiltersCount > 0" class="search-page__filter-badge">
               {{ activeFiltersCount }}
             </span>
           </button>

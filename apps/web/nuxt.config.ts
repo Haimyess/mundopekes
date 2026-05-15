@@ -1,5 +1,6 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
+  ssr: false,
   extends: ['../../layers/core', '../../layers/ui', '../../layers/domain'],
   runtimeConfig: {
     googlePlacesApiKey: process.env.GOOGLE_PLACES_API_KEY,
@@ -23,7 +24,7 @@ export default defineNuxtConfig({
     redirectOptions: {
       login: '/login',
       callback: '/confirm',
-      exclude: ['/', '/search', '/activity/*'],
+      exclude: ['/*'],
     },
   },
 

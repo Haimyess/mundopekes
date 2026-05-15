@@ -58,7 +58,7 @@ export default defineEventHandler(async (event) => {
     'https://maps.googleapis.com/maps/api/place/textsearch/json',
     `?query=${encodeURIComponent(q.trim())}`,
     `&region=il`,
-    `&language=es`,
+    `&language=he`,
     `&key=${key}`,
   ].join('')
 
@@ -102,6 +102,7 @@ export default defineEventHandler(async (event) => {
     return {
       google_place_id: place.place_id,
       name: place.name,
+      name_i18n: { he: place.name },
       address: place.formatted_address,
       lat: place.geometry?.location?.lat ?? null,
       lng: place.geometry?.location?.lng ?? null,

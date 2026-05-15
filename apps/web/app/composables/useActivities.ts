@@ -10,8 +10,8 @@ import type { Activity } from '~/types'
 // Select reutilizable con todos los joins
 export const ACTIVITY_SELECT = `
   id,
-  title,
-  description,
+  title_i18n,
+  description_i18n,
   price,
   is_free,
   stroller_friendly,
@@ -24,15 +24,15 @@ export const ACTIVITY_SELECT = `
   metadata,
   place:places (
     id,
-    name,
-    description,
+    name_i18n,
+    description_i18n,
     lat,
     lng,
     images,
     status,
     city:cities ( id, name, region )
   ),
-  category:categories ( id, name, slug, icon, parent_id ),
+  category:categories ( id, name_i18n, slug, icon, parent_id ),
   age_ranges:activity_age_ranges (
     age_range:age_ranges ( id, label_key, min_months, max_months, sort_order )
   ),
@@ -48,8 +48,8 @@ export const ACTIVITY_SELECT = `
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const normalizeActivity = (raw: any): Activity => ({
   id: raw.id,
-  title: raw.title,
-  description: raw.description ?? null,
+  title_i18n: raw.title_i18n ?? {},
+  description_i18n: raw.description_i18n ?? null,
   price: raw.price ?? null,
   is_free: raw.is_free ?? false,
   stroller_friendly: raw.stroller_friendly ?? false,

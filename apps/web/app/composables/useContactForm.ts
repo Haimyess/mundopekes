@@ -1,6 +1,9 @@
 import type { ContactIntent } from '~/types/contact'
 
 export function useContactForm() {
+  // ✅ Llamado al top-level del composable (que se ejecuta dentro de setup)
+  const { t, locale } = useI18n()
+
   const isOpen = useState('contact:isOpen', () => false)
   const isLoading = useState('contact:isLoading', () => false)
   const intent = useState<ContactIntent>('contact:intent', () => 'other')
@@ -48,15 +51,15 @@ export function useContactForm() {
           message: form.value.message,
           activityId: prefillActivityId.value,
           activityTitle: prefillActivityTitle.value,
-          locale: useI18n().locale.value,
+          locale: locale.value, // ✅ usa la ref extraída arriba
         },
       })
 
       trackContactFormSend(intent.value)
-      toast.add({ title: useI18n().t('contact.success_title'), color: 'success' })
+      toast.add({ title: t('contact.success_title'), color: 'success' }) // ✅
       close()
     } catch {
-      toast.add({ title: useI18n().t('contact.error_title'), color: 'error' })
+      toast.add({ title: t('contact.error_title'), color: 'error' }) // ✅
     } finally {
       isLoading.value = false
     }

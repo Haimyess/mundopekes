@@ -1,17 +1,25 @@
 <script setup lang="ts">
 import type { ActivityFilters } from '~/types'
 
-const { t } = useI18n()
+const { tc } = useI18nContent()
 const { getFilterChips } = useActivityFilters()
+const { getNavCategories } = useCategories()
 
 const props = defineProps<{ filters: ActivityFilters }>()
 
 const emit = defineEmits<{
-  'remove': [key: keyof ActivityFilters, cityValue?: string]
-  'clear': []
+  remove: [key: keyof ActivityFilters, cityValue?: string]
+  clear: []
 }>()
 
-const chips = computed(() => getFilterChips(props.filters))
+const categoryOpts = ref<{ label: string; value: string }[]>([])
+
+onMounted(async () => {
+  const cats = await getNavCategories()
+  categoryOpts.value = cats.map((c) => ({ label: tc(c.name_i18n), value: c.slug }))
+})
+
+const chips = computed(() => getFilterChips(props.filters, categoryOpts.value))
 </script>
 
 <template>
@@ -87,6 +95,6 @@ const chips = computed(() => getFilterChips(props.filters))
   height: 0.875rem;
   flex-shrink: 0;
   opacity: 0.6;
-   color: var(--color-secundary-700);
+  color: var(--color-secundary-700);
 }
 </style>
