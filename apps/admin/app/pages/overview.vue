@@ -1,4 +1,3 @@
-<!-- app/pages/analytics.vue -->
 <script setup lang="ts">
 interface AnalyticsSummary {
   totalActivities: number
@@ -7,16 +6,6 @@ interface AnalyticsSummary {
   pendingSuggestions: number
   totalContactRequests: number
   pendingContactRequests: number
-  totalLogs: number
-  errorLogs: number
-  recentErrors: Array<{
-    id: string
-    level: string
-    context: string
-    message: string
-    created_at: string
-    metadata: unknown
-  }>
   recentFeedbacks: Array<{
     id: string
     name: string
@@ -83,18 +72,6 @@ const cards = computed(() => {
       icon: 'i-lucide-inbox',
       color: 'text-warning-500',
     },
-    {
-      label: 'Logs totales',
-      value: summary.value.totalLogs,
-      icon: 'i-lucide-terminal',
-      color: 'text-primary',
-    },
-    {
-      label: 'Errores (24h)',
-      value: summary.value.errorLogs,
-      icon: 'i-lucide-alert-triangle',
-      color: 'text-error-500',
-    },
   ]
 })
 
@@ -104,7 +81,7 @@ await load()
 <template>
   <UDashboardPanel>
     <template #header>
-      <UDashboardNavbar title="Analytics">
+      <UDashboardNavbar title="Vista general">
         <template #leading>
           <UDashboardSidebarCollapse />
         </template>
@@ -159,34 +136,6 @@ await load()
               <p class="text-sm text-(--ui-text-muted) line-clamp-2">
                 {{ fb.message }}
               </p>
-            </div>
-          </div>
-        </div>
-
-        <!-- Errores recientes -->
-        <div v-if="summary">
-          <h2 class="text-sm font-semibold mb-3 text-(--ui-text-muted) uppercase tracking-wider">
-            Errores recientes
-          </h2>
-          <div
-            v-if="summary.recentErrors.length === 0"
-            class="text-sm text-(--ui-text-muted) py-4 text-center"
-          >
-            Sin errores recientes
-          </div>
-          <div v-else class="flex flex-col gap-2">
-            <div
-              v-for="err in summary.recentErrors"
-              :key="err.id"
-              class="bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900 rounded-lg p-3 flex flex-col gap-1"
-            >
-              <div class="flex items-center gap-2">
-                <span class="font-mono text-xs text-(--ui-text-muted)">{{ err.context }}</span>
-                <span class="text-xs text-(--ui-text-muted) ml-auto">{{
-                  formatDate(err.created_at)
-                }}</span>
-              </div>
-              <span class="text-sm text-red-700 dark:text-red-300">{{ err.message }}</span>
             </div>
           </div>
         </div>

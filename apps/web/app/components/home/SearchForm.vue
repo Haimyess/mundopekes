@@ -6,6 +6,7 @@ const { tc } = useI18nContent()
 const router = useRouter()
 
 const { ageOptions, cityOptions, seasonOptions, buildQueryFromFilters } = useActivityFilters()
+const { trackSearch } = useTracking()
 const { getNavCategories } = useCategories()
 
 // ── Estado ────────────────────────────────────────────────────────
@@ -70,6 +71,13 @@ const seasonLabelMobile = computed(() => {
 })
 
 // ── Toggle helpers ────────────────────────────────────────────────
+function makeSelect<T>(toggle: (val: T) => void, drawer: Ref<boolean>) {
+  return (val: T) => {
+    toggle(val)
+    drawer.value = false
+  }
+}
+
 const toggleAge = (id: number) => {
   selectedAge.value = selectedAge.value === id ? undefined : id
 }
@@ -80,15 +88,19 @@ const toggleCity = (city: string) => {
   else selectedCities.value.splice(idx, 1)
 }
 
+const toggleSeason = (val: SeasonValue) => {
+  selectedSeason.value = selectedSeason.value === val ? undefined : val
+}
+
 const toggleCategory = (val: string) => {
   selectedCategory.value = selectedCategory.value === val ? undefined : val
 }
 
 const isCitySelected = (city: string) => selectedCities.value.includes(city)
 
-const toggleSeason = (val: SeasonValue) => {
-  selectedSeason.value = selectedSeason.value === val ? undefined : val
-}
+const selectAge = makeSelect(toggleAge, ageDrawerOpen)
+const selectSeason = makeSelect(toggleSeason, seasonDrawerOpen)
+const selectCategory = makeSelect(toggleCategory, categoryDrawerOpen)
 
 // ── Submit ────────────────────────────────────────────────────────
 const handleSearch = () => {
@@ -106,6 +118,12 @@ const handleSearch = () => {
     },
     searchText.value || undefined
   )
+  trackSearch({
+    query: searchText.value || undefined,
+    category: selectedCategory.value,
+    city: selectedCities.value.length ? selectedCities.value.join(',') : undefined,
+    ageRange: ageOptions.value.find((o) => o.value === selectedAge.value)?.value?.toString(),
+  })
   void router.push({ path: '/search', query })
 }
 
@@ -264,10 +282,7 @@ const seasonIcons: Record<string, string> = {
             :key="opt.value"
             type="button"
             class="drawer__option"
-            @click="
-              toggleAge(opt.value)
-              ageDrawerOpen = false
-            "
+            @click="selectAge(opt.value)"
           >
             <div
               class="drawer__radio"
@@ -337,10 +352,7 @@ const seasonIcons: Record<string, string> = {
             :key="opt.value"
             type="button"
             class="drawer__option"
-            @click="
-              toggleSeason(opt.value as SeasonValue)
-              seasonDrawerOpen = false
-            "
+            @click="selectSeason(opt.value as SeasonValue)"
           >
             <div
               class="drawer__radio"
@@ -370,10 +382,7 @@ const seasonIcons: Record<string, string> = {
             :key="opt.value"
             type="button"
             class="drawer__option"
-            @click="
-              toggleCategory(opt.value)
-              categoryDrawerOpen = false
-            "
+            @click="selectCategory(opt.value)"
           >
             <div
               class="drawer__radio"

@@ -4,7 +4,7 @@ import { useSessionId } from './useSessionId'
 export const useTracking = () => {
   const { gtag } = useGtag()
   const sessionId = useSessionId()
-  const { locale } = useI18n()
+  const locale = (useNuxtApp().$i18n as { locale: Ref<string> }).locale
 
   function post(event_type: string, payload: object) {
     $fetch('/api/track', {

@@ -1,4 +1,4 @@
-export type Json =
+﻿export type Json =
   | string
   | number
   | boolean
@@ -112,6 +112,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      activity_events: {
+        Row: {
+          created_at: string | null
+          event_type: string
+          id: string
+          locale: string | null
+          payload: Json
+          session_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          event_type: string
+          id?: string
+          locale?: string | null
+          payload?: Json
+          session_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          event_type?: string
+          id?: string
+          locale?: string | null
+          payload?: Json
+          session_id?: string | null
+        }
+        Relationships: []
       }
       activity_seasons: {
         Row: {
@@ -736,22 +763,3 @@ export const Constants = {
     },
   },
 } as const
-
-/**
- * Tipo para campos i18n JSONB
- */
-export type I18nField = Record<string, string>
-
-export type PlaceResolved = Omit<Tables<'places'>, 'name_i18n' | 'description_i18n'> & {
-  name_i18n: I18nField
-  description_i18n: I18nField
-}
-
-export type ActivityResolved = Omit<Tables<'activities'>, 'title_i18n' | 'description_i18n'> & {
-  title_i18n: I18nField
-  description_i18n: I18nField
-}
-
-export type CategoryResolved = Omit<Tables<'categories'>, 'name_i18n'> & {
-  name_i18n: I18nField
-}

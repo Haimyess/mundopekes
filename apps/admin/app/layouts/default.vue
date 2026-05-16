@@ -61,18 +61,25 @@ const links = [
       type: 'trigger',
       children: [
         {
-          label: 'Analytics',
-          icon: 'i-lucide-bar-chart-2',
-          to: '/analytics',
-          exact: true,
+          label: 'Vista general',
+          icon: 'i-lucide-layout-dashboard',
+          to: '/overview',
           onSelect: () => {
             open.value = false
           },
         },
         {
-          label: 'Logs',
+          label: 'Logs del sistema',
           icon: 'i-lucide-terminal',
-          to: '/logs',
+          to: '/system-logs',
+          onSelect: () => {
+            open.value = false
+          },
+        },
+        {
+          label: 'Actividad de usuarios',
+          icon: 'i-lucide-activity',
+          to: '/user-events',
           onSelect: () => {
             open.value = false
           },

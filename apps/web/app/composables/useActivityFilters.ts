@@ -277,7 +277,7 @@ export const useActivityFilters = () => {
     if (filters.search) {
       const q = sanitizeSearchQuery(filters.search)
       query = query.or(
-        `title_i18n->es.ilike.%${q}%,title_i18n->he.ilike.%${q}%,title_i18n->en.ilike.%${q}%,title_i18n->ru.ilike.%${q}%`
+        `title_i18n->>es.ilike.%${q}%,title_i18n->>he.ilike.%${q}%,title_i18n->>en.ilike.%${q}%,title_i18n->>ru.ilike.%${q}%`
       )
     }
 

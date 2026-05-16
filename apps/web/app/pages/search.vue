@@ -2,6 +2,8 @@
 import { useIntersectionObserver } from '@vueuse/core'
 import type { Activity, ActivityFilters } from '~/types'
 
+definePageMeta({ layout: 'fullwidth' })
+
 const { t } = useI18n()
 const { tc } = useI18nContent()
 const route = useRoute()
@@ -20,6 +22,7 @@ const {
 } = useActivityFilters()
 
 const { categoryOptions } = useCategories()
+const { trackSearch } = useTracking()
 
 // ── Cargar opciones al montar ─────────────────────────────────────
 await store.loadFilterOptions()
@@ -208,6 +211,12 @@ const fetchResults = async () => {
   loading.value = true
   try {
     activities.value = await fetchFilteredActivities(filtersFromUrl.value)
+    trackSearch({
+      query: filtersFromUrl.value.search,
+      category: filtersFromUrl.value.category,
+      city: filtersFromUrl.value.city,
+      resultsCount: activities.value.length,
+    })
   } finally {
     loading.value = false
   }

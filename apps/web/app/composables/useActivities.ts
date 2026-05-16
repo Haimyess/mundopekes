@@ -60,15 +60,21 @@ export const normalizeActivity = (raw: any): Activity => ({
   created_at: raw.created_at ?? '',
   updated_at: raw.updated_at ?? '',
   metadata: raw.metadata ?? {},
+  // place_id — puede venir directo o desde el join
+  place_id: raw.place_id ?? raw.place?.id ?? '',
   // place viene como objeto directo del join
   place: raw.place ?? null,
   // category viene como objeto directo del join
   category: raw.category ?? null,
-  // age_ranges viene como array de { age_range: AgeRange } — hay que aplanar
+  // activity_age_ranges — filas pivot tal como vienen de Supabase (sin aplanar)
+  activity_age_ranges: raw.age_ranges ?? [],
+  // activity_seasons — filas pivot tal como vienen de Supabase (sin aplanar)
+  activity_seasons: raw.seasons ?? [],
+  // age_ranges — aplanado (opcional, para compatibilidad)
   age_ranges: (raw.age_ranges ?? [])
     .map((r: { age_range: unknown }) => r.age_range)
     .filter(Boolean),
-  // seasons viene como array de { season: Season } — hay que aplanar
+  // seasons — aplanado (opcional, para compatibilidad)
   seasons: (raw.seasons ?? []).map((r: { season: unknown }) => r.season).filter(Boolean),
 })
 
