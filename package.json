@@ -16,7 +16,7 @@
     "test:web": "npm run test --workspace=apps/web",
     "test:admin": "npm run test --workspace=apps/admin",
     "commit": "cz",
-    "security:check": "snyk test --all-projects",
+    "security:check": "snyk test --file=package.json --policy-path=.snyk && snyk test --file=apps/web/package.json --policy-path=.snyk && snyk test --file=apps/admin/package.json --policy-path=.snyk",
     "security:monitor": "snyk monitor --all-projects",
     "prepare": "node -e \"const{execSync}=require('child_process');if(process.env.CI!=='1')execSync('husky',{stdio:'inherit'})\""
   },

@@ -12,9 +12,7 @@ export const useSuggestions = () => {
     submitting.value = true
 
     try {
-      const addressQuery = [input.location.address, input.location.city]
-        .filter(Boolean)
-        .join(', ')
+      const addressQuery = [input.location.address, input.location.city].filter(Boolean).join(', ')
 
       let location: SuggestionLocation = {
         address: input.location.address,

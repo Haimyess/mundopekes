@@ -3,29 +3,28 @@ import { useSuggestionWizard } from '~/composables/useSuggestionWizard'
 import type { WizardSchedule } from '~/composables/useSuggestionWizard'
 
 const wizard = useSuggestionWizard()
-const { t }  = useI18n()
+const { t } = useI18n()
 
 const DAYS: { key: keyof WizardSchedule; label: string }[] = [
-  { key: 'sunday',    label: 'Domingo' },
-  { key: 'monday',    label: 'Lunes' },
-  { key: 'tuesday',   label: 'Martes' },
+  { key: 'sunday', label: 'Domingo' },
+  { key: 'monday', label: 'Lunes' },
+  { key: 'tuesday', label: 'Martes' },
   { key: 'wednesday', label: 'Miércoles' },
-  { key: 'thursday',  label: 'Jueves' },
-  { key: 'friday',    label: 'Viernes' },
-  { key: 'saturday',  label: 'Sábado' },
+  { key: 'thursday', label: 'Jueves' },
+  { key: 'friday', label: 'Viernes' },
+  { key: 'saturday', label: 'Sábado' },
 ]
 
 const TOGGLES = [
-  { key: 'stroller'  as const, label: 'Apto para cochecitos',     icon: 'i-lucide-baby' },
-  { key: 'shadow'    as const, label: 'Hay sombra en el lugar',   icon: 'i-lucide-tree-pine' },
-  { key: 'bathrooms' as const, label: 'Hay baños',                icon: 'i-lucide-toilet' },
-  { key: 'weekends'  as const, label: 'Abre los fines de semana', icon: 'i-lucide-calendar' },
+  { key: 'stroller' as const, label: 'Apto para cochecitos', icon: 'i-lucide-baby' },
+  { key: 'shadow' as const, label: 'Hay sombra en el lugar', icon: 'i-lucide-tree-pine' },
+  { key: 'bathrooms' as const, label: 'Hay baños', icon: 'i-lucide-toilet' },
+  { key: 'weekends' as const, label: 'Abre los fines de semana', icon: 'i-lucide-calendar' },
 ]
 </script>
 
 <template>
   <div class="step-detalles">
-
     <!-- Precio -->
     <div class="step-detalles__section">
       <div class="step-detalles__toggle-row">
@@ -51,11 +50,7 @@ const TOGGLES = [
 
     <!-- Características -->
     <div class="step-detalles__section">
-      <div
-        v-for="toggle in TOGGLES"
-        :key="toggle.key"
-        class="step-detalles__toggle-row"
-      >
+      <div v-for="toggle in TOGGLES" :key="toggle.key" class="step-detalles__toggle-row">
         <div class="step-detalles__toggle-info">
           <UiIcon :name="toggle.icon" size="sm" />
           <span class="step-detalles__toggle-label">{{ toggle.label }}</span>
@@ -68,11 +63,7 @@ const TOGGLES = [
     <div class="step-detalles__section">
       <span class="step-detalles__section-label">{{ t('suggest.schedule') }}</span>
       <div class="step-detalles__schedule">
-        <div
-          v-for="day in DAYS"
-          :key="day.key"
-          class="step-detalles__day"
-        >
+        <div v-for="day in DAYS" :key="day.key" class="step-detalles__day">
           <button
             class="step-detalles__day-dot"
             :class="{ 'step-detalles__day-dot--active': wizard.state.value.schedule[day.key].open }"
@@ -80,7 +71,9 @@ const TOGGLES = [
           />
           <span
             class="step-detalles__day-name"
-            :class="{ 'step-detalles__day-name--active': wizard.state.value.schedule[day.key].open }"
+            :class="{
+              'step-detalles__day-name--active': wizard.state.value.schedule[day.key].open,
+            }"
           >
             {{ day.label }}
           </span>
@@ -88,21 +81,24 @@ const TOGGLES = [
             v-model="wizard.state.value.schedule[day.key].start"
             type="time"
             class="step-detalles__time-input"
-            :class="{ 'step-detalles__time-input--disabled': !wizard.state.value.schedule[day.key].open }"
+            :class="{
+              'step-detalles__time-input--disabled': !wizard.state.value.schedule[day.key].open,
+            }"
             :disabled="!wizard.state.value.schedule[day.key].open"
-          >
+          />
           <span class="step-detalles__time-sep">–</span>
           <input
             v-model="wizard.state.value.schedule[day.key].end"
             type="time"
             class="step-detalles__time-input"
-            :class="{ 'step-detalles__time-input--disabled': !wizard.state.value.schedule[day.key].open }"
+            :class="{
+              'step-detalles__time-input--disabled': !wizard.state.value.schedule[day.key].open,
+            }"
             :disabled="!wizard.state.value.schedule[day.key].open"
-          >
+          />
         </div>
       </div>
     </div>
-
   </div>
 </template>
 

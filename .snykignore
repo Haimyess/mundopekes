@@ -1,0 +1,4 @@
+﻿.claude/
+apps/**/.output/
+apps/**/npm/.output/
+**/node_modules/

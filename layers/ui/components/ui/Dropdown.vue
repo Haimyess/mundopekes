@@ -8,7 +8,7 @@ interface Props {
   buttonVariant?: ButtonVariant
 }
 
-const props = withDefaults(defineProps<Props>(), {
+withDefaults(defineProps<Props>(), {
   buttonVariant: 'ghost',
 })
 </script>

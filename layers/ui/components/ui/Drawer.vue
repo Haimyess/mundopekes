@@ -8,7 +8,7 @@ interface Props {
   maxHeight?: string
 }
 
-const props = withDefaults(defineProps<Props>(), {
+withDefaults(defineProps<Props>(), {
   direction: 'bottom',
   handle: true,
   maxHeight: '85vh',

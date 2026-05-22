@@ -3,7 +3,7 @@ import { useSuggestionWizard } from '~/composables/useSuggestionWizard'
 import type { WizardCategory } from '~/composables/useSuggestionWizard'
 
 const wizard = useSuggestionWizard()
-const { t }  = useI18n()
+const { t } = useI18n()
 
 const ALL_CATEGORIES: WizardCategory[] = [
   { id: '3e9f033e-f594-488d-98bf-a809cbd91299', name: 'Naturaleza' },
@@ -27,31 +27,29 @@ const ALL_CATEGORIES: WizardCategory[] = [
 const SEASONS = ['Primavera', 'Verano', 'Otoño', 'Invierno', 'Todo el año']
 
 const AGE_RANGES = [
-  { id: 6,  label: 'Bebés (0–11m)' },
-  { id: 7,  label: 'Pequeños (1–3 años)' },
-  { id: 8,  label: 'Preescolar (3–6 años)' },
-  { id: 9,  label: 'Escolar (6–12 años)' },
+  { id: 6, label: 'Bebés (0–11m)' },
+  { id: 7, label: 'Pequeños (1–3 años)' },
+  { id: 8, label: 'Preescolar (3–6 años)' },
+  { id: 9, label: 'Escolar (6–12 años)' },
   { id: 10, label: 'Adolescentes (12+)' },
   { id: 11, label: 'Todas las edades' },
 ]
 
 // Categoría seleccionada — solo una
-const selectedCategory = computed(() =>
-  wizard.state.value.selectedCategories[0] ?? null
-)
+const selectedCategory = computed(() => wizard.state.value.selectedCategories[0] ?? null)
 
 // Categorías disponibles — todas excepto la seleccionada
 const availableCategories = computed(() =>
-  ALL_CATEGORIES.filter(c => c.id !== selectedCategory.value?.id)
+  ALL_CATEGORIES.filter((c) => c.id !== selectedCategory.value?.id)
 )
 
 // Temporadas y edades no seleccionadas
 const availableSeasons = computed(() =>
-  SEASONS.filter(s => !wizard.state.value.selectedSeasons.includes(s))
+  SEASONS.filter((s) => !wizard.state.value.selectedSeasons.includes(s))
 )
 
 const availableAges = computed(() =>
-  AGE_RANGES.filter(a => !wizard.state.value.selectedAgeIds.includes(a.id))
+  AGE_RANGES.filter((a) => !wizard.state.value.selectedAgeIds.includes(a.id))
 )
 
 // Selección simple de categoría — reemplaza la anterior
@@ -73,7 +71,6 @@ const addCustomActivity = () => {
 
 <template>
   <div class="step-actividad">
-
     <!-- Actividad principal -->
     <div class="step-actividad__section">
       <span class="step-actividad__label">{{ t('suggest.what_to_do') }}</span>
@@ -124,7 +121,10 @@ const addCustomActivity = () => {
         </div>
 
         <!-- Custom agregado -->
-        <div v-if="wizard.state.value.customActivity && !showCustomInput" class="step-actividad__custom-added">
+        <div
+          v-if="wizard.state.value.customActivity && !showCustomInput"
+          class="step-actividad__custom-added"
+        >
           <span class="step-actividad__cat-badge step-actividad__cat-badge--custom">
             {{ wizard.state.value.customActivity }}
           </span>
@@ -139,7 +139,10 @@ const addCustomActivity = () => {
     </div>
 
     <!-- Temporada -->
-    <div v-if="selectedCategory || wizard.state.value.customActivity" class="step-actividad__section">
+    <div
+      v-if="selectedCategory || wizard.state.value.customActivity"
+      class="step-actividad__section"
+    >
       <span class="step-actividad__label">{{ t('suggest.season') }}</span>
       <div class="step-actividad__scroll-row">
         <button
@@ -158,7 +161,10 @@ const addCustomActivity = () => {
     </div>
 
     <!-- Edades -->
-    <div v-if="selectedCategory || wizard.state.value.customActivity" class="step-actividad__section">
+    <div
+      v-if="selectedCategory || wizard.state.value.customActivity"
+      class="step-actividad__section"
+    >
       <span class="step-actividad__label">{{ t('suggest.ages') }}</span>
       <div class="step-actividad__scroll-row">
         <button
@@ -175,7 +181,6 @@ const addCustomActivity = () => {
         {{ t('suggest.all_ages_selected') }}
       </div>
     </div>
-
   </div>
 </template>
 

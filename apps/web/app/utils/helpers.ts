@@ -28,26 +28,18 @@ export function formatDate(date: string, format: string = 'D [de] MMMM, YYYY'): 
  * Calcular distancia entre dos coordenadas (Haversine formula)
  * @returns distancia en kilómetros
  */
-export function calculateDistance(
-  lat1: number,
-  lng1: number,
-  lat2: number,
-  lng2: number
-): number {
+export function calculateDistance(lat1: number, lng1: number, lat2: number, lng2: number): number {
   const R = 6371 // Radio de la Tierra en km
   const dLat = toRad(lat2 - lat1)
   const dLng = toRad(lng2 - lng1)
-  
+
   const a =
     Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos(toRad(lat1)) *
-    Math.cos(toRad(lat2)) *
-    Math.sin(dLng / 2) *
-    Math.sin(dLng / 2)
-  
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) * Math.sin(dLng / 2)
+
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
   const distance = R * c
-  
+
   return Math.round(distance * 10) / 10 // Redondear a 1 decimal
 }
 
@@ -94,7 +86,7 @@ export function truncate(text: string, maxLength: number): string {
 export function isValidImageFile(file: File): boolean {
   const validTypes = ['image/jpeg', 'image/png', 'image/webp']
   const maxSize = 5 * 1024 * 1024 // 5MB
-  
+
   return validTypes.includes(file.type) && file.size <= maxSize
 }
 
@@ -106,9 +98,9 @@ export function slugify(text: string): string {
     .toString()
     .toLowerCase()
     .trim()
-    .replace(/\s+/g, '-')     // Espacios a guiones
+    .replace(/\s+/g, '-') // Espacios a guiones
     .replace(/[^\w\-]+/g, '') // Remover caracteres especiales
-    .replace(/-{2,}/g, '-')   // Múltiples guiones a uno solo
+    .replace(/-{2,}/g, '-') // Múltiples guiones a uno solo
 }
 
 /**
@@ -120,13 +112,32 @@ export function getImageUrl(path: string): string {
   return `${supabaseUrl}/storage/v1/object/public/activity-images/${path}`
 }
 
+interface ActivityFilterable {
+  location: { city: string }
+  type: string[]
+  age_range: { min: number; max: number }
+  is_free: boolean
+  stroller_friendly: boolean
+  open_weekends: boolean
+  name: string
+  description?: string
+}
+
+interface ActivityFilters {
+  city?: string
+  type?: string[]
+  age_min?: number
+  age_max?: number
+  is_free?: boolean
+  stroller_friendly?: boolean
+  open_weekends?: boolean
+  search?: string
+}
+
 /**
  * Validar si una actividad coincide con los filtros
  */
-export function matchesFilters(
-  activity: any,
-  filters: any
-): boolean {
+export function matchesFilters(activity: ActivityFilterable, filters: ActivityFilters): boolean {
   // Ciudad
   if (filters.city && activity.location.city !== filters.city) {
     return false
@@ -134,9 +145,7 @@ export function matchesFilters(
 
   // Tipo
   if (filters.type && filters.type.length > 0) {
-    const hasMatchingType = filters.type.some((t: string) => 
-      activity.type.includes(t)
-    )
+    const hasMatchingType = filters.type.some((t: string) => activity.type.includes(t))
     if (!hasMatchingType) return false
   }
 
@@ -144,7 +153,7 @@ export function matchesFilters(
   if (filters.age_min !== undefined && filters.age_max !== undefined) {
     const activityMinAge = activity.age_range.min
     const activityMaxAge = activity.age_range.max
-    
+
     // Verificar que haya solapamiento de rangos
     if (activityMaxAge < filters.age_min || activityMinAge > filters.age_max) {
       return false
@@ -171,7 +180,7 @@ export function matchesFilters(
     const searchLower = filters.search.toLowerCase()
     const matchesName = activity.name.toLowerCase().includes(searchLower)
     const matchesDescription = activity.description?.toLowerCase().includes(searchLower)
-    
+
     if (!matchesName && !matchesDescription) {
       return false
     }
@@ -183,18 +192,18 @@ export function matchesFilters(
 /**
  * Debounce function
  */
-export function debounce<T extends (...args: any[]) => any>(
+export function debounce<T extends (...args: unknown[]) => unknown>(
   func: T,
   wait: number
 ): (...args: Parameters<T>) => void {
   let timeout: NodeJS.Timeout | null = null
-  
+
   return function executedFunction(...args: Parameters<T>) {
     const later = () => {
       timeout = null
       func(...args)
     }
-    
+
     if (timeout) clearTimeout(timeout)
     timeout = setTimeout(later, wait)
   }

@@ -2,21 +2,21 @@
 import { useSuggestionWizard } from '~/composables/useSuggestionWizard'
 
 const props = defineProps<{
-  currentStep:  number
-  editOpen:     boolean
-  submitting:   boolean
-  canContinue:  boolean
-  isMobile:     boolean
+  currentStep: number
+  editOpen: boolean
+  submitting: boolean
+  canContinue: boolean
+  isMobile: boolean
 }>()
 
 const emit = defineEmits<{
-  next:        []
-  prev:        []
-  toggleEdit:  []
+  next: []
+  prev: []
+  toggleEdit: []
 }>()
 
 const wizard = useSuggestionWizard()
-const { t }  = useI18n()
+const { t } = useI18n()
 
 const ALL_CATEGORIES = [
   { id: '3e9f033e-f594-488d-98bf-a809cbd91299', name: 'Naturaleza' },
@@ -40,45 +40,39 @@ const ALL_CATEGORIES = [
 const ALL_SEASONS = ['Primavera', 'Verano', 'Otoño', 'Invierno', 'Todo el año']
 
 const ALL_AGES = [
-  { id: 6,  label: 'Bebés (0–11m)' },
-  { id: 7,  label: 'Pequeños (1–3 años)' },
-  { id: 8,  label: 'Preescolar (3–6 años)' },
-  { id: 9,  label: 'Escolar (6–12 años)' },
+  { id: 6, label: 'Bebés (0–11m)' },
+  { id: 7, label: 'Pequeños (1–3 años)' },
+  { id: 8, label: 'Preescolar (3–6 años)' },
+  { id: 9, label: 'Escolar (6–12 años)' },
   { id: 10, label: 'Adolescentes (12+)' },
   { id: 11, label: 'Todas las edades' },
 ]
 
 const availableDraftCategories = computed(() =>
-  ALL_CATEGORIES.filter(c =>
-    !wizard.editDraft.value?.selectedCategories?.some(s => s.id === c.id)
+  ALL_CATEGORIES.filter(
+    (c) => !wizard.editDraft.value?.selectedCategories?.some((s) => s.id === c.id)
   )
 )
 
 const availableDraftSeasons = computed(() =>
-  ALL_SEASONS.filter(s =>
-    !wizard.editDraft.value?.selectedSeasons?.includes(s)
-  )
+  ALL_SEASONS.filter((s) => !wizard.editDraft.value?.selectedSeasons?.includes(s))
 )
 
 const availableDraftAges = computed(() =>
-  ALL_AGES.filter(a =>
-    !wizard.editDraft.value?.selectedAgeIds?.includes(a.id)
-  )
+  ALL_AGES.filter((a) => !wizard.editDraft.value?.selectedAgeIds?.includes(a.id))
 )
 
-const editIsEmpty = computed(() =>
-  !wizard.editDraft.value?.selectedCategories?.length &&
-  !wizard.editDraft.value?.customActivity &&
-  !wizard.editDraft.value?.selectedSeasons?.length &&
-  !wizard.editDraft.value?.selectedAgeLabels?.length
+const editIsEmpty = computed(
+  () =>
+    !wizard.editDraft.value?.selectedCategories?.length &&
+    !wizard.editDraft.value?.customActivity &&
+    !wizard.editDraft.value?.selectedSeasons?.length &&
+    !wizard.editDraft.value?.selectedAgeLabels?.length
 )
-
-
 </script>
 
 <template>
   <div class="wizard-body">
-
     <div class="wizard-body__sticky">
       <SuggestionsWizardResumenBar
         :current-step="currentStep"
@@ -88,19 +82,14 @@ const editIsEmpty = computed(() =>
 
     <div class="wizard-body__content">
       <Transition name="step-fade" mode="out-in">
-        <SuggestionsWizardStepLugar      v-if="currentStep === 1" key="1" />
-        <SuggestionsWizardStepActividad  v-else-if="currentStep === 2" key="2" />
-        <SuggestionsWizardStepDetalles   v-else-if="currentStep === 3" key="3" />
+        <SuggestionsWizardStepLugar v-if="currentStep === 1" key="1" />
+        <SuggestionsWizardStepActividad v-else-if="currentStep === 2" key="2" />
+        <SuggestionsWizardStepDetalles v-else-if="currentStep === 3" key="3" />
       </Transition>
     </div>
 
     <div class="wizard-body__footer">
-      <UiButton
-        v-if="currentStep > 1"
-        variant="ghost"
-        size="sm"
-        @click="emit('prev')"
-      >
+      <UiButton v-if="currentStep > 1" variant="ghost" size="sm" @click="emit('prev')">
         {{ t('common.back') }}
       </UiButton>
       <div style="flex: 1" />
@@ -114,7 +103,6 @@ const editIsEmpty = computed(() =>
         {{ currentStep === 4 ? t('suggest.submit') : t('common.continue') }}
       </UiButton>
     </div>
-
   </div>
 
   <!-- Mobile: Drawer desde abajo -->
@@ -123,7 +111,11 @@ const editIsEmpty = computed(() =>
     :open="editOpen"
     direction="bottom"
     max-height="75vh"
-    @update:open="(v) => { if (!v) wizard.closeEdit() }"
+    @update:open="
+      (v) => {
+        if (!v) wizard.closeEdit()
+      }
+    "
   >
     <template #body>
       <div class="edit-drawer">
@@ -136,7 +128,6 @@ const editIsEmpty = computed(() =>
 
         <div class="edit-drawer__content">
           <div v-if="!editIsEmpty" class="edit-sections">
-
             <div class="edit-section">
               <span class="edit-label">{{ t('suggest.activity_type') }}</span>
               <div class="edit-chips">
@@ -221,7 +212,6 @@ const editIsEmpty = computed(() =>
                 </button>
               </div>
             </div>
-
           </div>
           <div v-else class="edit-empty">
             <UiIcon name="i-lucide-info" size="sm" />
@@ -243,13 +233,15 @@ const editIsEmpty = computed(() =>
     v-else
     :open="editOpen"
     :title="t('suggest.edit_title')"
-    @update:open="(v) => { if (!v) wizard.closeEdit() }"
+    @update:open="
+      (v) => {
+        if (!v) wizard.closeEdit()
+      }
+    "
   >
     <template #body>
       <div class="edit-slideover">
-
         <div v-if="!editIsEmpty" class="edit-sections">
-
           <div class="edit-section">
             <span class="edit-label">{{ t('suggest.activity_type') }}</span>
             <div class="edit-chips">
@@ -334,14 +326,12 @@ const editIsEmpty = computed(() =>
               </button>
             </div>
           </div>
-
         </div>
 
         <div v-else class="edit-empty">
           <UiIcon name="i-lucide-info" size="sm" />
           <span>{{ t('suggest.edit_empty') }}</span>
         </div>
-
       </div>
     </template>
 
@@ -387,10 +377,18 @@ const editIsEmpty = computed(() =>
 
 .step-fade-enter-active,
 .step-fade-leave-active {
-  transition: opacity 0.18s ease, transform 0.18s ease;
+  transition:
+    opacity 0.18s ease,
+    transform 0.18s ease;
 }
-.step-fade-enter-from { opacity: 0; transform: translateX(8px); }
-.step-fade-leave-to   { opacity: 0; transform: translateX(-8px); }
+.step-fade-enter-from {
+  opacity: 0;
+  transform: translateX(8px);
+}
+.step-fade-leave-to {
+  opacity: 0;
+  transform: translateX(-8px);
+}
 
 .edit-drawer {
   display: flex;

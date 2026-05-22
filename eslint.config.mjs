@@ -2,10 +2,10 @@ import { createConfigForNuxt } from '@nuxt/eslint-config/flat'
 import stylistic from '@stylistic/eslint-plugin'
 
 export default createConfigForNuxt({
-  features: { tooling: true },
+  features: { tooling: true }
 }).append(
   {
-    ignores: ['**/database.types.ts', '**/.nuxt/**', '**/node_modules/**'],
+    ignores: ['**/database.types.ts', '**/.nuxt/**', '**/node_modules/**']
   },
   {
     files: ['**/*.ts', '**/*.tsx', '**/*.vue', '**/*.js', '**/*.mjs', '**/*.cjs'],
@@ -20,7 +20,7 @@ export default createConfigForNuxt({
       '@stylistic/comma-dangle': 'warn',
       'no-empty': 'warn',
       'no-useless-escape': 'warn',
-      'unicorn/prefer-number-properties': 'warn',
-    },
+      'unicorn/prefer-number-properties': 'warn'
+    }
   }
 )

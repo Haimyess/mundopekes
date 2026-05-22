@@ -2,14 +2,14 @@
 import { useSuggestionWizard } from '~/composables/useSuggestionWizard'
 
 const props = defineProps<{ open: boolean }>()
-const emit  = defineEmits<{ 'update:open': [value: boolean] }>()
+const emit = defineEmits<{ 'update:open': [value: boolean] }>()
 
-const wizard     = useSuggestionWizard()
-const { t }      = useI18n()
-const toast      = useToast()
-const isMobile   = useMediaQuery('(max-width: 768px)')
+const wizard = useSuggestionWizard()
+const { t } = useI18n()
+const toast = useToast()
+const isMobile = useMediaQuery('(max-width: 768px)')
 const currentStep = ref(1)
-const submitting  = ref(false)
+const submitting = ref(false)
 // const editOpen    = ref(false)
 const TOTAL_STEPS = wizard.STEPS.length
 
@@ -69,7 +69,7 @@ const submit = async () => {
       method: 'POST',
       body: wizard.buildPayload(),
     })
-    toast.add({ 
+    toast.add({
       title: t('suggest.success_title'),
       description: t('suggest.success_desc'),
       color: 'success',
@@ -77,7 +77,7 @@ const submit = async () => {
     })
     handleClose()
   } catch (e: any) {
-    toast.add({ 
+    toast.add({
       title: t('suggest.error_title'),
       description: e?.data?.message ?? e?.message ?? t('common.error'),
       color: 'error',
@@ -98,7 +98,6 @@ const handleClose = () => {
 }
 
 const toggleEdit = () => wizard.toggleEdit()
-
 </script>
 
 <template>
@@ -108,8 +107,11 @@ const toggleEdit = () => wizard.toggleEdit()
     :open="open"
     direction="bottom"
     max-height="92vh"
-    
-    @update:open="(v) => { if (!v) handleClose() }"
+    @update:open="
+      (v) => {
+        if (!v) handleClose()
+      }
+    "
   >
     <template #body>
       <div class="wizard-layout">
@@ -118,7 +120,7 @@ const toggleEdit = () => wizard.toggleEdit()
           :total="TOTAL_STEPS"
           @close="handleClose"
         />
-     <!-- <SuggestionsWizardBody
+        <!-- <SuggestionsWizardBody
   :current-step="currentStep"
   :edit-open="wizard.editOpen.value"
   :submitting="submitting"
@@ -128,16 +130,16 @@ const toggleEdit = () => wizard.toggleEdit()
   @toggle-edit="toggleEdit"
 /> -->
 
-<SuggestionsWizardBody
-  :current-step="currentStep"
-  :edit-open="wizard.editOpen.value"
-  :submitting="submitting"
-  :can-continue="canContinue"
-  :is-mobile="isMobile"
-  @next="next"
-  @prev="prev"
-  @toggle-edit="toggleEdit"
-/>
+        <SuggestionsWizardBody
+          :current-step="currentStep"
+          :edit-open="wizard.editOpen.value"
+          :submitting="submitting"
+          :can-continue="canContinue"
+          :is-mobile="isMobile"
+          @next="next"
+          @prev="prev"
+          @toggle-edit="toggleEdit"
+        />
       </div>
     </template>
   </UiDrawer>
@@ -147,7 +149,11 @@ const toggleEdit = () => wizard.toggleEdit()
     v-else
     :open="open"
     :ui="{ content: 'sm:max-w-lg p-0 overflow-hidden' }"
-    @update:open="(v) => { if (!v) handleClose() }"
+    @update:open="
+      (v) => {
+        if (!v) handleClose()
+      }
+    "
   >
     <template #content>
       <div class="wizard-layout">
@@ -156,16 +162,16 @@ const toggleEdit = () => wizard.toggleEdit()
           :total="TOTAL_STEPS"
           @close="handleClose"
         />
-      <SuggestionsWizardBody
-  :current-step="currentStep"
-  :edit-open="wizard.editOpen.value"
-  :submitting="submitting"
-  :can-continue="canContinue"
-  :is-mobile="isMobile"
-  @next="next"
-  @prev="prev"
-  @toggle-edit="toggleEdit"
-/>
+        <SuggestionsWizardBody
+          :current-step="currentStep"
+          :edit-open="wizard.editOpen.value"
+          :submitting="submitting"
+          :can-continue="canContinue"
+          :is-mobile="isMobile"
+          @next="next"
+          @prev="prev"
+          @toggle-edit="toggleEdit"
+        />
       </div>
     </template>
   </UModal>
