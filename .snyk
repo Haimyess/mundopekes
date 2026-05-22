@@ -1,5 +1,10 @@
 # Snyk policy file
 version: v1.25.0
+exclude:
+  global:
+    - .claude/worktrees/**
+    - apps/*/. output/**
+    - '**/. output/**'
 ignore:
   SNYK-JS-LEAFLET-16427276:
     - '*':
