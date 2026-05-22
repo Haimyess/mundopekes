@@ -17,7 +17,7 @@ export default createConfigForNuxt({
       'vue/require-default-prop': 'warn',
       'vue/no-deprecated-v-on-native-modifier': 'warn',
       '@stylistic/max-statements-per-line': 'warn',
-      '@stylistic/comma-dangle': 'warn',
+      '@stylistic/comma-dangle': 'off',
       'no-empty': 'warn',
       'no-useless-escape': 'warn',
       'unicorn/prefer-number-properties': 'warn'
