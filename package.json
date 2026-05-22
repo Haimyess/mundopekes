@@ -20,6 +20,12 @@
     "security:monitor": "snyk monitor --all-projects",
     "prepare": "node -e \"const{execSync}=require('child_process');if(process.env.CI!=='1')execSync('husky',{stdio:'inherit'})\""
   },
+  "overrides": {
+    "devalue": "5.8.1",
+    "brace-expansion": "5.0.6",
+    "ws": "8.20.1",
+    "nitropack": "2.13.4"
+  },
   "engines": {
     "node": "22.x"
   },
@@ -51,6 +57,7 @@
     "snyk": "^1.1304.0"
   },
   "dependencies": {
-    "@vercel/analytics": "^2.0.1"
+    "@vercel/analytics": "^2.0.1",
+    "resend": "^6.12.3"
   }
 }
