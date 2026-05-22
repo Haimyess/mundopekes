@@ -1,6 +1,5 @@
 import { createConfigForNuxt } from '@nuxt/eslint-config/flat'
 import stylistic from '@stylistic/eslint-plugin'
-
 export default createConfigForNuxt({
   features: { tooling: true }
 }).append(
@@ -16,11 +15,21 @@ export default createConfigForNuxt({
       'vue/multi-word-component-names': 'off',
       'vue/require-default-prop': 'warn',
       'vue/no-deprecated-v-on-native-modifier': 'warn',
-      '@stylistic/max-statements-per-line': 'warn',
-      '@stylistic/comma-dangle': 'off',
       'no-empty': 'warn',
       'no-useless-escape': 'warn',
-      'unicorn/prefer-number-properties': 'warn'
+      'unicorn/prefer-number-properties': 'warn',
+      '@stylistic/comma-dangle': 'off',
+      '@stylistic/arrow-parens': 'off',
+      '@stylistic/operator-linebreak': 'off',
+      '@stylistic/member-delimiter-style': 'off',
+      '@stylistic/quote-props': 'off',
+      '@stylistic/max-statements-per-line': 'off',
+      'vue/singleline-html-element-content-newline': 'off',
+      'vue/html-self-closing': 'off',
+      'vue/comma-dangle': 'off',
+      'vue/html-indent': 'off',
+      'vue/operator-linebreak': 'off',
+      'vue/max-attributes-per-line': 'off',
     }
   }
 )
