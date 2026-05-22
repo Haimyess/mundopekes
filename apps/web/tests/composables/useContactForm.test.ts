@@ -1,9 +1,18 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { __resetStore } from '../__mocks__/nuxt-state'
+
 import { useContactForm } from '~/app/composables/useContactForm'
+
+vi.mock('vue-i18n', () => ({
+  useI18n: () => ({
+    t: (key: string) => key,
+    locale: { value: 'es' },
+  }),
+}))
 
 vi.stubGlobal('$fetch', vi.fn().mockResolvedValue({}))
 vi.stubGlobal('useTracking', () => ({ trackContactSend: vi.fn() }))
+vi.stubGlobal('useToast', () => ({ add: vi.fn() }))
 
 beforeEach(() => {
   __resetStore()
