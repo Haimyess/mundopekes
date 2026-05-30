@@ -217,6 +217,29 @@ const slideoverTitle = computed(() => {
   const name = nameI18n['he'] || nameI18n['es'] || Object.values(nameI18n)[0] || 'Sugerencia'
   return isEditing.value ? `Editando: ${name}` : name
 })
+
+// ── Metadata helpers ──────────────────────────────────────────────────────
+// Local shape of suggestion.metadata (written by the wizard in Fases 3–6)
+type SuggestionMeta = {
+  title_i18n?: Record<string, string> | null
+  phone?: string | null
+  website?: string | null
+  opening_hours_text?: string[] | null
+  hours_unknown?: boolean | null
+  has_shadow?: boolean | null
+  has_bathrooms?: boolean | null
+  price?: number | null
+}
+
+const meta = computed<SuggestionMeta>(
+  () => (props.suggestion?.metadata as SuggestionMeta | null) ?? {}
+)
+
+// Returns the best available string from an i18n Record (he → es → en → first)
+const pickI18n = (obj: Record<string, string> | null | undefined): string => {
+  if (!obj) return ''
+  return obj['he'] || obj['es'] || obj['en'] || Object.values(obj)[0] || ''
+}
 </script>
 
 <template>
@@ -235,6 +258,14 @@ const slideoverTitle = computed(() => {
       <div v-if="suggestion" class="flex flex-col gap-5 p-4">
         <!-- ── MODO VISTA ────────────────────────────────── -->
         <template v-if="!isEditing">
+          <!-- Título de la actividad (distinto del nombre del lugar) -->
+          <div v-if="meta.title_i18n && pickI18n(meta.title_i18n)">
+            <p class="text-xs font-medium text-(--ui-text-muted) uppercase tracking-wide mb-1">
+              Título de la actividad
+            </p>
+            <p class="text-base font-semibold">{{ pickI18n(meta.title_i18n) }}</p>
+          </div>
+
           <div class="flex items-center justify-between">
             <UBadge :color="statusColor" variant="subtle" size="lg">
               {{ statusLabel }}
@@ -269,6 +300,31 @@ const slideoverTitle = computed(() => {
                   · {{ suggestion.location.address }}
                 </span>
               </span>
+            </div>
+          </div>
+
+          <!-- Contacto del lugar -->
+          <div v-if="meta.phone || meta.website">
+            <p class="text-sm font-medium text-(--ui-text-muted) mb-2">Contacto</p>
+            <div class="flex flex-col gap-1.5">
+              <a
+                v-if="meta.phone"
+                :href="`tel:${meta.phone}`"
+                class="flex items-center gap-2 text-sm text-primary-500 hover:underline"
+              >
+                <UIcon name="i-lucide-phone" class="size-4 shrink-0" />
+                {{ meta.phone }}
+              </a>
+              <a
+                v-if="meta.website"
+                :href="meta.website"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="flex items-center gap-2 text-sm text-primary-500 hover:underline"
+              >
+                <UIcon name="i-lucide-globe" class="size-4 shrink-0" />
+                <span class="truncate">{{ meta.website }}</span>
+              </a>
             </div>
           </div>
 
@@ -319,12 +375,50 @@ const slideoverTitle = computed(() => {
                 />
                 Fines de semana
               </div>
+              <div class="flex items-center gap-2 text-sm">
+                <UIcon
+                  :name="meta.has_shadow ? 'i-lucide-check-circle' : 'i-lucide-circle'"
+                  :class="meta.has_shadow ? 'text-success-500' : 'text-(--ui-text-muted)'"
+                  class="size-4"
+                />
+                Sombra
+              </div>
+              <div class="flex items-center gap-2 text-sm">
+                <UIcon
+                  :name="meta.has_bathrooms ? 'i-lucide-check-circle' : 'i-lucide-circle'"
+                  :class="meta.has_bathrooms ? 'text-success-500' : 'text-(--ui-text-muted)'"
+                  class="size-4"
+                />
+                Baños
+              </div>
+            </div>
+            <!-- Precio cuando no es gratuito -->
+            <div
+              v-if="!suggestion.is_free && meta.price"
+              class="flex items-center gap-2 text-sm mt-2"
+            >
+              <UIcon name="i-lucide-shekel-sign" class="size-4 text-(--ui-text-muted)" />
+              ₪{{ meta.price }}
             </div>
           </div>
 
-          <div v-if="suggestion.schedule">
-            <p class="text-sm font-medium text-(--ui-text-muted) mb-1">Horario</p>
-            <p class="text-sm">
+          <!-- Horarios: hours_unknown → alerta; opening_hours_text → Google; fallback → schedule -->
+          <div v-if="meta.hours_unknown || meta.opening_hours_text?.length || suggestion.schedule">
+            <p class="text-sm font-medium text-(--ui-text-muted) mb-2">Horario</p>
+            <UAlert
+              v-if="meta.hours_unknown"
+              color="warning"
+              variant="subtle"
+              icon="i-lucide-clock"
+              title="Horarios pendientes de revisión"
+              description="El usuario no conocía los horarios al enviar la sugerencia."
+            />
+            <div v-else-if="meta.opening_hours_text?.length" class="flex flex-col gap-0.5">
+              <p v-for="(line, i) in meta.opening_hours_text" :key="i" class="text-sm">
+                {{ line }}
+              </p>
+            </div>
+            <p v-else-if="suggestion.schedule" class="text-sm">
               {{ suggestion.schedule }}
             </p>
           </div>
