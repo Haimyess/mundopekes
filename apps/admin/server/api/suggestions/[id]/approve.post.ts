@@ -1,19 +1,66 @@
 import { createClient } from '@supabase/supabase-js'
 import { enrichI18nField } from '../../../utils/translate'
 
+// Full shape of suggestion.metadata as written by the wizard (Fase 6)
+type SuggestionMeta = {
+  // Google Place identifiers
+  google_place_id?: string | null
+  place_photo_url?: string | null
+  google_types?: string[] | null
+  // Editable place info
+  google_url?: string | null
+  phone?: string | null
+  website?: string | null
+  wheelchair?: boolean | null
+  opening_hours_text?: string[] | null
+  photos?: string[] | null
+  // Activity
+  generated_title?: string | null
+  custom_activity?: string | null
+  title_i18n?: Record<string, string> | null
+  // Details
+  has_shadow?: boolean | null
+  has_bathrooms?: boolean | null
+  price?: number | null
+  // Schedule
+  hours_unknown?: boolean | null
+  schedule_structured?: unknown
+  age_range_ids?: number[]
+}
+
+type SuggestionAgeRange = { ids?: number[] }
+
+// Geocode an address via Nominatim (OpenStreetMap, no API key required).
+// Returns null and never throws — approval must not be blocked by geocoding failures.
+async function geocodeAddress(query: string): Promise<{ lat: number; lng: number } | null> {
+  try {
+    const encoded = encodeURIComponent(query.trim())
+    const results = await $fetch<Array<{ lat: string; lon: string }>>(
+      `https://nominatim.openstreetmap.org/search?q=${encoded}&format=json&limit=1&countrycodes=il`,
+      { headers: { 'User-Agent': 'MundoPekes/1.0 (contact@mundopekes.com)' } }
+    )
+    if (!results?.length) return null
+    return {
+      lat: Number.parseFloat(results[0]!.lat),
+      lng: Number.parseFloat(results[0]!.lon),
+    }
+  } catch {
+    return null
+  }
+}
+
 export default defineEventHandler(async (event) => {
   const id = getRouterParam(event, 'id')
   if (!id) throw createError({ statusCode: 400, message: 'ID requerido' })
 
   const config = useRuntimeConfig(event)
 
-  // Use service role for cross-table writes
   const supabase = createClient(
     config.public.supabaseUrl as string,
     config.supabaseServiceKey as string
   )
 
-  // 1. Fetch suggestion
+  // ── 1. Fetch suggestion ────────────────────────────────────────────────
   const { data: suggestion, error: fetchError } = await supabase
     .from('suggestions')
     .select('*')
@@ -38,38 +85,42 @@ export default defineEventHandler(async (event) => {
     name: suggestion.name_i18n,
   })
 
-  type SuggestionMeta = {
-    google_place_id?: string | null
-    phone?: string | null
-    website?: string | null
-    schedule_structured?: unknown
-  }
-  type SuggestionAgeRange = { ids?: number[] }
   const meta = (suggestion.metadata as SuggestionMeta | null) ?? {}
   const ageRange = (suggestion.age_range as SuggestionAgeRange | null) ?? {}
 
-  // 2. Enrich name_i18n
+  // ── 2. Enrich place name ───────────────────────────────────────────────
   const rawName = (suggestion.name_i18n as Record<string, string>) ?? {}
   const name_i18n = config.deeplApiKey
     ? await enrichI18nField(rawName, config.deeplApiKey as string)
     : rawName
 
-  // 3. Enrich description_i18n
+  // ── 3. Enrich place description ────────────────────────────────────────
   const rawDesc = (suggestion.description_i18n as Record<string, string>) ?? {}
   const description_i18n =
     config.deeplApiKey && Object.keys(rawDesc).length > 0
       ? await enrichI18nField(rawDesc, config.deeplApiKey as string)
       : rawDesc
 
-  // 4. Resolve city_id — upsert if not found
+  // ── 4. Enrich activity title (distinct from place name) ────────────────
+  // Source: metadata.title_i18n (set by the wizard). Falls back to name_i18n
+  // only when absent (legacy suggestions that predate Phase 3).
+  const rawTitle =
+    meta.title_i18n && Object.keys(meta.title_i18n).length > 0 ? meta.title_i18n : null
+  const title_i18n: Record<string, string> = rawTitle
+    ? config.deeplApiKey
+      ? await enrichI18nField(rawTitle, config.deeplApiKey as string)
+      : rawTitle
+    : { ...name_i18n } // fallback: use place name
+
+  // ── 5. Resolve city_id — upsert if not found ──────────────────────────
   const location = suggestion.location as {
     city?: string
     address?: string
     lat?: number
     lng?: number
   } | null
-  let city_id: number | null = null
 
+  let city_id: number | null = null
   if (location?.city) {
     const { data: existingCity } = await supabase
       .from('cities')
@@ -89,19 +140,51 @@ export default defineEventHandler(async (event) => {
     }
   }
 
-  // 5. Create Place
+  // ── 6. Resolve coordinates (geocoding fallback for manual entries) ──────
+  let lat: number | null = location?.lat ?? null
+  let lng: number | null = location?.lng ?? null
+
+  if (lat === null) {
+    const geoQuery = [location?.address, location?.city].filter(Boolean).join(', ')
+    if (geoQuery) {
+      const coords = await geocodeAddress(geoQuery)
+      if (coords) {
+        lat = coords.lat
+        lng = coords.lng
+        await logInfo(event, 'suggestions/approve', 'Geocoded missing coordinates', { lat, lng })
+      } else {
+        await logWarn(
+          event,
+          'suggestions/approve',
+          'Geocoding fallback failed — place.lat/lng will be null',
+          { id }
+        )
+      }
+    }
+  }
+
+  // ── 7. Create Place ────────────────────────────────────────────────────
   const placePayload = {
     name_i18n,
     description_i18n: Object.keys(description_i18n).length > 0 ? description_i18n : null,
     city_id,
-    lat: location?.lat ?? null,
-    lng: location?.lng ?? null,
+    lat,
+    lng,
     images: (suggestion.images as string[]) ?? [],
     status: 'active',
     metadata: {
+      // Identification
       google_place_id: meta.google_place_id ?? null,
+      // Contact & info (editable by user in wizard, then stored in suggestion.metadata)
       phone: meta.phone ?? null,
       website: meta.website ?? null,
+      google_url: meta.google_url ?? null,
+      wheelchair: meta.wheelchair ?? null,
+      opening_hours_text: meta.opening_hours_text?.length ? meta.opening_hours_text : null,
+      // Media
+      place_photo_url: meta.place_photo_url ?? null,
+      photos: meta.photos?.length ? meta.photos : null,
+      // Traceability
       from_suggestion: id,
     },
   }
@@ -120,22 +203,40 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 500, message: `Error creando lugar: ${placeError?.message}` })
   }
 
-  // 6. Create Activity — title_i18n derived from name_i18n, admin can refine later
+  // ── 8. Create Activity ─────────────────────────────────────────────────
+  const hoursUnknown = meta.hours_unknown === true
+
+  // price column exists on activities; null when free
+  const activityPrice: number | null = suggestion.is_free
+    ? null
+    : typeof meta.price === 'number'
+      ? meta.price
+      : null
+
   const activityPayload = {
     place_id: place.id,
     category_id: suggestion.category_id ?? null,
-    title_i18n: { ...name_i18n },
+    // Activity title (wizard-authored, DeepL-enriched above)
+    title_i18n,
     description_i18n: Object.keys(description_i18n).length > 0 ? description_i18n : null,
     is_free: suggestion.is_free ?? true,
+    price: activityPrice,
     stroller_friendly: suggestion.stroller_friendly ?? false,
     open_weekends: suggestion.open_weekends ?? false,
-    schedule: (suggestion.schedule as string) ?? null,
+    // Empty string when hours_unknown; structured schedule is in metadata
+    schedule: hoursUnknown ? null : ((suggestion.schedule as string) ?? null),
     images: (suggestion.images as string[]) ?? [],
     status: 'approved',
     metadata: {
       from_suggestion: id,
-      schedule_structured: meta.schedule_structured ?? null,
+      // Schedule
+      hours_unknown: hoursUnknown,
+      schedule_structured: hoursUnknown ? null : (meta.schedule_structured ?? null),
+      // Age ranges (also in pivot table activity_age_ranges)
       age_range_ids: ageRange.ids ?? [],
+      // has_shadow / has_bathrooms have no dedicated column — store in metadata
+      has_shadow: meta.has_shadow ?? false,
+      has_bathrooms: meta.has_bathrooms ?? false,
     },
   }
 
@@ -158,7 +259,7 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  // 7. Insert age range pivot rows
+  // ── 9. Age range pivot rows ────────────────────────────────────────────
   const ageRangeIds = ageRange.ids ?? []
   if (ageRangeIds.length > 0) {
     await supabase
@@ -168,7 +269,9 @@ export default defineEventHandler(async (event) => {
       )
   }
 
-  // 8. Insert season pivot rows
+  // ── 10. Season pivot rows ──────────────────────────────────────────────
+  // best_season stores VALUES (e.g. 'spring', 'summer'). 'all' may not have a row —
+  // the query simply won't return it, so the insert is safely skipped.
   const bestSeasons = (suggestion.best_season as string[]) ?? []
   if (bestSeasons.length > 0) {
     const { data: seasonData } = await supabase
@@ -186,7 +289,7 @@ export default defineEventHandler(async (event) => {
     }
   }
 
-  // 9. Mark suggestion as approved
+  // ── 11. Mark suggestion as approved ───────────────────────────────────
   await supabase
     .from('suggestions')
     .update({ status: 'approved', reviewed_at: new Date().toISOString() })
