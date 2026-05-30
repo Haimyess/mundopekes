@@ -136,7 +136,17 @@
     "custom_activity": "פעילות מותאמת אישית",
     "success_title": "ההצעה נשלחה!",
     "success_desc": "נבדוק אותה ונפרסם בקרוב ב-MundoPekes",
-    "error_title": "שגיאה בשליחה"
+    "error_title": "שגיאה בשליחה",
+    "step_progress": "שלב {n} מתוך {total}",
+    "step_lugar": "מקום",
+    "step_actividad": "פעילות",
+    "step_detalles": "פרטים",
+    "step_resumen": "סיכום",
+    "free": "הכניסה חינם",
+    "toggle_stroller": "מתאים לעגלות",
+    "toggle_shadow": "יש צל במקום",
+    "toggle_bathrooms": "יש שירותים",
+    "toggle_weekends": "פתוח בסופי שבוע"
   },
   "contact": {
     "title": "צור קשר",
@@ -240,6 +250,13 @@
     "back": "חזור",
     "done": "סיום",
     "edit": "ערוך",
-    "continue": "המשך"
+    "continue": "המשך",
+    "day_sunday": "ראשון",
+    "day_monday": "שני",
+    "day_tuesday": "שלישי",
+    "day_wednesday": "רביעי",
+    "day_thursday": "חמישי",
+    "day_friday": "שישי",
+    "day_saturday": "שבת"
   }
 }

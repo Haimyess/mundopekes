@@ -8,35 +8,35 @@ const props = defineProps<{
 
 const emit = defineEmits<{ close: [] }>()
 
-console.log('WIZARD_STEPS:', WIZARD_STEPS)
+const { t } = useI18n()
 </script>
-
 
 <template>
   <div class="wizard-header">
     <div class="wizard-header__top">
       <div class="wizard-header__info">
-        <span class="wizard-header__step-hint">Paso {{ currentStep }} de {{ total }}</span>
-        <span class="wizard-header__step-name">{{ WIZARD_STEPS[currentStep - 1]?.label }}</span>
+        <span class="wizard-header__step-hint">{{
+          t('suggest.step_progress', { n: currentStep, total })
+        }}</span>
+        <span class="wizard-header__step-name">{{
+          t(WIZARD_STEPS[currentStep - 1]?.labelKey ?? '')
+        }}</span>
       </div>
       <div class="wizard-header__right">
         <div class="wizard-header__lines">
-      <div
-  v-for="(_, i) in WIZARD_STEPS"
-  :key="i"
-  :style="{
-    height: '3px',
-    width: i + 1 === currentStep ? '28px' : '20px',
-    borderRadius: '9999px',
-    backgroundColor: i + 1 < currentStep
-      ? '#86efac'
-      : i + 1 === currentStep
-        ? '#22c55e'
-        : '#d4d4d4',
-    transition: 'all 0.3s',
-    flexShrink: '0',
-  }"
-/>
+          <div
+            v-for="(_, i) in WIZARD_STEPS"
+            :key="i"
+            :style="{
+              height: '3px',
+              width: i + 1 === currentStep ? '28px' : '20px',
+              borderRadius: '9999px',
+              backgroundColor:
+                i + 1 < currentStep ? '#86efac' : i + 1 === currentStep ? '#22c55e' : '#d4d4d4',
+              transition: 'all 0.3s',
+              flexShrink: '0',
+            }"
+          />
         </div>
         <button class="wizard-header__close" @click="emit('close')">
           <UiIcon name="i-lucide-x" size="sm" />

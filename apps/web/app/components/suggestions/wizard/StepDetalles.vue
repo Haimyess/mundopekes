@@ -5,22 +5,22 @@ import type { WizardSchedule } from '~/composables/useSuggestionWizard'
 const wizard = useSuggestionWizard()
 const { t } = useI18n()
 
-const DAYS: { key: keyof WizardSchedule; label: string }[] = [
-  { key: 'sunday', label: 'Domingo' },
-  { key: 'monday', label: 'Lunes' },
-  { key: 'tuesday', label: 'Martes' },
-  { key: 'wednesday', label: 'Miércoles' },
-  { key: 'thursday', label: 'Jueves' },
-  { key: 'friday', label: 'Viernes' },
-  { key: 'saturday', label: 'Sábado' },
-]
+const DAYS = computed<{ key: keyof WizardSchedule; label: string }[]>(() => [
+  { key: 'sunday', label: t('common.day_sunday') },
+  { key: 'monday', label: t('common.day_monday') },
+  { key: 'tuesday', label: t('common.day_tuesday') },
+  { key: 'wednesday', label: t('common.day_wednesday') },
+  { key: 'thursday', label: t('common.day_thursday') },
+  { key: 'friday', label: t('common.day_friday') },
+  { key: 'saturday', label: t('common.day_saturday') },
+])
 
-const TOGGLES = [
-  { key: 'stroller' as const, label: 'Apto para cochecitos', icon: 'i-lucide-baby' },
-  { key: 'shadow' as const, label: 'Hay sombra en el lugar', icon: 'i-lucide-tree-pine' },
-  { key: 'bathrooms' as const, label: 'Hay baños', icon: 'i-lucide-toilet' },
-  { key: 'weekends' as const, label: 'Abre los fines de semana', icon: 'i-lucide-calendar' },
-]
+const TOGGLES = computed(() => [
+  { key: 'stroller' as const, label: t('suggest.toggle_stroller'), icon: 'i-lucide-baby' },
+  { key: 'shadow' as const, label: t('suggest.toggle_shadow'), icon: 'i-lucide-tree-pine' },
+  { key: 'bathrooms' as const, label: t('suggest.toggle_bathrooms'), icon: 'i-lucide-toilet' },
+  { key: 'weekends' as const, label: t('suggest.toggle_weekends'), icon: 'i-lucide-calendar' },
+])
 </script>
 
 <template>
@@ -30,7 +30,7 @@ const TOGGLES = [
       <div class="step-detalles__toggle-row">
         <div class="step-detalles__toggle-info">
           <UiIcon name="i-lucide-ticket" size="sm" />
-          <span class="step-detalles__toggle-label">Es gratuito</span>
+          <span class="step-detalles__toggle-label">{{ t('suggest.free') }}</span>
         </div>
         <UCheckbox v-model="wizard.state.value.isFree" />
       </div>

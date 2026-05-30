@@ -136,7 +136,17 @@
     "custom_activity": "Своя активность",
     "success_title": "Предложение отправлено!",
     "success_desc": "Мы рассмотрим его и скоро опубликуем на MundoPekes",
-    "error_title": "Ошибка отправки"
+    "error_title": "Ошибка отправки",
+    "step_progress": "Шаг {n} из {total}",
+    "step_lugar": "Место",
+    "step_actividad": "Активность",
+    "step_detalles": "Детали",
+    "step_resumen": "Итог",
+    "free": "Бесплатно",
+    "toggle_stroller": "Подходит для колясок",
+    "toggle_shadow": "Есть тень",
+    "toggle_bathrooms": "Есть туалеты",
+    "toggle_weekends": "Открыто в выходные"
   },
   "contact": {
     "title": "Связаться с нами",
@@ -240,6 +250,13 @@
     "back": "Назад",
     "done": "Готово",
     "edit": "Редактировать",
-    "continue": "Продолжить"
+    "continue": "Продолжить",
+    "day_sunday": "Воскресенье",
+    "day_monday": "Понедельник",
+    "day_tuesday": "Вторник",
+    "day_wednesday": "Среда",
+    "day_thursday": "Четверг",
+    "day_friday": "Пятница",
+    "day_saturday": "Суббота"
   }
 }

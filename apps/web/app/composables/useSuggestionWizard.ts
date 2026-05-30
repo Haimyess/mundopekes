@@ -48,10 +48,10 @@ export interface WizardState {
 }
 
 export const WIZARD_STEPS = [
-  { label: 'Lugar' },
-  { label: 'Actividad' },
-  { label: 'Detalles' },
-  { label: 'Resumen' },
+  { labelKey: 'suggest.step_lugar' },
+  { labelKey: 'suggest.step_actividad' },
+  { labelKey: 'suggest.step_detalles' },
+  { labelKey: 'suggest.step_resumen' },
 ]
 
 const defaultSchedule = (): WizardSchedule => ({
