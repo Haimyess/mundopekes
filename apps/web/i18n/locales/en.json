@@ -147,7 +147,15 @@
     "toggle_shadow": "Shaded area",
     "toggle_bathrooms": "Restrooms available",
     "toggle_weekends": "Open on weekends",
-    "title_template": "{activity} at {place}"
+    "title_template": "{activity} at {place}",
+    "description_hint": "No description from Google — add your own",
+    "phone": "Phone",
+    "website": "Website",
+    "opening_hours": "Opening hours",
+    "show_more": "Show more",
+    "show_less": "Show less",
+    "geocoding": "Locating...",
+    "coords_not_found": "Address could not be located"
   },
   "contact": {
     "title": "Contact Us",

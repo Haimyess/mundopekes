@@ -147,7 +147,15 @@
     "toggle_shadow": "יש צל במקום",
     "toggle_bathrooms": "יש שירותים",
     "toggle_weekends": "פתוח בסופי שבוע",
-    "title_template": "{activity} ב{place}"
+    "title_template": "{activity} ב{place}",
+    "description_hint": "גוגל לא הביא תיאור — הוסיפו אחד",
+    "phone": "טלפון",
+    "website": "אתר",
+    "opening_hours": "שעות פתיחה",
+    "show_more": "הצג עוד",
+    "show_less": "הצג פחות",
+    "geocoding": "מאתר...",
+    "coords_not_found": "לא ניתן לאתר את הכתובת"
   },
   "contact": {
     "title": "צור קשר",

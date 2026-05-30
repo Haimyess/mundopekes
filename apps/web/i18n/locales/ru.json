@@ -147,7 +147,15 @@
     "toggle_shadow": "Есть тень",
     "toggle_bathrooms": "Есть туалеты",
     "toggle_weekends": "Открыто в выходные",
-    "title_template": "{activity} в {place}"
+    "title_template": "{activity} в {place}",
+    "description_hint": "Google не нашёл описание — добавьте своё",
+    "phone": "Телефон",
+    "website": "Сайт",
+    "opening_hours": "Часы работы",
+    "show_more": "Показать ещё",
+    "show_less": "Скрыть",
+    "geocoding": "Определяю...",
+    "coords_not_found": "Адрес не удалось определить"
   },
   "contact": {
     "title": "Связаться с нами",

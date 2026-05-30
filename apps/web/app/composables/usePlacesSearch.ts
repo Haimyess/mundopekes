@@ -23,6 +23,8 @@ export interface PlaceDetails {
 }
 
 export function usePlacesSearch() {
+  const { locale } = useI18n()
+
   const results = ref<PlaceSearchResult[]>([])
   const loading = ref(false)
   const loadingDetails = ref(false)
@@ -41,7 +43,7 @@ export function usePlacesSearch() {
       loading.value = true
       try {
         const data = await $fetch<{ places: PlaceSearchResult[] }>(
-          `/api/places/search?q=${encodeURIComponent(query)}`
+          `/api/places/search?q=${encodeURIComponent(query)}&lang=${locale.value}`
         )
         results.value = data.places
       } catch (e: unknown) {
@@ -56,7 +58,7 @@ export function usePlacesSearch() {
     loadingDetails.value = true
     try {
       const data = await $fetch<PlaceDetails>(
-        `/api/places/details?place_id=${encodeURIComponent(placeId)}`
+        `/api/places/details?place_id=${encodeURIComponent(placeId)}&lang=${locale.value}`
       )
       return data
     } catch {

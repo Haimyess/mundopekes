@@ -24,6 +24,15 @@ export interface WizardCategory {
   name_i18n: Record<string, string>
 }
 
+export interface WizardPlaceInfo {
+  phone: string
+  website: string
+  googleUrl: string
+  // Newline-separated weekday text from Google, editable by the user
+  openingHoursText: string
+  wheelchair: boolean | null
+}
+
 export interface WizardState {
   placeResult: PlaceSearchResult | null
   placeDetails: PlaceDetails | null
@@ -49,6 +58,9 @@ export interface WizardState {
   schedule: WizardSchedule
   titleManual: string
   titleTouched: boolean
+  placeInfo: WizardPlaceInfo
+  manualLat: number | null
+  manualLng: number | null
 }
 
 export const WIZARD_STEPS = [
@@ -92,6 +104,9 @@ const defaultState = (): WizardState => ({
   schedule: defaultSchedule(),
   titleManual: '',
   titleTouched: false,
+  placeInfo: { phone: '', website: '', googleUrl: '', openingHoursText: '', wheelchair: null },
+  manualLat: null,
+  manualLng: null,
 })
 
 export function useSuggestionWizard() {
@@ -235,7 +250,8 @@ export function useSuggestionWizard() {
 
   // ─── Actions ──────────────────────────────────────────────────
   // First call (no details): clears selectedCategories so StepActividad can reconcile
-  // them against real DB subcategories. Second call (with details): only updates names.
+  // them against real DB subcategories. Second call (with details): seeds names,
+  // description textarea, and editable place info.
   const setPlace = (place: PlaceSearchResult, details?: PlaceDetails) => {
     state.value.placeResult = place
     state.value.isManual = false
@@ -250,6 +266,20 @@ export function useSuggestionWizard() {
       state.value.name_i18n = { ...details.name_i18n }
       state.value.description_i18n = { ...details.description_i18n }
       state.value.placeDetails = details
+
+      // Pre-fill description textarea with best available locale text
+      if (!state.value.description.trim()) {
+        state.value.description = tc(details.description_i18n)
+      }
+
+      // Seed editable place info from Google data
+      state.value.placeInfo = {
+        phone: details.phone ?? '',
+        website: details.website ?? '',
+        googleUrl: details.google_url ?? '',
+        openingHoursText: (details.opening_hours?.weekday_text ?? []).join('\n'),
+        wheelchair: details.wheelchair_accessible ?? null,
+      }
     }
   }
 
@@ -258,7 +288,15 @@ export function useSuggestionWizard() {
     state.value.placeDetails = null
     state.value.name_i18n = {}
     state.value.description_i18n = {}
+    state.value.description = ''
     state.value.selectedCategories = []
+    state.value.placeInfo = {
+      phone: '',
+      website: '',
+      googleUrl: '',
+      openingHoursText: '',
+      wheelchair: null,
+    }
   }
 
   const toggleCategory = (cat: WizardCategory) => {
@@ -317,13 +355,18 @@ export function useSuggestionWizard() {
   // ─── Payload ──────────────────────────────────────────────────
   const buildPayload = () => {
     const s = state.value
-    const pd = s.placeDetails
+    const pi = s.placeInfo
 
-    const name_i18n = s.isManual ? { es: s.manualName } : { ...s.name_i18n }
+    const name_i18n = s.isManual ? { [locale.value]: s.manualName } : { ...s.name_i18n }
 
+    // Description stored under the active locale, not hardcoded 'es'
     const description_i18n = s.description.trim()
-      ? { ...s.description_i18n, es: s.description.trim() }
+      ? { ...s.description_i18n, [locale.value]: s.description.trim() }
       : { ...s.description_i18n }
+
+    const openingHoursLines = pi.openingHoursText
+      ? pi.openingHoursText.split('\n').filter(Boolean)
+      : undefined
 
     return {
       name_i18n,
@@ -333,12 +376,12 @@ export function useSuggestionWizard() {
       location: {
         address: s.isManual ? s.manualAddress : (s.placeResult?.address ?? ''),
         city: s.isManual ? s.manualCity : (s.placeResult?.address ?? ''),
-        lat: s.isManual ? undefined : (s.placeResult?.lat ?? undefined),
-        lng: s.isManual ? undefined : (s.placeResult?.lng ?? undefined),
+        lat: s.isManual ? (s.manualLat ?? undefined) : (s.placeResult?.lat ?? undefined),
+        lng: s.isManual ? (s.manualLng ?? undefined) : (s.placeResult?.lng ?? undefined),
       },
       category_id: s.selectedCategories[0]?.id ?? '',
       age_range_ids: s.selectedAgeIds,
-      best_season: s.selectedSeasons, // season values: ['spring', 'all', ...]
+      best_season: s.selectedSeasons,
       type: s.selectedCategories.map((c) => tc(c.name_i18n)),
       is_free: s.isFree,
       price: s.isFree ? undefined : Number.parseFloat(s.price) || undefined,
@@ -353,12 +396,13 @@ export function useSuggestionWizard() {
         google_types: s.placeResult?.types ?? undefined,
         generated_title: generatedTitle.value,
         custom_activity: s.customActivity || undefined,
-        google_url: pd?.google_url ?? undefined,
-        phone: pd?.phone ?? undefined,
-        website: pd?.website ?? undefined,
-        photos: pd?.photos?.length ? pd.photos : undefined,
-        wheelchair: pd?.wheelchair_accessible ?? undefined,
-        opening_hours_text: pd?.opening_hours?.weekday_text ?? undefined,
+        // Editable place info (seeded from Google, may be modified by user)
+        google_url: pi.googleUrl || undefined,
+        phone: pi.phone || undefined,
+        website: pi.website || undefined,
+        wheelchair: pi.wheelchair ?? undefined,
+        opening_hours_text: openingHoursLines?.length ? openingHoursLines : undefined,
+        photos: s.placeDetails?.photos?.length ? s.placeDetails.photos : undefined,
       },
     }
   }

@@ -5,9 +5,15 @@ import { useSuggestionWizard } from '~/composables/useSuggestionWizard'
 const wizard = useSuggestionWizard()
 const search = usePlacesSearch()
 const { t } = useI18n()
+const { geocode } = useGeocode()
 
 const query = ref('')
 const showResults = computed(() => search.results.value.length > 0 && !wizard.hasPlace.value)
+const showPlaceExtra = ref(false)
+
+// Geocoding status for manual entry feedback
+type GeoStatus = 'idle' | 'loading' | 'found' | 'not_found'
+const geoStatus = ref<GeoStatus>('idle')
 
 const onInput = (val: string) => {
   query.value = val
@@ -18,6 +24,7 @@ const selectPlace = async (place: (typeof search.results.value)[0]) => {
   wizard.setPlace(place)
   search.clear()
   query.value = place.name
+  showPlaceExtra.value = false
 
   const details = await search.fetchDetails(place.google_place_id)
   if (details) {
@@ -31,8 +38,29 @@ const toggleManual = () => {
     search.clear()
     query.value = ''
     wizard.clearPlace()
+    geoStatus.value = 'idle'
   }
 }
+
+// Geocode on blur of city or address field (fire-and-forget — never blocks submit)
+const triggerGeocode = async () => {
+  const parts = [wizard.state.value.manualCity, wizard.state.value.manualAddress].filter(Boolean)
+  if (parts.length === 0) return
+  geoStatus.value = 'loading'
+  const result = await geocode(parts.join(', '))
+  if (result) {
+    wizard.state.value.manualLat = result.lat
+    wizard.state.value.manualLng = result.lng
+    geoStatus.value = 'found'
+  } else {
+    geoStatus.value = 'not_found'
+  }
+}
+
+const hasPlaceExtra = computed(() => {
+  const pi = wizard.state.value.placeInfo
+  return !!(pi.phone || pi.website || pi.openingHoursText)
+})
 </script>
 
 <template>
@@ -78,17 +106,62 @@ const toggleManual = () => {
         </button>
       </div>
 
-      <!-- Lugar encontrado: solo descripción -->
-      <div v-else class="step-lugar__desc-field">
-        <UFormField :label="t('suggest.description')">
-          <UTextarea
-            v-model="wizard.state.value.description"
-            :placeholder="t('suggest.description_placeholder')"
-            :rows="4"
-            class="w-full"
-          />
-        </UFormField>
-      </div>
+      <!-- Lugar encontrado -->
+      <template v-else>
+        <!-- Descripción: preloaded from Google; hint if empty -->
+        <div class="step-lugar__desc-field">
+          <UFormField :label="t('suggest.description')">
+            <UTextarea
+              v-model="wizard.state.value.description"
+              :placeholder="t('suggest.description_placeholder')"
+              :rows="3"
+              class="w-full"
+            />
+          </UFormField>
+          <p v-if="!wizard.state.value.description.trim()" class="step-lugar__desc-hint">
+            <UiIcon name="i-lucide-info" size="xs" />
+            {{ t('suggest.description_hint') }}
+          </p>
+        </div>
+
+        <!-- Ver más: phone, website, opening hours -->
+        <template v-if="hasPlaceExtra">
+          <button class="step-lugar__toggle-extra" @click="showPlaceExtra = !showPlaceExtra">
+            <UiIcon
+              :name="showPlaceExtra ? 'i-lucide-chevron-up' : 'i-lucide-chevron-down'"
+              size="xs"
+            />
+            {{ showPlaceExtra ? t('suggest.show_less') : t('suggest.show_more') }}
+          </button>
+
+          <div v-if="showPlaceExtra" class="step-lugar__extra-fields">
+            <UFormField
+              v-if="wizard.state.value.placeInfo.phone !== undefined"
+              :label="t('suggest.phone')"
+            >
+              <UiInput v-model="wizard.state.value.placeInfo.phone" icon="i-lucide-phone" />
+            </UFormField>
+
+            <UFormField
+              v-if="wizard.state.value.placeInfo.website !== undefined"
+              :label="t('suggest.website')"
+            >
+              <UiInput v-model="wizard.state.value.placeInfo.website" icon="i-lucide-globe" />
+            </UFormField>
+
+            <UFormField
+              v-if="wizard.state.value.placeInfo.openingHoursText"
+              :label="t('suggest.opening_hours')"
+            >
+              <UTextarea
+                v-model="wizard.state.value.placeInfo.openingHoursText"
+                :rows="4"
+                class="w-full"
+              />
+            </UFormField>
+          </div>
+        </template>
+      </template>
     </template>
 
     <!-- Entrada manual -->
@@ -105,15 +178,34 @@ const toggleManual = () => {
             <UiInput
               v-model="wizard.state.value.manualCity"
               :placeholder="t('suggest.city_placeholder')"
+              @blur="triggerGeocode"
             />
           </UFormField>
         </div>
+
         <UFormField :label="t('suggest.address')">
           <UiInput
             v-model="wizard.state.value.manualAddress"
             :placeholder="t('suggest.address_placeholder')"
+            @blur="triggerGeocode"
           />
         </UFormField>
+
+        <!-- Geocoding feedback -->
+        <div v-if="geoStatus !== 'idle'" class="step-lugar__geo-status">
+          <template v-if="geoStatus === 'loading'">
+            <UiIcon name="i-lucide-loader-2" size="xs" class="animate-spin" />
+            <span>{{ t('suggest.geocoding') }}</span>
+          </template>
+          <template v-else-if="geoStatus === 'found'">
+            <UiIcon name="i-lucide-map-pin" size="xs" class="step-lugar__geo-ok" />
+          </template>
+          <template v-else-if="geoStatus === 'not_found'">
+            <UiIcon name="i-lucide-map-pin-off" size="xs" class="step-lugar__geo-warn" />
+            <span class="step-lugar__geo-warn">{{ t('suggest.coords_not_found') }}</span>
+          </template>
+        </div>
+
         <UFormField :label="t('suggest.description')">
           <UTextarea
             v-model="wizard.state.value.description"
@@ -122,6 +214,7 @@ const toggleManual = () => {
             class="w-full"
           />
         </UFormField>
+
         <button class="step-lugar__manual-link" @click="toggleManual">
           {{ t('suggest.search_automatic') }}
         </button>
@@ -150,11 +243,9 @@ const toggleManual = () => {
 
 .step-lugar__results {
   position: absolute;
-  top: calc(100% + 4px);
-  left: 0;
-  right: 0;
-  /* background: var(--color-background-primary); */
-  background-color: white;
+  inset-block-start: calc(100% + 4px);
+  inset-inline: 0;
+  background-color: var(--color-background-primary);
   border: 0.5px solid var(--color-border-secondary);
   border-radius: var(--border-radius-lg);
   overflow: hidden;
@@ -173,7 +264,7 @@ const toggleManual = () => {
   gap: var(--space-3);
   padding: var(--space-3) var(--space-4);
   width: 100%;
-  text-align: left;
+  text-align: start;
   background: transparent;
   border: none;
   border-bottom: 0.5px solid var(--color-border-tertiary);
@@ -231,6 +322,46 @@ const toggleManual = () => {
   text-overflow: ellipsis;
 }
 
+.step-lugar__desc-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.step-lugar__desc-hint {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--font-size-xs);
+  color: var(--color-text-tertiary);
+}
+
+.step-lugar__toggle-extra {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--font-size-xs);
+  color: var(--color-secondary-600);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  font-family: var(--font-family-base);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  align-self: flex-start;
+}
+
+.step-lugar__toggle-extra:hover {
+  color: var(--color-secondary-700);
+}
+
+.step-lugar__extra-fields {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
 .step-lugar__manual-link {
   font-size: var(--font-size-xs);
   color: var(--color-secondary-500);
@@ -240,7 +371,7 @@ const toggleManual = () => {
   border: none;
   cursor: pointer;
   padding: 0;
-  text-align: left;
+  text-align: start;
 }
 
 .step-lugar__manual-link:hover {
@@ -259,9 +390,20 @@ const toggleManual = () => {
   gap: var(--space-3);
 }
 
-.step-lugar__desc-field {
+.step-lugar__geo-status {
   display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--font-size-xs);
+  color: var(--color-text-tertiary);
+  margin-block-start: calc(-1 * var(--space-2));
+}
+
+.step-lugar__geo-ok {
+  color: var(--color-success-500, #22c55e);
+}
+
+.step-lugar__geo-warn {
+  color: var(--color-warning-600, #d97706);
 }
 </style>

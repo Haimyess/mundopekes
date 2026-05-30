@@ -150,7 +150,15 @@
     "toggle_shadow": "Hay sombra en el lugar",
     "toggle_bathrooms": "Hay baños",
     "toggle_weekends": "Abre los fines de semana",
-    "title_template": "{activity} en {place}"
+    "title_template": "{activity} en {place}",
+    "description_hint": "Google no trajo descripción — añade una",
+    "phone": "Teléfono",
+    "website": "Sitio web",
+    "opening_hours": "Horarios",
+    "show_more": "Ver más",
+    "show_less": "Ver menos",
+    "geocoding": "Ubicando...",
+    "coords_not_found": "No se pudo ubicar la dirección"
   },
   "contact": {
     "title": "Contáctanos",
