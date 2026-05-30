@@ -38,10 +38,14 @@ interface GoogleTextSearchResponse {
   results: GooglePlace[]
 }
 
+const VALID_LANGS = new Set(['es', 'en', 'he', 'ru'])
+
 export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig()
   const query = getQuery(event)
   const q = query.q
+  const rawLang = typeof query.lang === 'string' ? query.lang : ''
+  const lang = VALID_LANGS.has(rawLang) ? rawLang : 'he'
 
   if (!q || typeof q !== 'string' || q.trim().length < 3) {
     throw createError({ statusCode: 400, statusMessage: 'Query mínimo 3 caracteres' })
@@ -52,13 +56,13 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 500, statusMessage: 'API key no configurada' })
   }
 
-  await logInfo(event, 'places/search', 'Searching places', { q })
+  await logInfo(event, 'places/search', 'Searching places', { q, lang })
 
   const searchUrl = [
     'https://maps.googleapis.com/maps/api/place/textsearch/json',
     `?query=${encodeURIComponent(q.trim())}`,
     `&region=il`,
-    `&language=he`,
+    `&language=${lang}`,
     `&key=${key}`,
   ].join('')
 
@@ -102,7 +106,7 @@ export default defineEventHandler(async (event) => {
     return {
       google_place_id: place.place_id,
       name: place.name,
-      name_i18n: { he: place.name },
+      name_i18n: { [lang]: place.name },
       address: place.formatted_address,
       lat: place.geometry?.location?.lat ?? null,
       lng: place.geometry?.location?.lng ?? null,

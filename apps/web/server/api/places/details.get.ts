@@ -25,10 +25,14 @@ interface GooglePlaceNameResponse {
   result?: { name: string }
 }
 
+const VALID_LANGS = new Set(['es', 'en', 'he', 'ru'])
+
 export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig()
   const query = getQuery(event)
   const placeId = query.place_id
+  const rawLang = typeof query.lang === 'string' ? query.lang : ''
+  const lang = VALID_LANGS.has(rawLang) ? rawLang : 'he'
 
   if (!placeId || typeof placeId !== 'string') {
     throw createError({ statusCode: 400, statusMessage: 'place_id es requerido' })
@@ -39,33 +43,35 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 500, statusMessage: 'API key no configurada' })
   }
 
-  await logInfo(event, 'places/details', 'Fetching place details', { place_id: placeId })
+  await logInfo(event, 'places/details', 'Fetching place details', { place_id: placeId, lang })
 
-  const heUrl = [
+  const mainUrl = [
     'https://maps.googleapis.com/maps/api/place/details/json',
     `?place_id=${encodeURIComponent(placeId)}`,
-    `&language=he`,
+    `&language=${lang}`,
     `&fields=name,editorial_summary,formatted_phone_number,website,opening_hours,photos,wheelchair_accessible_entrance,url`,
     `&key=${key}`,
   ].join('')
 
-  const makeNameUrl = (lang: string) =>
+  const makeNameUrl = (l: string) =>
     [
       'https://maps.googleapis.com/maps/api/place/details/json',
       `?place_id=${encodeURIComponent(placeId)}`,
-      `&language=${lang}`,
+      `&language=${l}`,
       `&fields=name`,
       `&key=${key}`,
     ].join('')
 
-  let heData: GooglePlaceDetailsResponse
+  let mainData: GooglePlaceDetailsResponse
+  let heData: GooglePlaceNameResponse
   let esData: GooglePlaceNameResponse
   let enData: GooglePlaceNameResponse
   let ruData: GooglePlaceNameResponse
 
   try {
-    ;[heData, esData, enData, ruData] = await Promise.all([
-      fetch(heUrl).then((r) => r.json()) as Promise<GooglePlaceDetailsResponse>,
+    ;[mainData, heData, esData, enData, ruData] = await Promise.all([
+      fetch(mainUrl).then((r) => r.json()) as Promise<GooglePlaceDetailsResponse>,
+      fetch(makeNameUrl('he')).then((r) => r.json()) as Promise<GooglePlaceNameResponse>,
       fetch(makeNameUrl('es')).then((r) => r.json()) as Promise<GooglePlaceNameResponse>,
       fetch(makeNameUrl('en')).then((r) => r.json()) as Promise<GooglePlaceNameResponse>,
       fetch(makeNameUrl('ru')).then((r) => r.json()) as Promise<GooglePlaceNameResponse>,
@@ -77,42 +83,42 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 502, statusMessage: 'Error conectando con Google Places' })
   }
 
-  if (heData.status !== 'OK' || !heData.result) {
+  if (mainData.status !== 'OK' || !mainData.result) {
     await logError(event, 'places/details', 'Google Places returned no result', {
-      status: heData.status,
+      status: mainData.status,
       place_id: placeId,
     })
     throw createError({ statusCode: 404, statusMessage: 'Lugar no encontrado' })
   }
 
-  const he = heData.result
-  const heName = he.name
+  const main = mainData.result
 
   const name_i18n: Record<string, string> = {
-    he: heName,
-    es: esData.result?.name ?? heName,
-    en: enData.result?.name ?? heName,
-    ru: ruData.result?.name ?? heName,
+    he: heData.result?.name ?? main.name,
+    es: esData.result?.name ?? main.name,
+    en: enData.result?.name ?? main.name,
+    ru: ruData.result?.name ?? main.name,
+    [lang]: main.name,
   }
 
   const description_i18n: Record<string, string> = {}
-  if (he.editorial_summary?.overview) {
-    description_i18n.he = he.editorial_summary.overview
+  if (main.editorial_summary?.overview) {
+    description_i18n[lang] = main.editorial_summary.overview
   }
 
-  const photos = (he.photos ?? [])
+  const photos = (main.photos ?? [])
     .slice(0, 5)
     .map((p) => `/api/places/photo?ref=${encodeURIComponent(p.photo_reference)}`)
 
   return {
     name_i18n,
     description_i18n,
-    phone: he.formatted_phone_number ?? null,
-    website: he.website ?? null,
-    google_url: he.url ?? null,
-    wheelchair_accessible: he.wheelchair_accessible_entrance ?? null,
-    opening_hours: he.opening_hours
-      ? { weekday_text: he.opening_hours.weekday_text, periods: he.opening_hours.periods }
+    phone: main.formatted_phone_number ?? null,
+    website: main.website ?? null,
+    google_url: main.url ?? null,
+    wheelchair_accessible: main.wheelchair_accessible_entrance ?? null,
+    opening_hours: main.opening_hours
+      ? { weekday_text: main.opening_hours.weekday_text, periods: main.opening_hours.periods }
       : null,
     photos,
   }
