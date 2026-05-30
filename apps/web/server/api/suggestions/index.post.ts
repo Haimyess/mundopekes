@@ -7,8 +7,18 @@ interface ScheduleDay {
   end: string
 }
 
+interface WizardSchedule {
+  sunday: ScheduleDay
+  monday: ScheduleDay
+  tuesday: ScheduleDay
+  wednesday: ScheduleDay
+  thursday: ScheduleDay
+  friday: ScheduleDay
+  saturday: ScheduleDay
+}
+
 interface SuggestionPayload {
-  // Lugar
+  // ── Lugar ──────────────────────────────────────────────────────
   name_i18n: Record<string, string>
   description_i18n?: Record<string, string>
   location: {
@@ -17,33 +27,40 @@ interface SuggestionPayload {
     lat?: number
     lng?: number
   }
-  // Actividad
+  // ── Actividad ──────────────────────────────────────────────────
+  // Título de la actividad (distinto de name_i18n que es el nombre del lugar)
+  title_i18n?: Record<string, string>
   category_id: string
   age_range_ids: number[]
   best_season: string[]
   type: string[]
-  // Detalles
+  // ── Detalles ───────────────────────────────────────────────────
   is_free: boolean
   price?: number
   stroller_friendly: boolean
   has_shadow: boolean
   has_bathrooms: boolean
   open_weekends: boolean
-  // Horarios — objeto por día
-  schedule_structured: {
-    sunday: ScheduleDay
-    monday: ScheduleDay
-    tuesday: ScheduleDay
-    wednesday: ScheduleDay
-    thursday: ScheduleDay
-    friday: ScheduleDay
-    saturday: ScheduleDay
-  }
-  // Metadata de Google
-  metadata: {
+  // Undefined when hours_unknown=true; null/structured when known
+  schedule_structured?: WizardSchedule | null
+  // ── Metadata ───────────────────────────────────────────────────
+  metadata?: {
+    // Google Place identifiers
     google_place_id?: string
     place_photo_url?: string
     google_types?: string[]
+    // Editable place info (seeded from Google, may be user-edited)
+    google_url?: string
+    phone?: string
+    website?: string
+    wheelchair?: boolean | null
+    opening_hours_text?: string[]
+    photos?: string[]
+    // Activity metadata
+    generated_title?: string
+    custom_activity?: string
+    // Schedule
+    hours_unknown?: boolean
   }
 }
 
@@ -67,16 +84,20 @@ export default defineEventHandler(async (event) => {
   const firstName = Object.values(body.name_i18n)[0] ?? 'unknown'
   await logInfo(event, 'suggestions/create', 'Creating suggestion', { name: firstName })
 
-  // Construir schedule como texto legible también
+  // Build human-readable schedule text.
+  // When hours_unknown=true the wizard sends schedule_structured=undefined → scheduleText=''.
   const DAYS = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday']
   const DAY_ES = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado']
   const scheduleText = DAYS.map((d, i) => {
-    const day = body.schedule_structured?.[d as keyof typeof body.schedule_structured]
+    const day = body.schedule_structured?.[d as keyof WizardSchedule]
     if (!day?.open) return null
     return `${DAY_ES[i]}: ${day.start}–${day.end}`
   })
     .filter(Boolean)
     .join(', ')
+
+  const meta = body.metadata ?? {}
+  const hoursUnknown = meta.hours_unknown === true
 
   const { data, error } = await client
     .from('suggestions')
@@ -97,11 +118,30 @@ export default defineEventHandler(async (event) => {
       images: [],
       status: 'pending',
       metadata: {
-        ...body.metadata,
+        // ── Google Place identifiers ──────────────────────────────
+        google_place_id: meta.google_place_id ?? null,
+        place_photo_url: meta.place_photo_url ?? null,
+        google_types: meta.google_types ?? null,
+        // ── Editable place info ───────────────────────────────────
+        google_url: meta.google_url ?? null,
+        phone: meta.phone ?? null,
+        website: meta.website ?? null,
+        wheelchair: meta.wheelchair ?? null,
+        opening_hours_text: meta.opening_hours_text?.length ? meta.opening_hours_text : null,
+        photos: meta.photos?.length ? meta.photos : null,
+        // ── Activity ─────────────────────────────────────────────
+        generated_title: meta.generated_title ?? null,
+        custom_activity: meta.custom_activity ?? null,
+        // Activity title (locale-keyed; approval will DeepL-enrich to all 4 locales)
+        title_i18n: body.title_i18n && Object.keys(body.title_i18n).length ? body.title_i18n : null,
+        // ── Details ──────────────────────────────────────────────
         has_shadow: body.has_shadow ?? false,
         has_bathrooms: body.has_bathrooms ?? false,
         price: body.is_free ? null : (body.price ?? null),
-        schedule_structured: body.schedule_structured ?? null,
+        // ── Schedule ─────────────────────────────────────────────
+        hours_unknown: hoursUnknown,
+        // null when hours_unknown=true (schedule_structured arrives undefined → ?? null)
+        schedule_structured: hoursUnknown ? null : (body.schedule_structured ?? null),
         age_range_ids: body.age_range_ids ?? [],
       },
     })
