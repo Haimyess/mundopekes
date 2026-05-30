@@ -155,7 +155,11 @@
     "show_more": "Показать ещё",
     "show_less": "Скрыть",
     "geocoding": "Определяю...",
-    "coords_not_found": "Адрес не удалось определить"
+    "coords_not_found": "Адрес не удалось определить",
+    "hours_unknown": "Часы работы неизвестны",
+    "edit_hours_manually": "Редактировать вручную",
+    "hours_pending_review": "На проверке",
+    "activity_title": "Название активности"
   },
   "contact": {
     "title": "Связаться с нами",

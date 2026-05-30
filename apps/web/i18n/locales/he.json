@@ -155,7 +155,11 @@
     "show_more": "הצג עוד",
     "show_less": "הצג פחות",
     "geocoding": "מאתר...",
-    "coords_not_found": "לא ניתן לאתר את הכתובת"
+    "coords_not_found": "לא ניתן לאתר את הכתובת",
+    "hours_unknown": "שעות לא ידועות",
+    "edit_hours_manually": "ערוך ידנית",
+    "hours_pending_review": "ממתין לבדיקה",
+    "activity_title": "כותרת הפעילות"
   },
   "contact": {
     "title": "צור קשר",

@@ -158,7 +158,11 @@
     "show_more": "Ver más",
     "show_less": "Ver menos",
     "geocoding": "Ubicando...",
-    "coords_not_found": "No se pudo ubicar la dirección"
+    "coords_not_found": "No se pudo ubicar la dirección",
+    "hours_unknown": "No sé los horarios",
+    "edit_hours_manually": "Editar manualmente",
+    "hours_pending_review": "Pendiente de revisión",
+    "activity_title": "Título de la actividad"
   },
   "contact": {
     "title": "Contáctanos",

@@ -58,6 +58,8 @@ export interface WizardState {
   schedule: WizardSchedule
   titleManual: string
   titleTouched: boolean
+  // When true: user doesn't know the hours; schedule_structured is omitted from payload
+  hoursUnknown: boolean
   placeInfo: WizardPlaceInfo
   manualLat: number | null
   manualLng: number | null
@@ -104,6 +106,7 @@ const defaultState = (): WizardState => ({
   schedule: defaultSchedule(),
   titleManual: '',
   titleTouched: false,
+  hoursUnknown: false,
   placeInfo: { phone: '', website: '', googleUrl: '', openingHoursText: '', wheelchair: null },
   manualLat: null,
   manualLng: null,
@@ -389,7 +392,7 @@ export function useSuggestionWizard() {
       has_shadow: s.shadow,
       has_bathrooms: s.bathrooms,
       open_weekends: s.weekends,
-      schedule_structured: s.schedule,
+      schedule_structured: s.hoursUnknown ? undefined : s.schedule,
       metadata: {
         google_place_id: s.placeResult?.google_place_id ?? undefined,
         place_photo_url: s.placeResult?.photo_url ?? undefined,
@@ -401,6 +404,7 @@ export function useSuggestionWizard() {
         phone: pi.phone || undefined,
         website: pi.website || undefined,
         wheelchair: pi.wheelchair ?? undefined,
+        hours_unknown: s.hoursUnknown || undefined,
         opening_hours_text: openingHoursLines?.length ? openingHoursLines : undefined,
         photos: s.placeDetails?.photos?.length ? s.placeDetails.photos : undefined,
       },

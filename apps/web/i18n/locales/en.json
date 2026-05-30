@@ -155,7 +155,11 @@
     "show_more": "Show more",
     "show_less": "Show less",
     "geocoding": "Locating...",
-    "coords_not_found": "Address could not be located"
+    "coords_not_found": "Address could not be located",
+    "hours_unknown": "I don't know the hours",
+    "edit_hours_manually": "Edit manually",
+    "hours_pending_review": "Pending review",
+    "activity_title": "Activity title"
   },
   "contact": {
     "title": "Contact Us",
