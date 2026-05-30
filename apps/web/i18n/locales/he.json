@@ -146,7 +146,8 @@
     "toggle_stroller": "מתאים לעגלות",
     "toggle_shadow": "יש צל במקום",
     "toggle_bathrooms": "יש שירותים",
-    "toggle_weekends": "פתוח בסופי שבוע"
+    "toggle_weekends": "פתוח בסופי שבוע",
+    "title_template": "{activity} ב{place}"
   },
   "contact": {
     "title": "צור קשר",

@@ -146,7 +146,8 @@
     "toggle_stroller": "Stroller-friendly",
     "toggle_shadow": "Shaded area",
     "toggle_bathrooms": "Restrooms available",
-    "toggle_weekends": "Open on weekends"
+    "toggle_weekends": "Open on weekends",
+    "title_template": "{activity} at {place}"
   },
   "contact": {
     "title": "Contact Us",

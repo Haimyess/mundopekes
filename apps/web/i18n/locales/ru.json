@@ -146,7 +146,8 @@
     "toggle_stroller": "Подходит для колясок",
     "toggle_shadow": "Есть тень",
     "toggle_bathrooms": "Есть туалеты",
-    "toggle_weekends": "Открыто в выходные"
+    "toggle_weekends": "Открыто в выходные",
+    "title_template": "{activity} в {place}"
   },
   "contact": {
     "title": "Связаться с нами",

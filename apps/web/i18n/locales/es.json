@@ -149,7 +149,8 @@
     "toggle_stroller": "Apto para cochecitos",
     "toggle_shadow": "Hay sombra en el lugar",
     "toggle_bathrooms": "Hay baños",
-    "toggle_weekends": "Abre los fines de semana"
+    "toggle_weekends": "Abre los fines de semana",
+    "title_template": "{activity} en {place}"
   },
   "contact": {
     "title": "Contáctanos",

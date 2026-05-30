@@ -1,58 +1,96 @@
 <script setup lang="ts">
 import { useSuggestionWizard } from '~/composables/useSuggestionWizard'
 import type { WizardCategory } from '~/composables/useSuggestionWizard'
+import { useCategories } from '~/composables/useCategories'
+import { useI18nContent } from '~/composables/useI18nContent'
 
 const wizard = useSuggestionWizard()
 const { t } = useI18n()
+const { tc } = useI18nContent()
+const store = useActivitiesStore()
+const { getNavCategoriesWithChildren } = useCategories()
 
-const ALL_CATEGORIES: WizardCategory[] = [
-  { id: '3e9f033e-f594-488d-98bf-a809cbd91299', name: 'Naturaleza' },
-  { id: '5364a238-ba30-4d4c-846d-91bb0fda0095', name: 'Parques' },
-  { id: '30d7ea34-bcf8-4209-b418-cdede2e431e6', name: 'Agua y playas' },
-  { id: '49ca0529-1130-43f7-a439-3198d7ac5b56', name: 'Camping' },
-  { id: 'ec4b6619-dd04-4f06-b32f-480af759c30c', name: 'Picnic' },
-  { id: '0f35ac9a-3c24-4224-ad35-0de0a7ff7035', name: 'Museos' },
-  { id: '2027495d-0003-4308-b16b-586dfea6adbb', name: 'Arte' },
-  { id: 'a95dbfb7-1324-48c6-9aa1-43952c21151a', name: 'Historia' },
-  { id: 'a1287296-46a8-4973-b892-5dca978c06a7', name: 'Religioso' },
-  { id: '82e97ad6-e5a9-46cb-a394-209b593d5526', name: 'Educativo' },
-  { id: 'f5adf8e8-bb7b-4b12-af87-0789a401149c', name: 'Animales' },
-  { id: '4de2060d-173a-4733-8bb4-10d25c1a622d', name: 'Juego y recreo' },
-  { id: '6ea4f0c3-ac70-43bf-9161-7defc88a036d', name: 'Trekking' },
-  { id: '3c9bd581-ea1b-4e96-b2f1-d45775425e46', name: 'Ski' },
-  { id: 'fdbe1e25-ee11-484f-9177-99ffe978a8d5', name: 'Deportes' },
-  { id: '05031276-9b35-4d51-b4d4-2da8de4e03fe', name: 'Gastronomía' },
-]
-
-const SEASONS = ['Primavera', 'Verano', 'Otoño', 'Invierno', 'Todo el año']
-
-const AGE_RANGES = [
-  { id: 6, label: 'Bebés (0–11m)' },
-  { id: 7, label: 'Pequeños (1–3 años)' },
-  { id: 8, label: 'Preescolar (3–6 años)' },
-  { id: 9, label: 'Escolar (6–12 años)' },
-  { id: 10, label: 'Adolescentes (12+)' },
-  { id: 11, label: 'Todas las edades' },
-]
-
-// Categoría seleccionada — solo una
-const selectedCategory = computed(() => wizard.state.value.selectedCategories[0] ?? null)
-
-// Categorías disponibles — todas excepto la seleccionada
-const availableCategories = computed(() =>
-  ALL_CATEGORIES.filter((c) => c.id !== selectedCategory.value?.id)
+// Subcategories (nav_level=2) from DB. Key shared with Body.vue — Nuxt deduplicates.
+const { data: categoriesData } = useAsyncData('wizard-subcategories', () =>
+  getNavCategoriesWithChildren()
 )
 
-// Temporadas y edades no seleccionadas
+const subcategories = computed<WizardCategory[]>(() =>
+  (categoriesData.value ?? []).flatMap((parent) =>
+    parent.children.map((c) => ({
+      id: c.id,
+      slug: c.slug,
+      name_i18n: c.name_i18n as Record<string, string>,
+    }))
+  )
+)
+
+// Reconcile Google-suggested IDs against real DB subcats once they're available
+const reconcileSuggestedCategories = () => {
+  if (wizard.state.value.selectedCategories.length) return
+  const suggested = wizard.state.value.placeResult?.suggested_categories ?? []
+  const matched = suggested
+    .map((sg) => subcategories.value.find((c) => c.id === sg.id))
+    .filter((c): c is WizardCategory => c !== undefined)
+    .slice(0, 1)
+  if (matched.length) wizard.state.value.selectedCategories = matched
+}
+
+watch(
+  subcategories,
+  (subs) => {
+    if (subs.length) reconcileSuggestedCategories()
+  },
+  {
+    immediate: true,
+  }
+)
+
+// Ensure filter options (ages + seasons) are loaded
+onMounted(async () => {
+  if (!store.filterOptionsLoaded) await store.loadFilterOptions()
+})
+
+// ── Age options (includes 'all') ──────────────────────────────────
+const ageOptions = computed(() =>
+  store.filterOptions.ageRanges
+    .filter((a) => a.label_key.startsWith('age.'))
+    .map((a) => ({
+      id: a.id,
+      label: t(`search.${a.label_key.replace('.', '_')}`),
+      isAll: a.label_key === 'age.all',
+    }))
+)
+
+// ID of the "all ages" row — needed to clear it when a specific age is picked
+const allAgeId = computed(
+  () => store.filterOptions.ageRanges.find((a) => a.label_key === 'age.all')?.id
+)
+
+// ── Season options (includes 'all') ──────────────────────────────
+const seasonOptions = computed(() =>
+  store.filterOptions.seasons.map((s) => ({
+    value: s.value,
+    label: t(s.label_key),
+    isAll: s.value === 'all',
+  }))
+)
+
+// ── Derived availability ──────────────────────────────────────────
+const selectedCategory = computed(() => wizard.state.value.selectedCategories[0] ?? null)
+
+const availableCategories = computed(() =>
+  subcategories.value.filter((c) => c.id !== selectedCategory.value?.id)
+)
+
 const availableSeasons = computed(() =>
-  SEASONS.filter((s) => !wizard.state.value.selectedSeasons.includes(s))
+  seasonOptions.value.filter((s) => !wizard.state.value.selectedSeasons.includes(s.value))
 )
 
 const availableAges = computed(() =>
-  AGE_RANGES.filter((a) => !wizard.state.value.selectedAgeIds.includes(a.id))
+  ageOptions.value.filter((a) => !wizard.state.value.selectedAgeIds.includes(a.id))
 )
 
-// Selección simple de categoría — reemplaza la anterior
 const selectCategory = (cat: WizardCategory) => {
   wizard.state.value.selectedCategories = [cat]
 }
@@ -78,7 +116,7 @@ const addCustomActivity = () => {
       <!-- Categoría seleccionada -->
       <div v-if="selectedCategory" class="step-actividad__selected-cat">
         <span class="step-actividad__cat-badge">
-          {{ selectedCategory.name }}
+          {{ tc(selectedCategory.name_i18n) }}
         </span>
         <span class="step-actividad__cat-hint">{{ t('suggest.change_activity') }}</span>
       </div>
@@ -91,7 +129,7 @@ const addCustomActivity = () => {
           class="step-actividad__chip"
           @click="selectCategory(cat)"
         >
-          {{ cat.name }}
+          {{ tc(cat.name_i18n) }}
         </button>
       </div>
 
@@ -146,12 +184,12 @@ const addCustomActivity = () => {
       <span class="step-actividad__label">{{ t('suggest.season') }}</span>
       <div class="step-actividad__scroll-row">
         <button
-          v-for="season in availableSeasons"
-          :key="season"
+          v-for="s in availableSeasons"
+          :key="s.value"
           class="step-actividad__chip"
-          @click="wizard.toggleSeason(season)"
+          @click="wizard.toggleSeason(s.value)"
         >
-          {{ season }}
+          {{ s.label }}
         </button>
       </div>
       <div v-if="!availableSeasons.length" class="step-actividad__all-selected">
@@ -168,12 +206,12 @@ const addCustomActivity = () => {
       <span class="step-actividad__label">{{ t('suggest.ages') }}</span>
       <div class="step-actividad__scroll-row">
         <button
-          v-for="age in availableAges"
-          :key="age.id"
+          v-for="a in availableAges"
+          :key="a.id"
           class="step-actividad__chip"
-          @click="wizard.toggleAge(age.id, age.label)"
+          @click="wizard.toggleAge(a.id, a.label, a.isAll, allAgeId)"
         >
-          {{ age.label }}
+          {{ a.label }}
         </button>
       </div>
       <div v-if="!availableAges.length" class="step-actividad__all-selected">
