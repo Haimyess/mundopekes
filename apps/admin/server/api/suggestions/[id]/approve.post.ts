@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
+import { useRuntimeConfig } from 'nuxt/app'
 import { enrichI18nField } from '../../../utils/translate'
 
 // Full shape of suggestion.metadata as written by the wizard (Fase 6)

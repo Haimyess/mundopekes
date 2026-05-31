@@ -17,3 +17,11 @@ export const useRouter = () => ({ push: () => {} })
 export const navigateTo = () => {}
 export const useRuntimeConfig = () => ({})
 export const useNuxtApp = () => ({})
+
+// useI18nContent: picks best locale from an i18n record (mirrors the real composable)
+export const useI18nContent = () => ({
+  tc: (content: Record<string, string> | null | undefined): string => {
+    if (!content) return ''
+    return content['es'] || content['he'] || content['en'] || Object.values(content)[0] || ''
+  },
+})
