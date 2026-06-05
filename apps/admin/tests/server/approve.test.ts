@@ -3,30 +3,17 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 // ── Mutable config for per-test control ───────────────────────────────────
 let _deeplApiKey: string | undefined = undefined
 
-// ── nuxt/app mock — intercepts the explicit 'nuxt/app' import in approve.post
-// (approve.post now explicitly imports useRuntimeConfig from 'nuxt/app' so that
-//  vi.mock can intercept it in tests without Nuxt runtime context)
-vi.mock('nuxt/app', async (importOriginal) => {
-  const mod = await importOriginal<Record<string, unknown>>()
-  return {
-    ...mod,
-    useNuxtApp: () => ({ $config: {} }),
-    useRuntimeConfig: (_event?: unknown) => ({
-      public: { supabaseUrl: 'http://local' },
-      supabaseServiceKey: 'key',
-      get deeplApiKey() {
-        return _deeplApiKey
-      },
-    }),
-  }
-})
-
-// ── @supabase/supabase-js mock (approve.post uses createClient directly) ──
+// ── #supabase/server mock (approve.post now uses serverSupabaseServiceRole) ─
 const mockSupabase = {
   from: vi.fn(),
 }
-vi.mock('@supabase/supabase-js', () => ({
-  createClient: vi.fn(() => mockSupabase),
+vi.mock('#supabase/server', () => ({
+  serverSupabaseServiceRole: vi.fn(() => mockSupabase),
+}))
+
+// ── admin-runtime-config mock (approve.post uses getDeeplApiKey) ──────────
+vi.mock('../../server/utils/admin-runtime-config', () => ({
+  getDeeplApiKey: vi.fn(() => _deeplApiKey),
 }))
 
 // ── translate mock (explicitly imported in approve.post) ──────────────────
@@ -52,8 +39,6 @@ vi.stubGlobal('createError', (input: Record<string, unknown>) => {
   err.statusCode = (input.statusCode as number) ?? 500
   return err
 })
-// useRuntimeConfig is mocked via #imports above
-
 // ── Load handler (after stubs) ────────────────────────────────────────────
 const { default: handler } = await import('../../server/api/suggestions/[id]/approve.post')
 

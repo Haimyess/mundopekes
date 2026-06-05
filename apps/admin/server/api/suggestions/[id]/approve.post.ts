@@ -1,5 +1,5 @@
-import { createClient } from '@supabase/supabase-js'
-import { useRuntimeConfig } from 'nuxt/app'
+import { serverSupabaseServiceRole } from '#supabase/server'
+import { getDeeplApiKey } from '../../../utils/admin-runtime-config'
 import { enrichI18nField } from '../../../utils/translate'
 
 // Full shape of suggestion.metadata as written by the wizard (Fase 6)
@@ -35,12 +35,8 @@ export default defineEventHandler(async (event) => {
   const id = getRouterParam(event, 'id')
   if (!id) throw createError({ statusCode: 400, message: 'ID requerido' })
 
-  const config = useRuntimeConfig(event)
-
-  const supabase = createClient(
-    config.public.supabaseUrl as string,
-    config.supabaseServiceKey as string
-  )
+  const supabase = serverSupabaseServiceRole(event)
+  const deeplApiKey = getDeeplApiKey(event)
 
   // ── 1. Fetch suggestion ────────────────────────────────────────────────
   const { data: suggestion, error: fetchError } = await supabase
@@ -72,15 +68,13 @@ export default defineEventHandler(async (event) => {
 
   // ── 2. Enrich place name ───────────────────────────────────────────────
   const rawName = (suggestion.name_i18n as Record<string, string>) ?? {}
-  const name_i18n = config.deeplApiKey
-    ? await enrichI18nField(rawName, config.deeplApiKey as string)
-    : rawName
+  const name_i18n = deeplApiKey ? await enrichI18nField(rawName, deeplApiKey) : rawName
 
   // ── 3. Enrich place description ────────────────────────────────────────
   const rawDesc = (suggestion.description_i18n as Record<string, string>) ?? {}
   const description_i18n =
-    config.deeplApiKey && Object.keys(rawDesc).length > 0
-      ? await enrichI18nField(rawDesc, config.deeplApiKey as string)
+    deeplApiKey && Object.keys(rawDesc).length > 0
+      ? await enrichI18nField(rawDesc, deeplApiKey)
       : rawDesc
 
   // ── 4. Enrich activity title (distinct from place name) ────────────────
@@ -89,8 +83,8 @@ export default defineEventHandler(async (event) => {
   const rawTitle =
     meta.title_i18n && Object.keys(meta.title_i18n).length > 0 ? meta.title_i18n : null
   const title_i18n: Record<string, string> = rawTitle
-    ? config.deeplApiKey
-      ? await enrichI18nField(rawTitle, config.deeplApiKey as string)
+    ? deeplApiKey
+      ? await enrichI18nField(rawTitle, deeplApiKey)
       : rawTitle
     : { ...name_i18n } // fallback: use place name
 
