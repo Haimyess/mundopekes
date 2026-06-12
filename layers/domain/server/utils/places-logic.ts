@@ -104,6 +104,7 @@ export type RawGoogleDetailsResult = {
   opening_hours?: { weekday_text: string[]; periods: unknown[] }
   photos?: { photo_reference: string }[]
   wheelchair_accessible_entrance?: boolean
+  restroom?: boolean
   url?: string
 }
 
@@ -139,6 +140,7 @@ export function mapDetailsResponse(
     website: main.website ?? null,
     google_url: main.url ?? null,
     wheelchair_accessible: main.wheelchair_accessible_entrance ?? null,
+    has_bathrooms: main.restroom ?? null,
     opening_hours: main.opening_hours
       ? { weekday_text: main.opening_hours.weekday_text, periods: main.opening_hours.periods }
       : null,

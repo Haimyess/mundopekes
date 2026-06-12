@@ -1,9 +1,18 @@
 const DEEPL_API_URL = 'https://api-free.deepl.com/v2/translate'
 
+// Used for target_lang (accepts region variants like EN-US)
 const LOCALE_TO_DEEPL: Record<string, string> = {
   es: 'ES',
   he: 'HE',
   en: 'EN-US',
+  ru: 'RU',
+}
+
+// Used for source_lang (only plain 2-letter codes; EN-US is invalid as source)
+const LOCALE_TO_DEEPL_SOURCE: Record<string, string> = {
+  es: 'ES',
+  he: 'HE',
+  en: 'EN',
   ru: 'RU',
 }
 
@@ -41,7 +50,7 @@ export async function enrichI18nField(
           body: JSON.stringify({
             text: [sourceText],
             target_lang: LOCALE_TO_DEEPL[targetLocale],
-            source_lang: LOCALE_TO_DEEPL[sourceLocale],
+            source_lang: LOCALE_TO_DEEPL_SOURCE[sourceLocale],
           }),
         })
 
