@@ -1,5 +1,4 @@
 import { defineEventHandler, getQuery, createError } from 'h3'
-import { logError, logInfo } from '../../utils/logger'
 import {
   resolveSearchLang,
   buildDetailsUrl,

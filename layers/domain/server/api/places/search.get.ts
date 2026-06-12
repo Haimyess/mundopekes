@@ -1,6 +1,5 @@
 // server/api/places/search.get.ts
 import { defineEventHandler, getQuery, createError } from 'h3'
-import { logError, logInfo } from '../../utils/logger'
 import { resolveSearchLang, buildSearchUrl, mapSearchResult } from '../../utils/places-logic'
 
 interface GoogleTextSearchResponse {

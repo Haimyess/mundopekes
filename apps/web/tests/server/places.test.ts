@@ -1,4 +1,4 @@
-// Tests for server/utils/places-logic.ts (pure helpers extracted from places BFF handlers)
+// Tests for layers/domain/server/utils/places-logic.ts (pure helpers extracted from places BFF handlers)
 // Handler integration tests are skipped because useRuntimeConfig requires a full Nuxt
 // runtime context that isn't available in vitest unit tests without e2e setup.
 import { describe, it, expect } from 'vitest'
@@ -10,8 +10,11 @@ import {
   mapSearchResult,
   mapDetailsResponse,
   GOOGLE_TYPES_MAP,
-} from '~/server/utils/places-logic'
-import type { RawGooglePlace, RawGoogleDetailsResult } from '~/server/utils/places-logic'
+} from '../../../../layers/domain/server/utils/places-logic'
+import type {
+  RawGooglePlace,
+  RawGoogleDetailsResult,
+} from '../../../../layers/domain/server/utils/places-logic'
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 const makePlace = (overrides: Partial<RawGooglePlace> = {}): RawGooglePlace => ({
