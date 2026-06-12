@@ -5,22 +5,33 @@ import type { WizardSchedule } from '~/composables/useSuggestionWizard'
 const wizard = useSuggestionWizard()
 const { t } = useI18n()
 
-const DAYS: { key: keyof WizardSchedule; label: string }[] = [
-  { key: 'sunday', label: 'Domingo' },
-  { key: 'monday', label: 'Lunes' },
-  { key: 'tuesday', label: 'Martes' },
-  { key: 'wednesday', label: 'Miércoles' },
-  { key: 'thursday', label: 'Jueves' },
-  { key: 'friday', label: 'Viernes' },
-  { key: 'saturday', label: 'Sábado' },
-]
+const DAYS = computed<{ key: keyof WizardSchedule; label: string }[]>(() => [
+  { key: 'sunday', label: t('common.day_sunday') },
+  { key: 'monday', label: t('common.day_monday') },
+  { key: 'tuesday', label: t('common.day_tuesday') },
+  { key: 'wednesday', label: t('common.day_wednesday') },
+  { key: 'thursday', label: t('common.day_thursday') },
+  { key: 'friday', label: t('common.day_friday') },
+  { key: 'saturday', label: t('common.day_saturday') },
+])
 
-const TOGGLES = [
-  { key: 'stroller' as const, label: 'Apto para cochecitos', icon: 'i-lucide-baby' },
-  { key: 'shadow' as const, label: 'Hay sombra en el lugar', icon: 'i-lucide-tree-pine' },
-  { key: 'bathrooms' as const, label: 'Hay baños', icon: 'i-lucide-toilet' },
-  { key: 'weekends' as const, label: 'Abre los fines de semana', icon: 'i-lucide-calendar' },
-]
+const TOGGLES = computed(() => [
+  { key: 'stroller' as const, label: t('suggest.toggle_stroller'), icon: 'i-lucide-baby' },
+  { key: 'shadow' as const, label: t('suggest.toggle_shadow'), icon: 'i-lucide-tree-pine' },
+  { key: 'bathrooms' as const, label: t('suggest.toggle_bathrooms'), icon: 'i-lucide-toilet' },
+  { key: 'weekends' as const, label: t('suggest.toggle_weekends'), icon: 'i-lucide-calendar' },
+])
+
+// Google hours exist when placeInfo.openingHoursText is non-empty
+const googleHoursLines = computed(() => {
+  const text = wizard.state.value.placeInfo?.openingHoursText ?? ''
+  return text ? text.split('\n').filter(Boolean) : []
+})
+
+const hasGoogleHours = computed(() => googleHoursLines.value.length > 0)
+
+// Starts hidden (show the Google hours by default when available)
+const showManualEditor = ref(false)
 </script>
 
 <template>
@@ -30,7 +41,7 @@ const TOGGLES = [
       <div class="step-detalles__toggle-row">
         <div class="step-detalles__toggle-info">
           <UiIcon name="i-lucide-ticket" size="sm" />
-          <span class="step-detalles__toggle-label">Es gratuito</span>
+          <span class="step-detalles__toggle-label">{{ t('suggest.free') }}</span>
         </div>
         <UCheckbox v-model="wizard.state.value.isFree" />
       </div>
@@ -61,43 +72,82 @@ const TOGGLES = [
 
     <!-- Horarios -->
     <div class="step-detalles__section">
-      <span class="step-detalles__section-label">{{ t('suggest.schedule') }}</span>
-      <div class="step-detalles__schedule">
-        <div v-for="day in DAYS" :key="day.key" class="step-detalles__day">
-          <button
-            class="step-detalles__day-dot"
-            :class="{ 'step-detalles__day-dot--active': wizard.state.value.schedule[day.key].open }"
-            @click="wizard.toggleDay(day.key)"
-          />
-          <span
-            class="step-detalles__day-name"
-            :class="{
-              'step-detalles__day-name--active': wizard.state.value.schedule[day.key].open,
-            }"
-          >
-            {{ day.label }}
+      <div class="step-detalles__schedule-header">
+        <span class="step-detalles__section-label">{{ t('suggest.schedule') }}</span>
+        <!-- Toggle "no sé los horarios" -->
+        <div class="step-detalles__toggle-info step-detalles__toggle-info--inline">
+          <span class="step-detalles__toggle-label step-detalles__toggle-label--sm">
+            {{ t('suggest.hours_unknown') }}
           </span>
-          <input
-            v-model="wizard.state.value.schedule[day.key].start"
-            type="time"
-            class="step-detalles__time-input"
-            :class="{
-              'step-detalles__time-input--disabled': !wizard.state.value.schedule[day.key].open,
-            }"
-            :disabled="!wizard.state.value.schedule[day.key].open"
-          />
-          <span class="step-detalles__time-sep">–</span>
-          <input
-            v-model="wizard.state.value.schedule[day.key].end"
-            type="time"
-            class="step-detalles__time-input"
-            :class="{
-              'step-detalles__time-input--disabled': !wizard.state.value.schedule[day.key].open,
-            }"
-            :disabled="!wizard.state.value.schedule[day.key].open"
-          />
+          <UCheckbox v-model="wizard.state.value.hoursUnknown" />
         </div>
       </div>
+
+      <!-- Schedule content — hidden when hoursUnknown -->
+      <template v-if="!wizard.state.value.hoursUnknown">
+        <!-- Google hours: primary display -->
+        <template v-if="hasGoogleHours && !showManualEditor">
+          <div class="step-detalles__google-hours">
+            <p
+              v-for="(line, i) in googleHoursLines"
+              :key="i"
+              class="step-detalles__google-hours-line"
+            >
+              {{ line }}
+            </p>
+          </div>
+          <button class="step-detalles__manual-link" @click="showManualEditor = true">
+            {{ t('suggest.edit_hours_manually') }}
+          </button>
+        </template>
+
+        <!-- Manual day-by-day editor (default when no Google hours, or when user requests it) -->
+        <template v-else>
+          <div v-if="hasGoogleHours" class="step-detalles__manual-back">
+            <button class="step-detalles__manual-link" @click="showManualEditor = false">
+              ← {{ t('suggest.opening_hours') }}
+            </button>
+          </div>
+          <div class="step-detalles__schedule">
+            <div v-for="day in DAYS" :key="day.key" class="step-detalles__day">
+              <button
+                class="step-detalles__day-dot"
+                :class="{
+                  'step-detalles__day-dot--active': wizard.state.value.schedule[day.key].open,
+                }"
+                @click="wizard.toggleDay(day.key)"
+              />
+              <span
+                class="step-detalles__day-name"
+                :class="{
+                  'step-detalles__day-name--active': wizard.state.value.schedule[day.key].open,
+                }"
+              >
+                {{ day.label }}
+              </span>
+              <input
+                v-model="wizard.state.value.schedule[day.key].start"
+                type="time"
+                class="step-detalles__time-input"
+                :class="{
+                  'step-detalles__time-input--disabled': !wizard.state.value.schedule[day.key].open,
+                }"
+                :disabled="!wizard.state.value.schedule[day.key].open"
+              />
+              <span class="step-detalles__time-sep">–</span>
+              <input
+                v-model="wizard.state.value.schedule[day.key].end"
+                type="time"
+                class="step-detalles__time-input"
+                :class="{
+                  'step-detalles__time-input--disabled': !wizard.state.value.schedule[day.key].open,
+                }"
+                :disabled="!wizard.state.value.schedule[day.key].open"
+              />
+            </div>
+          </div>
+        </template>
+      </template>
     </div>
   </div>
 </template>
@@ -115,13 +165,19 @@ const TOGGLES = [
   gap: var(--space-1);
 }
 
+.step-detalles__schedule-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-2);
+}
+
 .step-detalles__section-label {
   font-size: var(--font-size-xs);
   font-weight: var(--font-weight-medium);
   color: var(--color-text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  margin-bottom: var(--space-1);
 }
 
 .step-detalles__toggle-row {
@@ -143,20 +199,66 @@ const TOGGLES = [
   color: var(--color-text-secondary);
 }
 
+.step-detalles__toggle-info--inline {
+  gap: var(--space-2);
+}
+
 .step-detalles__toggle-label {
   font-size: var(--font-size-sm);
   color: var(--color-text-primary);
+}
+
+.step-detalles__toggle-label--sm {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
 }
 
 .step-detalles__price {
   padding-top: var(--space-2);
 }
 
+.step-detalles__google-hours {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-background-secondary);
+  border-radius: var(--border-radius-md);
+  border: 0.5px solid var(--color-border-tertiary);
+}
+
+.step-detalles__google-hours-line {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+  margin: 0;
+}
+
+.step-detalles__manual-link {
+  font-size: var(--font-size-xs);
+  color: var(--color-secondary-600);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  font-family: var(--font-family-base);
+  align-self: flex-start;
+  margin-top: var(--space-1);
+}
+
+.step-detalles__manual-link:hover {
+  color: var(--color-secondary-700);
+}
+
+.step-detalles__manual-back {
+  margin-bottom: var(--space-2);
+}
+
 .step-detalles__schedule {
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
-  margin-top: var(--space-1);
 }
 
 .step-detalles__day {

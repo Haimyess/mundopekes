@@ -1,7 +1,10 @@
 <script setup lang="ts">
 import { useSuggestionWizard } from '~/composables/useSuggestionWizard'
+import type { WizardCategory } from '~/composables/useSuggestionWizard'
+import { useCategories } from '~/composables/useCategories'
+import { useI18nContent } from '~/composables/useI18nContent'
 
-const props = defineProps<{
+defineProps<{
   currentStep: number
   editOpen: boolean
   submitting: boolean
@@ -17,49 +20,58 @@ const emit = defineEmits<{
 
 const wizard = useSuggestionWizard()
 const { t } = useI18n()
+const { tc } = useI18nContent()
+const store = useActivitiesStore()
+const { getNavCategoriesWithChildren } = useCategories()
 
-const ALL_CATEGORIES = [
-  { id: '3e9f033e-f594-488d-98bf-a809cbd91299', name: 'Naturaleza' },
-  { id: '5364a238-ba30-4d4c-846d-91bb0fda0095', name: 'Parques' },
-  { id: '30d7ea34-bcf8-4209-b418-cdede2e431e6', name: 'Agua y playas' },
-  { id: '49ca0529-1130-43f7-a439-3198d7ac5b56', name: 'Camping' },
-  { id: 'ec4b6619-dd04-4f06-b32f-480af759c30c', name: 'Picnic' },
-  { id: '0f35ac9a-3c24-4224-ad35-0de0a7ff7035', name: 'Museos' },
-  { id: '2027495d-0003-4308-b16b-586dfea6adbb', name: 'Arte' },
-  { id: 'a95dbfb7-1324-48c6-9aa1-43952c21151a', name: 'Historia' },
-  { id: 'a1287296-46a8-4973-b892-5dca978c06a7', name: 'Religioso' },
-  { id: '82e97ad6-e5a9-46cb-a394-209b593d5526', name: 'Educativo' },
-  { id: 'f5adf8e8-bb7b-4b12-af87-0789a401149c', name: 'Animales' },
-  { id: '4de2060d-173a-4733-8bb4-10d25c1a622d', name: 'Juego y recreo' },
-  { id: '6ea4f0c3-ac70-43bf-9161-7defc88a036d', name: 'Trekking' },
-  { id: '3c9bd581-ea1b-4e96-b2f1-d45775425e46', name: 'Ski' },
-  { id: 'fdbe1e25-ee11-484f-9177-99ffe978a8d5', name: 'Deportes' },
-  { id: '05031276-9b35-4d51-b4d4-2da8de4e03fe', name: 'Gastronomía' },
-]
+// Shared key with StepActividad — Nuxt returns cached data after first fetch
+const { data: categoriesData } = useAsyncData('wizard-subcategories', () =>
+  getNavCategoriesWithChildren()
+)
 
-const ALL_SEASONS = ['Primavera', 'Verano', 'Otoño', 'Invierno', 'Todo el año']
+const subcategories = computed<WizardCategory[]>(() =>
+  (categoriesData.value ?? []).flatMap((parent) =>
+    parent.children.map((c) => ({
+      id: c.id,
+      slug: c.slug,
+      name_i18n: c.name_i18n as Record<string, string>,
+    }))
+  )
+)
 
-const ALL_AGES = [
-  { id: 6, label: 'Bebés (0–11m)' },
-  { id: 7, label: 'Pequeños (1–3 años)' },
-  { id: 8, label: 'Preescolar (3–6 años)' },
-  { id: 9, label: 'Escolar (6–12 años)' },
-  { id: 10, label: 'Adolescentes (12+)' },
-  { id: 11, label: 'Todas las edades' },
-]
+onMounted(async () => {
+  if (!store.filterOptionsLoaded) await store.loadFilterOptions()
+})
 
+// ── Helpers ───────────────────────────────────────────────────────
+const ageLabel = (labelKey: string) => t(`search.${labelKey.replace('.', '_')}`)
+
+const allAgeId = computed(
+  () => store.filterOptions.ageRanges.find((a) => a.label_key === 'age.all')?.id
+)
+
+// value → translated label, for displaying selected season values as text
+const seasonLabelMap = computed(() =>
+  Object.fromEntries(store.filterOptions.seasons.map((s) => [s.value, t(s.label_key)]))
+)
+
+// ── Edit drawer: available items ──────────────────────────────────
 const availableDraftCategories = computed(() =>
-  ALL_CATEGORIES.filter(
+  subcategories.value.filter(
     (c) => !wizard.editDraft.value?.selectedCategories?.some((s) => s.id === c.id)
   )
 )
 
 const availableDraftSeasons = computed(() =>
-  ALL_SEASONS.filter((s) => !wizard.editDraft.value?.selectedSeasons?.includes(s))
+  store.filterOptions.seasons.filter(
+    (s) => !wizard.editDraft.value?.selectedSeasons?.includes(s.value)
+  )
 )
 
 const availableDraftAges = computed(() =>
-  ALL_AGES.filter((a) => !wizard.editDraft.value?.selectedAgeIds?.includes(a.id))
+  store.filterOptions.ageRanges
+    .filter((a) => a.label_key.startsWith('age.'))
+    .filter((a) => !wizard.editDraft.value?.selectedAgeIds?.includes(a.id))
 )
 
 const editIsEmpty = computed(
@@ -85,6 +97,7 @@ const editIsEmpty = computed(
         <SuggestionsWizardStepLugar v-if="currentStep === 1" key="1" />
         <SuggestionsWizardStepActividad v-else-if="currentStep === 2" key="2" />
         <SuggestionsWizardStepDetalles v-else-if="currentStep === 3" key="3" />
+        <SuggestionsWizardStepResumen v-else-if="currentStep === 4" key="4" />
       </Transition>
     </div>
 
@@ -137,7 +150,7 @@ const editIsEmpty = computed(
                   class="edit-chip edit-chip--active"
                   @click="wizard.draftToggleCategory(cat)"
                 >
-                  {{ cat.name }}
+                  {{ tc(cat.name_i18n) }}
                   <UiIcon name="i-lucide-x" size="xs" />
                 </button>
                 <button
@@ -146,7 +159,7 @@ const editIsEmpty = computed(
                   class="edit-chip"
                   @click="wizard.draftSetCategory(cat)"
                 >
-                  {{ cat.name }}
+                  {{ tc(cat.name_i18n) }}
                   <UiIcon name="i-lucide-plus" size="xs" />
                 </button>
               </div>
@@ -169,21 +182,21 @@ const editIsEmpty = computed(
               <span class="edit-label">{{ t('suggest.season') }}</span>
               <div class="edit-chips">
                 <button
-                  v-for="season in wizard.editDraft.value?.selectedSeasons"
-                  :key="season"
+                  v-for="sv in wizard.editDraft.value?.selectedSeasons"
+                  :key="sv"
                   class="edit-chip edit-chip--active"
-                  @click="wizard.draftToggleSeason(season)"
+                  @click="wizard.draftToggleSeason(sv)"
                 >
-                  {{ season }}
+                  {{ seasonLabelMap[sv] ?? sv }}
                   <UiIcon name="i-lucide-x" size="xs" />
                 </button>
                 <button
-                  v-for="season in availableDraftSeasons"
-                  :key="season"
+                  v-for="s in availableDraftSeasons"
+                  :key="s.value"
                   class="edit-chip"
-                  @click="wizard.draftToggleSeason(season)"
+                  @click="wizard.draftToggleSeason(s.value)"
                 >
-                  {{ season }}
+                  {{ t(s.label_key) }}
                   <UiIcon name="i-lucide-plus" size="xs" />
                 </button>
               </div>
@@ -205,9 +218,16 @@ const editIsEmpty = computed(
                   v-for="age in availableDraftAges"
                   :key="age.id"
                   class="edit-chip"
-                  @click="wizard.draftToggleAge(age.id, age.label)"
+                  @click="
+                    wizard.draftToggleAge(
+                      age.id,
+                      ageLabel(age.label_key),
+                      age.label_key === 'age.all',
+                      allAgeId
+                    )
+                  "
                 >
-                  {{ age.label }}
+                  {{ ageLabel(age.label_key) }}
                   <UiIcon name="i-lucide-plus" size="xs" />
                 </button>
               </div>
@@ -251,7 +271,7 @@ const editIsEmpty = computed(
                 class="edit-chip edit-chip--active"
                 @click="wizard.draftToggleCategory(cat)"
               >
-                {{ cat.name }}
+                {{ tc(cat.name_i18n) }}
                 <UiIcon name="i-lucide-x" size="xs" />
               </button>
               <button
@@ -260,7 +280,7 @@ const editIsEmpty = computed(
                 class="edit-chip"
                 @click="wizard.draftSetCategory(cat)"
               >
-                {{ cat.name }}
+                {{ tc(cat.name_i18n) }}
                 <UiIcon name="i-lucide-plus" size="xs" />
               </button>
             </div>
@@ -283,21 +303,21 @@ const editIsEmpty = computed(
             <span class="edit-label">{{ t('suggest.season') }}</span>
             <div class="edit-chips">
               <button
-                v-for="season in wizard.editDraft.value?.selectedSeasons"
-                :key="season"
+                v-for="sv in wizard.editDraft.value?.selectedSeasons"
+                :key="sv"
                 class="edit-chip edit-chip--active"
-                @click="wizard.draftToggleSeason(season)"
+                @click="wizard.draftToggleSeason(sv)"
               >
-                {{ season }}
+                {{ seasonLabelMap[sv] ?? sv }}
                 <UiIcon name="i-lucide-x" size="xs" />
               </button>
               <button
-                v-for="season in availableDraftSeasons"
-                :key="season"
+                v-for="s in availableDraftSeasons"
+                :key="s.value"
                 class="edit-chip"
-                @click="wizard.draftToggleSeason(season)"
+                @click="wizard.draftToggleSeason(s.value)"
               >
-                {{ season }}
+                {{ t(s.label_key) }}
                 <UiIcon name="i-lucide-plus" size="xs" />
               </button>
             </div>
@@ -319,9 +339,16 @@ const editIsEmpty = computed(
                 v-for="age in availableDraftAges"
                 :key="age.id"
                 class="edit-chip"
-                @click="wizard.draftToggleAge(age.id, age.label)"
+                @click="
+                  wizard.draftToggleAge(
+                    age.id,
+                    ageLabel(age.label_key),
+                    age.label_key === 'age.all',
+                    allAgeId
+                  )
+                "
               >
-                {{ age.label }}
+                {{ ageLabel(age.label_key) }}
                 <UiIcon name="i-lucide-plus" size="xs" />
               </button>
             </div>

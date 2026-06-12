@@ -20,7 +20,17 @@ export interface WizardSchedule {
 
 export interface WizardCategory {
   id: string
-  name: string
+  slug: string
+  name_i18n: Record<string, string>
+}
+
+export interface WizardPlaceInfo {
+  phone: string
+  website: string
+  googleUrl: string
+  // Newline-separated weekday text from Google, editable by the user
+  openingHoursText: string
+  wheelchair: boolean | null
 }
 
 export interface WizardState {
@@ -33,11 +43,12 @@ export interface WizardState {
   manualAddress: string
   description: string
   isManual: boolean
+  // Free-text activity term (e.g. "Videojuegos") — feeds the activity title
   customActivity: string
   selectedCategories: WizardCategory[]
-  selectedSeasons: string[]
+  selectedSeasons: string[] // season VALUES, e.g. ['spring', 'summer']
   selectedAgeIds: number[]
-  selectedAgeLabels: string[]
+  selectedAgeLabels: string[] // translated at selection time
   isFree: boolean
   price: string
   stroller: boolean
@@ -45,13 +56,20 @@ export interface WizardState {
   bathrooms: boolean
   weekends: boolean
   schedule: WizardSchedule
+  titleManual: string
+  titleTouched: boolean
+  // When true: user doesn't know the hours; schedule_structured is omitted from payload
+  hoursUnknown: boolean
+  placeInfo: WizardPlaceInfo
+  manualLat: number | null
+  manualLng: number | null
 }
 
 export const WIZARD_STEPS = [
-  { label: 'Lugar' },
-  { label: 'Actividad' },
-  { label: 'Detalles' },
-  { label: 'Resumen' },
+  { labelKey: 'suggest.step_lugar' },
+  { labelKey: 'suggest.step_actividad' },
+  { labelKey: 'suggest.step_detalles' },
+  { labelKey: 'suggest.step_resumen' },
 ]
 
 const defaultSchedule = (): WizardSchedule => ({
@@ -86,12 +104,21 @@ const defaultState = (): WizardState => ({
   bathrooms: false,
   weekends: false,
   schedule: defaultSchedule(),
+  titleManual: '',
+  titleTouched: false,
+  hoursUnknown: false,
+  placeInfo: { phone: '', website: '', googleUrl: '', openingHoursText: '', wheelchair: null },
+  manualLat: null,
+  manualLng: null,
 })
 
 export function useSuggestionWizard() {
   const state = useState<WizardState>('suggestion-wizard', defaultState)
   const editOpen = useState<boolean>('wizard-edit-open', () => false)
   const editDraft = useState<Partial<WizardState> | null>('wizard-edit-draft', () => null)
+
+  const { t, locale } = useI18n()
+  const { tc } = useI18nContent()
 
   // ─── Edit draft ───────────────────────────────────────────────
   const openEdit = () => {
@@ -141,15 +168,36 @@ export function useSuggestionWizard() {
     else editDraft.value.selectedCategories!.splice(idx, 1)
   }
 
-  const draftToggleSeason = (season: string) => {
+  // Stores season VALUE ('spring'). 'all' clears specifics; a specific clears 'all'.
+  const draftToggleSeason = (seasonValue: string) => {
     if (!editDraft.value) return
-    const idx = editDraft.value.selectedSeasons!.indexOf(season)
-    if (idx === -1) editDraft.value.selectedSeasons!.push(season)
+    if (seasonValue === 'all') {
+      editDraft.value.selectedSeasons = ['all']
+      return
+    }
+    const allIdx = editDraft.value.selectedSeasons!.indexOf('all')
+    if (allIdx !== -1) editDraft.value.selectedSeasons!.splice(allIdx, 1)
+    const idx = editDraft.value.selectedSeasons!.indexOf(seasonValue)
+    if (idx === -1) editDraft.value.selectedSeasons!.push(seasonValue)
     else editDraft.value.selectedSeasons!.splice(idx, 1)
   }
 
-  const draftToggleAge = (id: number, label: string) => {
+  // isAll=true → replace everything with this entry.
+  // allId → remove the "all ages" entry when adding a specific one.
+  const draftToggleAge = (id: number, label: string, isAll = false, allId?: number) => {
     if (!editDraft.value) return
+    if (isAll) {
+      editDraft.value.selectedAgeIds = [id]
+      editDraft.value.selectedAgeLabels = [label]
+      return
+    }
+    if (allId !== undefined) {
+      const allIdx = editDraft.value.selectedAgeIds!.indexOf(allId)
+      if (allIdx !== -1) {
+        editDraft.value.selectedAgeIds!.splice(allIdx, 1)
+        editDraft.value.selectedAgeLabels!.splice(allIdx, 1)
+      }
+    }
     const idx = editDraft.value.selectedAgeIds!.indexOf(id)
     if (idx === -1) {
       editDraft.value.selectedAgeIds!.push(id)
@@ -186,27 +234,55 @@ export function useSuggestionWizard() {
     () => state.value.selectedCategories.length > 0 || !!state.value.customActivity
   )
 
+  // Activity title derived from selection + i18n template. Reactive to locale.
   const generatedTitle = computed(() => {
-    const cat = state.value.selectedCategories[0]?.name ?? state.value.customActivity ?? ''
+    const activityTerm = state.value.selectedCategories[0]
+      ? tc(state.value.selectedCategories[0].name_i18n)
+      : state.value.customActivity
     const name = placeName.value
-    if (!cat && !name) return ''
-    if (!cat) return name
-    if (!name) return cat
-    return `${cat} en ${name}`
+    if (!activityTerm && !name) return ''
+    if (!activityTerm) return name
+    if (!name) return activityTerm
+    return t('suggest.title_template', { activity: activityTerm, place: name })
   })
 
+  // The title shown/sent. User may override by setting titleTouched + titleManual.
+  const effectiveTitle = computed(() =>
+    state.value.titleTouched ? state.value.titleManual : generatedTitle.value
+  )
+
   // ─── Actions ──────────────────────────────────────────────────
+  // First call (no details): clears selectedCategories so StepActividad can reconcile
+  // them against real DB subcategories. Second call (with details): seeds names,
+  // description textarea, and editable place info.
   const setPlace = (place: PlaceSearchResult, details?: PlaceDetails) => {
     state.value.placeResult = place
     state.value.isManual = false
-    state.value.selectedCategories = place.suggested_categories
     state.value.name_i18n = { ...place.name_i18n }
     state.value.description_i18n = {}
+
+    if (!details) {
+      state.value.selectedCategories = []
+    }
 
     if (details) {
       state.value.name_i18n = { ...details.name_i18n }
       state.value.description_i18n = { ...details.description_i18n }
       state.value.placeDetails = details
+
+      // Pre-fill description textarea with best available locale text
+      if (!state.value.description.trim()) {
+        state.value.description = tc(details.description_i18n)
+      }
+
+      // Seed editable place info from Google data
+      state.value.placeInfo = {
+        phone: details.phone ?? '',
+        website: details.website ?? '',
+        googleUrl: details.google_url ?? '',
+        openingHoursText: (details.opening_hours?.weekday_text ?? []).join('\n'),
+        wheelchair: details.wheelchair_accessible ?? null,
+      }
     }
   }
 
@@ -215,7 +291,15 @@ export function useSuggestionWizard() {
     state.value.placeDetails = null
     state.value.name_i18n = {}
     state.value.description_i18n = {}
+    state.value.description = ''
     state.value.selectedCategories = []
+    state.value.placeInfo = {
+      phone: '',
+      website: '',
+      googleUrl: '',
+      openingHoursText: '',
+      wheelchair: null,
+    }
   }
 
   const toggleCategory = (cat: WizardCategory) => {
@@ -224,13 +308,33 @@ export function useSuggestionWizard() {
     else state.value.selectedCategories.splice(idx, 1)
   }
 
-  const toggleSeason = (season: string) => {
-    const idx = state.value.selectedSeasons.indexOf(season)
-    if (idx === -1) state.value.selectedSeasons.push(season)
+  // Stores VALUE. 'all' clears specifics; a specific clears 'all'.
+  const toggleSeason = (seasonValue: string) => {
+    if (seasonValue === 'all') {
+      state.value.selectedSeasons = ['all']
+      return
+    }
+    const allIdx = state.value.selectedSeasons.indexOf('all')
+    if (allIdx !== -1) state.value.selectedSeasons.splice(allIdx, 1)
+    const idx = state.value.selectedSeasons.indexOf(seasonValue)
+    if (idx === -1) state.value.selectedSeasons.push(seasonValue)
     else state.value.selectedSeasons.splice(idx, 1)
   }
 
-  const toggleAge = (id: number, label: string) => {
+  // isAll=true → replace everything. allId → remove "all ages" when adding specific.
+  const toggleAge = (id: number, label: string, isAll = false, allId?: number) => {
+    if (isAll) {
+      state.value.selectedAgeIds = [id]
+      state.value.selectedAgeLabels = [label]
+      return
+    }
+    if (allId !== undefined) {
+      const allIdx = state.value.selectedAgeIds.indexOf(allId)
+      if (allIdx !== -1) {
+        state.value.selectedAgeIds.splice(allIdx, 1)
+        state.value.selectedAgeLabels.splice(allIdx, 1)
+      }
+    }
     const idx = state.value.selectedAgeIds.indexOf(id)
     if (idx === -1) {
       state.value.selectedAgeIds.push(id)
@@ -254,46 +358,55 @@ export function useSuggestionWizard() {
   // ─── Payload ──────────────────────────────────────────────────
   const buildPayload = () => {
     const s = state.value
-    const pd = s.placeDetails
+    const pi = s.placeInfo
 
-    const name_i18n = s.isManual ? { es: s.manualName } : { ...s.name_i18n }
+    const name_i18n = s.isManual ? { [locale.value]: s.manualName } : { ...s.name_i18n }
 
+    // Description stored under the active locale, not hardcoded 'es'
     const description_i18n = s.description.trim()
-      ? { ...s.description_i18n, es: s.description.trim() }
+      ? { ...s.description_i18n, [locale.value]: s.description.trim() }
       : { ...s.description_i18n }
+
+    const openingHoursLines = pi.openingHoursText
+      ? pi.openingHoursText.split('\n').filter(Boolean)
+      : undefined
 
     return {
       name_i18n,
       description_i18n,
+      // Activity title (distinct from the place name)
+      title_i18n: { [locale.value]: effectiveTitle.value },
       location: {
         address: s.isManual ? s.manualAddress : (s.placeResult?.address ?? ''),
         city: s.isManual ? s.manualCity : (s.placeResult?.address ?? ''),
-        lat: s.isManual ? undefined : (s.placeResult?.lat ?? undefined),
-        lng: s.isManual ? undefined : (s.placeResult?.lng ?? undefined),
+        lat: s.isManual ? (s.manualLat ?? undefined) : (s.placeResult?.lat ?? undefined),
+        lng: s.isManual ? (s.manualLng ?? undefined) : (s.placeResult?.lng ?? undefined),
       },
       category_id: s.selectedCategories[0]?.id ?? '',
       age_range_ids: s.selectedAgeIds,
       best_season: s.selectedSeasons,
-      type: s.selectedCategories.map((c) => c.name),
+      type: s.selectedCategories.map((c) => tc(c.name_i18n)),
       is_free: s.isFree,
       price: s.isFree ? undefined : Number.parseFloat(s.price) || undefined,
       stroller_friendly: s.stroller,
       has_shadow: s.shadow,
       has_bathrooms: s.bathrooms,
       open_weekends: s.weekends,
-      schedule_structured: s.schedule,
+      schedule_structured: s.hoursUnknown ? undefined : s.schedule,
       metadata: {
         google_place_id: s.placeResult?.google_place_id ?? undefined,
         place_photo_url: s.placeResult?.photo_url ?? undefined,
         google_types: s.placeResult?.types ?? undefined,
         generated_title: generatedTitle.value,
         custom_activity: s.customActivity || undefined,
-        google_url: pd?.google_url ?? undefined,
-        phone: pd?.phone ?? undefined,
-        website: pd?.website ?? undefined,
-        photos: pd?.photos?.length ? pd.photos : undefined,
-        wheelchair: pd?.wheelchair_accessible ?? undefined,
-        opening_hours_text: pd?.opening_hours?.weekday_text ?? undefined,
+        // Editable place info (seeded from Google, may be modified by user)
+        google_url: pi.googleUrl || undefined,
+        phone: pi.phone || undefined,
+        website: pi.website || undefined,
+        wheelchair: pi.wheelchair ?? undefined,
+        hours_unknown: s.hoursUnknown || undefined,
+        opening_hours_text: openingHoursLines?.length ? openingHoursLines : undefined,
+        photos: s.placeDetails?.photos?.length ? s.placeDetails.photos : undefined,
       },
     }
   }
@@ -310,6 +423,7 @@ export function useSuggestionWizard() {
     hasPlace,
     hasActivity,
     generatedTitle,
+    effectiveTitle,
     // edit
     openEdit,
     closeEdit,

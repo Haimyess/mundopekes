@@ -139,7 +139,30 @@
     "custom_activity": "Actividad personalizada",
     "success_title": "¡Sugerencia enviada!",
     "success_desc": "La revisaremos y la publicaremos pronto en MundoPekes",
-    "error_title": "Error al enviar"
+    "error_title": "Error al enviar",
+    "step_progress": "Paso {n} de {total}",
+    "step_lugar": "Lugar",
+    "step_actividad": "Actividad",
+    "step_detalles": "Detalles",
+    "step_resumen": "Resumen",
+    "free": "Es gratuito",
+    "toggle_stroller": "Apto para cochecitos",
+    "toggle_shadow": "Hay sombra en el lugar",
+    "toggle_bathrooms": "Hay baños",
+    "toggle_weekends": "Abre los fines de semana",
+    "title_template": "{activity} en {place}",
+    "description_hint": "Google no trajo descripción — añade una",
+    "phone": "Teléfono",
+    "website": "Sitio web",
+    "opening_hours": "Horarios",
+    "show_more": "Ver más",
+    "show_less": "Ver menos",
+    "geocoding": "Ubicando...",
+    "coords_not_found": "No se pudo ubicar la dirección",
+    "hours_unknown": "No sé los horarios",
+    "edit_hours_manually": "Editar manualmente",
+    "hours_pending_review": "Pendiente de revisión",
+    "activity_title": "Título de la actividad"
   },
   "contact": {
     "title": "Contáctanos",
@@ -243,6 +266,13 @@
     "back": "Volver",
     "done": "Listo",
     "edit": "Editar",
-    "continue": "Continuar"
+    "continue": "Continuar",
+    "day_sunday": "Domingo",
+    "day_monday": "Lunes",
+    "day_tuesday": "Martes",
+    "day_wednesday": "Miércoles",
+    "day_thursday": "Jueves",
+    "day_friday": "Viernes",
+    "day_saturday": "Sábado"
   }
 }

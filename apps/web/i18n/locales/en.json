@@ -136,7 +136,30 @@
     "custom_activity": "Custom activity",
     "success_title": "Suggestion sent!",
     "success_desc": "We'll review it and publish it soon on MundoPekes",
-    "error_title": "Error sending"
+    "error_title": "Error sending",
+    "step_progress": "Step {n} of {total}",
+    "step_lugar": "Place",
+    "step_actividad": "Activity",
+    "step_detalles": "Details",
+    "step_resumen": "Summary",
+    "free": "It's free",
+    "toggle_stroller": "Stroller-friendly",
+    "toggle_shadow": "Shaded area",
+    "toggle_bathrooms": "Restrooms available",
+    "toggle_weekends": "Open on weekends",
+    "title_template": "{activity} at {place}",
+    "description_hint": "No description from Google — add your own",
+    "phone": "Phone",
+    "website": "Website",
+    "opening_hours": "Opening hours",
+    "show_more": "Show more",
+    "show_less": "Show less",
+    "geocoding": "Locating...",
+    "coords_not_found": "Address could not be located",
+    "hours_unknown": "I don't know the hours",
+    "edit_hours_manually": "Edit manually",
+    "hours_pending_review": "Pending review",
+    "activity_title": "Activity title"
   },
   "contact": {
     "title": "Contact Us",
@@ -240,6 +263,13 @@
     "back": "Back",
     "done": "Done",
     "edit": "Edit",
-    "continue": "Continue"
+    "continue": "Continue",
+    "day_sunday": "Sunday",
+    "day_monday": "Monday",
+    "day_tuesday": "Tuesday",
+    "day_wednesday": "Wednesday",
+    "day_thursday": "Thursday",
+    "day_friday": "Friday",
+    "day_saturday": "Saturday"
   }
 }

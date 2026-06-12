@@ -136,7 +136,30 @@
     "custom_activity": "Своя активность",
     "success_title": "Предложение отправлено!",
     "success_desc": "Мы рассмотрим его и скоро опубликуем на MundoPekes",
-    "error_title": "Ошибка отправки"
+    "error_title": "Ошибка отправки",
+    "step_progress": "Шаг {n} из {total}",
+    "step_lugar": "Место",
+    "step_actividad": "Активность",
+    "step_detalles": "Детали",
+    "step_resumen": "Итог",
+    "free": "Бесплатно",
+    "toggle_stroller": "Подходит для колясок",
+    "toggle_shadow": "Есть тень",
+    "toggle_bathrooms": "Есть туалеты",
+    "toggle_weekends": "Открыто в выходные",
+    "title_template": "{activity} в {place}",
+    "description_hint": "Google не нашёл описание — добавьте своё",
+    "phone": "Телефон",
+    "website": "Сайт",
+    "opening_hours": "Часы работы",
+    "show_more": "Показать ещё",
+    "show_less": "Скрыть",
+    "geocoding": "Определяю...",
+    "coords_not_found": "Адрес не удалось определить",
+    "hours_unknown": "Часы работы неизвестны",
+    "edit_hours_manually": "Редактировать вручную",
+    "hours_pending_review": "На проверке",
+    "activity_title": "Название активности"
   },
   "contact": {
     "title": "Связаться с нами",
@@ -240,6 +263,13 @@
     "back": "Назад",
     "done": "Готово",
     "edit": "Редактировать",
-    "continue": "Продолжить"
+    "continue": "Продолжить",
+    "day_sunday": "Воскресенье",
+    "day_monday": "Понедельник",
+    "day_tuesday": "Вторник",
+    "day_wednesday": "Среда",
+    "day_thursday": "Четверг",
+    "day_friday": "Пятница",
+    "day_saturday": "Суббота"
   }
 }

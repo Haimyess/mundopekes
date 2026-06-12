@@ -3,8 +3,6 @@
 // Uso: /api/geocode?address=Hermon, Israel
 // Límite: 1 req/seg — suficiente para formularios
 
-import { logError, logInfo } from '../utils/logger'
-
 export default defineEventHandler(async (event) => {
   const query = getQuery(event)
   const address = query.address as string

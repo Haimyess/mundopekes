@@ -8,6 +8,7 @@ export default defineNuxtConfig({
   css: ['~/assets/css/main.css'],
   runtimeConfig: {
     deeplApiKey: process.env.DEEPL_API_KEY ?? '',
+    googlePlacesApiKey: process.env.GOOGLE_PLACES_API_KEY ?? '',
     supabaseServiceKey: process.env.SUPABASE_SECRET_KEY ?? '',
     public: {
       supabaseUrl: process.env.SUPABASE_URL ?? '',

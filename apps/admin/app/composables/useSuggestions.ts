@@ -15,10 +15,12 @@ export interface Suggestion {
   is_free: boolean
   schedule?: string
   images: string[]
+  category_id?: string | null
   status: SuggestionStatus
   rejection_reason?: string
   reviewed_at?: string
   created_at: string
+  metadata?: Record<string, unknown> | null
 }
 
 export const useSuggestions = () => {

@@ -31,6 +31,51 @@ const LOCALES = [
 
 const activeLocale = ref('he')
 
+// ── Reference data (loaded once for the edit form) ────────────────────────
+type RefSubcat = { id: string; name_i18n: Record<string, string>; slug: string }
+type RefSeason = { value: string; label_key: string }
+type RefAgeRange = { id: number; label_key: string }
+
+const subcategories = ref<RefSubcat[]>([])
+const dbSeasons = ref<RefSeason[]>([])
+const dbAgeRanges = ref<RefAgeRange[]>([])
+
+onMounted(async () => {
+  try {
+    const data = await $fetch<{
+      subcategories: RefSubcat[]
+      seasons: RefSeason[]
+      ageRanges: RefAgeRange[]
+    }>('/api/reference')
+    subcategories.value = data.subcategories
+    dbSeasons.value = data.seasons
+    dbAgeRanges.value = data.ageRanges
+  } catch {
+    // Reference data is optional — the edit form degrades gracefully if unavailable
+  }
+})
+
+// Human-readable labels for the admin (hardcoded Spanish, no i18n needed here)
+const AGE_LABELS: Record<string, string> = {
+  'age.all': 'Todas las edades',
+  'age.babies': 'Bebés (0-11m)',
+  'age.toddlers': 'Pequeños (1-3 años)',
+  'age.preschool': 'Preescolar (3-6 años)',
+  'age.school': 'Escolar (6-12 años)',
+  'age.teens': 'Adolescentes (12+)',
+}
+const SEASON_LABELS: Record<string, string> = {
+  all: 'Todas',
+  spring: 'Primavera',
+  summer: 'Verano',
+  autumn: 'Otoño',
+  winter: 'Invierno',
+}
+const ageLabel = (key: string) => AGE_LABELS[key] ?? key
+const seasonLabel = (value: string) => SEASON_LABELS[value] ?? value
+const catName = (c: RefSubcat) =>
+  c.name_i18n?.he || c.name_i18n?.es || Object.values(c.name_i18n ?? {})[0] || c.slug
+
 const showRejectForm = ref(false)
 const rejectionReason = ref('')
 
@@ -102,58 +147,58 @@ const editForm = reactive({
   name_i18n: {} as Record<string, string>,
   description_i18n: {} as Record<string, string>,
   location: { city: '', address: '' },
-  age_range: { min: 0, max: 216 },
-  type: [] as string[],
-  best_season: [] as string[],
+  category_id: '' as string,
+  age_range_ids: [] as number[],
+  best_season: [] as string[], // VALUES (spring, summer, …)
   stroller_friendly: false,
   open_weekends: false,
   is_free: false,
   schedule: '',
+  // Metadata fields
+  meta_title_i18n: {} as Record<string, string>,
+  meta_phone: '',
+  meta_website: '',
+  meta_opening_hours_text: '', // newline-separated for editing
+  meta_hours_unknown: false,
 })
 
-const ACTIVITY_TYPES = [
-  'parque',
-  'museo',
-  'biblioteca',
-  'indoor',
-  'outdoor',
-  'acuático',
-  'cultural',
-  'deportivo',
-  'educativo',
-  'granja',
-  'playa',
-]
-const SEASONS = ['primavera', 'verano', 'otoño', 'invierno', 'todo el año']
-
-const toggleType = (v: string) => {
-  const idx = editForm.type.indexOf(v)
-  if (idx === -1) editForm.type.push(v)
-  else editForm.type.splice(idx, 1)
+const toggleBestSeason = (value: string) => {
+  const idx = editForm.best_season.indexOf(value)
+  if (idx === -1) editForm.best_season.push(value)
+  else editForm.best_season.splice(idx, 1)
 }
 
-const toggleSeason = (v: string) => {
-  const idx = editForm.best_season.indexOf(v)
-  if (idx === -1) editForm.best_season.push(v)
-  else editForm.best_season.splice(idx, 1)
+const toggleAgeId = (id: number) => {
+  const idx = editForm.age_range_ids.indexOf(id)
+  if (idx === -1) editForm.age_range_ids.push(id)
+  else editForm.age_range_ids.splice(idx, 1)
 }
 
 // Cuando abre el modo edición, copiar los valores actuales al form
 const startEditing = () => {
   if (!props.suggestion) return
   const s = props.suggestion
-  editForm.name_i18n = s.name_i18n ?? {}
-  editForm.description_i18n = s.description_i18n ?? {}
+  const m = (s.metadata as SuggestionMeta | null) ?? {}
+
+  editForm.name_i18n = { ...(s.name_i18n ?? {}) }
+  editForm.description_i18n = { ...(s.description_i18n ?? {}) }
   editForm.location.city = s.location?.city ?? ''
   editForm.location.address = s.location?.address ?? ''
-  editForm.age_range.min = s.age_range?.min ?? 0
-  editForm.age_range.max = s.age_range?.max ?? 216
-  editForm.type = [...(s.type ?? [])]
+  editForm.category_id = s.category_id ?? ''
+  editForm.age_range_ids = [...((s.age_range as { ids?: number[] } | null)?.ids ?? [])]
   editForm.best_season = [...(s.best_season ?? [])]
   editForm.stroller_friendly = s.stroller_friendly
   editForm.open_weekends = s.open_weekends
   editForm.is_free = s.is_free
   editForm.schedule = s.schedule ?? ''
+  // Metadata
+  editForm.meta_title_i18n = { ...(m.title_i18n ?? {}) }
+  editForm.meta_phone = m.phone ?? ''
+  editForm.meta_website = m.website ?? ''
+  editForm.meta_opening_hours_text = Array.isArray(m.opening_hours_text)
+    ? m.opening_hours_text.join('\n')
+    : ''
+  editForm.meta_hours_unknown = m.hours_unknown === true
   isEditing.value = true
 }
 
@@ -178,13 +223,23 @@ const saveEdit = async () => {
         name_i18n: editForm.name_i18n,
         description_i18n: editForm.description_i18n,
         location: editForm.location,
-        age_range: editForm.age_range,
-        type: editForm.type,
+        category_id: editForm.category_id || null,
+        age_range: { ids: editForm.age_range_ids },
         best_season: editForm.best_season,
         stroller_friendly: editForm.stroller_friendly,
         open_weekends: editForm.open_weekends,
         is_free: editForm.is_free,
         schedule: editForm.schedule,
+        // Partial metadata — PUT will MERGE with existing, not overwrite
+        metadata: {
+          title_i18n: editForm.meta_title_i18n,
+          phone: editForm.meta_phone || null,
+          website: editForm.meta_website || null,
+          opening_hours_text: editForm.meta_opening_hours_text
+            ? editForm.meta_opening_hours_text.split('\n').filter(Boolean)
+            : null,
+          hours_unknown: editForm.meta_hours_unknown,
+        },
       },
     })
     toast.add({ title: 'Sugerencia actualizada', color: 'success' })
@@ -217,6 +272,29 @@ const slideoverTitle = computed(() => {
   const name = nameI18n['he'] || nameI18n['es'] || Object.values(nameI18n)[0] || 'Sugerencia'
   return isEditing.value ? `Editando: ${name}` : name
 })
+
+// ── Metadata helpers ──────────────────────────────────────────────────────
+// Local shape of suggestion.metadata (written by the wizard in Fases 3–6)
+type SuggestionMeta = {
+  title_i18n?: Record<string, string> | null
+  phone?: string | null
+  website?: string | null
+  opening_hours_text?: string[] | null
+  hours_unknown?: boolean | null
+  has_shadow?: boolean | null
+  has_bathrooms?: boolean | null
+  price?: number | null
+}
+
+const meta = computed<SuggestionMeta>(
+  () => (props.suggestion?.metadata as SuggestionMeta | null) ?? {}
+)
+
+// Returns the best available string from an i18n Record (he → es → en → first)
+const pickI18n = (obj: Record<string, string> | null | undefined): string => {
+  if (!obj) return ''
+  return obj['he'] || obj['es'] || obj['en'] || Object.values(obj)[0] || ''
+}
 </script>
 
 <template>
@@ -235,6 +313,14 @@ const slideoverTitle = computed(() => {
       <div v-if="suggestion" class="flex flex-col gap-5 p-4">
         <!-- ── MODO VISTA ────────────────────────────────── -->
         <template v-if="!isEditing">
+          <!-- Título de la actividad (distinto del nombre del lugar) -->
+          <div v-if="meta.title_i18n && pickI18n(meta.title_i18n)">
+            <p class="text-xs font-medium text-(--ui-text-muted) uppercase tracking-wide mb-1">
+              Título de la actividad
+            </p>
+            <p class="text-base font-semibold">{{ pickI18n(meta.title_i18n) }}</p>
+          </div>
+
           <div class="flex items-center justify-between">
             <UBadge :color="statusColor" variant="subtle" size="lg">
               {{ statusLabel }}
@@ -269,6 +355,31 @@ const slideoverTitle = computed(() => {
                   · {{ suggestion.location.address }}
                 </span>
               </span>
+            </div>
+          </div>
+
+          <!-- Contacto del lugar -->
+          <div v-if="meta.phone || meta.website">
+            <p class="text-sm font-medium text-(--ui-text-muted) mb-2">Contacto</p>
+            <div class="flex flex-col gap-1.5">
+              <a
+                v-if="meta.phone"
+                :href="`tel:${meta.phone}`"
+                class="flex items-center gap-2 text-sm text-primary-500 hover:underline"
+              >
+                <UIcon name="i-lucide-phone" class="size-4 shrink-0" />
+                {{ meta.phone }}
+              </a>
+              <a
+                v-if="meta.website"
+                :href="meta.website"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="flex items-center gap-2 text-sm text-primary-500 hover:underline"
+              >
+                <UIcon name="i-lucide-globe" class="size-4 shrink-0" />
+                <span class="truncate">{{ meta.website }}</span>
+              </a>
             </div>
           </div>
 
@@ -319,12 +430,50 @@ const slideoverTitle = computed(() => {
                 />
                 Fines de semana
               </div>
+              <div class="flex items-center gap-2 text-sm">
+                <UIcon
+                  :name="meta.has_shadow ? 'i-lucide-check-circle' : 'i-lucide-circle'"
+                  :class="meta.has_shadow ? 'text-success-500' : 'text-(--ui-text-muted)'"
+                  class="size-4"
+                />
+                Sombra
+              </div>
+              <div class="flex items-center gap-2 text-sm">
+                <UIcon
+                  :name="meta.has_bathrooms ? 'i-lucide-check-circle' : 'i-lucide-circle'"
+                  :class="meta.has_bathrooms ? 'text-success-500' : 'text-(--ui-text-muted)'"
+                  class="size-4"
+                />
+                Baños
+              </div>
+            </div>
+            <!-- Precio cuando no es gratuito -->
+            <div
+              v-if="!suggestion.is_free && meta.price"
+              class="flex items-center gap-2 text-sm mt-2"
+            >
+              <UIcon name="i-lucide-shekel-sign" class="size-4 text-(--ui-text-muted)" />
+              ₪{{ meta.price }}
             </div>
           </div>
 
-          <div v-if="suggestion.schedule">
-            <p class="text-sm font-medium text-(--ui-text-muted) mb-1">Horario</p>
-            <p class="text-sm">
+          <!-- Horarios: hours_unknown → alerta; opening_hours_text → Google; fallback → schedule -->
+          <div v-if="meta.hours_unknown || meta.opening_hours_text?.length || suggestion.schedule">
+            <p class="text-sm font-medium text-(--ui-text-muted) mb-2">Horario</p>
+            <UAlert
+              v-if="meta.hours_unknown"
+              color="warning"
+              variant="subtle"
+              icon="i-lucide-clock"
+              title="Horarios pendientes de revisión"
+              description="El usuario no conocía los horarios al enviar la sugerencia."
+            />
+            <div v-else-if="meta.opening_hours_text?.length" class="flex flex-col gap-0.5">
+              <p v-for="(line, i) in meta.opening_hours_text" :key="i" class="text-sm">
+                {{ line }}
+              </p>
+            </div>
+            <p v-else-if="suggestion.schedule" class="text-sm">
               {{ suggestion.schedule }}
             </p>
           </div>
@@ -367,7 +516,8 @@ const slideoverTitle = computed(() => {
 
         <!-- ── MODO EDICIÓN ──────────────────────────────── -->
         <template v-else>
-          <UFormField label="Nombre" required>
+          <!-- Nombre del lugar -->
+          <UFormField label="Nombre del lugar" required>
             <UTabs
               v-model="activeLocale"
               :items="LOCALES.map((l) => ({ label: l.label, value: l.key }))"
@@ -390,6 +540,7 @@ const slideoverTitle = computed(() => {
             />
           </UFormField>
 
+          <!-- Descripción del lugar -->
           <UFormField label="Descripción">
             <UTextarea
               v-model="editForm.description_i18n[activeLocale]"
@@ -399,6 +550,19 @@ const slideoverTitle = computed(() => {
             />
           </UFormField>
 
+          <!-- Título de la actividad (metadata.title_i18n) -->
+          <UFormField label="Título de la actividad">
+            <p class="text-xs text-(--ui-text-muted) mb-1">
+              Mismo selector de idioma que el nombre
+            </p>
+            <UInput
+              v-model="editForm.meta_title_i18n[activeLocale]"
+              :placeholder="`Ej: Senderismo en ${LOCALES.find((l) => l.key === activeLocale)?.label}`"
+              class="w-full"
+            />
+          </UFormField>
+
+          <!-- Ubicación -->
           <div class="grid grid-cols-2 gap-3">
             <UFormField label="Ciudad">
               <UInput v-model="editForm.location.city" placeholder="Tel Aviv" class="w-full" />
@@ -408,46 +572,91 @@ const slideoverTitle = computed(() => {
             </UFormField>
           </div>
 
-          <div class="grid grid-cols-2 gap-3">
-            <UFormField label="Edad mínima (meses)">
-              <UInput v-model.number="editForm.age_range.min" type="number" class="w-full" />
-            </UFormField>
-            <UFormField label="Edad máxima (meses)">
-              <UInput v-model.number="editForm.age_range.max" type="number" class="w-full" />
-            </UFormField>
-          </div>
-
-          <UFormField label="Tipos">
+          <!-- Categoría (subcategorías DB, selección única) -->
+          <UFormField label="Categoría">
             <div class="flex flex-wrap gap-2 mt-1">
               <UBadge
-                v-for="type in ACTIVITY_TYPES"
-                :key="type"
-                :color="editForm.type.includes(type) ? 'primary' : 'neutral'"
-                :variant="editForm.type.includes(type) ? 'solid' : 'subtle'"
+                v-for="cat in subcategories"
+                :key="cat.id"
+                :color="editForm.category_id === cat.id ? 'primary' : 'neutral'"
+                :variant="editForm.category_id === cat.id ? 'solid' : 'subtle'"
                 class="cursor-pointer select-none"
-                @click="toggleType(type)"
+                @click="editForm.category_id = editForm.category_id === cat.id ? '' : cat.id"
               >
-                {{ type }}
+                {{ catName(cat) }}
               </UBadge>
+              <span v-if="!subcategories.length" class="text-xs text-(--ui-text-muted)">
+                Cargando…
+              </span>
             </div>
           </UFormField>
 
+          <!-- Temporadas (VALUES desde DB) -->
           <UFormField label="Temporadas">
             <div class="flex flex-wrap gap-2 mt-1">
               <UBadge
-                v-for="season in SEASONS"
-                :key="season"
-                :color="editForm.best_season.includes(season) ? 'info' : 'neutral'"
-                :variant="editForm.best_season.includes(season) ? 'solid' : 'subtle'"
+                v-for="s in dbSeasons"
+                :key="s.value"
+                :color="editForm.best_season.includes(s.value) ? 'info' : 'neutral'"
+                :variant="editForm.best_season.includes(s.value) ? 'solid' : 'subtle'"
                 class="cursor-pointer select-none"
-                @click="toggleSeason(season)"
+                @click="toggleBestSeason(s.value)"
               >
-                {{ season }}
+                {{ seasonLabel(s.value) }}
               </UBadge>
+              <span v-if="!dbSeasons.length" class="text-xs text-(--ui-text-muted)">
+                Cargando…
+              </span>
             </div>
           </UFormField>
 
-          <UFormField label="Horario">
+          <!-- Edades (IDs desde DB) -->
+          <UFormField label="Edades">
+            <div class="flex flex-wrap gap-2 mt-1">
+              <UBadge
+                v-for="a in dbAgeRanges"
+                :key="a.id"
+                :color="editForm.age_range_ids.includes(a.id) ? 'secondary' : 'neutral'"
+                :variant="editForm.age_range_ids.includes(a.id) ? 'solid' : 'subtle'"
+                class="cursor-pointer select-none"
+                @click="toggleAgeId(a.id)"
+              >
+                {{ ageLabel(a.label_key) }}
+              </UBadge>
+              <span v-if="!dbAgeRanges.length" class="text-xs text-(--ui-text-muted)">
+                Cargando…
+              </span>
+            </div>
+          </UFormField>
+
+          <!-- Contacto del lugar -->
+          <div class="grid grid-cols-2 gap-3">
+            <UFormField label="Teléfono">
+              <UInput v-model="editForm.meta_phone" placeholder="+972 50 000 0000" class="w-full" />
+            </UFormField>
+            <UFormField label="Website">
+              <UInput v-model="editForm.meta_website" placeholder="https://..." class="w-full" />
+            </UFormField>
+          </div>
+
+          <!-- Horarios del lugar (texto de Google) -->
+          <UFormField label="Horarios del lugar">
+            <UTextarea
+              v-model="editForm.meta_opening_hours_text"
+              placeholder="Lunes: 09:00–17:00&#10;Martes: 09:00–17:00&#10;..."
+              :rows="4"
+              class="w-full"
+            />
+          </UFormField>
+
+          <!-- Toggle horarios desconocidos -->
+          <UCheckbox
+            v-model="editForm.meta_hours_unknown"
+            label="Horarios pendientes de revisión (no conocidos)"
+          />
+
+          <!-- Horario legible (campo legacy) -->
+          <UFormField label="Horario (texto libre)">
             <UInput v-model="editForm.schedule" placeholder="Lun-Vie 9:00-18:00" class="w-full" />
           </UFormField>
 
