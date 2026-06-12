@@ -6,6 +6,7 @@ import PlacesSlideover from '~/components/places/PlacesSlideover.vue'
 const props = defineProps<{
   activity?: Activity | null
   placeId?: string
+  place?: Place | null
 }>()
 
 const emit = defineEmits<{
@@ -92,7 +93,7 @@ const categoryOptions = computed(() =>
 )
 
 const selectedPlace = computed(
-  () => (places.value ?? []).find((p) => p.id === form.place_id) ?? null
+  () => props.place ?? (places.value ?? []).find((p) => p.id === form.place_id) ?? null
 )
 
 // Horarios de Google del lugar seleccionado (para sembrar el editor)
@@ -178,6 +179,13 @@ watch(
   () => form.is_free,
   (val) => {
     if (val) form.price = null
+  }
+)
+
+watch(
+  () => form.price,
+  (val) => {
+    if (val && val > 0) form.is_free = false
   }
 )
 
