@@ -17,6 +17,7 @@ const emit = defineEmits<{
 const toast = useToast()
 const overlay = useOverlay()
 const loading = ref(false)
+const { uploadFromUrl } = useImageUpload()
 
 const AGE_LABELS: Record<string, string> = {
   'age.all': 'All ages',
@@ -360,7 +361,11 @@ const save = async () => {
           </div>
         </UFormField>
 
-        <UiImageUploader v-model="form.images" :google-photos="googlePhotos" />
+        <UiImageUploader
+          v-model="form.images"
+          :google-photos="googlePhotos"
+          :upload-fn="uploadFromUrl"
+        />
       </div>
     </template>
 

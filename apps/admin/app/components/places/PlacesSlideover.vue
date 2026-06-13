@@ -14,6 +14,7 @@ const emit = defineEmits<{
 const toast = useToast()
 const loading = ref(false)
 const { geocode, isLoading: geocoding } = useGeocode()
+const { uploadFromUrl } = useImageUpload()
 
 interface PlaceMeta {
   google_place_id?: string | null
@@ -190,7 +191,11 @@ const save = async () => {
           Obtener coordenadas de la ciudad
         </UButton>
 
-        <UiImageUploader v-model="form.images" :google-photos="googlePhotos" />
+        <UiImageUploader
+          v-model="form.images"
+          :google-photos="googlePhotos"
+          :upload-fn="uploadFromUrl"
+        />
       </div>
     </template>
 
