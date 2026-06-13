@@ -16,6 +16,17 @@ const id = route.params.id as string
 
 const { data: place, refresh: refreshPlace } = await useFetch<Place>(`/api/places/${id}`)
 
+const placeMeta = computed(() => {
+  const m =
+    (place.value?.metadata as {
+      phone?: string | null
+      website?: string | null
+      opening_hours_text?: string[] | null
+      photos?: string[] | null
+    } | null) ?? {}
+  return m
+})
+
 const {
   activities,
   loading: activitiesLoading,
@@ -33,7 +44,7 @@ const openEditPlace = async () => {
 
 const openCreateActivity = async () => {
   const slideover = overlay.create(ActivitiesSlideover, {
-    props: { placeId: id },
+    props: { placeId: id, place: place.value },
   })
   await slideover.open()
   fetchActivities()
@@ -41,7 +52,7 @@ const openCreateActivity = async () => {
 
 const openEditActivity = async (activity: Activity) => {
   const slideover = overlay.create(ActivitiesSlideover, {
-    props: { activity, placeId: id },
+    props: { activity, placeId: id, place: place.value },
   })
   await slideover.open()
   fetchActivities()
@@ -147,8 +158,9 @@ await fetchActivities()
 
     <template #body>
       <!-- Info del lugar -->
-      <div class="mb-8 p-4 rounded-lg border border-default bg-elevated/30">
-        <div class="flex flex-wrap gap-3 mb-2">
+      <div class="mb-8 p-4 rounded-lg border border-default bg-elevated/30 flex flex-col gap-3">
+        <!-- City + coords -->
+        <div class="flex flex-wrap gap-3">
           <UBadge v-if="place?.city" variant="subtle" color="neutral">
             {{ place.city.name }}
           </UBadge>
@@ -156,6 +168,8 @@ await fetchActivities()
             {{ place.lat }}, {{ place.lng }}
           </UBadge>
         </div>
+
+        <!-- Description -->
         <p
           v-if="place?.description_i18n && Object.keys(place.description_i18n).length"
           class="text-muted text-sm"
@@ -163,6 +177,53 @@ await fetchActivities()
           {{ tc(place.description_i18n) }}
         </p>
         <p v-else class="text-muted text-sm italic">Sin descripción</p>
+
+        <!-- Phone + Website -->
+        <div v-if="placeMeta.phone || placeMeta.website" class="flex flex-wrap gap-4">
+          <a
+            v-if="placeMeta.phone"
+            :href="`tel:${placeMeta.phone}`"
+            class="flex items-center gap-1.5 text-sm text-primary-500 hover:underline"
+          >
+            <UIcon name="i-lucide-phone" class="size-4 shrink-0" />
+            {{ placeMeta.phone }}
+          </a>
+          <a
+            v-if="placeMeta.website"
+            :href="placeMeta.website"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="flex items-center gap-1.5 text-sm text-primary-500 hover:underline min-w-0"
+          >
+            <UIcon name="i-lucide-globe" class="size-4 shrink-0" />
+            <span class="truncate">{{ placeMeta.website }}</span>
+          </a>
+        </div>
+
+        <!-- Opening hours -->
+        <div v-if="placeMeta.opening_hours_text?.length">
+          <p class="text-xs font-medium text-muted uppercase tracking-wide mb-1">Horarios</p>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-0.5">
+            <p
+              v-for="(line, i) in placeMeta.opening_hours_text"
+              :key="i"
+              class="text-xs text-muted"
+            >
+              {{ line }}
+            </p>
+          </div>
+        </div>
+
+        <!-- Images -->
+        <div v-if="place?.images?.length" class="flex flex-wrap gap-2">
+          <img
+            v-for="url in place.images"
+            :key="url"
+            :src="url"
+            alt=""
+            class="size-20 rounded-md object-cover border border-default"
+          />
+        </div>
       </div>
 
       <!-- Actividades -->
