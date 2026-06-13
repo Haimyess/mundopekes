@@ -62,7 +62,15 @@
     "best_season": "עונה מומלצת",
     "report_outdated": "מידע לא מעודכן?",
     "types": "קטגוריות",
-    "open_weekends_label": "פתוח בסופי שבוע"
+    "open_weekends_label": "פתוח בסופי שבוע",
+    "hours": "שעות פתיחה",
+    "phone": "טלפון",
+    "website": "אתר",
+    "view_on_maps": "צפה במפות Google",
+    "wheelchair": "נגיש לכיסאות גלגלים",
+    "ages": "גילאים מומלצים",
+    "seasons": "עונה מומלצת",
+    "photos": "תמונות המקום"
   },
   "age": {
     "months": "{count} חודשים",

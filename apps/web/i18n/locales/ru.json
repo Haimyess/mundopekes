@@ -62,7 +62,15 @@
     "best_season": "Лучший сезон",
     "report_outdated": "Устаревшая информация?",
     "types": "Категории",
-    "open_weekends_label": "Открыто в выходные дни"
+    "open_weekends_label": "Открыто в выходные дни",
+    "hours": "Часы работы",
+    "phone": "Телефон",
+    "website": "Сайт",
+    "view_on_maps": "Открыть в Google Maps",
+    "wheelchair": "Доступно для инвалидных колясок",
+    "ages": "Рекомендуемые возрасты",
+    "seasons": "Лучший сезон",
+    "photos": "Фотографии места"
   },
   "age": {
     "months": "{count} мес.",

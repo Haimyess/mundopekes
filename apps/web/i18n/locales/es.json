@@ -64,7 +64,15 @@
     "best_season": "Mejor temporada",
     "report_outdated": "¿Información desactualizada?",
     "types": "Categorías",
-    "open_weekends_label": "Abierto los fines de semana"
+    "open_weekends_label": "Abierto los fines de semana",
+    "hours": "Horarios",
+    "phone": "Teléfono",
+    "website": "Sitio web",
+    "view_on_maps": "Ver en Google Maps",
+    "wheelchair": "Acceso para sillas de ruedas",
+    "ages": "Edades recomendadas",
+    "seasons": "Mejor temporada",
+    "photos": "Fotos del lugar"
   },
   "age": {
     "months": "{count} meses",
