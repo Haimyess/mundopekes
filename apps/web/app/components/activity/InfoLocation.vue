@@ -16,14 +16,12 @@ interface Props {
 const props = defineProps<Props>()
 const { t } = useI18n()
 
-const hasCoords = computed(() =>
-  props.place?.lat != null && props.place?.lng != null
-)
+const hasCoords = computed(() => props.place?.lat != null && props.place?.lng != null)
 
 // Leaflet espera [lat, lng] como tupla — parseFloat por si vienen como string de Supabase
 const mapCenter = computed<[number, number]>(() => [
   Number.parseFloat(String(props.place?.lat ?? 0)),
-  Number.parseFloat(String(props.place?.lng ?? 0))
+  Number.parseFloat(String(props.place?.lng ?? 0)),
 ])
 
 const wazeUrl = computed(() => {
@@ -41,17 +39,10 @@ const mapsUrl = computed(() => {
 
 <template>
   <div class="info-section">
-
     <!-- ─── Header ────────────────────────────────────────── -->
-    <div class="info-section__title">
-      <span class="info-section__title-icon-wrap">
-        <UIcon name="i-heroicons-map-pin" class="info-section__title-icon" />
-      </span>
-      {{ t('activity.location') }}
-    </div>
+    <h2 class="info-section__label">{{ t('activity.location') }}</h2>
 
     <div class="info-section__body">
-
       <!-- Nombre del lugar + ciudad -->
       <div class="info-location__meta">
         <p class="info-location__place-name">{{ place.name }}</p>
@@ -70,7 +61,7 @@ const mapsUrl = computed(() => {
             :zoom="14"
             :center="mapCenter"
             :use-global-leaflet="false"
-            style="height: 100%; width: 100%;"
+            style="height: 100%; width: 100%"
           >
             <LTileLayer
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -81,7 +72,7 @@ const mapsUrl = computed(() => {
             <LMarker :lat-lng="mapCenter">
               <LPopup>
                 <strong>{{ place.name }}</strong>
-                <br v-if="place.city?.name" >
+                <br v-if="place.city?.name" />
                 <span v-if="place.city?.name">{{ place.city.name }}</span>
               </LPopup>
             </LMarker>
@@ -121,58 +112,30 @@ const mapsUrl = computed(() => {
           Google Maps
         </a>
       </div>
-
     </div>
   </div>
 </template>
 
 <style scoped>
-
 @import 'leaflet/dist/leaflet.css';
 
 /* ── Card base ───────────────────────────────────────────────── */
 .info-section {
-  border: 1px solid var(--color-neutral-200);
-  border-radius: var(--border-radius-xl);
   overflow: hidden;
 }
 
-/* ── Header ──────────────────────────────────────────────────── */
-.info-section__title {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2-5);
-  font-family: var(--font-family-display);
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-bold);
-  color: var(--color-text-primary);
+/* ── Label ───────────────────────────────────────────────────── */
+.info-section__label {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-tertiary);
   text-transform: uppercase;
-  letter-spacing: 0.06em;
-  padding: var(--space-3) var(--space-5);
-  border-bottom: 1px solid var(--color-neutral-100);
-  background: var(--color-neutral-50);
-}
-
-.info-section__title-icon-wrap {
-  width: 1.75rem;
-  height: 1.75rem;
-  border-radius: var(--border-radius-md);
-  background: #d1fae5;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.info-section__title-icon {
-  width: 0.875rem;
-  height: 0.875rem;
-  color: #059669;
+  letter-spacing: 0.05em;
+  margin: 0 0 var(--space-3);
 }
 
 /* ── Body ────────────────────────────────────────────────────── */
 .info-section__body {
-  padding: var(--space-4) var(--space-5);
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
@@ -228,8 +191,13 @@ const mapsUrl = computed(() => {
 }
 
 @keyframes skeleton-pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
 }
 
 /* ── Sin coordenadas ─────────────────────────────────────────── */
@@ -264,7 +232,9 @@ const mapsUrl = computed(() => {
   border-radius: var(--border-radius-lg);
   text-decoration: none;
   border: 1px solid transparent;
-  transition: opacity var(--transition-fast), transform var(--transition-fast);
+  transition:
+    opacity var(--transition-fast),
+    transform var(--transition-fast);
 }
 
 .info-location__btn:hover {
@@ -278,12 +248,13 @@ const mapsUrl = computed(() => {
 }
 
 .info-location__btn--waze {
-  background: #33ccff;
+  background: var(--color-secondary-600, #16a34a);
   color: #fff;
+  border-color: transparent;
 }
 
 .info-location__btn--maps {
-  background: var(--color-neutral-100);
+  background: #fff;
   color: var(--color-text-primary);
   border-color: var(--color-neutral-200);
 }

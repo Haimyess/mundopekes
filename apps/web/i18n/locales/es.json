@@ -72,7 +72,12 @@
     "wheelchair": "Acceso para sillas de ruedas",
     "ages": "Edades recomendadas",
     "seasons": "Mejor temporada",
-    "photos": "Fotos del lugar"
+    "photos": "Fotos del lugar",
+    "features": "Características",
+    "open_now": "Abierto ahora",
+    "closed_now": "Cerrado",
+    "closed": "Cerrado",
+    "all_hours": "Ver horarios"
   },
   "age": {
     "months": "{count} meses",
@@ -268,6 +273,8 @@
     "error_types": "Selecciona al menos un tipo de actividad"
   },
   "common": {
+    "read_more": "Leer más",
+    "read_less": "Leer menos",
     "loading": "Cargando...",
     "error": "Ocurrió un error",
     "no_results": "No se encontraron resultados",

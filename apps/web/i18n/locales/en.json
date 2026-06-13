@@ -70,7 +70,12 @@
     "wheelchair": "Wheelchair accessible",
     "ages": "Recommended ages",
     "seasons": "Best season",
-    "photos": "Place photos"
+    "photos": "Place photos",
+    "features": "Features",
+    "open_now": "Open now",
+    "closed_now": "Closed",
+    "closed": "Closed",
+    "all_hours": "See hours"
   },
   "age": {
     "months": "{count} months",
@@ -265,6 +270,8 @@
     "error_types": "Select at least one activity type"
   },
   "common": {
+    "read_more": "Read more",
+    "read_less": "Read less",
     "loading": "Loading...",
     "error": "An error occurred",
     "no_results": "No results found",

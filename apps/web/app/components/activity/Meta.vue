@@ -23,77 +23,100 @@ function sortedSeasons(seasons: Season[]) {
 </script>
 
 <template>
-  <div class="activity-meta">
-    <!-- Age ranges -->
-    <div v-if="ageRanges.length" class="activity-meta__group">
-      <span class="activity-meta__group-label">{{ t('activity.ages') }}</span>
-      <div class="activity-meta__chips">
-        <UiBadge
+  <div class="act-meta">
+    <!-- Ages -->
+    <div v-if="ageRanges.length" class="act-meta__group">
+      <span class="act-meta__group-label">{{ t('activity.ages') }}</span>
+      <div class="act-meta__chips">
+        <span
           v-for="ar in sortedAgeRanges(ageRanges)"
           :key="ar.id"
-          variant="secondary"
-          size="sm"
+          class="act-chip act-chip--outline"
         >
           {{ t(ar.label_key) }}
-        </UiBadge>
+        </span>
       </div>
     </div>
 
     <!-- Seasons -->
-    <div v-if="seasons.length" class="activity-meta__group">
-      <span class="activity-meta__group-label">{{ t('activity.seasons') }}</span>
-      <div class="activity-meta__chips">
-        <UiBadge v-for="s in sortedSeasons(seasons)" :key="s.id" variant="secondary" size="sm">
+    <div v-if="seasons.length" class="act-meta__group">
+      <span class="act-meta__group-label">{{ t('activity.seasons') }}</span>
+      <div class="act-meta__chips">
+        <span v-for="s in sortedSeasons(seasons)" :key="s.id" class="act-chip act-chip--outline">
           {{ t(s.label_key) }}
-        </UiBadge>
+        </span>
       </div>
     </div>
 
     <!-- Feature chips -->
-    <div class="activity-meta__chips">
-      <UiBadge v-if="isFree" variant="success" size="sm">
+    <div class="act-meta__chips">
+      <span v-if="isFree" class="act-chip act-chip--filled">
         {{ t('activity.free') }}
-      </UiBadge>
-      <UiBadge v-else-if="price !== null" variant="secondary" size="sm"> ₪{{ price }} </UiBadge>
+      </span>
+      <span v-else-if="price !== null" class="act-chip act-chip--outline"> ₪{{ price }} </span>
 
-      <UiBadge v-if="strollerFriendly" variant="secondary" size="sm">
-        <UiIcon name="i-lucide-baby" size="xs" />
+      <span v-if="strollerFriendly" class="act-chip act-chip--outline">
         {{ t('activity.stroller_friendly') }}
-      </UiBadge>
+      </span>
 
-      <UiBadge v-if="openWeekends" variant="secondary" size="sm">
-        <UiIcon name="i-lucide-calendar" size="xs" />
+      <span v-if="openWeekends" class="act-chip act-chip--outline">
         {{ t('activity.open_weekends') }}
-      </UiBadge>
+      </span>
     </div>
   </div>
 </template>
 
 <style scoped>
-.activity-meta {
+.act-meta {
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
 }
 
-.activity-meta__group {
+.act-meta__group {
   display: flex;
   flex-direction: column;
   gap: var(--space-1-5, 0.375rem);
 }
 
-.activity-meta__group-label {
+.act-meta__group-label {
   font-size: var(--font-size-xs);
   font-weight: var(--font-weight-semibold);
   text-transform: uppercase;
-  letter-spacing: var(--letter-spacing-wide);
+  letter-spacing: 0.05em;
   color: var(--color-text-tertiary);
 }
 
-.activity-meta__chips {
+.act-meta__chips {
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-2);
   align-items: center;
+}
+
+/* Chip base */
+.act-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  padding: 3px 10px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+/* Outline — borde verde, texto verde, fondo blanco */
+.act-chip--outline {
+  border: 1px solid var(--color-secondary-400, #4ade80);
+  color: var(--color-secondary-700, #15803d);
+  background: transparent;
+}
+
+/* Filled — fondo verde, texto blanco (para "Gratis") */
+.act-chip--filled {
+  border: 1px solid var(--color-secondary-600, #16a34a);
+  background: var(--color-secondary-600, #16a34a);
+  color: #fff;
 }
 </style>
