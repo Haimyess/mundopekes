@@ -11,6 +11,7 @@ import type { Place } from '~/types'
 
 interface Props {
   place: Place
+  hideActions?: boolean
 }
 
 const props = defineProps<Props>()
@@ -39,9 +40,6 @@ const mapsUrl = computed(() => {
 
 <template>
   <div class="info-section">
-    <!-- ─── Header ────────────────────────────────────────── -->
-    <h2 class="info-section__label">{{ t('activity.location') }}</h2>
-
     <div class="info-section__body">
       <!-- Nombre del lugar + ciudad -->
       <div class="info-location__meta">
@@ -92,7 +90,7 @@ const mapsUrl = computed(() => {
       </div>
 
       <!-- ─── Botones de navegación ─────────────────────── -->
-      <div v-if="hasCoords" class="info-location__actions">
+      <div v-if="hasCoords && !hideActions" class="info-location__actions">
         <a
           :href="wazeUrl!"
           target="_blank"

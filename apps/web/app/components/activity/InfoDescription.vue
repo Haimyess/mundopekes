@@ -30,7 +30,6 @@ onMounted(() => {
 
 <template>
   <div class="info-desc">
-    <h2 class="info-desc__label">{{ t('activity.description') }}</h2>
     <div
       ref="contentEl"
       class="info-desc__text"
