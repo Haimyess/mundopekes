@@ -45,11 +45,27 @@ const deletePlace = async (id: string) => {
 }
 
 const search = ref('')
+const cityFilter = ref('all')
+const hasActivitiesFilter = ref('all')
+
+const cityOptions = computed(() => [
+  { label: 'Todas las ciudades', value: 'all' },
+  ...Array.from(new Set((data.value ?? []).map((p) => p.city?.name).filter(Boolean) as string[]))
+    .sort((a, b) => a.localeCompare(b, 'es'))
+    .map((name) => ({ label: name, value: name })),
+])
 
 const filtered = computed(() =>
   (data.value ?? []).filter((p) => {
     const name = tc(p.name_i18n ?? {})
-    return name.toLowerCase().includes(search.value.toLowerCase())
+    if (!name.toLowerCase().includes(search.value.toLowerCase())) return false
+    if (cityFilter.value !== 'all' && p.city?.name !== cityFilter.value) return false
+    if (hasActivitiesFilter.value !== 'all') {
+      const count = p.activities?.[0]?.count ?? 0
+      if (hasActivitiesFilter.value === 'yes' && count === 0) return false
+      if (hasActivitiesFilter.value === 'no' && count > 0) return false
+    }
+    return true
   })
 )
 
@@ -57,7 +73,8 @@ const columns: TableColumn<Place>[] = [
   {
     accessorKey: 'name_i18n',
     header: 'Nombre',
-    cell: ({ row }) => tc(row.original.name_i18n ?? {}),
+    cell: ({ row }) =>
+      h('span', { 'data-place-id': row.original.id }, tc(row.original.name_i18n ?? {})),
   },
   {
     accessorKey: 'city',
@@ -131,6 +148,19 @@ const columns: TableColumn<Place>[] = [
           placeholder="Buscar lugares..."
           class="max-w-sm"
         />
+
+        <div class="flex flex-wrap items-center gap-1.5">
+          <USelect v-model="cityFilter" :items="cityOptions" class="min-w-44" />
+          <USelect
+            v-model="hasActivitiesFilter"
+            :items="[
+              { label: 'Todas', value: 'all' },
+              { label: 'Con actividades', value: 'yes' },
+              { label: 'Sin actividades', value: 'no' },
+            ]"
+            class="min-w-40"
+          />
+        </div>
       </div>
 
       <UTable
@@ -156,13 +186,10 @@ const columns: TableColumn<Place>[] = [
             const tr = target.closest('tbody tr')
             if (!tr) return
 
-            // Buscar el id directamente del DOM data attribute
-            const tbody = tr.closest('tbody')
-            if (!tbody) return
-            const rows = Array.from(tbody.querySelectorAll('tr'))
-            const index = rows.indexOf(tr as HTMLTableRowElement)
-            const place = filtered[index]
-            if (place) router.push(`/places/${place.id}`)
+            // Leer el id desde el data attribute — más robusto que usar el índice de fila
+            const idEl = tr.querySelector('[data-place-id]')
+            const placeId = idEl?.getAttribute('data-place-id')
+            if (placeId) router.push(`/places/${placeId}`)
           }
         "
       />
