@@ -147,15 +147,39 @@ await fetchActivities()
 <template>
   <UDashboardPanel :id="`place-${id}`">
     <template #header>
-      <UDashboardNavbar :title="place ? tc(place.name_i18n ?? {}) : '...'">
+      <UDashboardNavbar
+        :title="place ? tc(place.name_i18n ?? {}) : '...'"
+        :description="place?.city?.name ?? undefined"
+      >
         <template #leading>
           <UDashboardSidebarCollapse />
           <UButton icon="i-lucide-arrow-left" color="neutral" variant="ghost" to="/places" />
         </template>
         <template #right>
-          <UButton icon="i-lucide-pencil" color="neutral" variant="outline" @click="openEditPlace">
-            Editar lugar
-          </UButton>
+          <div class="flex items-center gap-2">
+            <!-- Badges de contexto rápido -->
+            <UBadge v-if="place?.city" variant="subtle" color="neutral" class="hidden sm:flex">
+              <UIcon name="i-lucide-map-pin" class="size-3 mr-1" />
+              {{ place.city.name }}
+            </UBadge>
+            <UBadge
+              v-if="activities.length"
+              variant="subtle"
+              color="primary"
+              class="hidden sm:flex"
+            >
+              {{ activities.length }} actividad{{ activities.length !== 1 ? 'es' : '' }}
+            </UBadge>
+
+            <UButton
+              icon="i-lucide-pencil"
+              color="neutral"
+              variant="outline"
+              @click="openEditPlace"
+            >
+              Editar lugar
+            </UButton>
+          </div>
         </template>
       </UDashboardNavbar>
     </template>

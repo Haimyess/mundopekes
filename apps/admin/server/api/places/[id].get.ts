@@ -1,4 +1,4 @@
-import { serverSupabaseClient } from '#supabase/server' // ← agregar
+import { serverSupabaseClient } from '#supabase/server'
 
 export default defineEventHandler(async (event) => {
   const id = getRouterParam(event, 'id')
@@ -7,19 +7,19 @@ export default defineEventHandler(async (event) => {
 
   const { data, error } = await supabase
     .from('places')
-    .select(`
+    .select(
+      `
       *,
-      city:cities(id, name, region),
-      activities(
-        *,
-        category:categories(id, name, slug),
-        activity_age_ranges(age_range:age_ranges(*)),
-        activity_seasons(season:seasons(*))
-      )
-    `)
+      city:cities(id, name, region)
+    `
+    )
     .eq('id', id)
     .single()
 
-  if (error) throw createError({ statusCode: 404, message: 'Lugar no encontrado' })
+  if (error) {
+    console.error('[places/[id].get]', error.message)
+    const status = error.code === 'PGRST116' ? 404 : 500
+    throw createError({ statusCode: status, message: error.message })
+  }
   return data
 })
