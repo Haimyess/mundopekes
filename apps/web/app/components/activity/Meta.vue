@@ -35,98 +35,85 @@ function sortedSeasons(seasons: Season[]) {
 </script>
 
 <template>
-  <div class="act-meta">
-    <!-- Ages -->
-    <div v-if="ageRanges.length" class="act-meta__group">
-      <p class="act-meta__group-label">{{ t('activity.ages') }}</p>
-      <div class="act-meta__chips">
-        <span v-for="ar in sortedAgeRanges(ageRanges)" :key="ar.id" class="act-chip">
-          <UIcon name="i-heroicons-user-group" class="act-chip__icon" />
-          {{ t(ar.label_key) }}
-        </span>
-      </div>
-    </div>
+  <!--
+    Todos los chips en un solo flex-wrap.
+    "elimina edades recomendadas" → sin group-label, todo mezclado.
+    Max 2 filas con scroll vertical.
+  -->
+  <div class="act-meta__chips">
+    <!-- Edades — sin label de grupo -->
+    <span v-for="ar in sortedAgeRanges(ageRanges)" :key="ar.id" class="act-chip">
+      <UIcon name="i-heroicons-user-group" class="act-chip__icon" />
+      {{ t(ar.label_key) }}
+    </span>
 
-    <!-- Seasons -->
-    <div v-if="seasons.length" class="act-meta__group">
-      <p class="act-meta__group-label">{{ t('activity.seasons') }}</p>
-      <div class="act-meta__chips">
-        <span v-for="s in sortedSeasons(seasons)" :key="s.id" class="act-chip">
-          <UIcon :name="seasonIcon(s.value)" class="act-chip__icon" />
-          {{ t(s.label_key) }}
-        </span>
-      </div>
-    </div>
+    <!-- Temporadas -->
+    <span v-for="s in sortedSeasons(seasons)" :key="s.id" class="act-chip">
+      <UIcon :name="seasonIcon(s.value)" class="act-chip__icon" />
+      {{ t(s.label_key) }}
+    </span>
 
-    <!-- Feature chips -->
-    <div class="act-meta__chips">
-      <span v-if="isFree" class="act-chip act-chip--highlight">
-        <UIcon name="i-heroicons-banknotes" class="act-chip__icon" />
-        {{ t('activity.free') }}
-      </span>
-      <span v-else-if="price !== null" class="act-chip">
-        <UIcon name="i-heroicons-banknotes" class="act-chip__icon" />
-        ₪{{ price }}
-      </span>
+    <!-- Gratis / Precio -->
+    <span v-if="isFree" class="act-chip act-chip--free">
+      <UIcon name="i-heroicons-tag" class="act-chip__icon" />
+      {{ t('activity.free') }}
+    </span>
+    <span v-else-if="price !== null" class="act-chip">
+      <UIcon name="i-heroicons-banknotes" class="act-chip__icon" />
+      ₪{{ price }}
+    </span>
 
-      <span v-if="strollerFriendly" class="act-chip">
-        <UIcon name="i-heroicons-heart" class="act-chip__icon" />
-        {{ t('activity.stroller_friendly') }}
-      </span>
+    <!-- Accesible cochecito -->
+    <span v-if="strollerFriendly" class="act-chip">
+      <UIcon name="i-heroicons-heart" class="act-chip__icon" />
+      {{ t('activity.stroller_friendly') }}
+    </span>
 
-      <span v-if="openWeekends" class="act-chip">
-        <UIcon name="i-heroicons-calendar-days" class="act-chip__icon" />
-        {{ t('activity.open_weekends') }}
-      </span>
-    </div>
+    <!-- Fines de semana -->
+    <span v-if="openWeekends" class="act-chip">
+      <UIcon name="i-heroicons-calendar-days" class="act-chip__icon" />
+      {{ t('activity.open_weekends') }}
+    </span>
   </div>
 </template>
 
 <style scoped>
-.act-meta {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
-}
-
-.act-meta__group {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-}
-
-.act-meta__group-label {
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-semibold);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--color-text-tertiary);
-  margin: 0;
-}
-
+/* Chips en max 2 líneas con scroll si hay más */
 .act-meta__chips {
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-2);
+  max-height: calc(2 * 2.25rem + var(--space-2)); /* ~2 filas de chips */
+  overflow-y: auto;
+  /* Ocultar scrollbar pero mantener scroll funcional */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
 
-/* Chip — estilo igual a los filtros del hero */
+.act-meta__chips::-webkit-scrollbar {
+  display: none;
+}
+
+/* Chip — estilo igual a sf-pill del homepage (sin background) */
 .act-chip {
   display: inline-flex;
   align-items: center;
-  gap: 0.375rem;
-  padding: 0.25rem 0.75rem;
+  gap: var(--space-1-5, 0.375rem);
+  padding: var(--space-2) var(--space-3);
   border-radius: 9999px;
+  border: 1.5px solid var(--color-secondary-300, #86efac);
+  background: transparent;
+  color: var(--color-secondary-700, #15803d);
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-medium);
   white-space: nowrap;
-  background: var(--color-secondary-100, #dcfce7);
-  color: var(--color-secondary-800, #166534);
-  border: 1px solid var(--color-secondary-200, #bbf7d0);
+  line-height: 1;
+  min-height: 2.25rem;
+  flex-shrink: 0;
 }
 
-/* Highlight (Gratis) — verde más oscuro */
-.act-chip--highlight {
+/* Chip Gratis — destaque verde relleno */
+.act-chip--free {
   background: var(--color-secondary-600, #16a34a);
   color: #fff;
   border-color: var(--color-secondary-600, #16a34a);
@@ -136,6 +123,6 @@ function sortedSeasons(seasons: Season[]) {
   width: 0.875rem;
   height: 0.875rem;
   flex-shrink: 0;
-  opacity: 0.85;
+  opacity: 0.9;
 }
 </style>

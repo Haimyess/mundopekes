@@ -75,7 +75,9 @@
     "open_now": "פתוח כעת",
     "closed_now": "סגור",
     "closed": "סגור",
-    "all_hours": "ראה שעות"
+    "all_hours": "ראה שעות",
+    "how_to_get": "איך מגיעים",
+    "more_info": "מידע נוסף"
   },
   "age": {
     "months": "{count} חודשים",
@@ -270,6 +272,7 @@
     "error_types": "בחר לפחות סוג פעילות אחד"
   },
   "common": {
+    "share": "שתף",
     "read_more": "קרא עוד",
     "read_less": "קרא פחות",
     "loading": "טוען...",

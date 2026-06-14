@@ -77,7 +77,9 @@
     "open_now": "Abierto ahora",
     "closed_now": "Cerrado",
     "closed": "Cerrado",
-    "all_hours": "Ver horarios"
+    "all_hours": "Ver horarios",
+    "how_to_get": "Cómo llegar",
+    "more_info": "Más información"
   },
   "age": {
     "months": "{count} meses",
@@ -273,6 +275,7 @@
     "error_types": "Selecciona al menos un tipo de actividad"
   },
   "common": {
+    "share": "Compartir",
     "read_more": "Leer más",
     "read_less": "Leer menos",
     "loading": "Cargando...",

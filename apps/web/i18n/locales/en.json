@@ -75,7 +75,9 @@
     "open_now": "Open now",
     "closed_now": "Closed",
     "closed": "Closed",
-    "all_hours": "See hours"
+    "all_hours": "See hours",
+    "how_to_get": "How to get there",
+    "more_info": "More information"
   },
   "age": {
     "months": "{count} months",
@@ -270,6 +272,7 @@
     "error_types": "Select at least one activity type"
   },
   "common": {
+    "share": "Share",
     "read_more": "Read more",
     "read_less": "Read less",
     "loading": "Loading...",
