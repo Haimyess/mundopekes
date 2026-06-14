@@ -774,59 +774,35 @@ const hasFeatures = computed(
     padding: var(--space-4) var(--space-5);
   }
 
-  /* Grid: galería izq (55%) + info der (45%) */
+  /* Grid: galería izq (1fr) + gap + info der (1fr) */
   .act-layout {
     display: grid;
-    grid-template-columns: 55% 45%;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-6);
     align-items: start;
-    min-height: calc(100vh - var(--navbar-h));
   }
 
-  /* Galería: sticky, llena la altura del viewport */
+  /*
+   * Galería: sticky al scroll.
+   * Sin height forzado — la imagen mantiene su aspect ratio (4:3).
+   * Cuando el usuario scrollea la info, la galería se queda visible.
+   */
   .act-col--gallery {
     position: sticky;
-    top: var(--navbar-h);
-    height: calc(100vh - var(--navbar-h));
+    top: calc(var(--navbar-h) + var(--space-4));
+  }
+
+  /* Imagen mantiene 4:3 natural, con border-radius y sombra leve */
+  .act-gallery :deep(.aspect-video) {
+    aspect-ratio: 4 / 3;
+    border-radius: var(--border-radius-xl, 1rem);
     overflow: hidden;
   }
 
-  .act-gallery {
-    height: 100%;
-  }
-
-  /* En desktop: galería llena el alto de la columna */
-  .act-col--gallery :deep(.w-full) {
-    height: 100%;
-  }
-
-  /* Override aspect ratio → llenar columna */
-  .act-col--gallery :deep(.aspect-video) {
-    aspect-ratio: unset;
-    height: 100%;
-    border-radius: 0;
-  }
-
-  /* Thumbnails en desktop: fila horizontal en la parte inferior */
-  .act-col--gallery :deep(.flex.flex-col) {
-    height: 100%;
-    gap: 0;
-  }
-
-  /* Imagen principal ocupa el resto del espacio */
-  .act-col--gallery :deep(.flex.flex-col > div:first-child) {
-    flex: 1;
-    min-height: 0;
-  }
-
-  /* Thumbnails: barra horizontal al fondo */
-  .act-col--gallery :deep(.flex.gap-2) {
-    padding: var(--space-2);
-    background: rgba(0, 0, 0, 0.03);
-  }
-
-  /* Columna info: padding más generoso */
+  /* Columna info: separador y padding generoso */
   .act-col--info {
     border-inline-start: 1px solid var(--divider);
+    padding-inline-start: var(--space-2);
   }
 
   .act-section {
