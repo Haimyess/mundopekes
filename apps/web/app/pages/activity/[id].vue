@@ -77,14 +77,26 @@ const wazeUrl = computed(() =>
     : null
 )
 
-// ─── Horarios: hoy desde Google Places ───────────────────────
-// Google Places weekday_text: Mon=0 … Sun=6
-const todayGPText = computed(() => {
+// ─── Horarios: parsear weekday_text de Google Places ─────────
+// Los lugares israelíes usan orden domingo-primero (igual que JS getDay())
+// por eso usamos getDay() directo como índice (0=Dom … 6=Sab)
+const todayIdx = computed(() => new Date().getDay())
+
+const parsedHours = computed(() => {
   const lines = placeDetails.value?.opening_hours?.weekday_text
   if (!lines?.length) return null
-  const day = new Date().getDay() // 0=Sun
-  const idx = day === 0 ? 6 : day - 1
-  return lines[idx] ?? null
+  return lines.map((line, idx) => {
+    // Formato típico: "Lunes: 9:00 – 18:00"  o  "ראשון: 09:00–21:00"
+    const sepIdx = line.indexOf(':')
+    const day = sepIdx > -1 ? line.slice(0, sepIdx).trim() : line
+    const hours = sepIdx > -1 ? line.slice(sepIdx + 1).trim() : ''
+    return { day, hours, isToday: idx === todayIdx.value }
+  })
+})
+
+const todayGPText = computed(() => {
+  const entry = parsedHours.value?.find((e) => e.isToday)
+  return entry ? `${entry.day}: ${entry.hours}` : null
 })
 
 // ─── Secciones colapsables ────────────────────────────────────
@@ -258,15 +270,19 @@ const hasFeatures = computed(
               />
             </button>
             <div v-show="open.hours" class="act-section__body">
-              <ul class="act-hours__list">
-                <li
-                  v-for="line in placeDetails.opening_hours.weekday_text"
-                  :key="line"
-                  class="act-hours__item"
-                >
-                  {{ line }}
-                </li>
-              </ul>
+              <table class="act-hours__table">
+                <tbody>
+                  <tr
+                    v-for="entry in parsedHours"
+                    :key="entry.day"
+                    class="act-hours__row"
+                    :class="{ 'act-hours__row--today': entry.isToday }"
+                  >
+                    <td class="act-hours__day">{{ entry.day }}</td>
+                    <td class="act-hours__time">{{ entry.hours }}</td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
           </div>
 
@@ -662,19 +678,43 @@ const hasFeatures = computed(
   flex-shrink: 0;
 }
 
-/* ── Horarios ────────────────────────────────────────────────── */
-.act-hours__list {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
+/* ── Horarios ─────────────────────────────────────────────────── */
+.act-hours__table {
+  width: 100%;
+  border-collapse: collapse;
 }
 
-.act-hours__item {
+.act-hours__row {
+  border-bottom: 1px solid var(--divider);
+}
+
+.act-hours__row:last-child {
+  border-bottom: none;
+}
+
+/* Día actual: fondo verde suave + texto verde */
+.act-hours__row--today .act-hours__day,
+.act-hours__row--today .act-hours__time {
+  color: var(--green);
+}
+
+.act-hours__row--today {
+  background: var(--color-secondary-50, #f0fdf4);
+}
+
+.act-hours__day {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+  color: var(--text);
+  padding: var(--space-2) var(--space-3) var(--space-2) 0;
+  white-space: nowrap;
+  width: 40%;
+}
+
+.act-hours__time {
   font-size: var(--font-size-sm);
   color: var(--text-muted);
+  padding: var(--space-2) 0;
 }
 
 /* ── Info rows ───────────────────────────────────────────────── */
@@ -784,12 +824,12 @@ const hasFeatures = computed(
 
   /*
    * Galería: sticky al scroll.
-   * Sin height forzado — la imagen mantiene su aspect ratio (4:3).
-   * Cuando el usuario scrollea la info, la galería se queda visible.
+   * top: 0 → cuando el navbar (no-sticky) desaparece al scrollear,
+   * la imagen sube hasta el borde superior del viewport.
    */
   .act-col--gallery {
     position: sticky;
-    top: calc(var(--navbar-h) + var(--space-4));
+    top: 0;
   }
 
   /* Imagen mantiene 4:3 natural, con border-radius y sombra leve */
