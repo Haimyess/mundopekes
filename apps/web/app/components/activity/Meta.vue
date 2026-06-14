@@ -32,19 +32,33 @@ function sortedAgeRanges(ranges: AgeRange[]) {
 function sortedSeasons(seasons: Season[]) {
   return [...seasons].sort((a, b) => a.sort_order - b.sort_order)
 }
+
+/**
+ * Convierte el label_key de la DB al path de traducción correcto.
+ * El DB guarda: "age.babies" → locale espera: "search.age_babies"
+ * Mismo patrón usado en useActivityFilters.ts
+ */
+function ageLabel(labelKey: string): string {
+  // Intenta la clave directa primero (por si ya es un path completo)
+  const direct = t(labelKey)
+  if (direct !== labelKey) return direct
+  // Si falló (devolvió la misma key), aplica conversión: age.babies → search.age_babies
+  const converted = `search.${labelKey.replace('.', '_')}`
+  return t(converted)
+}
 </script>
 
 <template>
   <!--
-    Todos los chips en un solo flex-wrap.
-    "elimina edades recomendadas" → sin group-label, todo mezclado.
-    Max 2 filas con scroll vertical.
+    Todos los chips en un flex-wrap, max 2 filas con scroll.
+    Sin label de grupo — sin "Edades recomendadas".
+    Estilo sf-pill: sin background, borde secondary-300.
   -->
   <div class="act-meta__chips">
-    <!-- Edades — sin label de grupo -->
+    <!-- Edades -->
     <span v-for="ar in sortedAgeRanges(ageRanges)" :key="ar.id" class="act-chip">
       <UIcon name="i-heroicons-user-group" class="act-chip__icon" />
-      {{ t(ar.label_key) }}
+      {{ ageLabel(ar.label_key) }}
     </span>
 
     <!-- Temporadas -->
@@ -53,8 +67,8 @@ function sortedSeasons(seasons: Season[]) {
       {{ t(s.label_key) }}
     </span>
 
-    <!-- Gratis / Precio -->
-    <span v-if="isFree" class="act-chip act-chip--free">
+    <!-- Gratis — mismo estilo que los demás (sin background) -->
+    <span v-if="isFree" class="act-chip">
       <UIcon name="i-heroicons-tag" class="act-chip__icon" />
       {{ t('activity.free') }}
     </span>
@@ -63,7 +77,7 @@ function sortedSeasons(seasons: Season[]) {
       ₪{{ price }}
     </span>
 
-    <!-- Accesible cochecito -->
+    <!-- Cochecito -->
     <span v-if="strollerFriendly" class="act-chip">
       <UIcon name="i-heroicons-heart" class="act-chip__icon" />
       {{ t('activity.stroller_friendly') }}
@@ -78,14 +92,13 @@ function sortedSeasons(seasons: Season[]) {
 </template>
 
 <style scoped>
-/* Chips en max 2 líneas con scroll si hay más */
+/* Max 2 filas con scroll oculto */
 .act-meta__chips {
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-2);
-  max-height: calc(2 * 2.25rem + var(--space-2)); /* ~2 filas de chips */
+  max-height: calc(2 * 2.25rem + var(--space-2));
   overflow-y: auto;
-  /* Ocultar scrollbar pero mantener scroll funcional */
   scrollbar-width: none;
   -ms-overflow-style: none;
 }
@@ -94,7 +107,7 @@ function sortedSeasons(seasons: Season[]) {
   display: none;
 }
 
-/* Chip — estilo igual a sf-pill del homepage (sin background) */
+/* Chip — igual a sf-pill del homepage: sin background */
 .act-chip {
   display: inline-flex;
   align-items: center;
@@ -110,13 +123,6 @@ function sortedSeasons(seasons: Season[]) {
   line-height: 1;
   min-height: 2.25rem;
   flex-shrink: 0;
-}
-
-/* Chip Gratis — destaque verde relleno */
-.act-chip--free {
-  background: var(--color-secondary-600, #16a34a);
-  color: #fff;
-  border-color: var(--color-secondary-600, #16a34a);
 }
 
 .act-chip__icon {

@@ -1,8 +1,9 @@
 <script setup lang="ts">
 /**
  * pages/activity/[id].vue
- * Columna única. Imágenes: solo activity.images.
- * Live Google Places → solo datos (horarios, tel, web, wheelchair).
+ * Mobile: columna única.
+ * Desktop: galería sticky izquierda + info scrollable derecha (estilo Airbnb).
+ * Imágenes: solo activity.images.
  */
 
 const route = useRoute()
@@ -99,16 +100,10 @@ function toggle(key: keyof typeof open) {
   open[key] = !open[key]
 }
 
-// ─── Compartir ────────────────────────────────────────────────
-async function handleShare() {
-  const title = activity.value ? tc(activity.value.title_i18n) : ''
-  const url = window.location.href
-  if (navigator.share) {
-    await navigator.share({ title, url }).catch(() => {})
-  } else {
-    await navigator.clipboard.writeText(url).catch(() => {})
-  }
-}
+// ─── Share modal ──────────────────────────────────────────────
+const shareOpen = ref(false)
+const shareUrl = computed(() => (import.meta.client ? window.location.href : ''))
+const shareTitle = computed(() => (activity.value ? tc(activity.value.title_i18n) : ''))
 
 function stripDomain(url: string) {
   try {
@@ -141,7 +136,7 @@ const hasFeatures = computed(
   <div>
     <!-- ─── Loading ─────────────────────────────────────── -->
     <div v-if="status === 'pending'" class="act-skeleton">
-      <div class="act-skeleton__hero" />
+      <div class="act-skeleton__gallery" />
       <div class="act-skeleton__body">
         <div class="act-skeleton__line act-skeleton__line--title" />
         <div class="act-skeleton__line act-skeleton__line--sub" />
@@ -151,235 +146,244 @@ const hasFeatures = computed(
 
     <!-- ─── Contenido ─────────────────────────────────── -->
     <div v-else-if="activity" class="act-page">
-      <!-- ── Back ─────────────────────────────────────── -->
-      <div class="act-top-row">
-        <button class="act-back-btn icon--directional" @click="$router.back()">
-          <UIcon name="i-heroicons-arrow-left" class="act-back-btn__icon" />
+      <!-- Top row (mobile only — encima de la galería) -->
+      <div class="act-top-row act-top-row--mobile">
+        <button class="act-back-btn" @click="$router.back()">
+          <UIcon name="i-heroicons-arrow-left" class="act-back-btn__icon icon--directional" />
           {{ t('common.back') }}
         </button>
-        <button class="act-share-btn" @click="handleShare">
+        <button class="act-share-btn" @click="shareOpen = true">
           <UIcon name="i-heroicons-share" class="act-share-btn__icon" />
           {{ t('common.share') }}
         </button>
       </div>
 
-      <!-- ── Galería ────────────────────────────────────── -->
-      <div class="act-gallery">
-        <ActivityImagesGallery :images="dbImages" :alt-text="tc(activity.title_i18n)" />
-      </div>
-
-      <!-- ── Header: categoría + título + dirección ──────── -->
-      <div class="act-section act-section--header">
-        <!-- categoría ARRIBA del título -->
-        <div v-if="activity.category" class="act-pill act-pill--category">
-          <UIcon name="i-heroicons-squares-2x2" class="act-pill__icon" />
-          {{ tc(activity.category.name_i18n) }}
+      <!-- Layout: gallery izq + info der en desktop -->
+      <div class="act-layout">
+        <!-- ══ Columna galería (sticky en desktop) ══ -->
+        <div class="act-col act-col--gallery">
+          <div class="act-gallery">
+            <ActivityImagesGallery :images="dbImages" :alt-text="tc(activity.title_i18n)" />
+          </div>
         </div>
 
-        <h1 class="act-header__title">{{ tc(activity.title_i18n) }}</h1>
+        <!-- ══ Columna información ══ -->
+        <div class="act-col act-col--info">
+          <!-- Top row (desktop only — dentro de la columna info) -->
+          <div class="act-top-row act-top-row--desktop">
+            <button class="act-back-btn" @click="$router.back()">
+              <UIcon name="i-heroicons-arrow-left" class="act-back-btn__icon icon--directional" />
+              {{ t('common.back') }}
+            </button>
+            <button class="act-share-btn" @click="shareOpen = true">
+              <UIcon name="i-heroicons-share" class="act-share-btn__icon" />
+              {{ t('common.share') }}
+            </button>
+          </div>
 
-        <div v-if="locationText" class="act-header__location">
-          <UIcon name="i-heroicons-map-pin" class="act-header__location-icon" />
-          <span>{{ locationText }}</span>
-        </div>
-      </div>
+          <!-- ── Header: categoría + título + dirección ──── -->
+          <div class="act-section act-section--header">
+            <!-- Chip categoría sin icono, solo texto -->
+            <div v-if="activity.category" class="act-pill act-pill--category">
+              {{ tc(activity.category.name_i18n) }}
+            </div>
 
-      <!-- ── SECCIÓN: Herramientas ─────────────────────── -->
-      <div v-if="mapsUrl || wazeUrl || placeDetails?.phone" class="act-section">
-        <!-- Encabezado colapsable -->
-        <button class="act-section__trigger" @click="toggle('tools')">
-          <span class="act-section__heading">{{ t('activity.how_to_get') }}</span>
-          <UIcon
-            name="i-heroicons-chevron-down"
-            class="act-section__chevron"
-            :class="{ 'act-section__chevron--open': open.tools }"
-          />
-        </button>
+            <h1 class="act-header__title">{{ tc(activity.title_i18n) }}</h1>
 
-        <div v-show="open.tools" class="act-section__body">
-          <!-- Fila: Google Maps + Waze -->
-          <div class="act-tools__nav-row">
-            <a
-              v-if="mapsUrl"
-              :href="mapsUrl"
-              target="_blank"
-              rel="noopener"
-              class="act-tools__btn act-tools__btn--maps"
-            >
-              <svg
-                class="act-tools__btn-icon"
-                viewBox="0 0 24 24"
-                fill="currentColor"
-                aria-hidden="true"
+            <div v-if="locationText" class="act-header__location">
+              <UIcon name="i-heroicons-map-pin" class="act-header__location-icon" />
+              <span>{{ locationText }}</span>
+            </div>
+          </div>
+
+          <!-- ── SECCIÓN: Herramientas ───────────────────── -->
+          <div v-if="mapsUrl || wazeUrl || placeDetails?.phone" class="act-section">
+            <button class="act-section__trigger" @click="toggle('tools')">
+              <span class="act-section__heading">{{ t('activity.how_to_get') }}</span>
+              <UIcon
+                name="i-heroicons-chevron-down"
+                class="act-section__chevron"
+                :class="{ 'act-section__chevron--open': open.tools }"
+              />
+            </button>
+
+            <div v-show="open.tools" class="act-section__body">
+              <!-- Fila: Google Maps + Waze -->
+              <div class="act-tools__nav-row">
+                <a
+                  v-if="mapsUrl"
+                  :href="mapsUrl"
+                  target="_blank"
+                  rel="noopener"
+                  class="act-tools__btn act-tools__btn--maps"
+                >
+                  <UIcon name="i-heroicons-map-pin" class="act-tools__btn-icon" />
+                  Google Maps
+                </a>
+                <a
+                  v-if="wazeUrl"
+                  :href="wazeUrl"
+                  target="_blank"
+                  rel="noopener"
+                  class="act-tools__btn act-tools__btn--waze"
+                >
+                  <UIcon name="i-heroicons-arrow-turn-up-right" class="act-tools__btn-icon" />
+                  Waze
+                </a>
+              </div>
+
+              <!-- Teléfono: mismo estilo que nav, full width -->
+              <a
+                v-if="placeDetails?.phone"
+                :href="`tel:${placeDetails.phone}`"
+                class="act-tools__btn act-tools__btn--phone"
               >
-                <path
-                  d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"
-                />
-              </svg>
-              Google Maps
-            </a>
-            <a
-              v-if="wazeUrl"
-              :href="wazeUrl"
-              target="_blank"
-              rel="noopener"
-              class="act-tools__btn act-tools__btn--waze"
-            >
-              <svg
-                class="act-tools__btn-icon"
-                viewBox="0 0 24 24"
-                fill="currentColor"
-                aria-hidden="true"
+                <UIcon name="i-heroicons-phone" class="act-tools__btn-icon" />
+                {{ placeDetails.phone }}
+              </a>
+            </div>
+          </div>
+
+          <!-- ── SECCIÓN: Horarios (Google Places) ─────── -->
+          <div v-if="placeDetails?.opening_hours?.weekday_text?.length" class="act-section">
+            <button class="act-section__trigger" @click="toggle('hours')">
+              <div class="act-section__heading-block">
+                <span class="act-section__heading">{{ t('activity.hours') }}</span>
+                <span v-if="todayGPText" class="act-section__sub">{{ todayGPText }}</span>
+              </div>
+              <UIcon
+                name="i-heroicons-chevron-down"
+                class="act-section__chevron"
+                :class="{ 'act-section__chevron--open': open.hours }"
+              />
+            </button>
+            <div v-show="open.hours" class="act-section__body">
+              <ul class="act-hours__list">
+                <li
+                  v-for="line in placeDetails.opening_hours.weekday_text"
+                  :key="line"
+                  class="act-hours__item"
+                >
+                  {{ line }}
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- ── SECCIÓN: Horarios DB ──────────────────── -->
+          <div v-else-if="activity.schedule" class="act-section">
+            <button class="act-section__trigger" @click="toggle('hours')">
+              <span class="act-section__heading">{{ t('activity.hours') }}</span>
+              <UIcon
+                name="i-heroicons-chevron-down"
+                class="act-section__chevron"
+                :class="{ 'act-section__chevron--open': open.hours }"
+              />
+            </button>
+            <div v-show="open.hours" class="act-section__body">
+              <ActivityInfoSchedule :schedule="activity.schedule" />
+            </div>
+          </div>
+
+          <!-- ── SECCIÓN: Descripción ──────────────────── -->
+          <div v-if="description" class="act-section">
+            <button class="act-section__trigger" @click="toggle('description')">
+              <span class="act-section__heading">{{ t('activity.description') }}</span>
+              <UIcon
+                name="i-heroicons-chevron-down"
+                class="act-section__chevron"
+                :class="{ 'act-section__chevron--open': open.description }"
+              />
+            </button>
+            <div v-show="open.description" class="act-section__body">
+              <ActivityInfoDescription :description="description" />
+            </div>
+          </div>
+
+          <!-- ── SECCIÓN: Características ─────────────── -->
+          <div v-if="hasFeatures" class="act-section">
+            <button class="act-section__trigger" @click="toggle('features')">
+              <span class="act-section__heading">{{ t('activity.features') }}</span>
+              <UIcon
+                name="i-heroicons-chevron-down"
+                class="act-section__chevron"
+                :class="{ 'act-section__chevron--open': open.features }"
+              />
+            </button>
+            <div v-show="open.features" class="act-section__body">
+              <ActivityMeta
+                :age-ranges="activity.age_ranges ?? []"
+                :seasons="activity.seasons ?? []"
+                :is-free="activity.is_free"
+                :price="activity.price"
+                :stroller-friendly="activity.stroller_friendly"
+                :open-weekends="activity.open_weekends"
+              />
+            </div>
+          </div>
+
+          <!-- ── SECCIÓN: Más info (web, wheelchair) ────── -->
+          <div
+            v-if="placeDetails?.website || placeDetails?.wheelchair_accessible"
+            class="act-section"
+          >
+            <button class="act-section__trigger" @click="toggle('extra')">
+              <span class="act-section__heading">{{ t('activity.more_info') }}</span>
+              <UIcon
+                name="i-heroicons-chevron-down"
+                class="act-section__chevron"
+                :class="{ 'act-section__chevron--open': open.extra }"
+              />
+            </button>
+            <div v-show="open.extra" class="act-section__body act-info-rows">
+              <a
+                v-if="placeDetails?.website"
+                :href="placeDetails.website"
+                target="_blank"
+                rel="noopener"
+                class="act-info-row"
               >
-                <path
-                  d="M20.54 6.63C19.29 4.6 17.35 3.07 15.04 2.38 9.8.81 4.31 3.9 2.74 9.14c-.55 1.83-.46 3.71.17 5.38L2 20l5.57-.89c.97.51 2.04.85 3.16.99l.27.03c5.47.52 10.32-3.5 10.84-8.97.15-1.6-.09-3.17-.3-4.53zM8 13.5c-.83 0-1.5-.67-1.5-1.5S7.17 10.5 8 10.5s1.5.67 1.5 1.5S8.83 13.5 8 13.5zm4 2c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1zm4-2c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5S16.83 13.5 16 13.5z"
-                />
-              </svg>
-              Waze
-            </a>
+                <UIcon name="i-heroicons-globe-alt" class="act-info-row__icon" />
+                <span>{{ stripDomain(placeDetails.website) }}</span>
+              </a>
+              <div v-if="placeDetails?.wheelchair_accessible" class="act-info-row">
+                <UIcon name="i-heroicons-user" class="act-info-row__icon" />
+                <span>{{ t('activity.wheelchair') }}</span>
+              </div>
+            </div>
           </div>
 
-          <!-- Teléfono debajo -->
-          <a
-            v-if="placeDetails?.phone"
-            :href="`tel:${placeDetails.phone}`"
-            class="act-tools__phone"
-          >
-            <UIcon name="i-heroicons-phone" class="act-tools__phone-icon" />
-            {{ placeDetails.phone }}
-          </a>
-        </div>
-      </div>
-
-      <!-- ── SECCIÓN: Horarios (Google Places) ─────────── -->
-      <div v-if="placeDetails?.opening_hours?.weekday_text?.length" class="act-section">
-        <button class="act-section__trigger" @click="toggle('hours')">
-          <div class="act-section__heading-block">
-            <span class="act-section__heading">{{ t('activity.hours') }}</span>
-            <span v-if="todayGPText" class="act-section__sub">{{ todayGPText }}</span>
+          <!-- ── SECCIÓN: Mapa ─────────────────────────── -->
+          <div v-if="activity.place" class="act-section">
+            <button class="act-section__trigger" @click="toggle('map')">
+              <span class="act-section__heading">{{ t('activity.location') }}</span>
+              <UIcon
+                name="i-heroicons-chevron-down"
+                class="act-section__chevron"
+                :class="{ 'act-section__chevron--open': open.map }"
+              />
+            </button>
+            <div v-show="open.map" class="act-section__body">
+              <ActivityInfoLocation :place="activity.place" hide-actions />
+            </div>
           </div>
-          <UIcon
-            name="i-heroicons-chevron-down"
-            class="act-section__chevron"
-            :class="{ 'act-section__chevron--open': open.hours }"
-          />
-        </button>
-        <div v-show="open.hours" class="act-section__body">
-          <ul class="act-hours__list">
-            <li
-              v-for="line in placeDetails.opening_hours.weekday_text"
-              :key="line"
-              class="act-hours__item"
-            >
-              {{ line }}
-            </li>
-          </ul>
-        </div>
-      </div>
 
-      <!-- ── SECCIÓN: Horarios DB ───────────────────────── -->
-      <div v-else-if="activity.schedule" class="act-section">
-        <button class="act-section__trigger" @click="toggle('hours')">
-          <span class="act-section__heading">{{ t('activity.hours') }}</span>
-          <UIcon
-            name="i-heroicons-chevron-down"
-            class="act-section__chevron"
-            :class="{ 'act-section__chevron--open': open.hours }"
-          />
-        </button>
-        <div v-show="open.hours" class="act-section__body">
-          <ActivityInfoSchedule :schedule="activity.schedule" />
-        </div>
-      </div>
-
-      <!-- ── SECCIÓN: Descripción ───────────────────────── -->
-      <div v-if="description" class="act-section">
-        <button class="act-section__trigger" @click="toggle('description')">
-          <span class="act-section__heading">{{ t('activity.description') }}</span>
-          <UIcon
-            name="i-heroicons-chevron-down"
-            class="act-section__chevron"
-            :class="{ 'act-section__chevron--open': open.description }"
-          />
-        </button>
-        <div v-show="open.description" class="act-section__body">
-          <ActivityInfoDescription :description="description" />
-        </div>
-      </div>
-
-      <!-- ── SECCIÓN: Características ──────────────────── -->
-      <div v-if="hasFeatures" class="act-section">
-        <button class="act-section__trigger" @click="toggle('features')">
-          <span class="act-section__heading">{{ t('activity.features') }}</span>
-          <UIcon
-            name="i-heroicons-chevron-down"
-            class="act-section__chevron"
-            :class="{ 'act-section__chevron--open': open.features }"
-          />
-        </button>
-        <div v-show="open.features" class="act-section__body">
-          <ActivityMeta
-            :age-ranges="activity.age_ranges ?? []"
-            :seasons="activity.seasons ?? []"
-            :is-free="activity.is_free"
-            :price="activity.price"
-            :stroller-friendly="activity.stroller_friendly"
-            :open-weekends="activity.open_weekends"
-          />
-        </div>
-      </div>
-
-      <!-- ── SECCIÓN: Info extra (web, wheelchair) ──────── -->
-      <div v-if="placeDetails?.website || placeDetails?.wheelchair_accessible" class="act-section">
-        <button class="act-section__trigger" @click="toggle('extra')">
-          <span class="act-section__heading">{{ t('activity.more_info') }}</span>
-          <UIcon
-            name="i-heroicons-chevron-down"
-            class="act-section__chevron"
-            :class="{ 'act-section__chevron--open': open.extra }"
-          />
-        </button>
-        <div v-show="open.extra" class="act-section__body act-info-rows">
-          <a
-            v-if="placeDetails?.website"
-            :href="placeDetails.website"
-            target="_blank"
-            rel="noopener"
-            class="act-info-row"
-          >
-            <UIcon name="i-heroicons-globe-alt" class="act-info-row__icon" />
-            <span>{{ stripDomain(placeDetails.website) }}</span>
-          </a>
-          <div v-if="placeDetails?.wheelchair_accessible" class="act-info-row">
-            <UIcon name="i-heroicons-user" class="act-info-row__icon" />
-            <span>{{ t('activity.wheelchair') }}</span>
+          <!-- ── Reporte ────────────────────────────────── -->
+          <div class="act-section act-section--report">
+            <ActivityReportActivityButton
+              :activity-id="activity.id"
+              :activity-title="tc(activity.title_i18n)"
+            />
           </div>
         </div>
+        <!-- /act-col--info -->
       </div>
-
-      <!-- ── SECCIÓN: Mapa ──────────────────────────────── -->
-      <div v-if="activity.place" class="act-section">
-        <button class="act-section__trigger" @click="toggle('map')">
-          <span class="act-section__heading">{{ t('activity.location') }}</span>
-          <UIcon
-            name="i-heroicons-chevron-down"
-            class="act-section__chevron"
-            :class="{ 'act-section__chevron--open': open.map }"
-          />
-        </button>
-        <div v-show="open.map" class="act-section__body">
-          <ActivityInfoLocation :place="activity.place" hide-actions />
-        </div>
-      </div>
-
-      <!-- ── Reporte ────────────────────────────────────── -->
-      <div class="act-section act-section--report">
-        <ActivityReportActivityButton
-          :activity-id="activity.id"
-          :activity-title="tc(activity.title_i18n)"
-        />
-      </div>
+      <!-- /act-layout -->
     </div>
+    <!-- /act-page -->
+
+    <!-- ── Share modal ────────────────────────────────────── -->
+    <ActivityShareModal v-model:open="shareOpen" :title="shareTitle" :url="shareUrl" />
   </div>
 </template>
 
@@ -392,11 +396,11 @@ const hasFeatures = computed(
   --divider: var(--color-neutral-100, #f5f5f5);
   --text: var(--color-text-primary, #171717);
   --text-muted: var(--color-text-secondary, #525252);
-  /* Padding lateral uniforme en toda la página */
   --px: var(--space-3, 0.75rem);
+  --navbar-h: 64px;
 }
 
-/* ── Shell ─────────────────────────────────────────────────────── */
+/* ── Shell mobile: columna única ──────────────────────────────── */
 .act-page {
   max-width: 600px;
   margin-inline: auto;
@@ -412,6 +416,11 @@ const hasFeatures = computed(
   padding: var(--space-3) var(--px);
 }
 
+/* Mobile: encima de la galería */
+.act-top-row--desktop {
+  display: none;
+}
+
 .act-back-btn {
   display: inline-flex;
   align-items: center;
@@ -425,6 +434,7 @@ const hasFeatures = computed(
   cursor: pointer;
 }
 
+/* Solo el icono se voltea en RTL, no el texto */
 .act-back-btn__icon {
   width: 1rem;
   height: 1rem;
@@ -454,12 +464,22 @@ const hasFeatures = computed(
   height: 0.875rem;
 }
 
-/* ── Galería (un poco más alta) ───────────────────────────────── */
+/* ── Layout ───────────────────────────────────────────────────── */
+.act-layout {
+  display: flex;
+  flex-direction: column;
+}
+
+/* En mobile la galería es parte del flujo normal */
+.act-col--gallery {
+  width: 100%;
+}
+
 .act-gallery {
   width: 100%;
 }
 
-/* Override Tailwind aspect-video → 4:3 para más altura */
+/* Override aspect ratio del carrusel: 4:3 en mobile */
 .act-gallery :deep(.aspect-video) {
   aspect-ratio: 4 / 3;
 }
@@ -479,7 +499,7 @@ const hasFeatures = computed(
   padding-block: var(--space-3);
 }
 
-/* Trigger colapsable ─ toda la fila es clickeable */
+/* Trigger colapsable */
 .act-section__trigger {
   display: flex;
   align-items: center;
@@ -521,11 +541,10 @@ const hasFeatures = computed(
   text-align: start;
 }
 
-/* Sub-texto bajo el heading (ej: horario de hoy) */
 .act-section__sub {
   font-size: var(--font-size-xs);
   color: var(--text-muted);
-  padding-inline-start: calc(3px + var(--space-2)); /* alinea con heading */
+  padding-inline-start: calc(3px + var(--space-2));
   font-weight: var(--font-weight-normal);
 }
 
@@ -545,7 +564,8 @@ const hasFeatures = computed(
   padding-top: var(--space-3);
 }
 
-/* ── Header: categoría + título + dirección ──────────────────── */
+/* ── Header ───────────────────────────────────────────────────── */
+/* Chip categoría: solo texto, sin icono */
 .act-pill {
   display: inline-flex;
   align-items: center;
@@ -563,12 +583,6 @@ const hasFeatures = computed(
 
 .act-pill--category {
   margin-block-end: var(--space-2);
-}
-
-.act-pill__icon {
-  width: 0.8rem;
-  height: 0.8rem;
-  flex-shrink: 0;
 }
 
 .act-header__title {
@@ -595,7 +609,7 @@ const hasFeatures = computed(
   color: var(--green);
 }
 
-/* ── Tools: Maps + Waze en fila, phone debajo ────────────────── */
+/* ── Tools ────────────────────────────────────────────────────── */
 .act-tools__nav-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -603,6 +617,7 @@ const hasFeatures = computed(
   margin-block-end: var(--space-2);
 }
 
+/* Base del botón de herramienta */
 .act-tools__btn {
   display: inline-flex;
   align-items: center;
@@ -615,6 +630,7 @@ const hasFeatures = computed(
   text-decoration: none;
   border: 1.5px solid transparent;
   transition: opacity 0.15s;
+  min-height: 2.5rem;
 }
 
 .act-tools__btn:hover {
@@ -632,30 +648,18 @@ const hasFeatures = computed(
   border-color: var(--color-neutral-200, #e5e5e5);
 }
 
+/* Teléfono: ancho completo, mismo estilo que waze */
+.act-tools__btn--phone {
+  width: 100%;
+  background: #fff;
+  color: var(--text);
+  border-color: var(--color-neutral-200, #e5e5e5);
+}
+
 .act-tools__btn-icon {
-  width: 1.1rem;
-  height: 1.1rem;
-  flex-shrink: 0;
-}
-
-.act-tools__phone {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  font-size: var(--font-size-sm);
-  color: var(--text-muted);
-  text-decoration: none;
-}
-
-.act-tools__phone:hover {
-  color: var(--green);
-}
-
-.act-tools__phone-icon {
   width: 1rem;
   height: 1rem;
   flex-shrink: 0;
-  color: var(--green);
 }
 
 /* ── Horarios ────────────────────────────────────────────────── */
@@ -710,7 +714,7 @@ const hasFeatures = computed(
   margin-inline: auto;
 }
 
-.act-skeleton__hero {
+.act-skeleton__gallery {
   width: 100%;
   aspect-ratio: 4 / 3;
   background: var(--color-neutral-200);
@@ -747,6 +751,95 @@ const hasFeatures = computed(
   }
   50% {
     opacity: 0.45;
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   DESKTOP: galería sticky izquierda + info scrollable derecha
+   ══════════════════════════════════════════════════════════════ */
+@media (min-width: 768px) {
+  /* Página ocupa todo el ancho del container */
+  .act-page {
+    max-width: none;
+    display: block;
+  }
+
+  /* Ocultar el top-row mobile, mostrar el desktop */
+  .act-top-row--mobile {
+    display: none;
+  }
+
+  .act-top-row--desktop {
+    display: flex;
+    padding: var(--space-4) var(--space-5);
+  }
+
+  /* Grid: galería izq (55%) + info der (45%) */
+  .act-layout {
+    display: grid;
+    grid-template-columns: 55% 45%;
+    align-items: start;
+    min-height: calc(100vh - var(--navbar-h));
+  }
+
+  /* Galería: sticky, llena la altura del viewport */
+  .act-col--gallery {
+    position: sticky;
+    top: var(--navbar-h);
+    height: calc(100vh - var(--navbar-h));
+    overflow: hidden;
+  }
+
+  .act-gallery {
+    height: 100%;
+  }
+
+  /* En desktop: galería llena el alto de la columna */
+  .act-col--gallery :deep(.w-full) {
+    height: 100%;
+  }
+
+  /* Override aspect ratio → llenar columna */
+  .act-col--gallery :deep(.aspect-video) {
+    aspect-ratio: unset;
+    height: 100%;
+    border-radius: 0;
+  }
+
+  /* Thumbnails en desktop: fila horizontal en la parte inferior */
+  .act-col--gallery :deep(.flex.flex-col) {
+    height: 100%;
+    gap: 0;
+  }
+
+  /* Imagen principal ocupa el resto del espacio */
+  .act-col--gallery :deep(.flex.flex-col > div:first-child) {
+    flex: 1;
+    min-height: 0;
+  }
+
+  /* Thumbnails: barra horizontal al fondo */
+  .act-col--gallery :deep(.flex.gap-2) {
+    padding: var(--space-2);
+    background: rgba(0, 0, 0, 0.03);
+  }
+
+  /* Columna info: padding más generoso */
+  .act-col--info {
+    border-inline-start: 1px solid var(--divider);
+  }
+
+  .act-section {
+    padding-inline: var(--space-5);
+  }
+
+  .act-section--header {
+    padding-top: var(--space-4);
+  }
+
+  /* Título más grande en desktop */
+  .act-header__title {
+    font-size: 2.25rem;
   }
 }
 </style>

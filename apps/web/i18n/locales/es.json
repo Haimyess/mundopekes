@@ -276,6 +276,8 @@
   },
   "common": {
     "share": "Compartir",
+    "copy_link": "Copiar enlace",
+    "copied": "¡Copiado!",
     "read_more": "Leer más",
     "read_less": "Leer menos",
     "loading": "Cargando...",

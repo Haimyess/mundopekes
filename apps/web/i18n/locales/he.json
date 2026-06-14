@@ -273,6 +273,8 @@
   },
   "common": {
     "share": "שתף",
+    "copy_link": "העתק קישור",
+    "copied": "הועתק!",
     "read_more": "קרא עוד",
     "read_less": "קרא פחות",
     "loading": "טוען...",

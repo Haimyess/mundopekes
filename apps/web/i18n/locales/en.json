@@ -273,6 +273,8 @@
   },
   "common": {
     "share": "Share",
+    "copy_link": "Copy link",
+    "copied": "Copied!",
     "read_more": "Read more",
     "read_less": "Read less",
     "loading": "Loading...",
