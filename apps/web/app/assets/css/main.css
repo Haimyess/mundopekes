@@ -98,3 +98,19 @@ html {
     -webkit-filter: none !important;
   }
 }
+
+/* ── RTL global overrides ─────────────────────────────────────
+   Only covers cases where the browser's automatic RTL handling
+   (from dir="rtl" on <html>) is not enough.
+   Do NOT add direction:rtl or text-align:right here.            */
+[dir="rtl"] .icon--directional {
+  transform: scaleX(-1);
+}
+
+[dir="rtl"] .step-fade-enter-from {
+  transform: translateX(-8px);
+}
+
+[dir="rtl"] .step-fade-leave-to {
+  transform: translateX(8px);
+}

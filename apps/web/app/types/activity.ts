@@ -19,6 +19,7 @@ export interface Place {
   images: string[]
   status: 'active' | 'inactive' | 'draft'
   city: City | null
+  metadata: Record<string, unknown> | null
 }
 
 export interface Category {

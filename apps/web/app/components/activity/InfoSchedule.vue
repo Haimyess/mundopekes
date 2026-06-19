@@ -29,27 +29,30 @@ const isExpanded = ref(false)
  * Si no es JSON válido, muestra el texto tal cual.
  */
 const DAY_KEYS = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday']
-const DAY_LABELS: Record<string, string> = {
-  sunday:    'Domingo',
-  monday:    'Lunes',
-  tuesday:   'Martes',
-  wednesday: 'Miércoles',
-  thursday:  'Jueves',
-  friday:    'Viernes',
-  saturday:  'Sábado'
-}
+
+const DAY_LABELS = computed<Record<string, string>>(() => ({
+  sunday: t('common.day_sunday'),
+  monday: t('common.day_monday'),
+  tuesday: t('common.day_tuesday'),
+  wednesday: t('common.day_wednesday'),
+  thursday: t('common.day_thursday'),
+  friday: t('common.day_friday'),
+  saturday: t('common.day_saturday'),
+}))
 
 const parsedDays = computed(() => {
   try {
     const obj = JSON.parse(props.schedule)
     if (typeof obj === 'object' && !Array.isArray(obj)) {
-      return DAY_KEYS.map(key => ({
+      return DAY_KEYS.map((key) => ({
         key,
-        label: DAY_LABELS[key] ?? key,
-        hours: obj[key] ?? null
+        label: DAY_LABELS.value[key] ?? key,
+        hours: obj[key] ?? null,
       }))
     }
-  } catch {}
+  } catch {
+    /* not structured JSON */
+  }
   return null
 })
 
@@ -57,13 +60,13 @@ const isStructured = computed(() => parsedDays.value !== null)
 
 // ─── Estado actual (solo para horarios estructurados) ─────────
 const todayKey = computed(() => {
-  const days = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday']
+  const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday']
   return days[new Date().getDay()]
 })
 
 const todayHours = computed(() => {
   if (!parsedDays.value) return null
-  return parsedDays.value.find(d => d.key === todayKey.value) ?? null
+  return parsedDays.value.find((d) => d.key === todayKey.value) ?? null
 })
 
 const isClosed = computed(() => {
@@ -72,18 +75,21 @@ const isClosed = computed(() => {
   return h === 'closed' || h === 'cerrado'
 })
 
-const statusLabel = computed(() => isClosed.value ? t('activity.closed_now') : t('activity.open_now'))
-const statusColor = computed(() => isClosed.value ? 'text-red-600' : 'text-green-600')
+const statusLabel = computed(() =>
+  isClosed.value ? t('activity.closed_now') : t('activity.open_now')
+)
+const statusColor = computed(() =>
+  isClosed.value ? 'info-schedule__status--closed' : 'info-schedule__status--open'
+)
 const todayDisplay = computed(() => {
   if (!todayHours.value?.hours) return ''
   const h = todayHours.value.hours.toLowerCase()
-  return (h === 'closed' || h === 'cerrado') ? '' : todayHours.value.hours
+  return h === 'closed' || h === 'cerrado' ? '' : todayHours.value.hours
 })
 </script>
 
 <template>
   <div class="info-section">
-
     <!-- ─── Header del acordeón ───────────────────────────── -->
     <button
       class="info-schedule__trigger"
@@ -91,11 +97,8 @@ const todayDisplay = computed(() => {
       @click="isExpanded = !isExpanded"
     >
       <div class="info-schedule__trigger-left">
-        <span class="info-section__title-icon-wrap info-section__title-icon-wrap--sky">
-          <UIcon name="i-heroicons-clock" class="info-section__title-icon" />
-        </span>
+        <UIcon name="i-heroicons-clock" class="info-schedule__clock-icon" />
         <div class="info-schedule__status">
-          <!-- Horario estructurado: muestra abierto/cerrado -->
           <template v-if="isStructured">
             <span class="info-schedule__status-label" :class="statusColor">
               {{ statusLabel }}
@@ -104,15 +107,11 @@ const todayDisplay = computed(() => {
               {{ todayDisplay }}
             </span>
           </template>
-          <!-- Texto libre: solo muestra el título -->
           <template v-else>
-            <span class="info-schedule__status-label text-gray-800">
-              {{ t('activity.schedule') }}
-            </span>
+            <span class="info-schedule__status-label">{{ t('activity.schedule') }}</span>
           </template>
         </div>
       </div>
-
       <div class="info-schedule__trigger-right">
         <span class="info-schedule__all-hours">{{ t('activity.all_hours') }}</span>
         <UIcon
@@ -125,7 +124,6 @@ const todayDisplay = computed(() => {
     <!-- ─── Contenido expandido ───────────────────────────── -->
     <Transition name="schedule-expand">
       <div v-if="isExpanded" class="info-schedule__body">
-
         <!-- Días estructurados -->
         <template v-if="isStructured">
           <div
@@ -137,11 +135,18 @@ const todayDisplay = computed(() => {
             <span class="info-schedule__day-label">{{ day.label }}</span>
             <span
               class="info-schedule__day-hours"
-              :class="(!day.hours || day.hours.toLowerCase() === 'closed' || day.hours.toLowerCase() === 'cerrado')
-                ? 'text-gray-400'
-                : 'text-gray-700'"
+              :class="
+                !day.hours ||
+                day.hours.toLowerCase() === 'closed' ||
+                day.hours.toLowerCase() === 'cerrado'
+                  ? 'text-gray-400'
+                  : 'text-gray-700'
+              "
             >
-              {{ (!day.hours || day.hours.toLowerCase() === 'closed' || day.hours.toLowerCase() === 'cerrado')
+              {{
+                !day.hours ||
+                day.hours.toLowerCase() === 'closed' ||
+                day.hours.toLowerCase() === 'cerrado'
                   ? t('activity.closed')
                   : day.hours
               }}
@@ -153,51 +158,42 @@ const todayDisplay = computed(() => {
         <template v-else>
           <p class="info-schedule__free-text">{{ schedule }}</p>
         </template>
-
       </div>
     </Transition>
-
   </div>
 </template>
 
 <style scoped>
 /* ── Card base ───────────────────────────────────────────────── */
 .info-section {
-  border: 1px solid var(--color-neutral-200);
-  border-radius: var(--border-radius-xl);
   overflow: hidden;
 }
 
-/* ── Icon wrap ───────────────────────────────────────────────── */
-.info-section__title-icon-wrap {
-  width: 2rem;
-  height: 2rem;
-  border-radius: var(--border-radius-lg);
-  display: flex;
-  align-items: center;
-  justify-content: center;
+/* ── Trigger (botón acordeón) ────────────────────────────────── */
+.info-schedule__clock-icon {
+  width: 1rem;
+  height: 1rem;
+  color: var(--color-secondary-600, #16a34a);
   flex-shrink: 0;
 }
-.info-section__title-icon-wrap--sky { background: #e0f2fe; }
-.info-section__title-icon-wrap--sky .info-section__title-icon { color: #0284c7; }
-.info-section__title-icon { width: 1rem; height: 1rem; }
 
-/* ── Trigger (botón acordeón) ────────────────────────────────── */
 .info-schedule__trigger {
   width: 100%;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: var(--space-4) var(--space-5);
-  background: var(--color-neutral-50);
+  padding: 0;
+  background: none;
   border: none;
   cursor: pointer;
-  text-align: left;
-  transition: background var(--transition-fast);
+  text-align: start;
 }
 
-.info-schedule__trigger:hover {
-  background: var(--color-neutral-100);
+.info-schedule__status--open {
+  color: var(--color-secondary-600, #16a34a);
+}
+.info-schedule__status--closed {
+  color: var(--color-neutral-500, #737373);
 }
 
 .info-schedule__trigger-left {
@@ -287,7 +283,9 @@ const todayDisplay = computed(() => {
 /* ── Animación acordeón ──────────────────────────────────────── */
 .schedule-expand-enter-active,
 .schedule-expand-leave-active {
-  transition: max-height 0.25s ease, opacity 0.2s ease;
+  transition:
+    max-height 0.25s ease,
+    opacity 0.2s ease;
   overflow: hidden;
   max-height: 500px;
 }

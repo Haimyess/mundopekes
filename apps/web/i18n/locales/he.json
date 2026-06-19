@@ -62,7 +62,22 @@
     "best_season": "עונה מומלצת",
     "report_outdated": "מידע לא מעודכן?",
     "types": "קטגוריות",
-    "open_weekends_label": "פתוח בסופי שבוע"
+    "open_weekends_label": "פתוח בסופי שבוע",
+    "hours": "שעות פתיחה",
+    "phone": "טלפון",
+    "website": "אתר",
+    "view_on_maps": "צפה במפות Google",
+    "wheelchair": "נגיש לכיסאות גלגלים",
+    "ages": "גילאים מומלצים",
+    "seasons": "עונה מומלצת",
+    "photos": "תמונות המקום",
+    "features": "מאפיינים",
+    "open_now": "פתוח כעת",
+    "closed_now": "סגור",
+    "closed": "סגור",
+    "all_hours": "ראה שעות",
+    "how_to_get": "איך מגיעים",
+    "more_info": "מידע נוסף"
   },
   "age": {
     "months": "{count} חודשים",
@@ -257,6 +272,11 @@
     "error_types": "בחר לפחות סוג פעילות אחד"
   },
   "common": {
+    "share": "שתף",
+    "copy_link": "העתק קישור",
+    "copied": "הועתק!",
+    "read_more": "קרא עוד",
+    "read_less": "קרא פחות",
     "loading": "טוען...",
     "error": "אירעה שגיאה",
     "no_results": "לא נמצאו תוצאות",

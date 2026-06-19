@@ -64,7 +64,22 @@
     "best_season": "Mejor temporada",
     "report_outdated": "¿Información desactualizada?",
     "types": "Categorías",
-    "open_weekends_label": "Abierto los fines de semana"
+    "open_weekends_label": "Abierto los fines de semana",
+    "hours": "Horarios",
+    "phone": "Teléfono",
+    "website": "Sitio web",
+    "view_on_maps": "Ver en Google Maps",
+    "wheelchair": "Acceso para sillas de ruedas",
+    "ages": "Edades recomendadas",
+    "seasons": "Mejor temporada",
+    "photos": "Fotos del lugar",
+    "features": "Características",
+    "open_now": "Abierto ahora",
+    "closed_now": "Cerrado",
+    "closed": "Cerrado",
+    "all_hours": "Ver horarios",
+    "how_to_get": "Cómo llegar",
+    "more_info": "Más información"
   },
   "age": {
     "months": "{count} meses",
@@ -260,6 +275,11 @@
     "error_types": "Selecciona al menos un tipo de actividad"
   },
   "common": {
+    "share": "Compartir",
+    "copy_link": "Copiar enlace",
+    "copied": "¡Copiado!",
+    "read_more": "Leer más",
+    "read_less": "Leer menos",
     "loading": "Cargando...",
     "error": "Ocurrió un error",
     "no_results": "No se encontraron resultados",

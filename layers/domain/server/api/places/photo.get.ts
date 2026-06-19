@@ -1,7 +1,15 @@
 // server/api/places/photo.get.ts
 import { defineEventHandler, getQuery, createError, setHeader } from 'h3'
 
+const RATE_LIMIT = 60
+const RATE_WINDOW_SECONDS = 60
+
 export default defineEventHandler(async (event) => {
+  await checkRateLimit(event, 'places/photo', {
+    limit: RATE_LIMIT,
+    windowSeconds: RATE_WINDOW_SECONDS,
+  })
+
   const config = useRuntimeConfig()
   const query = getQuery(event)
   const ref = query.ref

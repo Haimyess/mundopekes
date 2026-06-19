@@ -16,7 +16,15 @@ interface GooglePlaceNameResponse {
   result?: { name: string }
 }
 
+const RATE_LIMIT = 20
+const RATE_WINDOW_SECONDS = 60
+
 export default defineEventHandler(async (event) => {
+  await checkRateLimit(event, 'places/details', {
+    limit: RATE_LIMIT,
+    windowSeconds: RATE_WINDOW_SECONDS,
+  })
+
   const config = useRuntimeConfig()
   const query = getQuery(event)
   const placeId = query.place_id

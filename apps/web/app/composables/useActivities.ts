@@ -30,6 +30,7 @@ export const ACTIVITY_SELECT = `
     lng,
     images,
     status,
+    metadata,
     city:cities ( id, name, region )
   ),
   category:categories ( id, name_i18n, slug, icon, parent_id ),

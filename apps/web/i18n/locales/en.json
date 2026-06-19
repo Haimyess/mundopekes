@@ -62,7 +62,22 @@
     "best_season": "Best season",
     "types": "Categories",
     "open_weekends_label": "Open on weekends",
-    "report_outdated": "Outdated information?"
+    "report_outdated": "Outdated information?",
+    "hours": "Opening hours",
+    "phone": "Phone",
+    "website": "Website",
+    "view_on_maps": "View on Google Maps",
+    "wheelchair": "Wheelchair accessible",
+    "ages": "Recommended ages",
+    "seasons": "Best season",
+    "photos": "Place photos",
+    "features": "Features",
+    "open_now": "Open now",
+    "closed_now": "Closed",
+    "closed": "Closed",
+    "all_hours": "See hours",
+    "how_to_get": "How to get there",
+    "more_info": "More information"
   },
   "age": {
     "months": "{count} months",
@@ -257,6 +272,11 @@
     "error_types": "Select at least one activity type"
   },
   "common": {
+    "share": "Share",
+    "copy_link": "Copy link",
+    "copied": "Copied!",
+    "read_more": "Read more",
+    "read_less": "Read less",
     "loading": "Loading...",
     "error": "An error occurred",
     "no_results": "No results found",

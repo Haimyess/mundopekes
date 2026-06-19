@@ -2,6 +2,8 @@ import { serverSupabaseClient } from '#supabase/server'
 import { enrichI18nField } from '../../utils/translate'
 
 export default defineEventHandler(async (event) => {
+  await requireAdminUser(event)
+
   const body = await readBody(event)
   const supabase = await serverSupabaseClient(event)
   const config = useRuntimeConfig(event)
