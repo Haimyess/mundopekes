@@ -84,12 +84,12 @@ const handleKeydown = (e: KeyboardEvent) => {
               :key="index"
               class="min-w-full h-full flex-shrink-0"
             >
-              <NuxtImg
+              <img
                 :src="img"
                 :alt="`${altText} ${index + 1}`"
                 class="w-full h-full object-cover"
-                loading="lazy"
-                sizes="100vw"
+                :loading="index === 0 ? 'eager' : 'lazy'"
+                decoding="async"
               />
             </div>
           </div>
@@ -140,11 +140,12 @@ const handleKeydown = (e: KeyboardEvent) => {
       <div class="flex flex-col gap-3">
         <!-- Imagen principal -->
         <div class="w-full aspect-video rounded-xl overflow-hidden bg-gray-100">
-          <NuxtImg
+          <img
             :src="images[activeIndex]"
             :alt="`${altText} ${activeIndex + 1}`"
             class="w-full h-full object-cover transition-opacity duration-200"
-            sizes="(max-width: 1024px) 100vw, 60vw"
+            loading="eager"
+            decoding="async"
           />
         </div>
 
