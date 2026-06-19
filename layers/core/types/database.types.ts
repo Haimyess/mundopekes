@@ -12,7 +12,7 @@ export type Database = {
         Row: {
           category_id: string | null
           created_at: string | null
-          description: string | null
+          description_i18n: Json
           id: string
           images: string[] | null
           is_free: boolean | null
@@ -23,13 +23,13 @@ export type Database = {
           schedule: string | null
           status: string | null
           stroller_friendly: boolean | null
-          title: string
+          title_i18n: Json
           updated_at: string | null
         }
         Insert: {
           category_id?: string | null
           created_at?: string | null
-          description?: string | null
+          description_i18n?: Json
           id?: string
           images?: string[] | null
           is_free?: boolean | null
@@ -40,13 +40,13 @@ export type Database = {
           schedule?: string | null
           status?: string | null
           stroller_friendly?: boolean | null
-          title: string
+          title_i18n?: Json
           updated_at?: string | null
         }
         Update: {
           category_id?: string | null
           created_at?: string | null
-          description?: string | null
+          description_i18n?: Json
           id?: string
           images?: string[] | null
           is_free?: boolean | null
@@ -57,7 +57,7 @@ export type Database = {
           schedule?: string | null
           status?: string | null
           stroller_friendly?: boolean | null
-          title?: string
+          title_i18n?: Json
           updated_at?: string | null
         }
         Relationships: [
@@ -106,6 +106,33 @@ export type Database = {
             referencedColumns: ['id']
           },
         ]
+      }
+      activity_events: {
+        Row: {
+          created_at: string | null
+          event_type: string
+          id: string
+          locale: string | null
+          payload: Json
+          session_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          event_type: string
+          id?: string
+          locale?: string | null
+          payload?: Json
+          session_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          event_type?: string
+          id?: string
+          locale?: string | null
+          payload?: Json
+          session_id?: string | null
+        }
+        Relationships: []
       }
       activity_seasons: {
         Row: {
@@ -161,6 +188,27 @@ export type Database = {
         }
         Relationships: []
       }
+      api_rate_limits: {
+        Row: {
+          created_at: string
+          endpoint: string
+          id: string
+          ip: string
+        }
+        Insert: {
+          created_at?: string
+          endpoint: string
+          id?: string
+          ip: string
+        }
+        Update: {
+          created_at?: string
+          endpoint?: string
+          id?: string
+          ip?: string
+        }
+        Relationships: []
+      }
       app_logs: {
         Row: {
           app: string
@@ -196,7 +244,7 @@ export type Database = {
           created_at: string | null
           icon: string | null
           id: string
-          name: string
+          name_i18n: Json
           nav_level: number
           order: number
           parent_id: string | null
@@ -208,7 +256,7 @@ export type Database = {
           created_at?: string | null
           icon?: string | null
           id?: string
-          name: string
+          name_i18n?: Json
           nav_level?: number
           order?: number
           parent_id?: string | null
@@ -220,7 +268,7 @@ export type Database = {
           created_at?: string | null
           icon?: string | null
           id?: string
-          name?: string
+          name_i18n?: Json
           nav_level?: number
           order?: number
           parent_id?: string | null
@@ -310,21 +358,21 @@ export type Database = {
         Row: {
           created_at: string | null
           id: string
-          name: string
+          name_i18n: Json
           order: number
           slug: string
         }
         Insert: {
           created_at?: string | null
           id?: string
-          name: string
+          name_i18n?: Json
           order?: number
           slug: string
         }
         Update: {
           created_at?: string | null
           id?: string
-          name?: string
+          name_i18n?: Json
           order?: number
           slug?: string
         }
@@ -332,32 +380,32 @@ export type Database = {
       }
       faqs: {
         Row: {
-          answer: string
+          answer_i18n: Json
           created_at: string | null
           faq_category_id: string | null
           id: string
           order: number
-          question: string
+          question_i18n: Json
           status: string
           updated_at: string | null
         }
         Insert: {
-          answer: string
+          answer_i18n?: Json
           created_at?: string | null
           faq_category_id?: string | null
           id?: string
           order?: number
-          question: string
+          question_i18n?: Json
           status?: string
           updated_at?: string | null
         }
         Update: {
-          answer?: string
+          answer_i18n?: Json
           created_at?: string | null
           faq_category_id?: string | null
           id?: string
           order?: number
-          question?: string
+          question_i18n?: Json
           status?: string
           updated_at?: string | null
         }
@@ -375,13 +423,13 @@ export type Database = {
         Row: {
           city_id: number | null
           created_at: string | null
-          description: string | null
+          description_i18n: Json
           id: string
           images: string[] | null
           lat: number | null
           lng: number | null
           metadata: Json | null
-          name: string
+          name_i18n: Json
           provider_id: string | null
           status: string
           updated_at: string | null
@@ -389,13 +437,13 @@ export type Database = {
         Insert: {
           city_id?: number | null
           created_at?: string | null
-          description?: string | null
+          description_i18n?: Json
           id?: string
           images?: string[] | null
           lat?: number | null
           lng?: number | null
           metadata?: Json | null
-          name: string
+          name_i18n?: Json
           provider_id?: string | null
           status?: string
           updated_at?: string | null
@@ -403,13 +451,13 @@ export type Database = {
         Update: {
           city_id?: number | null
           created_at?: string | null
-          description?: string | null
+          description_i18n?: Json
           id?: string
           images?: string[] | null
           lat?: number | null
           lng?: number | null
           metadata?: Json | null
-          name?: string
+          name_i18n?: Json
           provider_id?: string | null
           status?: string
           updated_at?: string | null
@@ -523,13 +571,13 @@ export type Database = {
           best_season: string[]
           category_id: string | null
           created_at: string | null
-          description: string | null
+          description_i18n: Json
           id: string
           images: string[] | null
           is_free: boolean | null
           location: Json
           metadata: Json | null
-          name: string
+          name_i18n: Json
           open_weekends: boolean | null
           rejection_reason: string | null
           reviewed_at: string | null
@@ -543,13 +591,13 @@ export type Database = {
           best_season: string[]
           category_id?: string | null
           created_at?: string | null
-          description?: string | null
+          description_i18n?: Json
           id?: string
           images?: string[] | null
           is_free?: boolean | null
           location: Json
           metadata?: Json | null
-          name: string
+          name_i18n?: Json
           open_weekends?: boolean | null
           rejection_reason?: string | null
           reviewed_at?: string | null
@@ -563,13 +611,13 @@ export type Database = {
           best_season?: string[]
           category_id?: string | null
           created_at?: string | null
-          description?: string | null
+          description_i18n?: Json
           id?: string
           images?: string[] | null
           is_free?: boolean | null
           location?: Json
           metadata?: Json | null
-          name?: string
+          name_i18n?: Json
           open_weekends?: boolean | null
           rejection_reason?: string | null
           reviewed_at?: string | null
@@ -594,6 +642,7 @@ export type Database = {
     }
     Functions: {
       categories_next_order: { Args: { parent?: string }; Returns: number }
+      get_i18n_text: { Args: { data: Json; locale: string }; Returns: string }
       is_admin: { Args: never; Returns: boolean }
     }
     Enums: {

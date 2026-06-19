@@ -1,10 +1,10 @@
-﻿export type Json
-  = | string
-    | number
-    | boolean
-    | null
-    | { [key: string]: Json | undefined }
-    | Json[]
+export type Json =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: Json | undefined }
+  | Json[]
 
 export type Database = {
   // Allows to automatically instantiate createClient with right options
@@ -80,7 +80,7 @@ export type Database = {
             isOneToOne: false
             referencedRelation: 'places'
             referencedColumns: ['id']
-          }
+          },
         ]
       }
       activity_age_ranges: {
@@ -110,7 +110,7 @@ export type Database = {
             isOneToOne: false
             referencedRelation: 'age_ranges'
             referencedColumns: ['id']
-          }
+          },
         ]
       }
       activity_events: {
@@ -167,7 +167,7 @@ export type Database = {
             isOneToOne: false
             referencedRelation: 'seasons'
             referencedColumns: ['id']
-          }
+          },
         ]
       }
       age_ranges: {
@@ -191,6 +191,27 @@ export type Database = {
           max_months?: number
           min_months?: number
           sort_order?: number
+        }
+        Relationships: []
+      }
+      api_rate_limits: {
+        Row: {
+          created_at: string
+          endpoint: string
+          id: string
+          ip: string
+        }
+        Insert: {
+          created_at?: string
+          endpoint: string
+          id?: string
+          ip: string
+        }
+        Update: {
+          created_at?: string
+          endpoint?: string
+          id?: string
+          ip?: string
         }
         Relationships: []
       }
@@ -268,7 +289,7 @@ export type Database = {
             isOneToOne: false
             referencedRelation: 'categories'
             referencedColumns: ['id']
-          }
+          },
         ]
       }
       cities: {
@@ -336,7 +357,7 @@ export type Database = {
             isOneToOne: false
             referencedRelation: 'activities'
             referencedColumns: ['id']
-          }
+          },
         ]
       }
       faq_categories: {
@@ -401,7 +422,7 @@ export type Database = {
             isOneToOne: false
             referencedRelation: 'faq_categories'
             referencedColumns: ['id']
-          }
+          },
         ]
       }
       places: {
@@ -461,7 +482,7 @@ export type Database = {
             isOneToOne: false
             referencedRelation: 'providers'
             referencedColumns: ['id']
-          }
+          },
         ]
       }
       providers: {
@@ -526,7 +547,7 @@ export type Database = {
             isOneToOne: false
             referencedRelation: 'cities'
             referencedColumns: ['id']
-          }
+          },
         ]
       }
       seasons: {
@@ -618,7 +639,7 @@ export type Database = {
             isOneToOne: false
             referencedRelation: 'categories'
             referencedColumns: ['id']
-          }
+          },
         ]
       }
     }
@@ -626,9 +647,9 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      categories_next_order: { Args: { parent?: string }, Returns: number }
-      get_i18n_text: { Args: { data: Json, locale: string }, Returns: string }
-      is_admin: { Args: never, Returns: boolean }
+      categories_next_order: { Args: { parent?: string }; Returns: number }
+      get_i18n_text: { Args: { data: Json; locale: string }; Returns: string }
+      is_admin: { Args: never; Returns: boolean }
     }
     Enums: {
       provider_status: 'pending' | 'active' | 'suspended' | 'rejected'
@@ -650,22 +671,22 @@ export type Tables<
   TableName extends DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables']
-      & DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Views'])
-    : never = never
+    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables'] &
+      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Views'])
+    : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
-  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables']
-    & DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Views'])[TableName] extends {
+  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables'] &
+    DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Views'])[TableName] extends {
       Row: infer R
     }
       ? R
       : never
-  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema['Tables']
-    & DefaultSchema['Views'])
-    ? (DefaultSchema['Tables']
-      & DefaultSchema['Views'])[DefaultSchemaTableNameOrOptions] extends {
+  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema['Tables'] &
+    DefaultSchema['Views'])
+    ? (DefaultSchema['Tables'] &
+      DefaultSchema['Views'])[DefaultSchemaTableNameOrOptions] extends {
         Row: infer R
       }
         ? R
@@ -680,7 +701,7 @@ export type TablesInsert<
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables']
-    : never = never
+    : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -705,7 +726,7 @@ export type TablesUpdate<
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables']
-    : never = never
+    : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -730,7 +751,7 @@ export type Enums<
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions['schema']]['Enums']
-    : never = never
+    : never = never,
 > = DefaultSchemaEnumNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -747,7 +768,7 @@ export type CompositeTypes<
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions['schema']]['CompositeTypes']
-    : never = never
+    : never = never,
 > = PublicCompositeTypeNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -759,7 +780,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      provider_status: ['pending', 'active', 'suspended', 'rejected']
-    }
-  }
+      provider_status: ['pending', 'active', 'suspended', 'rejected'],
+    },
+  },
 } as const

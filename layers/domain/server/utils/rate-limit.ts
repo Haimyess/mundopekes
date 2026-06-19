@@ -1,4 +1,5 @@
 import { serverSupabaseServiceRole } from '#supabase/server'
+import type { Database } from '~/types/database.types'
 import type { H3Event } from 'h3'
 
 // TODO: add a Supabase cron job to delete rows older than 1 hour:
@@ -16,10 +17,7 @@ export async function checkRateLimit(
   { limit, windowSeconds }: { limit: number; windowSeconds: number }
 ): Promise<void> {
   const ip = getRequestIP(event, { xForwardedFor: true }) ?? 'unknown'
-  // Cast to any: api_rate_limits is not in database.types yet (migration pending).
-  // Remove cast once the migration is applied and types are regenerated.
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const supabase = serverSupabaseServiceRole(event) as any
+  const supabase = serverSupabaseServiceRole<Database>(event)
 
   const windowStart = new Date(Date.now() - windowSeconds * 1000).toISOString()
 
