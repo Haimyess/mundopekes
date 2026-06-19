@@ -111,7 +111,7 @@ onMounted(async () => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  height: 64px;
+  height: 48px;
   gap: 0.5rem;
 }
 
@@ -202,6 +202,9 @@ onMounted(async () => {
 }
 
 @media (min-width: 768px) {
+  .navbar__inner {
+    height: 64px;
+  }
   .navbar__desktop {
     display: flex;
   }

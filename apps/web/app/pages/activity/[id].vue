@@ -186,8 +186,8 @@ const open = reactive({
   tools: true,
   hours: false,
   description: true,
-  features: false,
-  extra: true,
+  features: true,
+  extra: false,
   map: true,
 })
 function toggle(key: keyof typeof open) {

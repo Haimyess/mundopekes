@@ -194,4 +194,18 @@ const handleKeydown = (e: KeyboardEvent) => {
   position: relative;
   background: var(--color-neutral-100, #f5f5f5);
 }
+
+/* El flex-track ocupa exactamente el alto del carrusel */
+.gallery-mobile-carousel > div {
+  height: 100%;
+}
+
+/* Cada slide llena el espacio y centra la imagen */
+.gallery-mobile-carousel img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center center;
+}
 </style>
