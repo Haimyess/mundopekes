@@ -35,7 +35,7 @@ const { data: placeDetails } = await useAsyncData(
           phone: string | null
           website: string | null
           google_url: string | null
-          opening_hours: { weekday_text: string[] } | null
+          opening_hours: { weekday_text: string[]; open_now: boolean | null } | null
           wheelchair_accessible: boolean | null
           photos: string[]
         }>(`/api/places/details?place_id=${placeId.value}&lang=${locale.value}`)
@@ -77,26 +77,106 @@ const wazeUrl = computed(() =>
     : null
 )
 
-// ─── Horarios: parsear weekday_text de Google Places ─────────
-// Los lugares israelíes usan orden domingo-primero (igual que JS getDay())
-// por eso usamos getDay() directo como índice (0=Dom … 6=Sab)
-const todayIdx = computed(() => new Date().getDay())
+// ─── Horarios ─────────────────────────────────────────────────
+// Fuente de verdad: Google Places weekday_text (datos reales verificados).
+// Fallback: schedule_structured de la DB (solo si no hay datos de Google).
+// Los nombres de los días SIEMPRE vienen de nuestras traducciones i18n,
+// no del texto de Google (que puede estar en hebreo independientemente del idioma).
+const todayIdx = computed(() => new Date().getDay()) // 0=Dom … 6=Sab
 
-const parsedHours = computed(() => {
+const _SCHED_KEYS = [
+  'sunday',
+  'monday',
+  'tuesday',
+  'wednesday',
+  'thursday',
+  'friday',
+  'saturday',
+] as const
+type _SchedKey = (typeof _SCHED_KEYS)[number]
+type _SchedDay = { open: boolean; start: string; end: string }
+type _SchedMap = Record<_SchedKey, _SchedDay>
+
+// ── 1. Google Places (fuente primaria) ───────────────────────
+// El orden de días en weekday_text depende del idioma de la petición:
+//   - Hebreo (he) → domingo-primero (israelí): lineIdx = JS getDay()
+//   - Resto       → lunes-primero (europeo):  JS day = (lineIdx + 1) % 7
+const parsedGoogleHours = computed(() => {
   const lines = placeDetails.value?.opening_hours?.weekday_text
   if (!lines?.length) return null
-  return lines.map((line, idx) => {
-    // Formato típico: "Lunes: 9:00 – 18:00"  o  "ראשון: 09:00–21:00"
-    const sepIdx = line.indexOf(':')
-    const day = sepIdx > -1 ? line.slice(0, sepIdx).trim() : line
-    const hours = sepIdx > -1 ? line.slice(sepIdx + 1).trim() : ''
-    return { day, hours, isToday: idx === todayIdx.value }
+  const isHebrew = locale.value === 'he'
+  return lines.map((line, lineIdx) => {
+    // Mapear índice de línea → JS getDay() (0=Dom … 6=Sab)
+    const jsDay = isHebrew ? lineIdx : (lineIdx + 1) % 7
+    const key = _SCHED_KEYS[jsDay] as _SchedKey
+    // Extraer las horas: todo lo que va después del primer ':' (el nombre del día en Google)
+    const colonIdx = line.indexOf(':')
+    const hours = colonIdx > -1 ? line.slice(colonIdx + 1).trim() : line
+    return {
+      key,
+      label: t(`common.day_${key}`), // nombre i18n, NO el de Google
+      hours,
+      open: undefined as boolean | undefined, // desconocido por línea individual
+      isToday: jsDay === todayIdx.value,
+    }
   })
 })
 
+// ── 2. DB schedule_structured (fallback si no hay Google) ────
+const structuredSchedule = computed(() => {
+  const meta = activity.value?.metadata as {
+    schedule_structured?: _SchedMap | null
+    hours_unknown?: boolean
+  } | null
+  if (!meta || meta.hours_unknown) return null
+  return meta.schedule_structured ?? null
+})
+
+const parsedStructuredHours = computed(() => {
+  if (parsedGoogleHours.value) return null // Google ya disponible, no usamos structured
+  if (!structuredSchedule.value) return null
+  return _SCHED_KEYS.map((key, idx) => {
+    const day = structuredSchedule.value![key]
+    return {
+      key,
+      label: t(`common.day_${key}`),
+      open: day.open,
+      hours: day.open ? `${day.start} – ${day.end}` : t('activity.closed'),
+      isToday: idx === todayIdx.value,
+    }
+  })
+})
+
+// Filas unificadas para la tabla: primero Google, luego structured
+const hoursRows = computed(() => parsedGoogleHours.value ?? parsedStructuredHours.value)
+
+const todayRow = computed(() => hoursRows.value?.find((e) => e.isToday) ?? null)
+
+// ¿Está abierto ahora mismo?
+// - Si Google devuelve open_now (tiempo real) → lo usamos
+// - Si tenemos schedule_structured → calculamos según hora actual
+// - Si no hay ninguno → null (no mostrar badge)
+const isOpenNow = computed<boolean | null>(() => {
+  const gOpenNow = placeDetails.value?.opening_hours?.open_now
+  if (gOpenNow !== null && gOpenNow !== undefined) return gOpenNow
+
+  // Fallback: calcular desde structured
+  const sc = structuredSchedule.value
+  if (!sc) return null
+  const key = _SCHED_KEYS[todayIdx.value]
+  if (!key) return null
+  const entry = sc[key]
+  if (!entry?.open) return false
+  const now = new Date()
+  const nowMins = now.getHours() * 60 + now.getMinutes()
+  const [sh, sm] = entry.start.split(':').map(Number)
+  const [eh, em] = entry.end.split(':').map(Number)
+  return nowMins >= sh * 60 + sm && nowMins < eh * 60 + em
+})
+
 const todayGPText = computed(() => {
-  const entry = parsedHours.value?.find((e) => e.isToday)
-  return entry ? `${entry.day}: ${entry.hours}` : null
+  if (!todayRow.value) return null
+  return `${todayRow.value.label}: ${todayRow.value.hours}`
 })
 
 // ─── Secciones colapsables ────────────────────────────────────
@@ -112,8 +192,7 @@ function toggle(key: keyof typeof open) {
   open[key] = !open[key]
 }
 
-// ─── Share modal ──────────────────────────────────────────────
-const shareOpen = ref(false)
+// ─── Share ────────────────────────────────────────────────────
 const shareUrl = computed(() => (import.meta.client ? window.location.href : ''))
 const shareTitle = computed(() => (activity.value ? tc(activity.value.title_i18n) : ''))
 
@@ -164,10 +243,7 @@ const hasFeatures = computed(
           <UIcon name="i-heroicons-arrow-left" class="act-back-btn__icon icon--directional" />
           {{ t('common.back') }}
         </button>
-        <button class="act-share-btn" @click="shareOpen = true">
-          <UIcon name="i-heroicons-share" class="act-share-btn__icon" />
-          {{ t('common.share') }}
-        </button>
+        <ActivityShareModal :title="shareTitle" :url="shareUrl" />
       </div>
 
       <!-- Layout: gallery izq + info der en desktop -->
@@ -187,10 +263,7 @@ const hasFeatures = computed(
               <UIcon name="i-heroicons-arrow-left" class="act-back-btn__icon icon--directional" />
               {{ t('common.back') }}
             </button>
-            <button class="act-share-btn" @click="shareOpen = true">
-              <UIcon name="i-heroicons-share" class="act-share-btn__icon" />
-              {{ t('common.share') }}
-            </button>
+            <ActivityShareModal :title="shareTitle" :url="shareUrl" />
           </div>
 
           <!-- ── Header: categoría + título + dirección ──── -->
@@ -256,12 +329,23 @@ const hasFeatures = computed(
             </div>
           </div>
 
-          <!-- ── SECCIÓN: Horarios (Google Places) ─────── -->
-          <div v-if="placeDetails?.opening_hours?.weekday_text?.length" class="act-section">
+          <!-- ── SECCIÓN: Horarios ─────────────────────── -->
+          <!-- Google Places (fuente real) → schedule_structured DB → schedule texto -->
+          <div v-if="hoursRows || activity.schedule" class="act-section">
             <button class="act-section__trigger" @click="toggle('hours')">
               <div class="act-section__heading-block">
-                <span class="act-section__heading">{{ t('activity.hours') }}</span>
-                <span v-if="todayGPText" class="act-section__sub">{{ todayGPText }}</span>
+                <div class="act-hours__trigger-top">
+                  <span class="act-section__heading">{{ t('activity.hours') }}</span>
+                  <!-- Badge abierto/cerrado: solo cuando tenemos info fiable -->
+                  <span
+                    v-if="hoursRows && isOpenNow !== null"
+                    class="act-hours__badge"
+                    :class="isOpenNow ? 'act-hours__badge--open' : 'act-hours__badge--closed'"
+                  >
+                    {{ isOpenNow ? t('activity.open_now') : t('activity.closed_now') }}
+                  </span>
+                </div>
+                <span v-if="todayGPText" class="act-hours__today-text">{{ todayGPText }}</span>
               </div>
               <UIcon
                 name="i-heroicons-chevron-down"
@@ -270,34 +354,30 @@ const hasFeatures = computed(
               />
             </button>
             <div v-show="open.hours" class="act-section__body">
-              <table class="act-hours__table">
+              <!-- Tabla unificada: usa hoursRows (Google o structured, mismo formato) -->
+              <table v-if="hoursRows" class="act-hours__table">
                 <tbody>
                   <tr
-                    v-for="entry in parsedHours"
-                    :key="entry.day"
+                    v-for="entry in hoursRows"
+                    :key="entry.key"
                     class="act-hours__row"
                     :class="{ 'act-hours__row--today': entry.isToday }"
                   >
-                    <td class="act-hours__day">{{ entry.day }}</td>
-                    <td class="act-hours__time">{{ entry.hours }}</td>
+                    <td class="act-hours__day">{{ entry.label }}</td>
+                    <td
+                      class="act-hours__time"
+                      :class="{
+                        'act-hours__time--closed': entry.open === false,
+                        'act-hours__time--open-now': entry.isToday && isOpenNow === true,
+                      }"
+                    >
+                      {{ entry.hours }}
+                    </td>
                   </tr>
                 </tbody>
               </table>
-            </div>
-          </div>
-
-          <!-- ── SECCIÓN: Horarios DB ──────────────────── -->
-          <div v-else-if="activity.schedule" class="act-section">
-            <button class="act-section__trigger" @click="toggle('hours')">
-              <span class="act-section__heading">{{ t('activity.hours') }}</span>
-              <UIcon
-                name="i-heroicons-chevron-down"
-                class="act-section__chevron"
-                :class="{ 'act-section__chevron--open': open.hours }"
-              />
-            </button>
-            <div v-show="open.hours" class="act-section__body">
-              <ActivityInfoSchedule :schedule="activity.schedule" />
+              <!-- Último fallback: texto libre (schedule string) -->
+              <ActivityInfoSchedule v-else-if="activity.schedule" :schedule="activity.schedule" />
             </div>
           </div>
 
@@ -399,7 +479,6 @@ const hasFeatures = computed(
     <!-- /act-page -->
 
     <!-- ── Share modal ────────────────────────────────────── -->
-    <ActivityShareModal v-model:open="shareOpen" :title="shareTitle" :url="shareUrl" />
   </div>
 </template>
 
@@ -456,30 +535,6 @@ const hasFeatures = computed(
   height: 1rem;
 }
 
-.act-share-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-1-5, 0.375rem);
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-medium);
-  color: var(--green);
-  background: none;
-  border: 1.5px solid var(--green-300);
-  border-radius: 9999px;
-  padding: var(--space-1-5, 0.375rem) var(--space-3);
-  cursor: pointer;
-  transition: background 0.15s;
-}
-
-.act-share-btn:hover {
-  background: var(--color-secondary-50, #f0fdf4);
-}
-
-.act-share-btn__icon {
-  width: 0.875rem;
-  height: 0.875rem;
-}
-
 /* ── Layout ───────────────────────────────────────────────────── */
 .act-layout {
   display: flex;
@@ -493,6 +548,7 @@ const hasFeatures = computed(
 
 .act-gallery {
   width: 100%;
+  padding-top: var(--space-2);
 }
 
 /* Override aspect ratio del carrusel: 4:3 en mobile */
@@ -717,6 +773,55 @@ const hasFeatures = computed(
   padding: var(--space-2) 0;
 }
 
+.act-hours__time--closed {
+  color: var(--color-neutral-400, #a3a3a3);
+  font-style: italic;
+}
+
+.act-hours__time--open-now {
+  color: var(--green);
+  font-weight: var(--font-weight-bold);
+}
+
+/* ── Trigger top row: heading + badge ───────────────────────── */
+.act-hours__trigger-top {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.act-hours__badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  padding: 2px var(--space-2);
+  border-radius: 9999px;
+  line-height: 1.4;
+  flex-shrink: 0;
+}
+
+.act-hours__badge--open {
+  background: var(--color-secondary-100, #dcfce7);
+  color: var(--color-secondary-700, #15803d);
+  border: 1px solid var(--color-secondary-300, #86efac);
+}
+
+.act-hours__badge--closed {
+  background: var(--color-neutral-100, #f5f5f5);
+  color: var(--color-neutral-500, #737373);
+  border: 1px solid var(--color-neutral-200, #e5e5e5);
+}
+
+/* Texto de hoy más visible que el sub genérico */
+.act-hours__today-text {
+  font-size: var(--font-size-sm);
+  color: var(--text-muted);
+  padding-inline-start: calc(3px + var(--space-2));
+  font-weight: var(--font-weight-normal);
+  margin-top: 1px;
+}
+
 /* ── Info rows ───────────────────────────────────────────────── */
 .act-info-rows {
   display: flex;
@@ -824,12 +929,12 @@ const hasFeatures = computed(
 
   /*
    * Galería: sticky al scroll.
-   * top: 0 → cuando el navbar (no-sticky) desaparece al scrollear,
-   * la imagen sube hasta el borde superior del viewport.
+   * top: var(--space-3) → pequeño respiro entre la imagen y el borde superior
+   * cuando el navbar (no-sticky) desaparece al scrollear.
    */
   .act-col--gallery {
     position: sticky;
-    top: 0;
+    top: var(--space-3);
   }
 
   /* Imagen mantiene 4:3 natural, con border-radius y sombra leve */

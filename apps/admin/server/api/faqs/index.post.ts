@@ -3,6 +3,8 @@ import { serverSupabaseClient } from '#supabase/server'
 import type { Database, TablesInsert } from '~/types/database.types'
 
 export default defineEventHandler(async (event) => {
+  await requireAdminUser(event)
+
   const body = await readBody(event)
   const supabase = await serverSupabaseClient<Database>(event)
 
@@ -21,7 +23,7 @@ export default defineEventHandler(async (event) => {
     answer: body.answer,
     faq_category_id: body.faq_category_id ?? null,
     status: body.status ?? 'draft',
-    order: (last?.order ?? -1) + 1
+    order: (last?.order ?? -1) + 1,
   }
 
   const { data, error } = await supabase

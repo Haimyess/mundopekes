@@ -29,15 +29,16 @@ const isExpanded = ref(false)
  * Si no es JSON válido, muestra el texto tal cual.
  */
 const DAY_KEYS = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday']
-const DAY_LABELS: Record<string, string> = {
-  sunday: 'Domingo',
-  monday: 'Lunes',
-  tuesday: 'Martes',
-  wednesday: 'Miércoles',
-  thursday: 'Jueves',
-  friday: 'Viernes',
-  saturday: 'Sábado',
-}
+
+const DAY_LABELS = computed<Record<string, string>>(() => ({
+  sunday: t('common.day_sunday'),
+  monday: t('common.day_monday'),
+  tuesday: t('common.day_tuesday'),
+  wednesday: t('common.day_wednesday'),
+  thursday: t('common.day_thursday'),
+  friday: t('common.day_friday'),
+  saturday: t('common.day_saturday'),
+}))
 
 const parsedDays = computed(() => {
   try {
@@ -45,7 +46,7 @@ const parsedDays = computed(() => {
     if (typeof obj === 'object' && !Array.isArray(obj)) {
       return DAY_KEYS.map((key) => ({
         key,
-        label: DAY_LABELS[key] ?? key,
+        label: DAY_LABELS.value[key] ?? key,
         hours: obj[key] ?? null,
       }))
     }

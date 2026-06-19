@@ -12,6 +12,8 @@ const BUCKET = 'place-images'
  * the URL doesn't expire (Google Places photo refs have a limited lifetime).
  */
 export default defineEventHandler(async (event) => {
+  await requireAdminUser(event)
+
   const { url } = await readBody<{ url: string }>(event)
 
   if (!url || !url.startsWith('/api/places/photo?ref=')) {
