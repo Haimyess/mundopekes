@@ -171,6 +171,8 @@ const isOpenNow = computed<boolean | null>(() => {
   const nowMins = now.getHours() * 60 + now.getMinutes()
   const [sh, sm] = entry.start.split(':').map(Number)
   const [eh, em] = entry.end.split(':').map(Number)
+  if (!Number.isFinite(sh) || !Number.isFinite(sm) || !Number.isFinite(eh) || !Number.isFinite(em))
+    return null
   return nowMins >= sh * 60 + sm && nowMins < eh * 60 + em
 })
 
@@ -182,9 +184,9 @@ const todayGPText = computed(() => {
 // ─── Secciones colapsables ────────────────────────────────────
 const open = reactive({
   tools: true,
-  hours: true,
+  hours: false,
   description: true,
-  features: true,
+  features: false,
   extra: true,
   map: true,
 })
@@ -282,7 +284,11 @@ const hasFeatures = computed(
           </div>
 
           <!-- ── SECCIÓN: Herramientas ───────────────────── -->
-          <div v-if="mapsUrl || wazeUrl || placeDetails?.phone" class="act-section">
+          <div
+            v-if="mapsUrl || wazeUrl || placeDetails?.phone"
+            class="act-section"
+            :class="{ 'act-section--open': open.tools }"
+          >
             <button class="act-section__trigger" @click="toggle('tools')">
               <span class="act-section__heading">{{ t('activity.how_to_get') }}</span>
               <UIcon
@@ -331,7 +337,11 @@ const hasFeatures = computed(
 
           <!-- ── SECCIÓN: Horarios ─────────────────────── -->
           <!-- Google Places (fuente real) → schedule_structured DB → schedule texto -->
-          <div v-if="hoursRows || activity.schedule" class="act-section">
+          <div
+            v-if="hoursRows || activity.schedule"
+            class="act-section"
+            :class="{ 'act-section--open': open.hours }"
+          >
             <button class="act-section__trigger" @click="toggle('hours')">
               <div class="act-section__heading-block">
                 <div class="act-hours__trigger-top">
@@ -382,7 +392,11 @@ const hasFeatures = computed(
           </div>
 
           <!-- ── SECCIÓN: Descripción ──────────────────── -->
-          <div v-if="description" class="act-section">
+          <div
+            v-if="description"
+            class="act-section"
+            :class="{ 'act-section--open': open.description }"
+          >
             <button class="act-section__trigger" @click="toggle('description')">
               <span class="act-section__heading">{{ t('activity.description') }}</span>
               <UIcon
@@ -397,7 +411,11 @@ const hasFeatures = computed(
           </div>
 
           <!-- ── SECCIÓN: Características ─────────────── -->
-          <div v-if="hasFeatures" class="act-section">
+          <div
+            v-if="hasFeatures"
+            class="act-section"
+            :class="{ 'act-section--open': open.features }"
+          >
             <button class="act-section__trigger" @click="toggle('features')">
               <span class="act-section__heading">{{ t('activity.features') }}</span>
               <UIcon
@@ -422,6 +440,7 @@ const hasFeatures = computed(
           <div
             v-if="placeDetails?.website || placeDetails?.wheelchair_accessible"
             class="act-section"
+            :class="{ 'act-section--open': open.extra }"
           >
             <button class="act-section__trigger" @click="toggle('extra')">
               <span class="act-section__heading">{{ t('activity.more_info') }}</span>
@@ -450,7 +469,7 @@ const hasFeatures = computed(
           </div>
 
           <!-- ── SECCIÓN: Mapa ─────────────────────────── -->
-          <div v-if="activity.place" class="act-section">
+          <div v-if="activity.place" class="act-section" :class="{ 'act-section--open': open.map }">
             <button class="act-section__trigger" @click="toggle('map')">
               <span class="act-section__heading">{{ t('activity.location') }}</span>
               <UIcon
@@ -488,7 +507,7 @@ const hasFeatures = computed(
   --green: var(--color-secondary-600, #16a34a);
   --green-300: var(--color-secondary-300, #86efac);
   --green-700: var(--color-secondary-700, #15803d);
-  --divider: var(--color-neutral-100, #f5f5f5);
+  --divider: var(--color-neutral-200, #e5e5e5);
   --text: var(--color-text-primary, #171717);
   --text-muted: var(--color-text-secondary, #525252);
   --px: var(--space-3, 0.75rem);
@@ -508,7 +527,7 @@ const hasFeatures = computed(
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: var(--space-3) var(--px);
+  padding: var(--space-2) var(--px);
 }
 
 /* Mobile: encima de la galería */
@@ -551,24 +570,47 @@ const hasFeatures = computed(
   padding-top: var(--space-2);
 }
 
-/* Override aspect ratio del carrusel: 4:3 en mobile */
-.act-gallery :deep(.aspect-video) {
-  aspect-ratio: 4 / 3;
-}
-
 /* ── Secciones ─────────────────────────────────────────────────── */
 .act-section {
+  position: relative;
   padding: var(--space-4) var(--px);
+  padding-inline-start: calc(var(--px) + 11px);
   border-top: 1px solid var(--divider);
+}
+
+.act-section::before {
+  content: '';
+  position: absolute;
+  inset-inline-start: var(--px);
+  top: var(--space-4);
+  width: 3px;
+  border-radius: 2px;
+  background: var(--green);
+  height: 1.25em;
+  transition: height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.act-section--open::before {
+  height: calc(100% - var(--space-4) - var(--space-4));
 }
 
 .act-section--header {
   border-top: none;
   padding-top: var(--space-3);
+  padding-inline-start: var(--px);
+}
+
+.act-section--header::before {
+  display: none;
 }
 
 .act-section--report {
   padding-block: var(--space-3);
+  padding-inline-start: var(--px);
+}
+
+.act-section--report::before {
+  display: none;
 }
 
 /* Trigger colapsable */
@@ -585,7 +627,7 @@ const hasFeatures = computed(
   gap: var(--space-2);
 }
 
-/* Heading con barra verde inline-start */
+/* Heading */
 .act-section__heading {
   font-size: var(--font-size-base);
   font-weight: var(--font-weight-semibold);
@@ -594,16 +636,6 @@ const hasFeatures = computed(
   align-items: center;
   gap: var(--space-2);
   text-align: start;
-}
-
-.act-section__heading::before {
-  content: '';
-  display: block;
-  width: 3px;
-  height: 1.1em;
-  background: var(--green);
-  border-radius: 2px;
-  flex-shrink: 0;
 }
 
 .act-section__heading-block {
@@ -616,7 +648,6 @@ const hasFeatures = computed(
 .act-section__sub {
   font-size: var(--font-size-xs);
   color: var(--text-muted);
-  padding-inline-start: calc(3px + var(--space-2));
   font-weight: var(--font-weight-normal);
 }
 
@@ -642,15 +673,17 @@ const hasFeatures = computed(
   display: inline-flex;
   align-items: center;
   gap: var(--space-1-5, 0.375rem);
-  padding: var(--space-1-5, 0.375rem) var(--space-3);
+  padding: 0.2rem var(--space-2-5, 0.625rem);
   border-radius: 9999px;
-  border: 1.5px solid var(--green-300);
-  background: transparent;
-  color: var(--green-700);
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-medium);
+  border: none;
+  background: var(--green-700);
+  color: #fff;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
   line-height: 1;
   white-space: nowrap;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
 }
 
 .act-pill--category {
@@ -671,7 +704,7 @@ const hasFeatures = computed(
   align-items: center;
   gap: var(--space-1-5, 0.375rem);
   font-size: var(--font-size-sm);
-  color: var(--text-muted);
+  color: var(--color-neutral-600, #525252);
 }
 
 .act-header__location-icon {
@@ -817,7 +850,6 @@ const hasFeatures = computed(
 .act-hours__today-text {
   font-size: var(--font-size-sm);
   color: var(--text-muted);
-  padding-inline-start: calc(3px + var(--space-2));
   font-weight: var(--font-weight-normal);
   margin-top: 1px;
 }
@@ -951,11 +983,17 @@ const hasFeatures = computed(
   }
 
   .act-section {
-    padding-inline: var(--space-5);
+    padding-inline-end: var(--space-5);
+    padding-inline-start: calc(var(--space-5) + 11px);
+  }
+
+  .act-section::before {
+    inset-inline-start: var(--space-5);
   }
 
   .act-section--header {
     padding-top: var(--space-4);
+    padding-inline-start: var(--space-5);
   }
 
   /* Título más grande en desktop */

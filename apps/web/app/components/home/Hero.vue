@@ -5,11 +5,6 @@ const { t } = useI18n()
 <template>
   <section class="hero">
     <div class="hero__text">
-      <div class="hero__badge">
-        <span class="hero__badge-dot" />
-        {{ t('hero.badge') }}
-      </div>
-
       <h1 class="hero__title">
         {{ t('hero.title_start') }}
         <span class="hero__accent">{{ t('hero.title_accent') }}</span>
@@ -29,34 +24,12 @@ const { t } = useI18n()
 
 <style scoped>
 .hero {
-  padding: var(--space-10) var(--space-0) var(--space-12);
-}
-
-.hero__badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  background-color: var(--color-secondary-50);
-  color: var(--color-secondary-800);
-  border: 1px solid var(--color-secondary-200);
-  border-radius: 9999px;
-  padding: 4px 12px;
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-medium);
-  margin-bottom: var(--space-4);
-}
-
-.hero__badge-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background-color: var(--color-secondary-500);
-  flex-shrink: 0;
+  padding: var(--space-6) var(--space-0) var(--space-8);
 }
 
 .hero__text {
   text-align: left;
-  margin-bottom: var(--space-8);
+  margin-bottom: var(--space-6);
 }
 
 .hero__title {

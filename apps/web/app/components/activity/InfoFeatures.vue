@@ -16,12 +16,12 @@ const { t } = useI18n()
 const { formatAgeRange } = useAgeRange()
 
 const seasonConfig: Record<string, { icon: string }> = {
-  spring:   { icon: '🌸' },
-  summer:   { icon: '☀️' },
-  fall:     { icon: '🍂' },
-  autumn:   { icon: '🍂' },
-  winter:   { icon: '❄️' },
-  all_year: { icon: '🌍' }
+  spring: { icon: '🌸' },
+  summer: { icon: '☀️' },
+  fall: { icon: '🍂' },
+  autumn: { icon: '🍂' },
+  winter: { icon: '❄️' },
+  all_year: { icon: '🌍' },
 }
 
 interface Chip {
@@ -42,12 +42,12 @@ const chips = computed((): Chip[] => {
       key: 'age',
       emoji: '👶',
       label: formatAgeRange(props.activity.age_ranges),
-      type: 'age'
+      type: 'age',
     })
   }
 
   // Temporadas
-  for (const s of (props.activity.seasons ?? [])) {
+  for (const s of props.activity.seasons ?? []) {
     const cfg = seasonConfig[s.value?.toLowerCase()] ?? { icon: '🌍' }
     const label = s.label_key ? t(s.label_key) : s.value
     list.push({ key: `season-${s.id}`, emoji: cfg.icon, label, type: 'season' })
@@ -55,17 +55,32 @@ const chips = computed((): Chip[] => {
 
   // Gratuita
   if (props.activity.is_free) {
-    list.push({ key: 'free', uicon: 'i-heroicons-banknotes', label: t('activity.free'), type: 'free' })
+    list.push({
+      key: 'free',
+      uicon: 'i-heroicons-banknotes',
+      label: t('activity.free'),
+      type: 'free',
+    })
   }
 
   // Stroller friendly
   if (props.activity.stroller_friendly) {
-    list.push({ key: 'stroller', uicon: 'i-heroicons-heart', label: t('activity.stroller_friendly'), type: 'feature' })
+    list.push({
+      key: 'stroller',
+      uicon: 'i-heroicons-heart',
+      label: t('activity.stroller_friendly'),
+      type: 'feature',
+    })
   }
 
   // Fines de semana
   if (props.activity.open_weekends) {
-    list.push({ key: 'weekends', uicon: 'i-heroicons-calendar-days', label: t('activity.open_weekends'), type: 'feature' })
+    list.push({
+      key: 'weekends',
+      uicon: 'i-heroicons-calendar-days',
+      label: t('activity.open_weekends'),
+      type: 'feature',
+    })
   }
 
   return list
@@ -74,7 +89,6 @@ const chips = computed((): Chip[] => {
 
 <template>
   <div v-if="chips.length" class="info-section">
-
     <!-- Header -->
     <div class="info-section__title">
       <span class="info-section__title-icon-wrap info-section__title-icon-wrap--amber">
@@ -105,7 +119,6 @@ const chips = computed((): Chip[] => {
         </div>
       </div>
     </div>
-
   </div>
 </template>
 
@@ -114,7 +127,6 @@ const chips = computed((): Chip[] => {
 .info-section {
   border: 1px solid var(--color-neutral-200);
   border-radius: var(--border-radius-xl);
-  overflow: hidden;
 }
 
 /* ── Header ──────────────────────────────────────────────────── */
@@ -143,9 +155,16 @@ const chips = computed((): Chip[] => {
   flex-shrink: 0;
 }
 
-.info-section__title-icon-wrap--amber { background: #fef3c7; }
-.info-section__title-icon-wrap--amber .info-section__title-icon { color: #d97706; }
-.info-section__title-icon { width: 0.875rem; height: 0.875rem; }
+.info-section__title-icon-wrap--amber {
+  background: #fef3c7;
+}
+.info-section__title-icon-wrap--amber .info-section__title-icon {
+  color: #d97706;
+}
+.info-section__title-icon {
+  width: 0.875rem;
+  height: 0.875rem;
+}
 
 .info-section__body {
   padding: var(--space-4) var(--space-5);
@@ -154,8 +173,14 @@ const chips = computed((): Chip[] => {
 /* ── Chips grid ──────────────────────────────────────────────── */
 .info-features__grid {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: var(--space-2);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.info-features__grid::-webkit-scrollbar {
+  display: none;
 }
 
 .info-features__chip {
@@ -169,7 +194,9 @@ const chips = computed((): Chip[] => {
   border: 1px solid var(--color-neutral-200);
   background: var(--color-neutral-50);
   color: var(--color-text-secondary);
-  transition: background var(--transition-fast), transform var(--transition-fast);
+  transition:
+    background var(--transition-fast),
+    transform var(--transition-fast);
   cursor: default;
 }
 

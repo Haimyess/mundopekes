@@ -29,7 +29,7 @@ const { isSwiping, direction } = useSwipe(carouselEl, {
   onSwipeEnd() {
     if (direction.value === 'left') goNext()
     if (direction.value === 'right') goPrev()
-  }
+  },
 })
 
 const goNext = () => {
@@ -61,12 +61,8 @@ const handleKeydown = (e: KeyboardEvent) => {
 
 <template>
   <div class="w-full">
-
     <!-- ─── FALLBACK: sin imágenes ─────────────────────────── -->
-    <div
-      v-if="!hasImages"
-      class="w-full aspect-video rounded-xl overflow-hidden bg-gray-100"
-    >
+    <div v-if="!hasImages" class="w-full aspect-video rounded-xl overflow-hidden bg-gray-100">
       <SharedNoImage class="w-full h-full" />
     </div>
 
@@ -76,7 +72,7 @@ const handleKeydown = (e: KeyboardEvent) => {
         <!-- Carrusel -->
         <div
           ref="carouselEl"
-          class="w-full aspect-video overflow-hidden rounded-xl select-none"
+          class="gallery-mobile-carousel select-none"
           :class="{ 'cursor-grabbing': isSwiping }"
         >
           <div
@@ -126,19 +122,12 @@ const handleKeydown = (e: KeyboardEvent) => {
         </div>
 
         <!-- Indicadores de línea -->
-        <div
-          v-if="totalImages > 1"
-          class="flex gap-1.5 justify-center mt-3 px-2"
-        >
+        <div v-if="totalImages > 1" class="flex gap-1.5 justify-center mt-3 px-2">
           <button
             v-for="(_, index) in images"
             :key="index"
             class="h-1 rounded-full transition-all duration-300 focus:outline-none"
-            :class="[
-              index === activeIndex
-                ? 'bg-primary-500 flex-[2]'
-                : 'bg-gray-300 flex-1'
-            ]"
+            :class="[index === activeIndex ? 'bg-primary-500 flex-[2]' : 'bg-gray-300 flex-1']"
             :aria-label="`Go to image ${index + 1}`"
             @click="goTo(index)"
           />
@@ -160,10 +149,7 @@ const handleKeydown = (e: KeyboardEvent) => {
         </div>
 
         <!-- Thumbnails (solo si hay más de 1) -->
-        <div
-          v-if="totalImages > 1"
-          class="flex gap-2 overflow-x-auto scrollbar-hide"
-        >
+        <div v-if="totalImages > 1" class="flex gap-2 overflow-x-auto scrollbar-hide">
           <button
             v-for="(img, index) in images"
             :key="index"
@@ -171,7 +157,7 @@ const handleKeydown = (e: KeyboardEvent) => {
             :class="[
               index === activeIndex
                 ? 'border-primary-500 opacity-100'
-                : 'border-transparent opacity-60 hover:opacity-90'
+                : 'border-transparent opacity-60 hover:opacity-90',
             ]"
             :aria-label="`View image ${index + 1}`"
             @click="goTo(index)"
@@ -187,7 +173,6 @@ const handleKeydown = (e: KeyboardEvent) => {
         </div>
       </div>
     </template>
-
   </div>
 </template>
 
@@ -198,5 +183,14 @@ const handleKeydown = (e: KeyboardEvent) => {
 .scrollbar-hide {
   -ms-overflow-style: none;
   scrollbar-width: none;
+}
+
+.gallery-mobile-carousel {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  border-radius: 0.75rem;
+  position: relative;
+  background: var(--color-neutral-100, #f5f5f5);
 }
 </style>

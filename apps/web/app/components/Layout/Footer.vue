@@ -13,53 +13,88 @@ const footerLinks = [
 </script>
 
 <template>
-  <footer class="bg-gray-900 text-white py-8 mt-auto">
+  <footer class="footer">
     <UiContainer>
-      <div
-        class="flex flex-col items-center gap-4 text-center md:flex-row md:justify-between md:items-center md:text-left md:gap-0"
-      >
-        <!-- Logo -->
-        <span class="text-xl font-bold text-primary-400">MundoPekes</span>
+      <div class="footer__inner">
+        <span class="footer__logo">MundoPekes</span>
 
-        <!-- Links -->
-        <nav class="flex items-center flex-wrap justify-center gap-4 md:justify-start md:gap-6">
-          <NuxtLink
-            v-for="link in footerLinks"
-            :key="link.to"
-            :to="link.to"
-            class="text-gray-300 hover:text-white transition-colors text-sm link"
-          >
+        <nav class="footer__nav">
+          <NuxtLink v-for="link in footerLinks" :key="link.to" :to="link.to" class="footer__link">
             {{ t(link.label) }}
           </NuxtLink>
-          <button
-            class="link text-gray-300 hover:text-white transition-colors text-sm"
-            @click="openContact('other')"
-          >
+          <button class="footer__link footer__link--btn" @click="openContact('other')">
             {{ t('nav.contact') }}
           </button>
         </nav>
 
-        <!-- Copyright -->
-        <div class="text-gray-400 text-xs md:text-sm">
-          © {{ currentYear }} MundoPekes. {{ t('footer.rights') }}
-        </div>
+        <p class="footer__copy">© {{ currentYear }} MundoPekes</p>
       </div>
     </UiContainer>
   </footer>
 </template>
 
 <style scoped>
-footer button {
-  /* font-family: var(--font-family-base); */
-  color: inherit;
+.footer {
+  border-top: 1px solid var(--color-neutral-200, #e5e5e5);
+  padding: var(--space-8) 0;
+  margin-top: auto;
+  background: #fff;
 }
 
-.link {
+.footer__inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-5);
+  text-align: center;
+}
+
+.footer__logo {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-secondary-700);
+  letter-spacing: -0.02em;
+}
+
+.footer__nav {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-1) var(--space-5);
+}
+
+.footer__link {
   font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  text-decoration: none;
+  transition: color 0.15s;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font-family: inherit;
 }
 
-.link::hover {
-  text-decoration: underline wavy red 2px;
-  cursor: pointer;
+.footer__link:hover {
+  color: var(--color-text-primary);
+}
+
+.footer__copy {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-tertiary, #a3a3a3);
+  margin: 0;
+}
+
+@media (min-width: 768px) {
+  .footer__inner {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    text-align: left;
+  }
+
+  .footer__nav {
+    justify-content: flex-start;
+  }
 }
 </style>

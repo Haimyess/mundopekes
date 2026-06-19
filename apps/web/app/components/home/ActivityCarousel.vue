@@ -109,9 +109,9 @@ const onClickCapture = (e: MouseEvent) => {
 
 <style scoped>
 /* ── Section ─────────────────────────────────────────────────── */
-.carousel {
+/* .carousel {
   padding: var(--space-8) 0;
-}
+} */
 
 /* ── Header ──────────────────────────────────────────────────── */
 .carousel__header {

@@ -41,8 +41,8 @@ const mapsUrl = computed(() => {
 <template>
   <div class="info-section">
     <div class="info-section__body">
-      <!-- Nombre del lugar + ciudad -->
-      <div class="info-location__meta">
+      <!-- Nombre del lugar + ciudad (solo cuando hay mapa) -->
+      <div v-if="hasCoords" class="info-location__meta">
         <p class="info-location__place-name">{{ place.name }}</p>
         <p v-if="place.city?.name" class="info-location__city">
           <UIcon name="i-heroicons-building-office-2" class="info-location__city-icon" />
@@ -84,9 +84,12 @@ const mapsUrl = computed(() => {
       </ClientOnly>
 
       <!-- Sin coordenadas -->
-      <div v-else-if="!hasCoords" class="info-location__no-map">
-        <UIcon name="i-heroicons-map" class="info-location__no-map-icon" />
-        <span>{{ t('activity.no_location') }}</span>
+      <div v-else class="info-location__no-map">
+        <UIcon name="i-heroicons-map-pin-slash" class="info-location__no-map-icon" />
+        <div class="info-location__no-map-text">
+          <span class="info-location__no-map-title">{{ t('activity.no_location') }}</span>
+          <span v-if="place.name" class="info-location__no-map-sub">{{ place.name }}</span>
+        </div>
       </div>
 
       <!-- ─── Botones de navegación ─────────────────────── -->
@@ -202,16 +205,35 @@ const mapsUrl = computed(() => {
 .info-location__no-map {
   display: flex;
   align-items: center;
-  gap: var(--space-2);
-  font-size: var(--font-size-sm);
-  color: var(--color-text-secondary);
-  padding: var(--space-3) 0;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  background: var(--color-neutral-50, #fafafa);
+  border: 1px solid var(--color-neutral-200, #e5e5e5);
+  border-radius: var(--border-radius-lg);
 }
 
 .info-location__no-map-icon {
-  width: 1rem;
-  height: 1rem;
+  width: 1.25rem;
+  height: 1.25rem;
   flex-shrink: 0;
+  color: var(--color-neutral-400, #a3a3a3);
+}
+
+.info-location__no-map-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.info-location__no-map-title {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-secondary);
+}
+
+.info-location__no-map-sub {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-tertiary, #a3a3a3);
 }
 
 /* ── Botones de navegación ───────────────────────────────────── */

@@ -56,6 +56,7 @@
     "stroller_friendly": "Доступно для колясок",
     "open_weekends": "Открыто в выходные",
     "location": "Место",
+    "no_location": "Точное местоположение недоступно",
     "schedule": "Расписание",
     "description": "Описание",
     "age_range": "Рекомендуемый возраст",

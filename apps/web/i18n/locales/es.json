@@ -58,6 +58,7 @@
     "stroller_friendly": "Apto para coches",
     "open_weekends": "Abierto fines de semana",
     "location": "Ubicación",
+    "no_location": "Sin ubicación exacta disponible",
     "schedule": "Horario",
     "description": "Descripción",
     "age_range": "Edad recomendada",

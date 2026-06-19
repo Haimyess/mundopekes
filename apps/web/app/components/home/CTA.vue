@@ -1,40 +1,67 @@
 <script setup lang="ts">
 const { t } = useI18n()
-// import SuggestionModal from '../suggestions/SuggestionModal.vue';
-
-// const showModal = ref(false)
-// Add it to a store or composable becuase its been used in many places. 
 const wizardOpen = ref(false)
 </script>
 
 <template>
-  <section class="py-12 md:py-16">
-    <div class="bg-gradient-to-r from-primary-500 to-primary-600 rounded-2xl p-8 md:p-12 text-center text-white shadow-xl">
-      <h2 class="text-3xl md:text-4xl font-bold mb-4">
-        {{ t('cta.title') }}
-      </h2>
-      <p class="text-xl mb-8 text-primary-100">
-        {{ t('cta.description') }}
-      </p>
-      <!-- <UiButton
-        variant="secondary"
-        size="lg"
-        icon="i-heroicons-plus-circle"
-        @click="showModal = true"
-      >
-        {{ t('cta.button') }}
-      </UiButton> -->
-
-        <UiButton variant="primary" @click="wizardOpen = true">
-    Sugerir un lugar
-  </UiButton>
+  <section class="cta">
+    <div class="cta__inner">
+      <div class="cta__text">
+        <h2 class="cta__title">{{ t('cta.title') }}</h2>
+        <p class="cta__desc">{{ t('cta.description') }}</p>
+      </div>
+      <UiButton class="cta__btn" @click="wizardOpen = true"> Sugerir un lugar </UiButton>
     </div>
-
-    <!-- <SuggestionModal
-      v-model:open="showModal"
-      @close="showModal = false"
-
-      /> -->
-      <SuggestionsSuggestionWizard v-model:open="wizardOpen" />
+    <SuggestionsSuggestionWizard v-model:open="wizardOpen" />
   </section>
 </template>
+
+<style scoped>
+.cta {
+  padding: var(--space-10) 0 var(--space-12);
+}
+
+.cta__inner {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-5);
+  border: 1.5px solid var(--color-neutral-200, #e5e5e5);
+  border-radius: var(--border-radius-2xl, 1.5rem);
+  padding: var(--space-8) var(--space-7);
+  background: var(--color-neutral-50, #fafafa);
+}
+
+.cta__title {
+  font-family: var(--font-family-display);
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary);
+  margin: 0 0 var(--space-2);
+  line-height: 1.2;
+}
+
+.cta__desc {
+  font-size: var(--font-size-base);
+  color: var(--color-text-secondary);
+  margin: 0;
+  line-height: var(--line-height-relaxed);
+  max-width: 40ch;
+}
+
+.cta__btn {
+  flex-shrink: 0;
+}
+
+@media (min-width: 640px) {
+  .cta__inner {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .cta__text {
+    flex: 1;
+  }
+}
+</style>

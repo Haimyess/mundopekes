@@ -47,7 +47,7 @@ onMounted(async () => {
 <template>
   <div>
     <HomeHero />
-    <div class="py-8 space-y-12">
+    <div class="py-4 space-y-10">
       <HomeActivityCarousel
         :title="$t('carousels.recent')"
         :activities="activitiesStore.recentActivities"

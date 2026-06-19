@@ -56,6 +56,7 @@
     "stroller_friendly": "Stroller friendly",
     "open_weekends": "Open weekends",
     "location": "Location",
+    "no_location": "No exact location available",
     "schedule": "Schedule",
     "description": "Description",
     "age_range": "Recommended age",
