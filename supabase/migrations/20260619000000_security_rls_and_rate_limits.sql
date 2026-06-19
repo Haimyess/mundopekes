@@ -152,3 +152,95 @@ CREATE POLICY "contact_requests: update admin"
   TO authenticated
   USING  (auth.jwt() -> 'app_metadata' ->> 'role' = 'admin')
   WITH CHECK (auth.jwt() -> 'app_metadata' ->> 'role' = 'admin');
+
+
+-- -----------------------------------------------------------------------------
+-- F) RLS para categories
+-- -----------------------------------------------------------------------------
+
+ALTER TABLE categories ENABLE ROW LEVEL SECURITY;
+
+-- SELECT público: es navegación del sitio
+CREATE POLICY "categories: select público"
+  ON categories FOR SELECT
+  TO anon, authenticated
+  USING (true);
+
+CREATE POLICY "categories: insert admin"
+  ON categories FOR INSERT
+  TO authenticated
+  WITH CHECK (auth.jwt() -> 'app_metadata' ->> 'role' = 'admin');
+
+CREATE POLICY "categories: update admin"
+  ON categories FOR UPDATE
+  TO authenticated
+  USING  (auth.jwt() -> 'app_metadata' ->> 'role' = 'admin')
+  WITH CHECK (auth.jwt() -> 'app_metadata' ->> 'role' = 'admin');
+
+CREATE POLICY "categories: delete admin"
+  ON categories FOR DELETE
+  TO authenticated
+  USING (auth.jwt() -> 'app_metadata' ->> 'role' = 'admin');
+
+
+-- -----------------------------------------------------------------------------
+-- G) RLS para faq_categories
+-- -----------------------------------------------------------------------------
+
+ALTER TABLE faq_categories ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "faq_categories: select público"
+  ON faq_categories FOR SELECT
+  TO anon, authenticated
+  USING (true);
+
+CREATE POLICY "faq_categories: insert admin"
+  ON faq_categories FOR INSERT
+  TO authenticated
+  WITH CHECK (auth.jwt() -> 'app_metadata' ->> 'role' = 'admin');
+
+CREATE POLICY "faq_categories: update admin"
+  ON faq_categories FOR UPDATE
+  TO authenticated
+  USING  (auth.jwt() -> 'app_metadata' ->> 'role' = 'admin')
+  WITH CHECK (auth.jwt() -> 'app_metadata' ->> 'role' = 'admin');
+
+CREATE POLICY "faq_categories: delete admin"
+  ON faq_categories FOR DELETE
+  TO authenticated
+  USING (auth.jwt() -> 'app_metadata' ->> 'role' = 'admin');
+
+
+-- -----------------------------------------------------------------------------
+-- H) RLS para faqs
+-- -----------------------------------------------------------------------------
+
+ALTER TABLE faqs ENABLE ROW LEVEL SECURITY;
+
+-- SELECT público solo de FAQs publicadas
+CREATE POLICY "faqs: select público publicadas"
+  ON faqs FOR SELECT
+  TO anon, authenticated
+  USING (status = 'published');
+
+-- Admin puede leer todas (incluyendo draft)
+CREATE POLICY "faqs: select admin todas"
+  ON faqs FOR SELECT
+  TO authenticated
+  USING (auth.jwt() -> 'app_metadata' ->> 'role' = 'admin');
+
+CREATE POLICY "faqs: insert admin"
+  ON faqs FOR INSERT
+  TO authenticated
+  WITH CHECK (auth.jwt() -> 'app_metadata' ->> 'role' = 'admin');
+
+CREATE POLICY "faqs: update admin"
+  ON faqs FOR UPDATE
+  TO authenticated
+  USING  (auth.jwt() -> 'app_metadata' ->> 'role' = 'admin')
+  WITH CHECK (auth.jwt() -> 'app_metadata' ->> 'role' = 'admin');
+
+CREATE POLICY "faqs: delete admin"
+  ON faqs FOR DELETE
+  TO authenticated
+  USING (auth.jwt() -> 'app_metadata' ->> 'role' = 'admin');

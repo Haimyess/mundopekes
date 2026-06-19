@@ -2,6 +2,8 @@ import { serverSupabaseServiceRole } from '#supabase/server'
 import type { Database } from '~/types/database.types'
 
 export default defineEventHandler(async (event) => {
+  await requireAdminUser(event)
+
   const supabase = serverSupabaseServiceRole<Database>(event)
   const id = getRouterParam(event, 'id')
 

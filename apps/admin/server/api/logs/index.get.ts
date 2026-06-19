@@ -2,6 +2,8 @@ import { serverSupabaseServiceRole } from '#supabase/server'
 import type { Database } from '~/types/database.types'
 
 export default defineEventHandler(async (event) => {
+  await requireAdminUser(event)
+
   const query = getQuery(event)
   const page = Math.max(1, Number(query.page) || 1)
   const limit = Math.min(200, Math.max(1, Number(query.limit) || 50))

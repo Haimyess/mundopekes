@@ -3,6 +3,8 @@
 import { createClient } from '@supabase/supabase-js'
 
 export default defineEventHandler(async (event) => {
+  await requireAdminUser(event)
+
   const config = useRuntimeConfig(event)
   const supabase = createClient(
     config.public.supabaseUrl as string,
