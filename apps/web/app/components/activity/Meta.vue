@@ -95,7 +95,7 @@ function ageLabel(labelKey: string): string {
 /* Max 2 filas con scroll oculto */
 .act-meta__chips {
   display: flex;
-  flex-wrap: wrap;
+  /* flex-wrap: wrap; */
   gap: var(--space-2);
   max-height: calc(2 * 2.25rem + var(--space-2));
   overflow-y: auto;
