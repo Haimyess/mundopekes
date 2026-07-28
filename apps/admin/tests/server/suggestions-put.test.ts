@@ -58,6 +58,10 @@ vi.stubGlobal('geocodeAddress', (...args: unknown[]) => mockGeocode(...args))
 vi.stubGlobal('logInfo', vi.fn().mockResolvedValue(undefined))
 vi.stubGlobal('logWarn', vi.fn().mockResolvedValue(undefined))
 vi.stubGlobal('logError', vi.fn().mockResolvedValue(undefined))
+vi.stubGlobal(
+  'requireAdminUser',
+  vi.fn().mockResolvedValue({ id: 'admin-001', app_metadata: { role: 'admin' } })
+)
 
 // ── Load handler ───────────────────────────────────────────────────────────
 const { default: handler } = await import('../../server/api/suggestions/[id]/index.put')

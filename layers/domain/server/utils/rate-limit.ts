@@ -21,7 +21,7 @@ export async function checkRateLimit(
 
   const windowStart = new Date(Date.now() - windowSeconds * 1000).toISOString()
 
-  let count = 0
+  let count: number
   try {
     const { count: c } = await supabase
       .from('api_rate_limits')

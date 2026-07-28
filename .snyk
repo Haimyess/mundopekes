@@ -26,4 +26,32 @@ ignore:
     - '*':
         reason: tmp in commitizen/external-editor devDependency only, never reaches production.
         expires: '2026-12-31T00:00:00.000Z'
+  SNYK-JS-ESBUILD-17750815:
+    - '*':
+        reason: esbuild via @nuxt/fonts > fontless is a build-time-only font optimization tool; never runs in the production server/runtime and never processes user input.
+        expires: '2026-12-31T00:00:00.000Z'
+  SNYK-JS-ESBUILD-17750822:
+    - '*':
+        reason: esbuild via @nuxt/fonts > fontless is a build-time-only font optimization tool; never runs in the production server/runtime and never processes user input.
+        expires: '2026-12-31T00:00:00.000Z'
+  SNYK-JS-JSYAML-18313070:
+    - '*':
+        reason: js-yaml via @nuxtjs/i18n > @rollup/plugin-yaml only parses our own static locale YAML files at build time, never user-supplied input.
+        expires: '2026-12-31T00:00:00.000Z'
+  SNYK-JS-SHARP-18184259:
+    - '*':
+        reason: sharp is pinned to ^0.34.3 by ipx (@nuxt/image); npm overrides do not cascade into optionalDependencies (confirmed via reproduction), so the fix cannot be forced without patch-package. Revisit when @nuxt/image/ipx bump their sharp pin to 0.35.x.
+        expires: '2026-10-31T00:00:00.000Z'
+  SNYK-JS-SHARP-18184262:
+    - '*':
+        reason: sharp is pinned to ^0.34.3 by ipx (@nuxt/image); npm overrides do not cascade into optionalDependencies (confirmed via reproduction), so the fix cannot be forced without patch-package. Revisit when @nuxt/image/ipx bump their sharp pin to 0.35.x.
+        expires: '2026-10-31T00:00:00.000Z'
+  SNYK-JS-SHARP-18184416:
+    - '*':
+        reason: sharp is pinned to ^0.34.3 by ipx (@nuxt/image); npm overrides do not cascade into optionalDependencies (confirmed via reproduction), so the fix cannot be forced without patch-package. Revisit when @nuxt/image/ipx bump their sharp pin to 0.35.x.
+        expires: '2026-10-31T00:00:00.000Z'
+  SNYK-JS-SHARP-18184418:
+    - '*':
+        reason: sharp is pinned to ^0.34.3 by ipx (@nuxt/image); npm overrides do not cascade into optionalDependencies (confirmed via reproduction), so the fix cannot be forced without patch-package. Revisit when @nuxt/image/ipx bump their sharp pin to 0.35.x.
+        expires: '2026-10-31T00:00:00.000Z'
 patch: {}

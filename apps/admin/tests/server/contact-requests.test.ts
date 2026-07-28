@@ -34,6 +34,11 @@ vi.mock('#supabase/server', () => ({
   serverSupabaseServiceRole: vi.fn(() => ({ from: mockFrom })),
 }))
 
+vi.stubGlobal(
+  'requireAdminUser',
+  vi.fn().mockResolvedValue({ id: 'admin-001', app_metadata: { role: 'admin' } })
+)
+
 beforeEach(() => {
   vi.clearAllMocks()
   resolveValue = { data: [], count: 0, error: null }
