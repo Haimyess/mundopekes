@@ -406,7 +406,7 @@ describe('approve.post — activity payload', () => {
 //  Season pivot
 // ═══════════════════════════════════════════════════════════════════════════
 describe('approve.post — season pivot', () => {
-  it("best_season=['all'] with no DB row → 0 pivot inserts, no throw", async () => {
+  it('best_season=[all] with no DB row → 0 pivot inserts, no throw', async () => {
     const suggestion = makeSuggestion({ best_season: ['all'] })
     const seasonInsertSpy = vi.fn(() => Promise.resolve({ error: null }))
 
