@@ -16,18 +16,17 @@ const DAYS: Array<keyof ScheduleStructured> = [
 const DAY_ES = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado']
 
 // Israeli addresses from Google are typically "street number, city, Israel" —
-// take the second-to-last comma-separated segment, or the third-to-last if that's "Israel"/"ישראל".
+// the city is the segment right before the trailing country, if there is one,
+// otherwise it's the last segment (e.g. small localities with no street: "Gan Shmuel, Israel").
 export function extractCity(formattedAddress: string): string {
   const parts = formattedAddress.split(', ').map((p) => p.trim())
-  if (parts.length < 2) return parts[0] ?? ''
+  if (parts.length === 0) return ''
 
-  let index = parts.length - 2
   const last = parts[parts.length - 1]
-  if (last === 'ישראל' || last === 'Israel') {
-    index = parts.length - 3
-  }
+  const hasCountrySuffix = last === 'ישראל' || last === 'Israel'
+  const cityIndex = hasCountrySuffix ? parts.length - 2 : parts.length - 1
 
-  return parts[index] ?? parts[parts.length - 2] ?? ''
+  return parts[cityIndex] ?? parts[0] ?? ''
 }
 
 function buildScheduleText(schedule: ScheduleStructured): string {
@@ -54,12 +53,23 @@ export async function ingestSuggestion(
   const photoUrl = place.photo_reference
     ? `/api/places/photo?ref=${encodeURIComponent(place.photo_reference)}`
     : null
+  const photos = details.photo_references.map(
+    (ref) => `/api/places/photo?ref=${encodeURIComponent(ref)}`
+  )
+
+  // Google's per-locale name lookup (details.name_i18n) falls back to the
+  // Hebrew name when no localized listing exists — Haiku's translation is
+  // the reliable source for es/en/ru, `he` stays sourced from Google/scrape.
+  const name_i18n = { he: details.name_i18n.he, ...enriched.name_i18n }
+  const description_i18n = details.description_he
+    ? { he: details.description_he, ...enriched.description_i18n }
+    : enriched.description_i18n
 
   const { data, error } = await supabase
     .from('suggestions')
     .insert({
-      name_i18n: details.name_i18n,
-      description_i18n: details.description_he ? { he: details.description_he } : {},
+      name_i18n,
+      description_i18n,
 
       location: {
         address: place.formatted_address,
@@ -82,6 +92,7 @@ export async function ingestSuggestion(
       metadata: {
         google_place_id: place.place_id,
         place_photo_url: photoUrl,
+        photos,
         phone: details.phone,
         website: details.website,
         google_url: details.google_url,

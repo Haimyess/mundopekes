@@ -37,6 +37,11 @@ export interface EnrichedData {
   stroller_friendly: boolean
   open_weekends: boolean
   schedule_structured: ScheduleStructured
+  // Translations of name_he / editorial_summary_he — Google's per-locale name
+  // lookup often just returns the Hebrew name again when no localized listing
+  // exists, so this is the only reliable source for es/en/ru text.
+  name_i18n: { es: string; en: string; ru: string }
+  description_i18n: { es: string; en: string; ru: string }
 }
 
 const SYSTEM_PROMPT = `You are a data enrichment specialist for MundoPekes, a family activity platform in Israel.
@@ -69,6 +74,14 @@ Rules for age_range_ids:
 - Baby/toddler specific: 0-12m and 1-3y
 - When uncertain: include 1-3y, 3-6y, 6-12y
 
+Rules for name_i18n / description_i18n:
+- Translate name_he into natural Spanish, English and Russian (transliterate
+  proper nouns rather than leaving them in Hebrew script)
+- Translate editorial_summary_he the same way; if it's null/empty, return an
+  empty string "" for all three languages — do not invent a description
+- schedule_structured MUST always include all 7 keys (sunday..saturday), even
+  when closed — never omit a day
+
 Return this exact JSON structure:
 {
   "category_id": "uuid from categories list",
@@ -78,7 +91,9 @@ Return this exact JSON structure:
   "is_free_confidence": "medium",
   "stroller_friendly": true,
   "open_weekends": false,
-  "schedule_structured": { ... }
+  "schedule_structured": { "sunday": {...}, "monday": {...}, "tuesday": {...}, "wednesday": {...}, "thursday": {...}, "friday": {...}, "saturday": {...} },
+  "name_i18n": { "es": "...", "en": "...", "ru": "..." },
+  "description_i18n": { "es": "...", "en": "...", "ru": "..." }
 }`
 
 function buildUserMessage(input: EnrichInput): string {
@@ -108,12 +123,49 @@ function extractJson(text: string): string {
   return text.slice(start, end + 1)
 }
 
+const SCHEDULE_DAYS: Array<keyof ScheduleStructured> = [
+  'sunday',
+  'monday',
+  'tuesday',
+  'wednesday',
+  'thursday',
+  'friday',
+  'saturday',
+]
+
+const DEFAULT_DAY: ScheduleDay = { open: false, start: '09:00', end: '17:00' }
+
+// Guards against a malformed/partial Haiku response — an omitted day or
+// translation key would otherwise surface as a silently missing/empty field
+// in the admin edit form rather than a visible error.
+function normalize(data: EnrichedData): EnrichedData {
+  const schedule_structured = { ...data.schedule_structured }
+  for (const day of SCHEDULE_DAYS) {
+    if (!schedule_structured[day]) schedule_structured[day] = { ...DEFAULT_DAY }
+  }
+
+  return {
+    ...data,
+    schedule_structured,
+    name_i18n: {
+      es: data.name_i18n?.es ?? '',
+      en: data.name_i18n?.en ?? '',
+      ru: data.name_i18n?.ru ?? '',
+    },
+    description_i18n: {
+      es: data.description_i18n?.es ?? '',
+      en: data.description_i18n?.en ?? '',
+      ru: data.description_i18n?.ru ?? '',
+    },
+  }
+}
+
 export async function enrichWithHaiku(input: EnrichInput): Promise<EnrichedData> {
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
   const response = await client.messages.create({
     model: 'claude-haiku-4-5-20251001',
-    max_tokens: 800,
+    max_tokens: 1500,
     system: SYSTEM_PROMPT,
     messages: [{ role: 'user', content: buildUserMessage(input) }],
   })
@@ -132,5 +184,5 @@ export async function enrichWithHaiku(input: EnrichInput): Promise<EnrichedData>
     })
   }
 
-  return parsed
+  return normalize(parsed)
 }
