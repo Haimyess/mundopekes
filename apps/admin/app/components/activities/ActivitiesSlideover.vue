@@ -159,7 +159,7 @@ watch(
       form.images = [...(val.images ?? [])]
       form.age_range_ids = (v.activity_age_ranges ?? []).map((r) => r.age_range.id)
       form.best_season = (v.activity_seasons ?? []).map((r) => r.season.value)
-      form.schedule_structured = meta.schedule_structured ?? defaultSchedule()
+      form.schedule_structured = mergeSchedule(meta.schedule_structured)
       form.hours_unknown = meta.hours_unknown === true
       form.has_shadow = meta.has_shadow === true
       form.has_bathrooms = meta.has_bathrooms === true

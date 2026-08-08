@@ -196,10 +196,10 @@ const startEditing = () => {
   editForm.meta_title_i18n = { ...(m.title_i18n ?? {}) }
   editForm.meta_phone = m.phone ?? ''
   editForm.meta_website = m.website ?? ''
-  // Merge (not replace) — guards against suggestions ingested before the agent
-  // guaranteed all 7 days, which would otherwise show as blank/unchecked days
-  // in the editor instead of the ones that do exist.
-  editForm.schedule_structured = { ...defaultSchedule(), ...(m.schedule_structured ?? {}) }
+  // Per-day, per-field merge (not a shallow object merge) — guards against
+  // suggestions with a day present but missing/empty start-end, which would
+  // otherwise render as blank time inputs in the manual editor.
+  editForm.schedule_structured = mergeSchedule(m.schedule_structured)
   editForm.meta_hours_unknown = m.hours_unknown === true
   editForm.meta_has_shadow = m.has_shadow === true
   editForm.meta_has_bathrooms = m.has_bathrooms === true

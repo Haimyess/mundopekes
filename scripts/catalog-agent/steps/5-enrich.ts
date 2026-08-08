@@ -141,7 +141,15 @@ const DEFAULT_DAY: ScheduleDay = { open: false, start: '09:00', end: '17:00' }
 function normalize(data: EnrichedData): EnrichedData {
   const schedule_structured = { ...data.schedule_structured }
   for (const day of SCHEDULE_DAYS) {
-    if (!schedule_structured[day]) schedule_structured[day] = { ...DEFAULT_DAY }
+    const d = schedule_structured[day]
+    // A day can be present but malformed (missing/empty start-end) — validate
+    // each field individually, not just whether the day key exists, or the
+    // admin edit form renders that day as "open" with blank time inputs.
+    schedule_structured[day] = {
+      open: d?.open ?? DEFAULT_DAY.open,
+      start: d?.start?.trim() ? d.start : DEFAULT_DAY.start,
+      end: d?.end?.trim() ? d.end : DEFAULT_DAY.end,
+    }
   }
 
   return {
