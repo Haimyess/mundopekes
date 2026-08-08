@@ -64,6 +64,13 @@ const createParent = async () => {
   showNewParent.value = false
 }
 
+// Abrir el form de nueva subcategoría, limpio
+const openNewChildForm = (parentId: string) => {
+  showNewChild.value = parentId
+  newChildForm.name = ''
+  newChildForm.icon = ''
+}
+
 // Crear hijo
 const createChild = async (parentId: string) => {
   if (!newChildForm.name) return
@@ -101,7 +108,7 @@ await fetch()
 </script>
 
 <template>
-  <UDashboardPanel>
+  <UDashboardPanel :ui="{ body: 'flex flex-col flex-1 overflow-y-auto p-4 gap-3' }">
     <template #header>
       <UDashboardNavbar :title="t('categories.title')">
         <template #leading>
@@ -115,7 +122,7 @@ await fetch()
       </UDashboardNavbar>
     </template>
 
-    <div class="p-4 flex flex-col gap-3">
+    <template #body>
       <!-- Loading -->
       <div v-if="loading" class="flex justify-center py-12">
         <UIcon name="i-lucide-loader-2" class="animate-spin size-6 text-muted" />
@@ -147,7 +154,9 @@ await fetch()
           v-model="localTree"
           handle=".drag-handle-parent"
           :animation="150"
+          :force-fallback="true"
           ghost-class="opacity-40"
+          fallback-class="drag-fallback"
           @end="onParentDragEnd"
         >
           <UCard
@@ -217,7 +226,9 @@ await fetch()
                 v-model="parent.children"
                 handle=".drag-handle-child"
                 :animation="150"
+                :force-fallback="true"
                 ghost-class="opacity-40"
+                fallback-class="drag-fallback"
                 @end="() => onChildDragEnd(parent)"
               >
                 <div
@@ -299,11 +310,7 @@ await fetch()
 
               <button
                 class="flex items-center gap-2 px-3 py-2 text-xs text-muted hover:text-primary transition-colors"
-                @click="
-                  showNewChild = parent.id
-                  newChildForm.name = ''
-                  newChildForm.icon = ''
-                "
+                @click="openNewChildForm(parent.id)"
               >
                 <UIcon name="i-lucide-plus" class="size-3" />
                 {{ t('categories.addSubcategory') }}
@@ -317,6 +324,19 @@ await fetch()
           {{ t('categories.empty') }}
         </div>
       </template>
-    </div>
+    </template>
   </UDashboardPanel>
 </template>
+
+<style scoped>
+/* Sortable's forceFallback clone — without this it's still a plain DOM
+   clone with no elevation, which reads as "barely there" while dragging.
+   force-fallback itself already fixes the native-HTML5-DnD transparency,
+   this just makes the picked-up block visually obvious. */
+:global(.drag-fallback) {
+  opacity: 1 !important;
+  box-shadow: 0 8px 24px rgb(0 0 0 / 0.18);
+  border-radius: var(--ui-radius, 0.5rem);
+  background: var(--ui-bg, white);
+}
+</style>
