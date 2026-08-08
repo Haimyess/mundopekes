@@ -44,6 +44,7 @@ onMounted(async () => {
 })
 </script>
 
+<!-- CREATE A CONTAINER AND A LAYOUT -->
 <template>
   <div>
     <HomeHero />

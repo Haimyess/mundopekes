@@ -2,43 +2,41 @@
 import { DateFormatter, getLocalTimeZone, CalendarDate, today } from '@internationalized/date'
 import type { Range } from '~/types'
 
+const { t } = useI18n()
+
 const df = new DateFormatter('en-US', {
-  dateStyle: 'medium'
+  dateStyle: 'medium',
 })
 
 const selected = defineModel<Range>({ required: true })
 
-const ranges = [
-  { label: 'Last 7 days', days: 7 },
-  { label: 'Last 14 days', days: 14 },
-  { label: 'Last 30 days', days: 30 },
-  { label: 'Last 3 months', months: 3 },
-  { label: 'Last 6 months', months: 6 },
-  { label: 'Last year', years: 1 }
-]
+const ranges = computed(() => [
+  { label: t('home.dateRangePicker.last7Days'), days: 7 },
+  { label: t('home.dateRangePicker.last14Days'), days: 14 },
+  { label: t('home.dateRangePicker.last30Days'), days: 30 },
+  { label: t('home.dateRangePicker.last3Months'), months: 3 },
+  { label: t('home.dateRangePicker.last6Months'), months: 6 },
+  { label: t('home.dateRangePicker.lastYear'), years: 1 },
+])
 
 const toCalendarDate = (date: Date) => {
-  return new CalendarDate(
-    date.getFullYear(),
-    date.getMonth() + 1,
-    date.getDate()
-  )
+  return new CalendarDate(date.getFullYear(), date.getMonth() + 1, date.getDate())
 }
 
 const calendarRange = computed({
   get: () => ({
     start: selected.value.start ? toCalendarDate(selected.value.start) : undefined,
-    end: selected.value.end ? toCalendarDate(selected.value.end) : undefined
+    end: selected.value.end ? toCalendarDate(selected.value.end) : undefined,
   }),
-  set: (newValue: { start: CalendarDate | null, end: CalendarDate | null }) => {
+  set: (newValue: { start: CalendarDate | null; end: CalendarDate | null }) => {
     selected.value = {
       start: newValue.start ? newValue.start.toDate(getLocalTimeZone()) : new Date(),
-      end: newValue.end ? newValue.end.toDate(getLocalTimeZone()) : new Date()
+      end: newValue.end ? newValue.end.toDate(getLocalTimeZone()) : new Date(),
     }
-  }
+  },
 })
 
-const isRangeSelected = (range: { days?: number, months?: number, years?: number }) => {
+const isRangeSelected = (range: { days?: number; months?: number; years?: number }) => {
   if (!selected.value.start || !selected.value.end) return false
 
   const currentDate = today(getLocalTimeZone())
@@ -58,7 +56,7 @@ const isRangeSelected = (range: { days?: number, months?: number, years?: number
   return selectedStart.compare(startDate) === 0 && selectedEnd.compare(currentDate) === 0
 }
 
-const selectRange = (range: { days?: number, months?: number, years?: number }) => {
+const selectRange = (range: { days?: number; months?: number; years?: number }) => {
   const endDate = today(getLocalTimeZone())
   let startDate = endDate.copy()
 
@@ -72,7 +70,7 @@ const selectRange = (range: { days?: number, months?: number, years?: number }) 
 
   selected.value = {
     start: startDate.toDate(getLocalTimeZone()),
-    end: endDate.toDate(getLocalTimeZone())
+    end: endDate.toDate(getLocalTimeZone()),
   }
 }
 </script>
@@ -95,12 +93,15 @@ const selectRange = (range: { days?: number, months?: number, years?: number }) 
           </template>
         </template>
         <template v-else>
-          Pick a date
+          {{ t('home.dateRangePicker.pickDate') }}
         </template>
       </span>
 
       <template #trailing>
-        <UIcon name="i-lucide-chevron-down" class="shrink-0 text-dimmed size-5 group-data-[state=open]:rotate-180 transition-transform duration-200" />
+        <UIcon
+          name="i-lucide-chevron-down"
+          class="shrink-0 text-dimmed size-5 group-data-[state=open]:rotate-180 transition-transform duration-200"
+        />
       </template>
     </UButton>
 
@@ -120,12 +121,7 @@ const selectRange = (range: { days?: number, months?: number, years?: number }) 
           />
         </div>
 
-        <UCalendar
-          v-model="calendarRange"
-          class="p-2"
-          :number-of-months="2"
-          range
-        />
+        <UCalendar v-model="calendarRange" class="p-2" :number-of-months="2" range />
       </div>
     </template>
   </UPopover>

@@ -7,6 +7,7 @@ export interface Place {
   lng: number | null
   images: string[]
   metadata: Record<string, unknown>
+  status: 'active' | 'inactive'
   created_at: string
   updated_at: string
   city?: { id: number; name: string; region: string }

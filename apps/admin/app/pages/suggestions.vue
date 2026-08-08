@@ -2,17 +2,50 @@
 <script setup lang="ts">
 import type { TableColumn } from '@nuxt/ui'
 import type { Suggestion } from '~/composables/useSuggestions'
+import { syncUrlPage } from '~/composables/useUrlPage'
 
 const UBadge = resolveComponent('UBadge')
 const UButton = resolveComponent('UButton')
 const UIcon = resolveComponent('UIcon')
 
+const { t, locale } = useI18n()
+const { tc } = useI18nContent()
+
 const {
   suggestions,
+  total,
   loading,
   statusFilter,
-  fetch: loadSuggestions
+  categoryFilter,
+  cityFilter,
+  isFreeFilter,
+  page,
+  pageSize,
+  fetch: loadSuggestions,
 } = useSuggestions()
+
+syncUrlPage(page)
+
+const pageCount = computed(() => Math.max(1, Math.ceil(total.value / pageSize.value)))
+
+// Opciones de filtro — categorías y ciudades reales, no derivadas de la página actual
+const { data: categories } =
+  await useFetch<{ id: string; name_i18n: Record<string, string> }[]>('/api/categories')
+const { data: cities } = await useFetch<string[]>('/api/suggestions/cities')
+
+const categoryOptions = computed(() => [
+  { label: t('suggestions.filters.allCategories'), value: '' },
+  ...(categories.value ?? []).map((c) => ({ label: tc(c.name_i18n ?? {}), value: c.id })),
+])
+const cityOptions = computed(() => [
+  { label: t('suggestions.filters.allCities'), value: '' },
+  ...(cities.value ?? []).map((c) => ({ label: c, value: c })),
+])
+const freeOptions = computed(() => [
+  { label: t('suggestions.filters.allPrices'), value: 'all' },
+  { label: t('suggestions.filters.free'), value: 'true' },
+  { label: t('suggestions.filters.paid'), value: 'false' },
+])
 
 const selected = ref<Suggestion | null>(null)
 const slideoverOpen = ref(false)
@@ -22,14 +55,11 @@ const openSuggestion = (suggestion: Suggestion) => {
   slideoverOpen.value = true
 }
 
-// const onClose = () => {
-//   slideoverOpen.value = false
-//   selected.value = null
-// }
-
 const onClose = () => {
   slideoverOpen.value = false
-  setTimeout(() => { selected.value = null }, 300)
+  setTimeout(() => {
+    selected.value = null
+  }, 300)
 }
 
 const onAction = async () => {
@@ -37,110 +67,144 @@ const onAction = async () => {
 }
 
 // Tabs de filtro
-const tabs = [
-  { label: 'Pendientes', value: 'pending', icon: 'i-lucide-clock' },
-  { label: 'Aprobadas', value: 'approved', icon: 'i-lucide-check-circle' },
-  { label: 'Rechazadas', value: 'rejected', icon: 'i-lucide-x-circle' },
-  { label: 'Todas', value: 'all', icon: 'i-lucide-list' }
-]
+const tabs = computed(() => [
+  { label: t('suggestions.tabs.pending'), value: 'pending', icon: 'i-lucide-clock' },
+  { label: t('suggestions.tabs.approved'), value: 'approved', icon: 'i-lucide-check-circle' },
+  { label: t('suggestions.tabs.rejected'), value: 'rejected', icon: 'i-lucide-x-circle' },
+  { label: t('suggestions.tabs.all'), value: 'all', icon: 'i-lucide-list' },
+])
 
 const formatDate = (date: string) =>
-  new Date(date).toLocaleDateString('es-AR', {
-    day: '2-digit', month: 'short', year: 'numeric'
+  new Date(date).toLocaleDateString(locale.value === 'en' ? 'en-US' : 'es-AR', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
   })
 
-const statusColor = (status: string) => ({
-  pending: 'warning' as const,
-  approved: 'success' as const,
-  rejected: 'error' as const
-}[status] ?? 'neutral')
+const statusColor = (status: string) =>
+  ({
+    pending: 'warning' as const,
+    approved: 'success' as const,
+    rejected: 'error' as const,
+  })[status] ?? 'neutral'
 
-const statusLabel = (status: string) => ({
-  pending: 'Pendiente',
-  approved: 'Aprobada',
-  rejected: 'Rechazada'
-}[status] ?? status)
+const statusLabel = (status: string) =>
+  ({
+    pending: t('suggestions.status.pending'),
+    approved: t('suggestions.status.approved'),
+    rejected: t('suggestions.status.rejected'),
+  })[status] ?? status
 
-const columns: TableColumn<Suggestion>[] = [
+const isFromAgent = (suggestion: Suggestion) =>
+  (suggestion.metadata as { source?: string } | null)?.source === 'agent'
+
+const columns = computed<TableColumn<Suggestion>[]>(() => [
   {
-    accessorKey: 'name',
-    header: 'Nombre'
+    accessorKey: 'name_i18n',
+    header: t('suggestions.columns.name'),
+    cell: ({ row }) => tc(row.original.name_i18n) || '—',
   },
   {
     accessorKey: 'location',
-    header: 'Ciudad',
-    cell: ({ row }) => row.original.location?.city ?? '—'
+    header: t('suggestions.columns.city'),
+    cell: ({ row }) => row.original.location?.city ?? '—',
   },
   {
     accessorKey: 'type',
-    header: 'Tipo',
+    header: t('suggestions.columns.type'),
     cell: ({ row }) => {
       const types = row.original.type ?? []
       return h('div', { class: 'flex gap-1 flex-wrap' }, [
-        ...types.slice(0, 2).map((t: string) =>
-          h(UBadge, { key: t, color: 'neutral', variant: 'subtle', size: 'xs' }, () => t)
-        ),
+        ...types
+          .slice(0, 2)
+          .map((t: string) =>
+            h(UBadge, { key: t, color: 'neutral', variant: 'subtle', size: 'md' }, () => t)
+          ),
         types.length > 2
           ? h('span', { class: 'text-xs text-(--ui-text-muted)' }, `+${types.length - 2}`)
-          : null
+          : null,
       ])
-    }
+    },
   },
   {
     accessorKey: 'is_free',
-    header: 'Gratuito',
-    cell: ({ row }) => h(UIcon, {
-      name: row.original.is_free ? 'i-lucide-check' : 'i-lucide-minus',
-      class: row.original.is_free ? 'text-success-500' : 'text-(--ui-text-muted)'
-    })
+    header: t('suggestions.columns.free'),
+    cell: ({ row }) =>
+      h(UIcon, {
+        name: row.original.is_free ? 'i-lucide-check' : 'i-lucide-minus',
+        class: row.original.is_free ? 'text-success-500' : 'text-(--ui-text-muted)',
+      }),
+  },
+  {
+    id: 'source',
+    header: t('suggestions.columns.source'),
+    cell: ({ row }) =>
+      h(
+        UBadge,
+        { color: isFromAgent(row.original) ? 'info' : 'neutral', variant: 'subtle', size: 'sm' },
+        () =>
+          t(isFromAgent(row.original) ? 'suggestions.source.agent' : 'suggestions.source.manual')
+      ),
   },
   {
     accessorKey: 'created_at',
-    header: 'Fecha',
-    cell: ({ row }) => h('span', { class: 'text-sm text-(--ui-text-muted)' }, formatDate(row.original.created_at))
+    header: t('suggestions.columns.date'),
+    cell: ({ row }) =>
+      h('span', { class: 'text-sm text-(--ui-text-muted)' }, formatDate(row.original.created_at)),
   },
   {
     accessorKey: 'status',
-    header: 'Estado',
-    cell: ({ row }) => h(UBadge, {
-      color: statusColor(row.original.status),
-      variant: 'subtle',
-      size: 'sm'
-    }, () => statusLabel(row.original.status))
+    header: t('suggestions.columns.status'),
+    cell: ({ row }) =>
+      h(
+        UBadge,
+        {
+          color: statusColor(row.original.status),
+          variant: 'subtle',
+          size: 'sm',
+        },
+        () => statusLabel(row.original.status)
+      ),
   },
   {
     id: 'actions',
-    cell: ({ row }) => h(UButton, {
-      color: 'neutral',
-      variant: 'ghost',
-      icon: 'i-lucide-eye',
-      size: 'xs',
-      onClick: (e: MouseEvent) => {
-        e.stopPropagation()
-        openSuggestion(row.original)
-      }
-    })
-  }
-]
+    cell: ({ row }) =>
+      h(UButton, {
+        color: 'neutral',
+        variant: 'ghost',
+        icon: 'i-lucide-eye',
+        size: 'xs',
+        onClick: (e: MouseEvent) => {
+          e.stopPropagation()
+          openSuggestion(row.original)
+        },
+      }),
+  },
+])
 
 await loadSuggestions()
 </script>
 
 <template>
-  <UDashboardPanel>
+  <UDashboardPanel :ui="{ body: 'flex flex-col flex-1 overflow-hidden p-0 gap-0' }">
     <template #header>
-      <UDashboardNavbar title="Sugerencias">
+      <UDashboardNavbar :title="t('suggestions.title')">
         <template #right>
           <UBadge color="warning" variant="subtle">
-            {{ suggestions.filter(s => s.status === 'pending').length }} pendientes
+            {{
+              statusFilter === 'pending'
+                ? total
+                : suggestions.filter((s) => s.status === 'pending').length
+            }}
+            {{ t('suggestions.pendingBadge') }}
           </UBadge>
         </template>
       </UDashboardNavbar>
     </template>
 
     <template #body>
-      <!-- Tabs de filtro -->
-      <div class="px-4 pt-4">
+      <!-- Zona fija: tabs + filtros, nunca scrollea -->
+      <div class="shrink-0 flex flex-col gap-3 p-4 border-b border-default">
         <div class="flex gap-2 flex-wrap">
           <UButton
             v-for="tab in tabs"
@@ -154,10 +218,16 @@ await loadSuggestions()
             {{ tab.label }}
           </UButton>
         </div>
+
+        <div class="flex gap-2 flex-wrap">
+          <USelect v-model="categoryFilter" :items="categoryOptions" class="min-w-44" />
+          <USelect v-model="cityFilter" :items="cityOptions" class="min-w-40" />
+          <USelect v-model="isFreeFilter" :items="freeOptions" class="min-w-36" />
+        </div>
       </div>
 
-      <!-- Tabla -->
-      <div class="p-4">
+      <!-- Zona scrolleable: solo la tabla -->
+      <div class="flex-1 min-h-0 overflow-y-auto p-4">
         <UTable
           :data="suggestions"
           :columns="columns"
@@ -166,24 +236,27 @@ await loadSuggestions()
           :ui="{
             base: 'table-fixed border-separate border-spacing-0',
             thead: '[&>tr]:bg-elevated/50 [&>tr]:after:content-none',
-            tbody: '[&>tr]:last:[&>td]:border-b-0 [&>tr]:hover:bg-elevated/50 [&>tr]:cursor-pointer [&>tr]:transition-colors',
+            tbody:
+              '[&>tr]:last:[&>td]:border-b-0 [&>tr]:hover:bg-elevated/50 [&>tr]:cursor-pointer [&>tr]:transition-colors',
             th: 'py-2 first:rounded-l-lg last:rounded-r-lg border-y border-default first:border-l last:border-r',
-            td: 'border-b border-default'
+            td: 'border-b border-default',
           }"
+        />
+      </div>
+
+      <!-- Zona fija: paginación, siempre visible abajo -->
+      <div v-if="pageCount > 1" class="shrink-0 flex justify-end p-4 border-t border-default">
+        <UPagination
+          :default-page="page"
+          :items-per-page="pageSize"
+          :total="total"
+          @update:page="(p: number) => (page = p)"
         />
       </div>
     </template>
   </UDashboardPanel>
 
   <!-- Slideover detalle -->
-  <!-- <SuggestionsSlideover
-    v-if="slideoverOpen"
-    :suggestion="selected"
-    @approved="onAction"
-    @rejected="onAction"
-    @deleted="onAction"
-    @close="onClose"
-  /> -->
   <SuggestionsSlideover
     :open="slideoverOpen"
     :suggestion="selected"

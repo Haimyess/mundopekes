@@ -358,11 +358,12 @@ useSeoMeta({
 /* ── Página ────────────────────────────────────────────────────── */
 .search-page {
   min-height: 100vh;
-  background-color: var(--color-bg-secondary, #f9fafb);
+  /* background-color: var(--color-bg-secondary, #f9fafb); */
 }
 
 .search-page__container {
   max-width: 80rem;
+  margin-top: var(--space-6);
   margin-inline: auto;
   padding: var(--space-8) var(--space-4);
   display: flex;

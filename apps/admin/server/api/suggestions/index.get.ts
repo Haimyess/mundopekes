@@ -21,6 +21,15 @@ export default defineEventHandler(async (event) => {
   if (query.status) {
     q = q.eq('status', query.status as string)
   }
+  if (query.category_id) {
+    q = q.eq('category_id', query.category_id as string)
+  }
+  if (query.city) {
+    q = q.eq('location->>city', query.city as string)
+  }
+  if (query.is_free !== undefined && query.is_free !== '') {
+    q = q.eq('is_free', query.is_free === 'true')
+  }
 
   if (hasPagination) {
     q = q.range(from, to)

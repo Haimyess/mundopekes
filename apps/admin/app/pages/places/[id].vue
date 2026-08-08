@@ -9,6 +9,7 @@ const UBadge = resolveComponent('UBadge')
 const UDropdownMenu = resolveComponent('UDropdownMenu')
 
 const { tc } = useI18nContent()
+const { t } = useI18n()
 const route = useRoute()
 const overlay = useOverlay()
 
@@ -68,39 +69,39 @@ const statusColor = {
   rejected: 'error',
 } as const
 
-const statusLabel = {
-  approved: 'Aprobada',
-  pending: 'Pendiente',
-  rejected: 'Rechazada',
-}
+const statusLabel = computed(() => ({
+  approved: t('placeDetail.status.approved'),
+  pending: t('placeDetail.status.pending'),
+  rejected: t('placeDetail.status.rejected'),
+}))
 
-const columns: TableColumn<Activity>[] = [
+const columns = computed<TableColumn<Activity>[]>(() => [
   {
     accessorKey: 'title_i18n',
-    header: 'Título',
+    header: t('placeDetail.table.title'),
     cell: ({ row }) => tc(row.original.title_i18n ?? {}),
   },
   {
     accessorKey: 'category',
-    header: 'Categoría',
+    header: t('placeDetail.table.category'),
     cell: ({ row }) => (row.original.category ? tc(row.original.category.name_i18n ?? {}) : '—'),
   },
   {
     accessorKey: 'price',
-    header: 'Precio',
+    header: t('placeDetail.table.price'),
     cell: ({ row }) =>
       row.original.is_free
-        ? h(UBadge, { variant: 'subtle', color: 'success' }, () => 'Gratis')
+        ? h(UBadge, { variant: 'subtle', color: 'success' }, () => t('placeDetail.free'))
         : `₪${row.original.price}`,
   },
   {
     accessorKey: 'status',
-    header: 'Estado',
+    header: t('placeDetail.table.status'),
     cell: ({ row }) =>
       h(
         UBadge,
         { variant: 'subtle', color: statusColor[row.original.status] },
-        () => statusLabel[row.original.status]
+        () => statusLabel.value[row.original.status]
       ),
   },
   {
@@ -115,13 +116,13 @@ const columns: TableColumn<Activity>[] = [
             content: { align: 'end' },
             items: [
               {
-                label: 'Editar',
+                label: t('placeDetail.actions.edit'),
                 icon: 'i-lucide-pencil',
                 onSelect: () => openEditActivity(row.original),
               },
               { type: 'separator' as const },
               {
-                label: 'Eliminar',
+                label: t('placeDetail.actions.delete'),
                 icon: 'i-lucide-trash',
                 color: 'error' as const,
                 onSelect: () => removeActivity(row.original.id),
@@ -138,7 +139,7 @@ const columns: TableColumn<Activity>[] = [
         )
       ),
   },
-]
+])
 
 // Fetch inicial de actividades (sin paginación, usa el composable con placeId fijo)
 await fetchActivities()
@@ -158,6 +159,18 @@ await fetchActivities()
         <template #right>
           <div class="flex items-center gap-2">
             <!-- Badges de contexto rápido -->
+            <UBadge
+              v-if="place"
+              variant="subtle"
+              :color="place.status === 'active' ? 'success' : 'neutral'"
+              class="hidden sm:flex"
+            >
+              {{
+                place.status === 'active'
+                  ? t('placeDetail.status.placeActive')
+                  : t('placeDetail.status.placeInactive')
+              }}
+            </UBadge>
             <UBadge v-if="place?.city" variant="subtle" color="neutral" class="hidden sm:flex">
               <UIcon name="i-lucide-map-pin" class="size-3 mr-1" />
               {{ place.city.name }}
@@ -168,7 +181,12 @@ await fetchActivities()
               color="primary"
               class="hidden sm:flex"
             >
-              {{ activities.length }} actividad{{ activities.length !== 1 ? 'es' : '' }}
+              {{ activities.length }}
+              {{
+                activities.length === 1
+                  ? t('placeDetail.activityWord.singular')
+                  : t('placeDetail.activityWord.plural')
+              }}
             </UBadge>
 
             <UButton
@@ -177,7 +195,7 @@ await fetchActivities()
               variant="outline"
               @click="openEditPlace"
             >
-              Editar lugar
+              {{ t('placeDetail.editButton') }}
             </UButton>
           </div>
         </template>
@@ -191,10 +209,10 @@ await fetchActivities()
         class="flex flex-col items-center justify-center gap-3 py-16 text-center"
       >
         <UIcon name="i-lucide-map-pin-off" class="size-10 text-muted" />
-        <p class="font-medium text-highlighted">No se pudo cargar el lugar</p>
+        <p class="font-medium text-highlighted">{{ t('placeDetail.error.title') }}</p>
         <p class="text-sm text-muted">{{ placeError.message }}</p>
         <UButton variant="outline" color="neutral" icon="i-lucide-refresh-cw" @click="refreshPlace">
-          Reintentar
+          {{ t('placeDetail.error.retry') }}
         </UButton>
       </div>
 
@@ -219,7 +237,7 @@ await fetchActivities()
           >
             {{ tc(place.description_i18n) }}
           </p>
-          <p v-else class="text-muted text-sm italic">Sin descripción</p>
+          <p v-else class="text-muted text-sm italic">{{ t('placeDetail.noDescription') }}</p>
 
           <!-- Phone + Website -->
           <div v-if="placeMeta.phone || placeMeta.website" class="flex flex-wrap gap-4">
@@ -245,7 +263,9 @@ await fetchActivities()
 
           <!-- Opening hours -->
           <div v-if="placeMeta.opening_hours_text?.length">
-            <p class="text-xs font-medium text-muted uppercase tracking-wide mb-1">Horarios</p>
+            <p class="text-xs font-medium text-muted uppercase tracking-wide mb-1">
+              {{ t('placeDetail.openingHours') }}
+            </p>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-0.5">
               <p
                 v-for="(line, i) in placeMeta.opening_hours_text"
@@ -272,13 +292,13 @@ await fetchActivities()
         <!-- Actividades -->
         <div class="flex items-center justify-between mb-4">
           <h2 class="font-semibold text-base">
-            Actividades
+            {{ t('placeDetail.activitiesHeading') }}
             <UBadge variant="subtle" color="neutral" class="ml-2">
               {{ activities.length }}
             </UBadge>
           </h2>
           <UButton icon="i-lucide-plus" size="sm" @click="openCreateActivity">
-            Nueva actividad
+            {{ t('placeDetail.newActivityButton') }}
           </UButton>
         </div>
 

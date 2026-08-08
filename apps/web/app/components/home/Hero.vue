@@ -24,6 +24,7 @@ const { t } = useI18n()
 
 <style scoped>
 .hero {
+  margin-top: 2rem;
   padding: var(--space-6) var(--space-0) var(--space-8);
 }
 
@@ -43,7 +44,8 @@ const { t } = useI18n()
 }
 
 .hero__accent {
-  color: var(--color-secondary-500);
+  /* color: var(--color-secondary-500); */
+  color: var(--test-color);
 }
 
 .hero__subtitle {

@@ -20,26 +20,44 @@ const TARGET_LOCALES = ['es', 'he', 'en', 'ru'] as const
 
 /**
  * Takes an existing i18n JSONB field and fills in missing languages using DeepL.
- * Only translates locales that are missing or empty.
+ * When `previous` (the value currently stored in the DB) is passed, any locale
+ * whose text changed vs. `previous` is treated as the new source of truth and
+ * propagated to every other locale — not just the empty ones. This is what makes
+ * editing a name in one language retranslate the others instead of leaving them
+ * stale. Without `previous` (e.g. creating a new row), only empty locales are filled.
  * Returns the enriched Record<string, string>.
  */
 export async function enrichI18nField(
   existing: Record<string, string>,
-  apiKey: string
+  apiKey: string,
+  previous?: Record<string, string>
 ): Promise<Record<string, string>> {
-  const sourceLocale = Object.entries(existing).find(([, v]) => v?.trim())?.[0]
+  const changedLocales = previous
+    ? TARGET_LOCALES.filter(
+        (locale) => existing[locale]?.trim() && existing[locale] !== previous[locale]
+      )
+    : []
+
+  const sourceLocale = changedLocales[0] ?? Object.entries(existing).find(([, v]) => v?.trim())?.[0]
   if (!sourceLocale) return existing
 
   const sourceText = existing[sourceLocale]
   if (!sourceText?.trim()) return existing
 
   const result: Record<string, string> = { ...existing }
-  const missingLocales = TARGET_LOCALES.filter((locale) => !existing[locale]?.trim())
 
-  if (missingLocales.length === 0) return existing
+  // Si se editó manualmente uno o más idiomas, retraducimos el resto a partir del
+  // primero que cambió, sin pisar los que también se editaron a mano en el mismo
+  // guardado. Si no hay ningún cambio detectado, sólo completamos los vacíos.
+  const targetLocales =
+    changedLocales.length > 0
+      ? TARGET_LOCALES.filter((locale) => !changedLocales.includes(locale))
+      : TARGET_LOCALES.filter((locale) => !existing[locale]?.trim())
+
+  if (targetLocales.length === 0) return existing
 
   await Promise.all(
-    missingLocales.map(async (targetLocale) => {
+    targetLocales.map(async (targetLocale) => {
       try {
         const res = await fetch(DEEPL_API_URL, {
           method: 'POST',

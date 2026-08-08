@@ -27,21 +27,33 @@ export const useSuggestions = () => {
   const toast = useToast()
 
   const suggestions = ref<Suggestion[]>([])
+  const total = ref(0)
   const loading = ref(false)
   const actionLoading = ref(false)
 
-  // Filtro de status activo
+  // Filtros
   const statusFilter = ref<SuggestionStatus | 'all'>('pending')
+  const categoryFilter = ref<string | undefined>(undefined)
+  const cityFilter = ref<string | undefined>(undefined)
+  const isFreeFilter = ref<'all' | 'true' | 'false'>('all')
+  const page = ref(1)
+  const pageSize = ref(10)
 
-  // Fetch con filtro
+  // Fetch con filtros y paginación
   const fetch = async () => {
     loading.value = true
     try {
-      const params = statusFilter.value !== 'all' ? { status: statusFilter.value } : {}
+      const params: Record<string, string | number> = { page: page.value, pageSize: pageSize.value }
+      if (statusFilter.value !== 'all') params.status = statusFilter.value
+      if (categoryFilter.value) params.category_id = categoryFilter.value
+      if (cityFilter.value) params.city = cityFilter.value
+      if (isFreeFilter.value !== 'all') params.is_free = isFreeFilter.value
 
-      suggestions.value = await $fetch<Suggestion[]>('/api/suggestions', {
+      const result = await $fetch<{ data: Suggestion[]; count: number }>('/api/suggestions', {
         params,
       })
+      suggestions.value = result.data
+      total.value = result.count
     } catch (e) {
       toast.add({
         title: 'Error cargando sugerencias',
@@ -136,14 +148,26 @@ export const useSuggestions = () => {
     rejected: suggestions.value.filter((s) => s.status === 'rejected').length,
   }))
 
-  // Re-fetch cuando cambia el filtro
-  watch(statusFilter, fetch)
+  // Reset a página 1 cuando cambia cualquier filtro (dispara el watch de página)
+  watch([statusFilter, categoryFilter, cityFilter, isFreeFilter], () => {
+    if (page.value !== 1) page.value = 1
+    else fetch()
+  })
+
+  // Re-fetch cuando cambia de página
+  watch(page, fetch)
 
   return {
     suggestions,
+    total,
     loading,
     actionLoading,
     statusFilter,
+    categoryFilter,
+    cityFilter,
+    isFreeFilter,
+    page,
+    pageSize,
     counts,
     fetch,
     approve,

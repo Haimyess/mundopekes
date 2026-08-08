@@ -29,7 +29,13 @@ onMounted(async () => {
   <nav class="navbar">
     <UContainer>
       <div class="navbar__inner">
-        <NuxtLink to="/" class="navbar__logo">MundoPekes</NuxtLink>
+        <NuxtLink to="/" class="navbar__logo">
+          <NuxtImg
+            src="/mundopekes_logo_nobg.png"
+            alt="Mundo Pekes Logo"
+            class="navbar__logo-img"
+          />
+        </NuxtLink>
 
         <!-- Desktop -->
         <div class="navbar__desktop">
@@ -103,6 +109,21 @@ onMounted(async () => {
 </template>
 
 <style scoped>
+.navbar__logo {
+  display: flex;
+  align-items: center;
+}
+
+.navbar__logo-img {
+  /* Controla la altura máxima según tu diseño */
+  height: 100px;
+  width: auto;
+  object-fit: contain;
+  margin-top: 0.5rem;
+  position: relative;
+  left: -30px;
+}
+
 .navbar {
   background-color: white;
 }
@@ -113,9 +134,10 @@ onMounted(async () => {
   justify-content: space-between;
   height: 48px;
   gap: 0.5rem;
+  margin-top: 1rem;
 }
 
-.navbar__logo {
+/* .navbar__logo {
   font-size: 1.35rem;
   font-weight: 800;
   color: var(--color-secondary-700);
@@ -123,7 +145,7 @@ onMounted(async () => {
   letter-spacing: -0.02em;
   flex-shrink: 0;
   transition: opacity 0.2s ease;
-}
+} */
 .navbar__logo:hover {
   opacity: 0.8;
 }

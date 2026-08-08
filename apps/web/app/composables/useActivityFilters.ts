@@ -264,7 +264,11 @@ export const useActivityFilters = () => {
     }
 
     // Paso 2: query principal con joins
-    let query = client.from('activities').select(ACTIVITY_SELECT).eq('status', 'approved')
+    let query = client
+      .from('activities')
+      .select(ACTIVITY_SELECT)
+      .eq('status', 'approved')
+      .eq('place.status', 'active')
 
     if (placeIds?.length) {
       query = query.in('place_id', placeIds)

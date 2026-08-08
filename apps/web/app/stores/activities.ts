@@ -383,6 +383,7 @@ export const useActivitiesStore = defineStore('activities', () => {
         .from('activities')
         .select(ACTIVITY_SELECT)
         .eq('status', 'approved')
+        .eq('place.status', 'active')
 
       if (err) throw err
 

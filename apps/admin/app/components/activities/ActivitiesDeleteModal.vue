@@ -8,27 +8,30 @@ const emit = defineEmits<{
   confirm: []
 }>()
 
+const { t } = useI18n()
 const open = ref(false)
+
+const title = computed(() =>
+  props.count > 1
+    ? t('activitiesDeleteModal.titlePlural', { count: props.count })
+    : t('activitiesDeleteModal.titleSingular', { count: props.count })
+)
 </script>
 
 <template>
-  <UModal
-    v-model:open="open"
-    :title="`Eliminar ${count} actividad${count > 1 ? 'es' : ''}`"
-    description="Esta acción no se puede deshacer."
-  >
+  <UModal v-model:open="open" :title="title" :description="t('activitiesDeleteModal.description')">
     <slot />
 
     <template #body>
       <div class="flex justify-end gap-2">
         <UButton
-          label="Cancelar"
+          :label="t('activitiesDeleteModal.cancel')"
           color="neutral"
           variant="subtle"
           @click="open = false"
         />
         <UButton
-          label="Eliminar"
+          :label="t('activitiesDeleteModal.confirm')"
           color="error"
           variant="solid"
           :loading="loading"

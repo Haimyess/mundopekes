@@ -21,15 +21,8 @@ const emit = defineEmits<{
 
 const { approve, reject, remove, actionLoading } = useSuggestions()
 const toast = useToast()
-
-const LOCALES = [
-  { key: 'es', label: 'Español' },
-  { key: 'he', label: 'עברית' },
-  { key: 'en', label: 'English' },
-  { key: 'ru', label: 'Русский' },
-]
-
-const activeLocale = ref('he')
+const { t, locale } = useI18n()
+const { uploadFromUrl } = useImageUpload()
 
 // ── Reference data (loaded once for the edit form) ────────────────────────
 type RefSubcat = { id: string; name_i18n: Record<string, string>; slug: string }
@@ -55,26 +48,43 @@ onMounted(async () => {
   }
 })
 
-// Human-readable labels for the admin (hardcoded Spanish, no i18n needed here)
-const AGE_LABELS: Record<string, string> = {
-  'age.all': 'Todas las edades',
-  'age.babies': 'Bebés (0-11m)',
-  'age.toddlers': 'Pequeños (1-3 años)',
-  'age.preschool': 'Preescolar (3-6 años)',
-  'age.school': 'Escolar (6-12 años)',
-  'age.teens': 'Adolescentes (12+)',
-}
-const SEASON_LABELS: Record<string, string> = {
-  all: 'Todas',
-  spring: 'Primavera',
-  summer: 'Verano',
-  autumn: 'Otoño',
-  winter: 'Invierno',
-}
-const ageLabel = (key: string) => AGE_LABELS[key] ?? key
-const seasonLabel = (value: string) => SEASON_LABELS[value] ?? value
+// Human-readable labels passed down to UiActivityFields — same namespace pattern
+// as ActivitiesSlideover so both editors share look & feel.
+const AGE_LABELS = computed<Record<string, string>>(() => ({
+  'age.all': t('suggestionsSlideover.ageLabels.all'),
+  'age.babies': t('suggestionsSlideover.ageLabels.babies'),
+  'age.toddlers': t('suggestionsSlideover.ageLabels.toddlers'),
+  'age.preschool': t('suggestionsSlideover.ageLabels.preschool'),
+  'age.school': t('suggestionsSlideover.ageLabels.school'),
+  'age.teens': t('suggestionsSlideover.ageLabels.teens'),
+}))
+const SEASON_LABELS = computed<Record<string, string>>(() => ({
+  all: t('suggestionsSlideover.seasonLabels.all'),
+  spring: t('suggestionsSlideover.seasonLabels.spring'),
+  summer: t('suggestionsSlideover.seasonLabels.summer'),
+  autumn: t('suggestionsSlideover.seasonLabels.autumn'),
+  winter: t('suggestionsSlideover.seasonLabels.winter'),
+}))
+const allAgeId = computed(() => dbAgeRanges.value.find((a) => a.label_key === 'age.all')?.id)
 const catName = (c: RefSubcat) =>
   c.name_i18n?.he || c.name_i18n?.es || Object.values(c.name_i18n ?? {})[0] || c.slug
+
+const DAY_ES: Record<keyof WizardSchedule, string> = {
+  sunday: 'Domingo',
+  monday: 'Lunes',
+  tuesday: 'Martes',
+  wednesday: 'Miércoles',
+  thursday: 'Jueves',
+  friday: 'Viernes',
+  saturday: 'Sábado',
+}
+const buildScheduleText = (schedule: WizardSchedule): string =>
+  SCHEDULE_DAYS.map((day) => {
+    const d = schedule[day]
+    return d.open ? `${DAY_ES[day]}: ${d.start}–${d.end}` : null
+  })
+    .filter(Boolean)
+    .join(', ')
 
 const showRejectForm = ref(false)
 const rejectionReason = ref('')
@@ -89,7 +99,7 @@ const handleApprove = async () => {
 const handleReject = async () => {
   if (!props.suggestion) return
   if (!rejectionReason.value.trim()) {
-    toast.add({ title: 'Ingresá un motivo de rechazo', color: 'error' })
+    toast.add({ title: t('suggestionsSlideover.toast.rejectReasonRequired'), color: 'error' })
     return
   }
   await reject(props.suggestion.id, rejectionReason.value)
@@ -126,14 +136,14 @@ const statusColor = computed(
 const statusLabel = computed(
   () =>
     ({
-      pending: 'Pendiente',
-      approved: 'Aprobada',
-      rejected: 'Rechazada',
+      pending: t('suggestionsSlideover.status.pending'),
+      approved: t('suggestionsSlideover.status.approved'),
+      rejected: t('suggestionsSlideover.status.rejected'),
     })[props.suggestion?.status ?? 'pending']
 )
 
 const formatDate = (date: string) =>
-  new Date(date).toLocaleDateString('es-AR', {
+  new Date(date).toLocaleDateString(locale.value === 'en' ? 'en-US' : 'es-AR', {
     day: '2-digit',
     month: 'short',
     year: 'numeric',
@@ -153,26 +163,17 @@ const editForm = reactive({
   stroller_friendly: false,
   open_weekends: false,
   is_free: false,
-  schedule: '',
+  images: [] as string[],
   // Metadata fields
   meta_title_i18n: {} as Record<string, string>,
   meta_phone: '',
   meta_website: '',
-  meta_opening_hours_text: '', // newline-separated for editing
+  schedule_structured: defaultSchedule() as WizardSchedule,
   meta_hours_unknown: false,
+  meta_has_shadow: false,
+  meta_has_bathrooms: false,
+  meta_price: null as number | null,
 })
-
-const toggleBestSeason = (value: string) => {
-  const idx = editForm.best_season.indexOf(value)
-  if (idx === -1) editForm.best_season.push(value)
-  else editForm.best_season.splice(idx, 1)
-}
-
-const toggleAgeId = (id: number) => {
-  const idx = editForm.age_range_ids.indexOf(id)
-  if (idx === -1) editForm.age_range_ids.push(id)
-  else editForm.age_range_ids.splice(idx, 1)
-}
 
 // Cuando abre el modo edición, copiar los valores actuales al form
 const startEditing = () => {
@@ -190,15 +191,19 @@ const startEditing = () => {
   editForm.stroller_friendly = s.stroller_friendly
   editForm.open_weekends = s.open_weekends
   editForm.is_free = s.is_free
-  editForm.schedule = s.schedule ?? ''
+  editForm.images = [...(s.images ?? [])]
   // Metadata
   editForm.meta_title_i18n = { ...(m.title_i18n ?? {}) }
   editForm.meta_phone = m.phone ?? ''
   editForm.meta_website = m.website ?? ''
-  editForm.meta_opening_hours_text = Array.isArray(m.opening_hours_text)
-    ? m.opening_hours_text.join('\n')
-    : ''
+  // Merge (not replace) — guards against suggestions ingested before the agent
+  // guaranteed all 7 days, which would otherwise show as blank/unchecked days
+  // in the editor instead of the ones that do exist.
+  editForm.schedule_structured = { ...defaultSchedule(), ...(m.schedule_structured ?? {}) }
   editForm.meta_hours_unknown = m.hours_unknown === true
+  editForm.meta_has_shadow = m.has_shadow === true
+  editForm.meta_has_bathrooms = m.has_bathrooms === true
+  editForm.meta_price = m.price ?? null
   isEditing.value = true
 }
 
@@ -211,7 +216,7 @@ const saveEdit = async () => {
   const toast = useToast()
 
   if (!Object.values(editForm.name_i18n).some((v) => v?.trim())) {
-    toast.add({ title: 'El nombre es requerido en al menos un idioma', color: 'error' })
+    toast.add({ title: t('suggestionsSlideover.toast.nameRequired'), color: 'error' })
     return
   }
 
@@ -229,25 +234,29 @@ const saveEdit = async () => {
         stroller_friendly: editForm.stroller_friendly,
         open_weekends: editForm.open_weekends,
         is_free: editForm.is_free,
-        schedule: editForm.schedule,
+        images: editForm.images,
+        schedule: editForm.meta_hours_unknown
+          ? null
+          : buildScheduleText(editForm.schedule_structured),
         // Partial metadata — PUT will MERGE with existing, not overwrite
         metadata: {
           title_i18n: editForm.meta_title_i18n,
           phone: editForm.meta_phone || null,
           website: editForm.meta_website || null,
-          opening_hours_text: editForm.meta_opening_hours_text
-            ? editForm.meta_opening_hours_text.split('\n').filter(Boolean)
-            : null,
           hours_unknown: editForm.meta_hours_unknown,
+          schedule_structured: editForm.meta_hours_unknown ? null : editForm.schedule_structured,
+          has_shadow: editForm.meta_has_shadow,
+          has_bathrooms: editForm.meta_has_bathrooms,
+          price: editForm.is_free ? null : editForm.meta_price,
         },
       },
     })
-    toast.add({ title: 'Sugerencia actualizada', color: 'success' })
+    toast.add({ title: t('suggestionsSlideover.toast.updated'), color: 'success' })
     isEditing.value = false
     emit('rejected') // reutilizamos para refrescar la lista
   } catch (e) {
     toast.add({
-      title: 'Error al guardar',
+      title: t('suggestionsSlideover.toast.saveError'),
       description: e instanceof Error ? e.message : String(e),
       color: 'error',
     })
@@ -267,10 +276,11 @@ watch(
 )
 
 const slideoverTitle = computed(() => {
-  if (!props.suggestion) return 'Sugerencia'
+  const fallback = t('suggestionsSlideover.fallbackTitle')
+  if (!props.suggestion) return fallback
   const nameI18n = props.suggestion.name_i18n
-  const name = nameI18n['he'] || nameI18n['es'] || Object.values(nameI18n)[0] || 'Sugerencia'
-  return isEditing.value ? `Editando: ${name}` : name
+  const name = nameI18n['he'] || nameI18n['es'] || Object.values(nameI18n)[0] || fallback
+  return isEditing.value ? `${t('suggestionsSlideover.editingPrefix')}: ${name}` : name
 })
 
 // ── Metadata helpers ──────────────────────────────────────────────────────
@@ -280,7 +290,9 @@ type SuggestionMeta = {
   phone?: string | null
   website?: string | null
   opening_hours_text?: string[] | null
+  photos?: string[] | null
   hours_unknown?: boolean | null
+  schedule_structured?: WizardSchedule | null
   has_shadow?: boolean | null
   has_bathrooms?: boolean | null
   price?: number | null
@@ -298,17 +310,7 @@ const pickI18n = (obj: Record<string, string> | null | undefined): string => {
 </script>
 
 <template>
-  <USlideover
-    :open="open"
-    :title="slideoverTitle"
-    :close="{ onClick: () => emit('close') }"
-    :ui="{ content: 'sm:max-w-xl' }"
-    @update:open="
-      (val) => {
-        if (!val) emit('close')
-      }
-    "
-  >
+  <UiEntitySlideover :open="open" :title="slideoverTitle" @close="emit('close')">
     <template #body>
       <div v-if="suggestion" class="flex flex-col gap-5 p-4">
         <!-- ── MODO VISTA ────────────────────────────────── -->
@@ -316,7 +318,7 @@ const pickI18n = (obj: Record<string, string> | null | undefined): string => {
           <!-- Título de la actividad (distinto del nombre del lugar) -->
           <div v-if="meta.title_i18n && pickI18n(meta.title_i18n)">
             <p class="text-xs font-medium text-(--ui-text-muted) uppercase tracking-wide mb-1">
-              Título de la actividad
+              {{ t('suggestionsSlideover.activityTitleLabel') }}
             </p>
             <p class="text-base font-semibold">{{ pickI18n(meta.title_i18n) }}</p>
           </div>
@@ -335,7 +337,9 @@ const pickI18n = (obj: Record<string, string> | null | undefined): string => {
               (suggestion as any).description_i18n?.he || (suggestion as any).description_i18n?.es
             "
           >
-            <p class="text-sm font-medium text-(--ui-text-muted) mb-1">Descripción</p>
+            <p class="text-sm font-medium text-(--ui-text-muted) mb-1">
+              {{ t('suggestionsSlideover.descriptionLabel') }}
+            </p>
             <p class="text-sm">
               {{
                 (suggestion as any).description_i18n?.he ||
@@ -346,7 +350,9 @@ const pickI18n = (obj: Record<string, string> | null | undefined): string => {
           </div>
 
           <div>
-            <p class="text-sm font-medium text-(--ui-text-muted) mb-2">Ubicación</p>
+            <p class="text-sm font-medium text-(--ui-text-muted) mb-2">
+              {{ t('suggestionsSlideover.locationLabel') }}
+            </p>
             <div class="flex items-center gap-2">
               <UIcon name="i-lucide-map-pin" class="text-primary size-4 shrink-0" />
               <span class="text-sm">
@@ -360,7 +366,9 @@ const pickI18n = (obj: Record<string, string> | null | undefined): string => {
 
           <!-- Contacto del lugar -->
           <div v-if="meta.phone || meta.website">
-            <p class="text-sm font-medium text-(--ui-text-muted) mb-2">Contacto</p>
+            <p class="text-sm font-medium text-(--ui-text-muted) mb-2">
+              {{ t('suggestionsSlideover.contactLabel') }}
+            </p>
             <div class="flex flex-col gap-1.5">
               <a
                 v-if="meta.phone"
@@ -384,16 +392,20 @@ const pickI18n = (obj: Record<string, string> | null | undefined): string => {
           </div>
 
           <div v-if="suggestion.type?.length">
-            <p class="text-sm font-medium text-(--ui-text-muted) mb-2">Tipo</p>
+            <p class="text-sm font-medium text-(--ui-text-muted) mb-2">
+              {{ t('suggestionsSlideover.typeLabel') }}
+            </p>
             <div class="flex flex-wrap gap-2">
-              <UBadge v-for="t in suggestion.type" :key="t" color="neutral" variant="subtle">
-                {{ t }}
+              <UBadge v-for="type in suggestion.type" :key="type" color="neutral" variant="subtle">
+                {{ type }}
               </UBadge>
             </div>
           </div>
 
           <div v-if="suggestion.best_season?.length">
-            <p class="text-sm font-medium text-(--ui-text-muted) mb-2">Mejor temporada</p>
+            <p class="text-sm font-medium text-(--ui-text-muted) mb-2">
+              {{ t('suggestionsSlideover.bestSeasonLabel') }}
+            </p>
             <div class="flex flex-wrap gap-2">
               <UBadge v-for="s in suggestion.best_season" :key="s" color="info" variant="subtle">
                 {{ s }}
@@ -402,7 +414,9 @@ const pickI18n = (obj: Record<string, string> | null | undefined): string => {
           </div>
 
           <div>
-            <p class="text-sm font-medium text-(--ui-text-muted) mb-2">Características</p>
+            <p class="text-sm font-medium text-(--ui-text-muted) mb-2">
+              {{ t('suggestionsSlideover.featuresLabel') }}
+            </p>
             <div class="grid grid-cols-2 gap-2">
               <div class="flex items-center gap-2 text-sm">
                 <UIcon
@@ -410,7 +424,7 @@ const pickI18n = (obj: Record<string, string> | null | undefined): string => {
                   :class="suggestion.is_free ? 'text-success-500' : 'text-(--ui-text-muted)'"
                   class="size-4"
                 />
-                Gratuito
+                {{ t('suggestionsSlideover.features.free') }}
               </div>
               <div class="flex items-center gap-2 text-sm">
                 <UIcon
@@ -420,7 +434,7 @@ const pickI18n = (obj: Record<string, string> | null | undefined): string => {
                   "
                   class="size-4"
                 />
-                Apto cochecito
+                {{ t('suggestionsSlideover.features.strollerFriendly') }}
               </div>
               <div class="flex items-center gap-2 text-sm">
                 <UIcon
@@ -428,7 +442,7 @@ const pickI18n = (obj: Record<string, string> | null | undefined): string => {
                   :class="suggestion.open_weekends ? 'text-success-500' : 'text-(--ui-text-muted)'"
                   class="size-4"
                 />
-                Fines de semana
+                {{ t('suggestionsSlideover.features.weekends') }}
               </div>
               <div class="flex items-center gap-2 text-sm">
                 <UIcon
@@ -436,7 +450,7 @@ const pickI18n = (obj: Record<string, string> | null | undefined): string => {
                   :class="meta.has_shadow ? 'text-success-500' : 'text-(--ui-text-muted)'"
                   class="size-4"
                 />
-                Sombra
+                {{ t('suggestionsSlideover.features.shadow') }}
               </div>
               <div class="flex items-center gap-2 text-sm">
                 <UIcon
@@ -444,7 +458,7 @@ const pickI18n = (obj: Record<string, string> | null | undefined): string => {
                   :class="meta.has_bathrooms ? 'text-success-500' : 'text-(--ui-text-muted)'"
                   class="size-4"
                 />
-                Baños
+                {{ t('suggestionsSlideover.features.bathrooms') }}
               </div>
             </div>
             <!-- Precio cuando no es gratuito -->
@@ -459,14 +473,16 @@ const pickI18n = (obj: Record<string, string> | null | undefined): string => {
 
           <!-- Horarios: hours_unknown → alerta; opening_hours_text → Google; fallback → schedule -->
           <div v-if="meta.hours_unknown || meta.opening_hours_text?.length || suggestion.schedule">
-            <p class="text-sm font-medium text-(--ui-text-muted) mb-2">Horario</p>
+            <p class="text-sm font-medium text-(--ui-text-muted) mb-2">
+              {{ t('suggestionsSlideover.scheduleLabel') }}
+            </p>
             <UAlert
               v-if="meta.hours_unknown"
               color="warning"
               variant="subtle"
               icon="i-lucide-clock"
-              title="Horarios pendientes de revisión"
-              description="El usuario no conocía los horarios al enviar la sugerencia."
+              :title="t('suggestionsSlideover.hoursUnknownTitle')"
+              :description="t('suggestionsSlideover.hoursUnknownDescription')"
             />
             <div v-else-if="meta.opening_hours_text?.length" class="flex flex-col gap-0.5">
               <p v-for="(line, i) in meta.opening_hours_text" :key="i" class="text-sm">
@@ -479,7 +495,9 @@ const pickI18n = (obj: Record<string, string> | null | undefined): string => {
           </div>
 
           <div v-if="suggestion.status === 'rejected' && suggestion.rejection_reason">
-            <p class="text-sm font-medium text-(--ui-text-muted) mb-1">Motivo de rechazo</p>
+            <p class="text-sm font-medium text-(--ui-text-muted) mb-1">
+              {{ t('suggestionsSlideover.rejectionReasonLabel') }}
+            </p>
             <UAlert
               color="error"
               variant="subtle"
@@ -490,10 +508,10 @@ const pickI18n = (obj: Record<string, string> | null | undefined): string => {
 
           <!-- Form rechazo inline -->
           <div v-if="showRejectForm" class="flex flex-col gap-3">
-            <UFormField label="Motivo del rechazo" required>
+            <UFormField :label="t('suggestionsSlideover.rejectForm.label')" required>
               <UTextarea
                 v-model="rejectionReason"
-                placeholder="Explicá por qué se rechaza esta sugerencia..."
+                :placeholder="t('suggestionsSlideover.rejectForm.placeholder')"
                 :rows="3"
                 class="w-full"
               />
@@ -505,10 +523,10 @@ const pickI18n = (obj: Record<string, string> | null | undefined): string => {
                 icon="i-lucide-x-circle"
                 @click="handleReject"
               >
-                Confirmar rechazo
+                {{ t('suggestionsSlideover.rejectForm.confirm') }}
               </UButton>
               <UButton color="neutral" variant="outline" @click="showRejectForm = false">
-                Cancelar
+                {{ t('suggestionsSlideover.cancel') }}
               </UButton>
             </div>
           </div>
@@ -516,64 +534,40 @@ const pickI18n = (obj: Record<string, string> | null | undefined): string => {
 
         <!-- ── MODO EDICIÓN ──────────────────────────────── -->
         <template v-else>
-          <!-- Nombre del lugar -->
-          <UFormField label="Nombre del lugar" required>
-            <UTabs
-              v-model="activeLocale"
-              :items="LOCALES.map((l) => ({ label: l.label, value: l.key }))"
-              class="w-full"
-            >
-              <template #default="{ item }">
-                <span class="flex items-center gap-1">
-                  {{ item.label }}
-                  <span
-                    v-if="!editForm.name_i18n[item.value]?.trim()"
-                    class="w-2 h-2 rounded-full bg-orange-400 inline-block"
-                  />
-                </span>
-              </template>
-            </UTabs>
-            <UInput
-              v-model="editForm.name_i18n[activeLocale]"
-              :placeholder="`Nombre en ${LOCALES.find((l) => l.key === activeLocale)?.label}`"
-              class="w-full mt-2"
-            />
-          </UFormField>
+          <UiI18nTabs
+            v-model="editForm.name_i18n"
+            :label="t('suggestionsSlideover.form.placeNameLabel')"
+            required
+          />
 
-          <!-- Descripción del lugar -->
-          <UFormField label="Descripción">
-            <UTextarea
-              v-model="editForm.description_i18n[activeLocale]"
-              :placeholder="`Descripción en ${LOCALES.find((l) => l.key === activeLocale)?.label}...`"
-              :rows="3"
-              class="w-full"
-            />
-          </UFormField>
+          <UiI18nTabs
+            v-model="editForm.description_i18n"
+            :label="t('suggestionsSlideover.descriptionLabel')"
+            type="textarea"
+            :rows="3"
+          />
 
-          <!-- Título de la actividad (metadata.title_i18n) -->
-          <UFormField label="Título de la actividad">
-            <p class="text-xs text-(--ui-text-muted) mb-1">
-              Mismo selector de idioma que el nombre
-            </p>
-            <UInput
-              v-model="editForm.meta_title_i18n[activeLocale]"
-              :placeholder="`Ej: Senderismo en ${LOCALES.find((l) => l.key === activeLocale)?.label}`"
-              class="w-full"
-            />
-          </UFormField>
+          <UiI18nTabs
+            v-model="editForm.meta_title_i18n"
+            :label="t('suggestionsSlideover.activityTitleLabel')"
+          />
 
           <!-- Ubicación -->
           <div class="grid grid-cols-2 gap-3">
-            <UFormField label="Ciudad">
+            <UFormField :label="t('suggestionsSlideover.form.cityLabel')">
               <UInput v-model="editForm.location.city" placeholder="Tel Aviv" class="w-full" />
             </UFormField>
-            <UFormField label="Dirección">
-              <UInput v-model="editForm.location.address" placeholder="Calle 123" class="w-full" />
+            <UFormField :label="t('suggestionsSlideover.form.addressLabel')">
+              <UInput
+                v-model="editForm.location.address"
+                :placeholder="t('suggestionsSlideover.form.addressPlaceholder')"
+                class="w-full"
+              />
             </UFormField>
           </div>
 
           <!-- Categoría (subcategorías DB, selección única) -->
-          <UFormField label="Categoría">
+          <UFormField :label="t('suggestionsSlideover.form.categoryLabel')">
             <div class="flex flex-wrap gap-2 mt-1">
               <UBadge
                 v-for="cat in subcategories"
@@ -586,85 +580,53 @@ const pickI18n = (obj: Record<string, string> | null | undefined): string => {
                 {{ catName(cat) }}
               </UBadge>
               <span v-if="!subcategories.length" class="text-xs text-(--ui-text-muted)">
-                Cargando…
-              </span>
-            </div>
-          </UFormField>
-
-          <!-- Temporadas (VALUES desde DB) -->
-          <UFormField label="Temporadas">
-            <div class="flex flex-wrap gap-2 mt-1">
-              <UBadge
-                v-for="s in dbSeasons"
-                :key="s.value"
-                :color="editForm.best_season.includes(s.value) ? 'info' : 'neutral'"
-                :variant="editForm.best_season.includes(s.value) ? 'solid' : 'subtle'"
-                class="cursor-pointer select-none"
-                @click="toggleBestSeason(s.value)"
-              >
-                {{ seasonLabel(s.value) }}
-              </UBadge>
-              <span v-if="!dbSeasons.length" class="text-xs text-(--ui-text-muted)">
-                Cargando…
-              </span>
-            </div>
-          </UFormField>
-
-          <!-- Edades (IDs desde DB) -->
-          <UFormField label="Edades">
-            <div class="flex flex-wrap gap-2 mt-1">
-              <UBadge
-                v-for="a in dbAgeRanges"
-                :key="a.id"
-                :color="editForm.age_range_ids.includes(a.id) ? 'secondary' : 'neutral'"
-                :variant="editForm.age_range_ids.includes(a.id) ? 'solid' : 'subtle'"
-                class="cursor-pointer select-none"
-                @click="toggleAgeId(a.id)"
-              >
-                {{ ageLabel(a.label_key) }}
-              </UBadge>
-              <span v-if="!dbAgeRanges.length" class="text-xs text-(--ui-text-muted)">
-                Cargando…
+                {{ t('suggestionsSlideover.loading') }}
               </span>
             </div>
           </UFormField>
 
           <!-- Contacto del lugar -->
           <div class="grid grid-cols-2 gap-3">
-            <UFormField label="Teléfono">
+            <UFormField :label="t('suggestionsSlideover.form.phoneLabel')">
               <UInput v-model="editForm.meta_phone" placeholder="+972 50 000 0000" class="w-full" />
             </UFormField>
-            <UFormField label="Website">
+            <UFormField :label="t('suggestionsSlideover.form.websiteLabel')">
               <UInput v-model="editForm.meta_website" placeholder="https://..." class="w-full" />
             </UFormField>
           </div>
 
-          <!-- Horarios del lugar (texto de Google) -->
-          <UFormField label="Horarios del lugar">
-            <UTextarea
-              v-model="editForm.meta_opening_hours_text"
-              placeholder="Lunes: 09:00–17:00&#10;Martes: 09:00–17:00&#10;..."
-              :rows="4"
-              class="w-full"
-            />
-          </UFormField>
-
-          <!-- Toggle horarios desconocidos -->
-          <UCheckbox
-            v-model="editForm.meta_hours_unknown"
-            label="Horarios pendientes de revisión (no conocidos)"
+          <!-- Mismo bloque de campos que ActivitiesSlideover: edades, temporadas, -->
+          <!-- gratis/precio, horario, opciones (incluye sombra/baños) e imágenes -->
+          <UiActivityFields
+            v-model:age-range-ids="editForm.age_range_ids"
+            v-model:best-season="editForm.best_season"
+            v-model:schedule-structured="editForm.schedule_structured"
+            v-model:hours-unknown="editForm.meta_hours_unknown"
+            v-model:is-free="editForm.is_free"
+            v-model:price="editForm.meta_price"
+            v-model:stroller-friendly="editForm.stroller_friendly"
+            v-model:open-weekends="editForm.open_weekends"
+            v-model:has-shadow="editForm.meta_has_shadow"
+            v-model:has-bathrooms="editForm.meta_has_bathrooms"
+            v-model:images="editForm.images"
+            :age-range-options="dbAgeRanges"
+            :season-options="dbSeasons"
+            :age-labels="AGE_LABELS"
+            :season-labels="SEASON_LABELS"
+            :all-age-id="allAgeId"
+            :google-hours-text="(meta.opening_hours_text ?? []).join('\n')"
+            :google-photos="meta.photos ?? []"
+            :upload-fn="uploadFromUrl"
+            :ages-label="t('suggestionsSlideover.form.agesLabel')"
+            :seasons-label="t('suggestionsSlideover.form.seasonsLabel')"
+            :price-label="t('suggestionsSlideover.form.priceLabel')"
+            :free-label="t('suggestionsSlideover.features.free')"
+            :options-label="t('suggestionsSlideover.featuresLabel')"
+            :stroller-friendly-label="t('suggestionsSlideover.features.strollerFriendly')"
+            :open-weekends-label="t('suggestionsSlideover.form.openWeekendsLabel')"
+            :has-shadow-label="t('suggestionsSlideover.features.shadow')"
+            :has-bathrooms-label="t('suggestionsSlideover.features.bathrooms')"
           />
-
-          <!-- Horario legible (campo legacy) -->
-          <UFormField label="Horario (texto libre)">
-            <UInput v-model="editForm.schedule" placeholder="Lun-Vie 9:00-18:00" class="w-full" />
-          </UFormField>
-
-          <div class="flex flex-col gap-2">
-            <UCheckbox v-model="editForm.is_free" label="Gratuito" />
-            <UCheckbox v-model="editForm.stroller_friendly" label="Apto cochecito" />
-            <UCheckbox v-model="editForm.open_weekends" label="Abre fines de semana" />
-          </div>
         </template>
       </div>
     </template>
@@ -672,9 +634,11 @@ const pickI18n = (obj: Record<string, string> | null | undefined): string => {
     <template #footer>
       <!-- Footer modo edición -->
       <div v-if="isEditing" class="flex justify-between gap-3 w-full">
-        <UButton color="neutral" variant="outline" @click="cancelEditing"> Cancelar </UButton>
+        <UButton color="neutral" variant="outline" @click="cancelEditing">
+          {{ t('suggestionsSlideover.cancel') }}
+        </UButton>
         <UButton icon="i-lucide-save" :loading="actionLoading" @click="saveEdit">
-          Guardar cambios
+          {{ t('suggestionsSlideover.saveChanges') }}
         </UButton>
       </div>
 
@@ -689,7 +653,7 @@ const pickI18n = (obj: Record<string, string> | null | undefined): string => {
             @click="handleDelete"
           />
           <UButton color="neutral" variant="outline" icon="i-lucide-pencil" @click="startEditing">
-            Editar
+            {{ t('suggestionsSlideover.edit') }}
           </UButton>
         </div>
 
@@ -701,7 +665,7 @@ const pickI18n = (obj: Record<string, string> | null | undefined): string => {
             icon="i-lucide-x-circle"
             @click="showRejectForm = true"
           >
-            Rechazar
+            {{ t('suggestionsSlideover.reject') }}
           </UButton>
           <UButton
             color="success"
@@ -709,7 +673,7 @@ const pickI18n = (obj: Record<string, string> | null | undefined): string => {
             :loading="actionLoading"
             @click="handleApprove"
           >
-            Aprobar y crear lugar
+            {{ t('suggestionsSlideover.approveAndCreate') }}
           </UButton>
         </div>
       </div>
@@ -717,7 +681,7 @@ const pickI18n = (obj: Record<string, string> | null | undefined): string => {
       <!-- Footer modo vista — ya procesada -->
       <div v-else class="flex justify-between w-full">
         <UButton color="neutral" variant="outline" icon="i-lucide-pencil" @click="startEditing">
-          Editar
+          {{ t('suggestionsSlideover.edit') }}
         </UButton>
         <UButton
           color="error"
@@ -726,9 +690,9 @@ const pickI18n = (obj: Record<string, string> | null | undefined): string => {
           :loading="actionLoading"
           @click="handleDelete"
         >
-          Eliminar
+          {{ t('suggestionsSlideover.delete') }}
         </UButton>
       </div>
     </template>
-  </USlideover>
+  </UiEntitySlideover>
 </template>

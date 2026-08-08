@@ -3,7 +3,9 @@
 import { VueDraggable } from 'vue-draggable-plus'
 import type { CategoryWithChildren, Category } from '~/composables/useCategories'
 
-const { tree, loading, saving, fetch, create, update, remove, reorderParents, reorderChildren } = useCategories()
+const { t } = useI18n()
+const { tree, loading, saving, fetch, create, update, remove, reorderParents, reorderChildren } =
+  useCategories()
 
 // Estado del form inline
 const editingId = ref<string | null>(null)
@@ -19,7 +21,8 @@ const newChildForm = reactive({ name: '', icon: '' })
 
 // Auto slug
 const toSlug = (name: string) =>
-  name.toLowerCase()
+  name
+    .toLowerCase()
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
     .replace(/[^a-z0-9]+/g, '-')
@@ -38,12 +41,14 @@ const saveEdit = async () => {
   await update(editingId.value, {
     name: editForm.name,
     slug: editForm.slug || toSlug(editForm.name),
-    icon: editForm.icon || null
+    icon: editForm.icon || null,
   })
   editingId.value = null
 }
 
-const cancelEdit = () => { editingId.value = null }
+const cancelEdit = () => {
+  editingId.value = null
+}
 
 // Crear padre
 const createParent = async () => {
@@ -52,7 +57,7 @@ const createParent = async () => {
     name: newParentForm.name,
     slug: toSlug(newParentForm.name),
     icon: newParentForm.icon || null,
-    parent_id: null
+    parent_id: null,
   })
   newParentForm.name = ''
   newParentForm.icon = ''
@@ -66,7 +71,7 @@ const createChild = async (parentId: string) => {
     name: newChildForm.name,
     slug: toSlug(newChildForm.name),
     icon: newChildForm.icon || null,
-    parent_id: parentId
+    parent_id: parentId,
   })
   newChildForm.name = ''
   newChildForm.icon = ''
@@ -75,7 +80,13 @@ const createChild = async (parentId: string) => {
 
 // Drag & drop padres
 const localTree = ref<CategoryWithChildren[]>([])
-watch(tree, (val) => { localTree.value = [...val] }, { immediate: true })
+watch(
+  tree,
+  (val) => {
+    localTree.value = [...val]
+  },
+  { immediate: true }
+)
 
 const onParentDragEnd = async () => {
   await reorderParents(localTree.value)
@@ -92,13 +103,13 @@ await fetch()
 <template>
   <UDashboardPanel>
     <template #header>
-      <UDashboardNavbar title="Categorías">
+      <UDashboardNavbar :title="t('categories.title')">
         <template #leading>
           <UDashboardSidebarCollapse />
         </template>
         <template #right>
           <UButton icon="i-lucide-plus" @click="showNewParent = true">
-            Nueva categoría
+            {{ t('categories.newCategory') }}
           </UButton>
         </template>
       </UDashboardNavbar>
@@ -114,14 +125,10 @@ await fetch()
         <!-- Form nueva categoría padre -->
         <UCard v-if="showNewParent" class="border-dashed">
           <div class="flex items-center gap-3">
-            <UInput
-              v-model="newParentForm.icon"
-              placeholder="i-lucide-tag"
-              class="w-40"
-            />
+            <UInput v-model="newParentForm.icon" placeholder="i-lucide-tag" class="w-40" />
             <UInput
               v-model="newParentForm.name"
-              placeholder="Nombre de la categoría"
+              :placeholder="t('categories.categoryNamePlaceholder')"
               class="flex-1"
               @keyup.enter="createParent"
             />
@@ -157,11 +164,7 @@ await fetch()
               />
 
               <!-- Ícono -->
-              <UIcon
-                v-if="parent.icon"
-                :name="parent.icon"
-                class="size-5 text-primary shrink-0"
-              />
+              <UIcon v-if="parent.icon" :name="parent.icon" class="size-5 text-primary shrink-0" />
               <div v-else class="size-5 shrink-0" />
 
               <!-- Modo edición inline -->
@@ -173,12 +176,7 @@ await fetch()
                   @keyup.enter="saveEdit"
                   @keyup.esc="cancelEdit"
                 />
-                <UButton
-                  size="xs"
-                  icon="i-lucide-check"
-                  :loading="saving"
-                  @click="saveEdit"
-                />
+                <UButton size="xs" icon="i-lucide-check" :loading="saving" @click="saveEdit" />
                 <UButton
                   size="xs"
                   color="neutral"
@@ -193,7 +191,7 @@ await fetch()
                 <span class="flex-1 font-medium text-sm">{{ parent.name }}</span>
                 <span class="text-xs text-muted">{{ parent.slug }}</span>
                 <UBadge color="neutral" variant="subtle" size="xs">
-                  {{ parent.children.length }} sub
+                  {{ parent.children.length }} {{ t('categories.subCount') }}
                 </UBadge>
                 <UButton
                   size="xs"
@@ -231,11 +229,7 @@ await fetch()
                     name="i-lucide-grip-vertical"
                     class="drag-handle-child cursor-grab text-muted size-3.5 shrink-0"
                   />
-                  <UIcon
-                    v-if="child.icon"
-                    :name="child.icon"
-                    class="size-4 text-muted shrink-0"
-                  />
+                  <UIcon v-if="child.icon" :name="child.icon" class="size-4 text-muted shrink-0" />
                   <div v-else class="size-4 shrink-0" />
 
                   <template v-if="editingId === child.id">
@@ -246,12 +240,7 @@ await fetch()
                       @keyup.enter="saveEdit"
                       @keyup.esc="cancelEdit"
                     />
-                    <UButton
-                      size="xs"
-                      icon="i-lucide-check"
-                      :loading="saving"
-                      @click="saveEdit"
-                    />
+                    <UButton size="xs" icon="i-lucide-check" :loading="saving" @click="saveEdit" />
                     <UButton
                       size="xs"
                       color="neutral"
@@ -289,7 +278,7 @@ await fetch()
                 <UInput v-model="newChildForm.icon" placeholder="i-lucide-tag" class="w-32" />
                 <UInput
                   v-model="newChildForm.name"
-                  placeholder="Nombre subcategoría"
+                  :placeholder="t('categories.subcategoryNamePlaceholder')"
                   class="flex-1"
                   @keyup.enter="createChild(parent.id)"
                 />
@@ -310,10 +299,14 @@ await fetch()
 
               <button
                 class="flex items-center gap-2 px-3 py-2 text-xs text-muted hover:text-primary transition-colors"
-                @click="showNewChild = parent.id; newChildForm.name = ''; newChildForm.icon = ''"
+                @click="
+                  showNewChild = parent.id
+                  newChildForm.name = ''
+                  newChildForm.icon = ''
+                "
               >
                 <UIcon name="i-lucide-plus" class="size-3" />
-                Agregar subcategoría
+                {{ t('categories.addSubcategory') }}
               </button>
             </div>
           </UCard>
@@ -321,7 +314,7 @@ await fetch()
 
         <!-- Vacío -->
         <div v-if="!loading && localTree.length === 0" class="text-center py-12 text-muted text-sm">
-          No hay categorías todavía. Creá la primera.
+          {{ t('categories.empty') }}
         </div>
       </template>
     </div>

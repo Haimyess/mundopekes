@@ -11,6 +11,7 @@ const emit = defineEmits<{
   close: [place?: Place]
 }>()
 
+const { t } = useI18n()
 const toast = useToast()
 const loading = ref(false)
 const { geocode, isLoading: geocoding } = useGeocode()
@@ -36,6 +37,14 @@ const form = reactive({
   lng: null as number | null,
   images: [] as string[],
   metadata: {} as PlaceMeta,
+  status: 'active' as 'active' | 'inactive',
+})
+
+const isActive = computed({
+  get: () => form.status === 'active',
+  set: (val: boolean) => {
+    form.status = val ? 'active' : 'inactive'
+  },
 })
 
 const { data: cities } = await useFetch<Array<{ id: number; name: string }>>('/api/cities')
@@ -53,6 +62,7 @@ watch(
       form.lng = val.lng
       form.images = [...(val.images ?? [])]
       form.metadata = { ...((val.metadata as PlaceMeta) ?? {}) }
+      form.status = val.status ?? 'active'
     } else {
       form.name_i18n = {}
       form.description_i18n = {}
@@ -61,6 +71,7 @@ watch(
       form.lng = null
       form.images = []
       form.metadata = {}
+      form.status = 'active'
     }
   },
   { immediate: true }
@@ -101,7 +112,7 @@ const onPlaceSelected = ({
 const geocodeCity = async () => {
   const cityName = cities.value?.find((c) => c.id === form.city_id)?.name
   if (!cityName) {
-    toast.add({ title: 'Seleccioná una ciudad primero', color: 'warning' })
+    toast.add({ title: t('placesSlideover.toast.selectCityFirst'), color: 'warning' })
     return
   }
   const result = await geocode(`${cityName}, Israel`)
@@ -109,13 +120,13 @@ const geocodeCity = async () => {
     form.lat = result.lat
     form.lng = result.lng
   } else {
-    toast.add({ title: 'No se encontraron coordenadas', color: 'warning' })
+    toast.add({ title: t('placesSlideover.toast.noCoordinates'), color: 'warning' })
   }
 }
 
 const save = async () => {
   if (!Object.values(form.name_i18n).some((v) => v?.trim())) {
-    toast.add({ title: 'El nombre es requerido en al menos un idioma', color: 'error' })
+    toast.add({ title: t('placesSlideover.toast.nameRequired'), color: 'error' })
     return
   }
   loading.value = true
@@ -126,19 +137,19 @@ const save = async () => {
         method: 'PUT',
         body: form,
       })
-      toast.add({ title: 'Lugar actualizado', color: 'success' })
+      toast.add({ title: t('placesSlideover.toast.updated'), color: 'success' })
     } else {
       saved = await $fetch<Place>('/api/places', {
         method: 'POST',
         body: form,
       })
-      toast.add({ title: 'Lugar creado', color: 'success' })
+      toast.add({ title: t('placesSlideover.toast.created'), color: 'success' })
     }
     emit('saved', saved)
     emit('close', saved)
   } catch (e) {
     toast.add({
-      title: 'Error',
+      title: t('placesSlideover.toast.errorTitle'),
       description: e instanceof Error ? e.message : String(e),
       color: 'error',
     })
@@ -149,33 +160,46 @@ const save = async () => {
 </script>
 
 <template>
-  <USlideover
-    :title="place ? 'Editar lugar' : 'Nuevo lugar'"
-    :close="{ onClick: () => emit('close') }"
+  <UiEntitySlideover
+    :title="place ? t('placesSlideover.editTitle') : t('placesSlideover.createTitle')"
+    @close="emit('close')"
   >
     <template #body>
       <div class="flex flex-col gap-4 p-4">
+        <UFormField
+          :label="t('placesSlideover.form.active')"
+          :description="t('placesSlideover.form.activeDescription')"
+          class="flex items-center justify-between gap-2"
+        >
+          <USwitch v-model="isActive" />
+        </UFormField>
+
         <!-- Búsqueda en Google (autollena los campos) -->
         <UiPlaceSearch lang="en" @selected="onPlaceSelected" />
 
-        <UiI18nTabs v-model="form.name_i18n" label="Nombre" required />
+        <UiI18nTabs v-model="form.name_i18n" :label="t('placesSlideover.form.name')" required />
 
-        <UiI18nTabs v-model="form.description_i18n" label="Descripción" type="textarea" :rows="3" />
+        <UiI18nTabs
+          v-model="form.description_i18n"
+          :label="t('placesSlideover.form.description')"
+          type="textarea"
+          :rows="3"
+        />
 
-        <UFormField label="Ciudad">
+        <UFormField :label="t('placesSlideover.form.city')">
           <USelect
             v-model="form.city_id"
             :items="(cities ?? []).map((c) => ({ label: c.name, value: c.id }))"
-            placeholder="Seleccioná una ciudad"
+            :placeholder="t('placesSlideover.form.cityPlaceholder')"
             class="w-full"
           />
         </UFormField>
 
         <div class="grid grid-cols-2 gap-3">
-          <UFormField label="Latitud">
+          <UFormField :label="t('placesSlideover.form.latitude')">
             <UInput v-model="form.lat" type="number" placeholder="32.0853" class="w-full" />
           </UFormField>
-          <UFormField label="Longitud">
+          <UFormField :label="t('placesSlideover.form.longitude')">
             <UInput v-model="form.lng" type="number" placeholder="34.7818" class="w-full" />
           </UFormField>
         </div>
@@ -188,7 +212,7 @@ const save = async () => {
           class="self-start"
           @click="geocodeCity"
         >
-          Obtener coordenadas de la ciudad
+          {{ t('placesSlideover.getCoordinatesButton') }}
         </UButton>
 
         <UiImageUploader
@@ -201,11 +225,13 @@ const save = async () => {
 
     <template #footer>
       <div class="flex justify-end gap-3 w-full">
-        <UButton color="neutral" variant="outline" @click="emit('close')"> Cancelar </UButton>
+        <UButton color="neutral" variant="outline" @click="emit('close')">
+          {{ t('placesSlideover.cancel') }}
+        </UButton>
         <UButton :loading="loading" @click="save">
-          {{ place ? 'Guardar cambios' : 'Crear lugar' }}
+          {{ place ? t('placesSlideover.saveChanges') : t('placesSlideover.createButton') }}
         </UButton>
       </div>
     </template>
-  </USlideover>
+  </UiEntitySlideover>
 </template>

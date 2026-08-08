@@ -1,7 +1,14 @@
 export default defineNuxtConfig({
   extends: ['../../layers/core', '../../layers/ui', '../../layers/domain'],
 
-  modules: ['@vercel/analytics', '@nuxt/eslint', '@nuxt/ui', '@vueuse/nuxt', '@nuxtjs/supabase'],
+  modules: [
+    '@vercel/analytics',
+    '@nuxt/eslint',
+    '@nuxt/ui',
+    '@vueuse/nuxt',
+    '@nuxtjs/supabase',
+    '@nuxtjs/i18n',
+  ],
   devtools: {
     enabled: true,
   },
@@ -30,6 +37,23 @@ export default defineNuxtConfig({
         braceStyle: '1tbs',
       },
     },
+  },
+  i18n: {
+    locales: [
+      {
+        code: 'es',
+        name: 'Español',
+        file: 'es.json',
+      },
+      {
+        code: 'en',
+        name: 'English',
+        file: 'en.json',
+      },
+    ],
+    langDir: 'locales',
+    defaultLocale: 'es',
+    strategy: 'no_prefix',
   },
   supabase: {
     url: process.env.SUPABASE_URL,

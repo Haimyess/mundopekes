@@ -54,6 +54,7 @@ export const useActivityLocation = () => {
       .from('activities')
       .select(ACTIVITY_SELECT)
       .eq('status', 'approved')
+      .eq('place.status', 'active')
 
     if (error) {
       console.error('Error fetching activities for location:', error)

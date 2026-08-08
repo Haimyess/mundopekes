@@ -2,10 +2,13 @@
 <script setup lang="ts">
 import type { TableColumn, DropdownMenuItem } from '@nuxt/ui'
 import type { Provider } from '~/composables/useProviders'
+import { syncUrlPage } from '~/composables/useUrlPage'
 
 const UBadge = resolveComponent('UBadge')
 const UDropdownMenu = resolveComponent('UDropdownMenu')
 const UButton = resolveComponent('UButton')
+
+const { t } = useI18n()
 
 const {
   providers,
@@ -18,6 +21,8 @@ const {
   fetch: loadProviders,
   updateStatus,
 } = useProviders()
+
+syncUrlPage(page)
 
 const slideoverOpen = ref(false)
 const notesInput = ref('')
@@ -37,19 +42,19 @@ const statusColor = (s: string) =>
 
 const statusLabel = (s: string) =>
   ({
-    pending: 'Pendiente',
-    active: 'Activo',
-    suspended: 'Suspendido',
-    rejected: 'Rechazado',
+    pending: t('providers.status.pending'),
+    active: t('providers.status.active'),
+    suspended: t('providers.status.suspended'),
+    rejected: t('providers.status.rejected'),
   })[s] ?? s
 
-const tabs = [
-  { label: 'Pendientes', value: 'pending' },
-  { label: 'Activos', value: 'active' },
-  { label: 'Suspendidos', value: 'suspended' },
-  { label: 'Rechazados', value: 'rejected' },
-  { label: 'Todos', value: 'all' },
-]
+const tabs = computed(() => [
+  { label: t('providers.tabs.pending'), value: 'pending' },
+  { label: t('providers.tabs.active'), value: 'active' },
+  { label: t('providers.tabs.suspended'), value: 'suspended' },
+  { label: t('providers.tabs.rejected'), value: 'rejected' },
+  { label: t('providers.tabs.all'), value: 'all' },
+])
 
 const openDetail = (provider: Provider) => {
   selectedProvider.value = provider
@@ -69,28 +74,28 @@ const handleUpdateStatus = async (
 const getActionItems = (row: Provider): DropdownMenuItem[][] => {
   const items: DropdownMenuItem[] = [
     {
-      label: 'Ver detalle',
+      label: t('providers.actions.viewDetail'),
       icon: 'i-lucide-eye',
       onSelect: () => openDetail(row),
     },
   ]
   if (row.status === 'pending' || row.status === 'suspended') {
     items.push({
-      label: 'Aprobar',
+      label: t('providers.actions.approve'),
       icon: 'i-lucide-check-circle',
       onSelect: () => updateStatus(row.id, 'active'),
     })
   }
   if (row.status === 'active') {
     items.push({
-      label: 'Suspender',
+      label: t('providers.actions.suspend'),
       icon: 'i-lucide-pause-circle',
       onSelect: () => updateStatus(row.id, 'suspended'),
     })
   }
   if (row.status === 'pending') {
     items.push({
-      label: 'Rechazar',
+      label: t('providers.actions.reject'),
       icon: 'i-lucide-x-circle',
       onSelect: () => openDetail(row),
     })
@@ -106,13 +111,13 @@ const scheduleEntries = computed(() => {
   >
   if (!s || typeof s !== 'object') return []
   const dayLabels: Record<string, string> = {
-    sunday: 'Dom',
-    monday: 'Lun',
-    tuesday: 'Mar',
-    wednesday: 'Mié',
-    thursday: 'Jue',
-    friday: 'Vie',
-    saturday: 'Sáb',
+    sunday: t('providers.dayLabels.sunday'),
+    monday: t('providers.dayLabels.monday'),
+    tuesday: t('providers.dayLabels.tuesday'),
+    wednesday: t('providers.dayLabels.wednesday'),
+    thursday: t('providers.dayLabels.thursday'),
+    friday: t('providers.dayLabels.friday'),
+    saturday: t('providers.dayLabels.saturday'),
   }
   return Object.entries(s).map(([day, val]) => ({
     day: dayLabels[day] ?? day,
@@ -139,10 +144,10 @@ const metadataCity = computed(() => {
   return m?.city ?? null
 })
 
-const columns: TableColumn<Provider>[] = [
+const columns = computed<TableColumn<Provider>[]>(() => [
   {
     accessorKey: 'created_at',
-    header: 'Fecha',
+    header: t('providers.columns.date'),
     cell: ({ row }) =>
       h(
         'span',
@@ -152,7 +157,7 @@ const columns: TableColumn<Provider>[] = [
   },
   {
     id: 'business',
-    header: 'Negocio',
+    header: t('providers.columns.business'),
     cell: ({ row }) =>
       h('div', { class: 'flex flex-col gap-0.5' }, [
         h('span', { class: 'text-sm font-medium' }, row.original.name),
@@ -164,7 +169,7 @@ const columns: TableColumn<Provider>[] = [
   },
   {
     accessorKey: 'activity_types',
-    header: 'Actividades',
+    header: t('providers.columns.activities'),
     cell: ({ row }) => {
       const types = row.original.activity_types ?? []
       const visible = types.slice(0, 2)
@@ -181,7 +186,7 @@ const columns: TableColumn<Provider>[] = [
   },
   {
     id: 'location',
-    header: 'Ciudad',
+    header: t('providers.columns.city'),
     cell: ({ row }) => {
       const m = row.original.metadata as { city?: string } | null
       return h('span', { class: 'text-sm' }, m?.city ?? '—')
@@ -189,7 +194,7 @@ const columns: TableColumn<Provider>[] = [
   },
   {
     accessorKey: 'status',
-    header: 'Estado',
+    header: t('providers.columns.status'),
     cell: ({ row }) =>
       h(UBadge, { color: statusColor(row.original.status), variant: 'subtle', size: 'sm' }, () =>
         statusLabel(row.original.status)
@@ -212,20 +217,22 @@ const columns: TableColumn<Provider>[] = [
         }
       ),
   },
-]
+])
 
 await loadProviders()
 </script>
 
 <template>
-  <UDashboardPanel>
+  <UDashboardPanel :ui="{ body: 'flex flex-col flex-1 overflow-hidden p-0 gap-0' }">
     <template #header>
-      <UDashboardNavbar title="Proveedores">
+      <UDashboardNavbar :title="t('providers.title')">
         <template #leading>
           <UDashboardSidebarCollapse />
         </template>
         <template #right>
-          <UBadge color="neutral" variant="subtle"> {{ total }} registros </UBadge>
+          <UBadge color="neutral" variant="subtle">
+            {{ total }} {{ t('providers.recordsBadge') }}
+          </UBadge>
           <UButton
             icon="i-lucide-refresh-cw"
             color="neutral"
@@ -239,8 +246,8 @@ await loadProviders()
     </template>
 
     <template #body>
-      <!-- Tabs -->
-      <div class="flex gap-1 px-4 pt-4 flex-wrap">
+      <!-- Zona fija: tabs, nunca scrollea -->
+      <div class="shrink-0 flex gap-1 p-4 flex-wrap border-b border-default">
         <button
           v-for="tab in tabs"
           :key="tab.value"
@@ -256,8 +263,8 @@ await loadProviders()
         </button>
       </div>
 
-      <!-- Tabla -->
-      <div class="p-4">
+      <!-- Zona scrolleable: solo la tabla -->
+      <div class="flex-1 min-h-0 overflow-y-auto p-4">
         <UTable
           :data="providers"
           :columns="columns"
@@ -274,15 +281,18 @@ await loadProviders()
         />
       </div>
 
-      <!-- Paginación -->
-      <div v-if="totalPages > 1" class="flex justify-center pb-4">
+      <!-- Zona fija: paginación, siempre visible abajo -->
+      <div v-if="totalPages > 1" class="shrink-0 flex justify-center p-4 border-t border-default">
         <UPagination v-model:page="page" :total="total" :items-per-page="20" />
       </div>
     </template>
   </UDashboardPanel>
 
   <!-- Slideover detalle -->
-  <USlideover v-model:open="slideoverOpen" :title="selectedProvider?.name ?? 'Proveedor'">
+  <USlideover
+    v-model:open="slideoverOpen"
+    :title="selectedProvider?.name ?? t('providers.slideoverFallbackTitle')"
+  >
     <template #body>
       <div v-if="selectedProvider" class="flex flex-col gap-5 p-1">
         <!-- Status badge -->
@@ -297,9 +307,9 @@ await loadProviders()
 
         <!-- Contacto -->
         <div class="flex flex-col gap-1">
-          <span class="text-xs font-semibold text-(--ui-text-muted) uppercase tracking-wider"
-            >Contacto</span
-          >
+          <span class="text-xs font-semibold text-(--ui-text-muted) uppercase tracking-wider">{{
+            t('providers.sections.contact')
+          }}</span>
           <span class="text-sm font-medium">{{ selectedProvider.email }}</span>
           <span v-if="selectedProvider.phone" class="text-sm text-(--ui-text-muted)">{{
             selectedProvider.phone
@@ -315,9 +325,9 @@ await loadProviders()
 
         <!-- Descripción -->
         <div class="flex flex-col gap-1">
-          <span class="text-xs font-semibold text-(--ui-text-muted) uppercase tracking-wider"
-            >Descripción</span
-          >
+          <span class="text-xs font-semibold text-(--ui-text-muted) uppercase tracking-wider">{{
+            t('providers.sections.description')
+          }}</span>
           <p class="text-sm leading-relaxed">
             {{ selectedProvider.description }}
           </p>
@@ -325,27 +335,27 @@ await loadProviders()
 
         <!-- Tipos -->
         <div class="flex flex-col gap-2">
-          <span class="text-xs font-semibold text-(--ui-text-muted) uppercase tracking-wider"
-            >Tipos de actividad</span
-          >
+          <span class="text-xs font-semibold text-(--ui-text-muted) uppercase tracking-wider">{{
+            t('providers.sections.activityTypes')
+          }}</span>
           <div class="flex flex-wrap gap-1">
             <UBadge
-              v-for="t in selectedProvider.activity_types"
-              :key="t"
+              v-for="type in selectedProvider.activity_types"
+              :key="type"
               color="primary"
               variant="subtle"
               size="sm"
             >
-              {{ t }}
+              {{ type }}
             </UBadge>
           </div>
         </div>
 
         <!-- Ubicación -->
         <div v-if="selectedProvider.address || metadataCity" class="flex flex-col gap-1">
-          <span class="text-xs font-semibold text-(--ui-text-muted) uppercase tracking-wider"
-            >Ubicación</span
-          >
+          <span class="text-xs font-semibold text-(--ui-text-muted) uppercase tracking-wider">{{
+            t('providers.sections.location')
+          }}</span>
           <span v-if="metadataCity" class="text-sm">{{ metadataCity }}</span>
           <span v-if="selectedProvider.address" class="text-sm text-(--ui-text-muted)">{{
             selectedProvider.address
@@ -354,9 +364,9 @@ await loadProviders()
 
         <!-- Horarios -->
         <div v-if="scheduleEntries.length" class="flex flex-col gap-2">
-          <span class="text-xs font-semibold text-(--ui-text-muted) uppercase tracking-wider"
-            >Horarios</span
-          >
+          <span class="text-xs font-semibold text-(--ui-text-muted) uppercase tracking-wider">{{
+            t('providers.sections.schedule')
+          }}</span>
           <div class="flex flex-col gap-1">
             <div
               v-for="entry in scheduleEntries"
@@ -364,7 +374,9 @@ await loadProviders()
               class="flex items-center gap-3 text-sm"
             >
               <span class="w-8 font-medium text-(--ui-text-muted)">{{ entry.day }}</span>
-              <span v-if="entry.closed" class="text-(--ui-text-muted)">Cerrado</span>
+              <span v-if="entry.closed" class="text-(--ui-text-muted)">{{
+                t('providers.closed')
+              }}</span>
               <span v-else>{{ entry.open }} – {{ entry.close }}</span>
             </div>
           </div>
@@ -372,9 +384,9 @@ await loadProviders()
 
         <!-- Precios -->
         <div v-if="priceRange" class="flex flex-col gap-1">
-          <span class="text-xs font-semibold text-(--ui-text-muted) uppercase tracking-wider"
-            >Precios</span
-          >
+          <span class="text-xs font-semibold text-(--ui-text-muted) uppercase tracking-wider">{{
+            t('providers.sections.prices')
+          }}</span>
           <span class="text-sm">
             {{ priceRange.from ?? '?' }} – {{ priceRange.to ?? '?' }}
             {{ priceRange.currency ?? 'ILS' }}
@@ -383,14 +395,14 @@ await loadProviders()
 
         <!-- Notas internas -->
         <div class="flex flex-col gap-1">
-          <span class="text-xs font-semibold text-(--ui-text-muted) uppercase tracking-wider"
-            >Notas internas</span
-          >
+          <span class="text-xs font-semibold text-(--ui-text-muted) uppercase tracking-wider">{{
+            t('providers.sections.internalNotes')
+          }}</span>
           <textarea
             v-model="notesInput"
             class="w-full text-sm border border-default rounded-lg p-2 bg-elevated resize-none"
             rows="3"
-            placeholder="Agregar notas..."
+            :placeholder="t('providers.notesPlaceholder')"
           />
         </div>
 
@@ -402,7 +414,7 @@ await loadProviders()
             icon="i-lucide-check-circle"
             @click="handleUpdateStatus(selectedProvider.id, 'active', notesInput)"
           >
-            Aprobar proveedor
+            {{ t('providers.buttons.approveProvider') }}
           </UButton>
           <UButton
             v-if="selectedProvider.status === 'active'"
@@ -411,7 +423,7 @@ await loadProviders()
             icon="i-lucide-pause-circle"
             @click="handleUpdateStatus(selectedProvider.id, 'suspended', notesInput)"
           >
-            Suspender
+            {{ t('providers.actions.suspend') }}
           </UButton>
           <UButton
             v-if="selectedProvider.status === 'pending'"
@@ -420,7 +432,7 @@ await loadProviders()
             icon="i-lucide-x-circle"
             @click="handleUpdateStatus(selectedProvider.id, 'rejected', notesInput)"
           >
-            Rechazar
+            {{ t('providers.actions.reject') }}
           </UButton>
         </div>
       </div>

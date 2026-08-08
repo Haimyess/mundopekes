@@ -2,8 +2,6 @@ import { serverSupabaseClient } from '#supabase/server'
 import type { Database, TablesUpdate } from '~/types/database.types'
 
 export default defineEventHandler(async (event) => {
-  await requireAdminUser(event)
-
   const id = getRouterParam(event, 'id')
   if (!id) throw createError({ statusCode: 400, message: 'ID requerido' })
 
@@ -36,6 +34,7 @@ export default defineEventHandler(async (event) => {
   if (body.open_weekends !== undefined) update.open_weekends = body.open_weekends
   if (body.is_free !== undefined) update.is_free = body.is_free
   if (body.schedule !== undefined) update.schedule = body.schedule
+  if (body.images !== undefined) update.images = body.images
 
   // Location: geocode if address provided but coords are missing.
   // Defensive: on failure, preserve previous coords; never block the save.

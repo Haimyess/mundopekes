@@ -5,6 +5,7 @@ definePageMeta({
 
 useHead({ title: 'Admin Login' })
 
+const { t } = useI18n()
 const { login, verifyMfa, loading, mfaRequired } = useAuth()
 
 const form = reactive({
@@ -32,20 +33,16 @@ const handleMfa = async () => {
         <div class="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-primary mb-4">
           <UIcon name="i-lucide-shield-check" class="text-white text-2xl" />
         </div>
-        <h1 class="text-2xl font-bold text-(--ui-text)">MundoPekes Admin</h1>
+        <h1 class="text-2xl font-bold text-(--ui-text)">{{ t('login.title') }}</h1>
         <p class="text-sm text-(--ui-text-muted) mt-1">
-          {{
-            mfaRequired
-              ? 'Ingresá el código de tu app autenticadora'
-              : 'Ingresá con tu cuenta de administrador'
-          }}
+          {{ mfaRequired ? t('login.subtitleMfa') : t('login.subtitleDefault') }}
         </p>
       </div>
 
       <!-- Paso 1: Email + Password -->
       <UCard v-if="!mfaRequired" class="shadow-lg">
         <div class="flex flex-col gap-5 p-1">
-          <UFormField label="Email" required>
+          <UFormField :label="t('login.email')" required>
             <UInput
               v-model="form.email"
               type="email"
@@ -58,7 +55,7 @@ const handleMfa = async () => {
             />
           </UFormField>
 
-          <UFormField label="Contraseña" required>
+          <UFormField :label="t('login.password')" required>
             <UInput
               v-model="form.password"
               :type="showPassword ? 'text' : 'password'"
@@ -81,7 +78,7 @@ const handleMfa = async () => {
           </UFormField>
 
           <UButton size="lg" block :loading="loading" icon="i-lucide-log-in" @click="handleSubmit">
-            Iniciar sesión
+            {{ t('login.signIn') }}
           </UButton>
         </div>
       </UCard>
@@ -95,7 +92,7 @@ const handleMfa = async () => {
             <UIcon name="i-lucide-smartphone" class="text-(--ui-text) text-2xl" />
           </div>
 
-          <UFormField label="Código de verificación" required>
+          <UFormField :label="t('login.mfaCode')" required>
             <UInput
               v-model="mfaCode"
               placeholder="123456"
@@ -116,20 +113,20 @@ const handleMfa = async () => {
             icon="i-lucide-shield-check"
             @click="handleMfa"
           >
-            Verificar
+            {{ t('login.verify') }}
           </UButton>
 
           <button
             class="text-xs text-(--ui-text-muted) text-center hover:underline"
             @click="mfaRequired = false"
           >
-            ← Volver al login
+            {{ t('login.backToLogin') }}
           </button>
         </div>
       </UCard>
 
       <p class="text-center text-xs text-(--ui-text-muted) mt-6">
-        MundoPekes Admin · Solo acceso autorizado
+        {{ t('login.footer') }}
       </p>
     </div>
   </div>

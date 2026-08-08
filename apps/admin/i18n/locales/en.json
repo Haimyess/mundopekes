@@ -1,0 +1,794 @@
+{
+  "nav": {
+    "dashboard": "Dashboard",
+    "places": "Places",
+    "activities": "Activities",
+    "suggestions": "Suggestions",
+    "categories": "Categories",
+    "providers": "Providers",
+    "monitoring": "Monitoring",
+    "overview": "Overview",
+    "systemLogs": "System Logs",
+    "userEvents": "User Activity",
+    "contactRequests": "Inquiries",
+    "support": "Support",
+    "helpDesk": "Help Desk",
+    "faqs": "FAQs",
+    "settings": "Settings",
+    "settingsGeneral": "General",
+    "settingsNotifications": "Notifications",
+    "settingsSecurity": "Security",
+    "brand": "Admin"
+  },
+  "language": {
+    "label": "Language"
+  },
+  "login": {
+    "title": "MundoPekes Admin",
+    "subtitleMfa": "Enter the code from your authenticator app",
+    "subtitleDefault": "Sign in with your administrator account",
+    "email": "Email",
+    "password": "Password",
+    "signIn": "Sign in",
+    "mfaCode": "Verification code",
+    "verify": "Verify",
+    "backToLogin": "← Back to login",
+    "footer": "MundoPekes Admin · Authorized access only"
+  },
+  "dashboard": {
+    "home": "Home",
+    "notifications": "Notifications",
+    "newMail": "New mail",
+    "newCustomer": "New customer"
+  },
+  "userMenu": {
+    "appearance": "Appearance",
+    "light": "Light",
+    "dark": "Dark",
+    "logout": "Log out"
+  },
+  "notifications": {
+    "title": "Notifications"
+  },
+  "customers": {
+    "title": "Customers",
+    "filterEmailPlaceholder": "Filter emails...",
+    "deleteSelected": "Delete",
+    "statusFilterPlaceholder": "Filter status",
+    "status": {
+      "all": "All",
+      "subscribed": "Subscribed",
+      "unsubscribed": "Unsubscribed",
+      "bounced": "Bounced"
+    },
+    "display": "Display",
+    "selectAll": "Select all",
+    "selectRow": "Select row",
+    "columns": {
+      "id": "ID",
+      "name": "Name",
+      "email": "Email",
+      "location": "Location",
+      "status": "Status"
+    },
+    "rowsSelected": "{selected} of {total} row(s) selected.",
+    "actionsLabel": "Actions",
+    "copyId": "Copy customer ID",
+    "viewDetails": "View customer details",
+    "viewPayments": "View customer payments",
+    "deleteCustomer": "Delete customer",
+    "toast": {
+      "copiedTitle": "Copied to clipboard",
+      "copiedDescription": "Customer ID copied to clipboard",
+      "deletedTitle": "Customer deleted",
+      "deletedDescription": "The customer has been deleted."
+    },
+    "addModal": {
+      "openButton": "New customer",
+      "title": "New customer",
+      "description": "Add a new customer to the database",
+      "nameLabel": "Name",
+      "namePlaceholder": "John Doe",
+      "emailLabel": "Email",
+      "emailPlaceholder": "john.doe{'@'}example.com",
+      "cancel": "Cancel",
+      "create": "Create",
+      "nameTooShort": "Too short",
+      "emailInvalid": "Invalid email",
+      "toastSuccessTitle": "Success",
+      "toastSuccessDescription": "New customer {name} added"
+    },
+    "deleteModal": {
+      "title": "Delete {count} customer(s)",
+      "description": "This action cannot be undone. Are you sure?",
+      "cancel": "Cancel",
+      "confirm": "Delete"
+    }
+  },
+  "contactRequests": {
+    "title": "Contact inquiries",
+    "totalBadge": "{total} inquiries",
+    "analytics": {
+      "title": "Feedback Analytics",
+      "total": "Total",
+      "thisMonth": "This month",
+      "pending": "Pending",
+      "resolved": "Resolved"
+    },
+    "providerBanner": {
+      "text": "Full provider records are managed on the Providers page",
+      "button": "Go to Providers"
+    },
+    "tabs": {
+      "all": "All",
+      "outdated": "🐛 Outdated",
+      "feedback": "💬 Feedback",
+      "provider": "🏢 Provider",
+      "other": "💡 Other"
+    },
+    "statusPlaceholder": "Status",
+    "intent": {
+      "outdated": "Outdated",
+      "feedback": "Feedback",
+      "provider": "Provider",
+      "other": "Other"
+    },
+    "status": {
+      "all": "All",
+      "pending": "Pending",
+      "read": "Read",
+      "resolved": "Resolved"
+    },
+    "columns": {
+      "date": "Date",
+      "intent": "Intent",
+      "contact": "Contact",
+      "activity": "Activity",
+      "message": "Message",
+      "status": "Status"
+    },
+    "actions": {
+      "viewDetail": "View detail",
+      "markRead": "Mark as read",
+      "markResolved": "Mark as resolved",
+      "markPending": "Mark as pending"
+    },
+    "slideover": {
+      "defaultTitle": "Inquiry"
+    }
+  },
+  "inbox": {
+    "title": "Inbox",
+    "tabs": {
+      "all": "All",
+      "unread": "Unread"
+    },
+    "dropdown": {
+      "markUnread": "Mark as unread",
+      "markImportant": "Mark as important",
+      "starThread": "Star thread",
+      "muteThread": "Mute thread"
+    },
+    "tooltip": {
+      "archive": "Archive",
+      "reply": "Reply",
+      "attachFile": "Attach file"
+    },
+    "toast": {
+      "sentTitle": "Email sent",
+      "sentDescription": "Your email has been sent successfully"
+    },
+    "replyTo": "Reply to {name} ({email})",
+    "replyPlaceholder": "Write your reply...",
+    "saveDraft": "Save draft",
+    "send": "Send"
+  },
+  "overview": {
+    "title": "Overview",
+    "cards": {
+      "activities": "Activities",
+      "places": "Places",
+      "suggestions": "Suggestions",
+      "pendingSuggestions": "Pending suggestions",
+      "totalContactRequests": "Total inquiries",
+      "pendingContactRequests": "Pending inquiries"
+    },
+    "recentFeedbacks": "Recent feedback"
+  },
+  "systemLogs": {
+    "title": "System Logs",
+    "recordsCount": "{count} records",
+    "errorsLast24h": "{count} errors (24h)",
+    "filters": {
+      "allLevels": "All levels",
+      "levelPlaceholder": "Level",
+      "allContexts": "All contexts",
+      "contextPlaceholder": "Context"
+    },
+    "levels": {
+      "error": "Error",
+      "warn": "Warning",
+      "info": "Info"
+    },
+    "columns": {
+      "date": "Date",
+      "level": "Level",
+      "context": "Context",
+      "message": "Message",
+      "metadata": "Metadata"
+    },
+    "view": "View",
+    "metadataModalTitle": "Log metadata"
+  },
+  "userEvents": {
+    "title": "User Activity",
+    "totalEvents": "Total events",
+    "last7Days": "Last 7 days",
+    "sections": {
+      "byType": "Distribution by type",
+      "topSearches": "Top searches · 7 days",
+      "topActivities": "Most viewed activities · 7 days",
+      "recentEvents": "Recent events"
+    },
+    "emptySearches": "No searches recorded yet",
+    "emptyActivities": "No views recorded yet",
+    "eventTypes": {
+      "pageView": "Page view",
+      "search": "Search",
+      "activityView": "Activity viewed",
+      "contactSend": "Contact sent",
+      "suggestionSubmit": "Suggestion",
+      "providerInterest": "Provider interest"
+    },
+    "columns": {
+      "date": "Date",
+      "type": "Type",
+      "session": "Session",
+      "locale": "Locale",
+      "payload": "Payload"
+    },
+    "view": "View",
+    "payloadModalTitle": "Event payload"
+  },
+  "home": {
+    "chart": {
+      "revenue": "Revenue"
+    },
+    "dateRangePicker": {
+      "pickDate": "Pick a date",
+      "last7Days": "Last 7 days",
+      "last14Days": "Last 14 days",
+      "last30Days": "Last 30 days",
+      "last3Months": "Last 3 months",
+      "last6Months": "Last 6 months",
+      "lastYear": "Last year"
+    },
+    "periodSelect": {
+      "daily": "Daily",
+      "weekly": "Weekly",
+      "monthly": "Monthly"
+    },
+    "sales": {
+      "id": "ID",
+      "date": "Date",
+      "status": "Status",
+      "email": "Email",
+      "amount": "Amount"
+    },
+    "stats": {
+      "customers": "Customers",
+      "conversions": "Conversions",
+      "revenue": "Revenue",
+      "orders": "Orders"
+    }
+  },
+  "places": {
+    "title": "Places",
+    "newButton": "New place",
+    "searchPlaceholder": "Search places...",
+    "filters": {
+      "allCities": "All cities",
+      "allActivities": "All",
+      "withActivities": "With activities",
+      "withoutActivities": "Without activities",
+      "allStatus": "All statuses"
+    },
+    "status": {
+      "active": "Active",
+      "inactive": "Inactive"
+    },
+    "table": {
+      "name": "Name",
+      "city": "City",
+      "activities": "Activities",
+      "status": "Status"
+    },
+    "actions": {
+      "edit": "Edit",
+      "delete": "Delete"
+    },
+    "toast": {
+      "deleted": "Place deleted",
+      "errorTitle": "Error"
+    }
+  },
+  "placeDetail": {
+    "status": {
+      "approved": "Approved",
+      "pending": "Pending",
+      "rejected": "Rejected",
+      "placeActive": "Active",
+      "placeInactive": "Inactive"
+    },
+    "table": {
+      "title": "Title",
+      "category": "Category",
+      "price": "Price",
+      "status": "Status"
+    },
+    "free": "Free",
+    "actions": {
+      "edit": "Edit",
+      "delete": "Delete"
+    },
+    "error": {
+      "title": "Could not load the place",
+      "retry": "Retry"
+    },
+    "noDescription": "No description",
+    "openingHours": "Opening hours",
+    "editButton": "Edit place",
+    "activitiesHeading": "Activities",
+    "newActivityButton": "New activity",
+    "activityWord": {
+      "singular": "activity",
+      "plural": "activities"
+    }
+  },
+  "placesSlideover": {
+    "editTitle": "Edit place",
+    "createTitle": "New place",
+    "form": {
+      "name": "Name",
+      "description": "Description",
+      "city": "City",
+      "cityPlaceholder": "Select a city",
+      "latitude": "Latitude",
+      "longitude": "Longitude",
+      "active": "Active",
+      "activeDescription": "Visible on the site. Turning this off hides the place and its activities."
+    },
+    "getCoordinatesButton": "Get coordinates from city",
+    "cancel": "Cancel",
+    "saveChanges": "Save changes",
+    "createButton": "Create place",
+    "toast": {
+      "selectCityFirst": "Select a city first",
+      "noCoordinates": "No coordinates were found",
+      "nameRequired": "Name is required in at least one language",
+      "updated": "Place updated",
+      "created": "Place created",
+      "errorTitle": "Error"
+    }
+  },
+  "activities": {
+    "title": "Activities",
+    "newButton": "New activity",
+    "searchPlaceholder": "Search activities...",
+    "deleteButton": "Delete",
+    "editButton": "Edit",
+    "filters": {
+      "allCategories": "All",
+      "allPlaces": "All",
+      "allStatuses": "All statuses",
+      "categoryPlaceholder": "Category",
+      "placePlaceholder": "Place"
+    },
+    "status": {
+      "approved": "Approved",
+      "pending": "Pending",
+      "rejected": "Rejected"
+    },
+    "table": {
+      "selectAll": "Select all",
+      "selectRow": "Select row",
+      "title": "Title",
+      "place": "Place",
+      "category": "Category",
+      "price": "Price",
+      "status": "Status"
+    },
+    "free": "Free",
+    "actions": {
+      "edit": "Edit",
+      "viewPlace": "View place",
+      "delete": "Delete"
+    },
+    "pagination": {
+      "selected": "{selected} of {total} activities selected"
+    }
+  },
+  "activitiesSlideover": {
+    "editTitle": "Edit activity",
+    "createTitle": "New activity",
+    "form": {
+      "place": "Place",
+      "placePlaceholder": "Select a place",
+      "title": "Title",
+      "description": "Description",
+      "category": "Category",
+      "categoryPlaceholder": "Select a category",
+      "ageRanges": "Age ranges",
+      "seasons": "Seasons",
+      "active": "Active",
+      "activeDescription": "Visible on the site. Same as Approved / Pending — use the selector below to reject it.",
+      "status": "Status",
+      "price": "Price",
+      "free": "Free",
+      "options": "Options",
+      "strollerFriendly": "Stroller / wheelchair friendly",
+      "openWeekends": "Open on weekends",
+      "hasShade": "Has shade",
+      "hasBathrooms": "Has bathrooms"
+    },
+    "createPlaceTitle": "Create new place",
+    "newButton": "New",
+    "status": {
+      "approved": "Approved",
+      "pending": "Pending",
+      "rejected": "Rejected"
+    },
+    "cancel": "Cancel",
+    "saveChanges": "Save changes",
+    "createButton": "Create activity",
+    "toast": {
+      "titleRequired": "Title is required in at least one language",
+      "placeRequired": "Select a place",
+      "updated": "Activity updated",
+      "created": "Activity created",
+      "errorTitle": "Error"
+    },
+    "ageLabels": {
+      "all": "All ages",
+      "babies": "Babies (0–11m)",
+      "toddlers": "Toddlers (1–3)",
+      "preschool": "Preschool (3–6)",
+      "school": "School age (6–12)",
+      "teens": "Teens (12+)"
+    },
+    "seasonLabels": {
+      "all": "All seasons",
+      "spring": "Spring",
+      "summer": "Summer",
+      "autumn": "Autumn",
+      "winter": "Winter"
+    }
+  },
+  "activitiesDeleteModal": {
+    "titleSingular": "Delete {count} activity",
+    "titlePlural": "Delete {count} activities",
+    "description": "This action cannot be undone.",
+    "cancel": "Cancel",
+    "confirm": "Delete"
+  },
+  "settings": {
+    "header": {
+      "title": "Settings"
+    },
+    "tabs": {
+      "general": "General",
+      "members": "Members",
+      "notifications": "Notifications",
+      "security": "Security",
+      "documentation": "Documentation"
+    },
+    "general": {
+      "profile": {
+        "title": "Profile",
+        "description": "This information will be displayed publicly.",
+        "save": "Save changes",
+        "nameLabel": "Name",
+        "nameDescription": "Will appear on receipts, invoices, and other communication.",
+        "emailLabel": "Email",
+        "emailDescription": "Used to sign in, for email receipts and product updates.",
+        "usernameLabel": "Username",
+        "usernameDescription": "Your unique username for logging in and your profile URL.",
+        "avatarLabel": "Avatar",
+        "avatarDescription": "JPG, GIF or PNG. 1MB Max.",
+        "avatarChoose": "Choose",
+        "bioLabel": "Bio",
+        "bioDescription": "Brief description for your profile. URLs are hyperlinked.",
+        "toastSuccessTitle": "Success",
+        "toastSuccessDescription": "Your settings have been updated.",
+        "errors": {
+          "tooShort": "Too short",
+          "invalidEmail": "Invalid email"
+        }
+      }
+    },
+    "notifications": {
+      "channels": {
+        "title": "Notification channels",
+        "description": "Where can we notify you?",
+        "email": {
+          "label": "Email",
+          "description": "Receive a daily email digest."
+        },
+        "desktop": {
+          "label": "Desktop",
+          "description": "Receive desktop notifications."
+        }
+      },
+      "account": {
+        "title": "Account updates",
+        "description": "Receive updates about the admin dashboard.",
+        "weeklyDigest": {
+          "label": "Weekly digest",
+          "description": "Receive a weekly digest of news."
+        },
+        "productUpdates": {
+          "label": "Product updates",
+          "description": "Receive a monthly email with all new features and updates."
+        },
+        "importantUpdates": {
+          "label": "Important updates",
+          "description": "Receive emails about important updates like security fixes, maintenance, etc."
+        }
+      }
+    },
+    "security": {
+      "password": {
+        "title": "Password",
+        "description": "Confirm your current password before setting a new one.",
+        "currentPlaceholder": "Current password",
+        "newPlaceholder": "New password",
+        "updateButton": "Update",
+        "errors": {
+          "minLength": "Minimum 8 characters",
+          "samePassword": "The new password must be different"
+        }
+      },
+      "mfa": {
+        "title": "Two-factor verification (MFA)",
+        "description": "Use an app like Google Authenticator or Authy for extra security.",
+        "notConfigured": "MFA not configured",
+        "activateButton": "Enable MFA",
+        "setupInstructions": "Scan the QR code with your authenticator app, then enter the 6-digit code to confirm.",
+        "qrAlt": "MFA QR code",
+        "manualCodeHint": "Can't scan? Enter this code manually:",
+        "codeLabel": "Verification code",
+        "confirmButton": "Confirm",
+        "cancelButton": "Cancel",
+        "enabledBadge": "MFA enabled",
+        "deactivateButton": "Disable MFA",
+        "toastSetupErrorTitle": "Error setting up MFA",
+        "toastEnabledTitle": "MFA enabled",
+        "toastEnabledDescription": "Your account now requires two-factor verification",
+        "toastWrongCodeTitle": "Incorrect code",
+        "toastWrongCodeDescription": "Check the code in your authenticator app",
+        "toastDisabledTitle": "MFA disabled",
+        "toastDisabledDescription": "Two-factor verification was removed",
+        "toastDisableErrorTitle": "Error disabling MFA"
+      },
+      "account": {
+        "title": "Account",
+        "description": "Don't want to use the service anymore? You can delete your account. This action cannot be undone.",
+        "deleteButton": "Delete account"
+      }
+    },
+    "members": {
+      "editMember": "Edit member",
+      "removeMember": "Remove member"
+    }
+  },
+  "support": {
+    "helpDesk": {
+      "title": "Help Desk",
+      "comingSoon": "Help Desk — coming soon"
+    },
+    "faqs": {
+      "header": {
+        "title": "FAQs",
+        "newButton": "New FAQ"
+      },
+      "filter": {
+        "allCategories": "All categories"
+      },
+      "status": {
+        "published": "Published",
+        "draft": "Draft"
+      },
+      "empty": "No FAQs yet. Create the first one.",
+      "slideover": {
+        "editTitle": "Edit FAQ",
+        "createTitle": "New FAQ"
+      },
+      "form": {
+        "questionLabel": "Question",
+        "questionPlaceholder": "How can I...?",
+        "answerLabel": "Answer",
+        "answerPlaceholder": "The detailed answer...",
+        "categoryLabel": "Category",
+        "categoryPlaceholder": "Select a category",
+        "statusLabel": "Status",
+        "cancelButton": "Cancel",
+        "saveButton": "Save changes",
+        "createButton": "Create FAQ"
+      },
+      "toast": {
+        "validationError": "Question and answer are required"
+      }
+    }
+  },
+  "suggestions": {
+    "title": "Suggestions",
+    "pendingBadge": "pending",
+    "tabs": {
+      "pending": "Pending",
+      "approved": "Approved",
+      "rejected": "Rejected",
+      "all": "All"
+    },
+    "status": {
+      "pending": "Pending",
+      "approved": "Approved",
+      "rejected": "Rejected"
+    },
+    "columns": {
+      "name": "Name",
+      "city": "City",
+      "type": "Type",
+      "free": "Free",
+      "source": "Source",
+      "date": "Date",
+      "status": "Status"
+    },
+    "filters": {
+      "allCategories": "All categories",
+      "allCities": "All cities",
+      "allPrices": "Free and paid",
+      "free": "Free",
+      "paid": "Paid"
+    },
+    "source": {
+      "agent": "Agent",
+      "manual": "Manual"
+    }
+  },
+  "suggestionsSlideover": {
+    "fallbackTitle": "Suggestion",
+    "editingPrefix": "Editing",
+    "cancel": "Cancel",
+    "edit": "Edit",
+    "delete": "Delete",
+    "reject": "Reject",
+    "saveChanges": "Save changes",
+    "approveAndCreate": "Approve and create place",
+    "loading": "Loading…",
+    "activityTitleLabel": "Activity title",
+    "descriptionLabel": "Description",
+    "locationLabel": "Location",
+    "contactLabel": "Contact",
+    "typeLabel": "Type",
+    "bestSeasonLabel": "Best season",
+    "featuresLabel": "Features",
+    "scheduleLabel": "Schedule",
+    "rejectionReasonLabel": "Rejection reason",
+    "hoursUnknownTitle": "Hours pending review",
+    "hoursUnknownDescription": "The user didn't know the opening hours when submitting the suggestion.",
+    "status": {
+      "pending": "Pending",
+      "approved": "Approved",
+      "rejected": "Rejected"
+    },
+    "features": {
+      "free": "Free",
+      "strollerFriendly": "Stroller friendly",
+      "weekends": "Open on weekends",
+      "shadow": "Shade",
+      "bathrooms": "Restrooms"
+    },
+    "ageLabels": {
+      "all": "All ages",
+      "babies": "Babies (0-11m)",
+      "toddlers": "Toddlers (1-3 years)",
+      "preschool": "Preschool (3-6 years)",
+      "school": "School age (6-12 years)",
+      "teens": "Teens (12+)"
+    },
+    "seasonLabels": {
+      "all": "All",
+      "spring": "Spring",
+      "summer": "Summer",
+      "autumn": "Autumn",
+      "winter": "Winter"
+    },
+    "toast": {
+      "rejectReasonRequired": "Enter a rejection reason",
+      "nameRequired": "The name is required in at least one language",
+      "updated": "Suggestion updated",
+      "saveError": "Error saving"
+    },
+    "rejectForm": {
+      "label": "Rejection reason",
+      "placeholder": "Explain why this suggestion is being rejected...",
+      "confirm": "Confirm rejection"
+    },
+    "form": {
+      "placeNameLabel": "Place name",
+      "cityLabel": "City",
+      "addressLabel": "Address",
+      "addressPlaceholder": "123 Main St",
+      "categoryLabel": "Category",
+      "seasonsLabel": "Seasons",
+      "agesLabel": "Ages",
+      "phoneLabel": "Phone",
+      "websiteLabel": "Website",
+      "openWeekendsLabel": "Open on weekends",
+      "priceLabel": "Price"
+    }
+  },
+  "categories": {
+    "title": "Categories",
+    "newCategory": "New category",
+    "categoryNamePlaceholder": "Category name",
+    "subcategoryNamePlaceholder": "Subcategory name",
+    "addSubcategory": "Add subcategory",
+    "subCount": "sub",
+    "empty": "No categories yet. Create the first one."
+  },
+  "providers": {
+    "title": "Providers",
+    "recordsBadge": "records",
+    "slideoverFallbackTitle": "Provider",
+    "closed": "Closed",
+    "notesPlaceholder": "Add notes...",
+    "tabs": {
+      "pending": "Pending",
+      "active": "Active",
+      "suspended": "Suspended",
+      "rejected": "Rejected",
+      "all": "All"
+    },
+    "status": {
+      "pending": "Pending",
+      "active": "Active",
+      "suspended": "Suspended",
+      "rejected": "Rejected"
+    },
+    "columns": {
+      "date": "Date",
+      "business": "Business",
+      "activities": "Activities",
+      "city": "City",
+      "status": "Status"
+    },
+    "actions": {
+      "viewDetail": "View detail",
+      "approve": "Approve",
+      "suspend": "Suspend",
+      "reject": "Reject"
+    },
+    "sections": {
+      "contact": "Contact",
+      "description": "Description",
+      "activityTypes": "Activity types",
+      "location": "Location",
+      "schedule": "Hours",
+      "prices": "Prices",
+      "internalNotes": "Internal notes"
+    },
+    "dayLabels": {
+      "sunday": "Sun",
+      "monday": "Mon",
+      "tuesday": "Tue",
+      "wednesday": "Wed",
+      "thursday": "Thu",
+      "friday": "Fri",
+      "saturday": "Sat"
+    },
+    "buttons": {
+      "approveProvider": "Approve provider"
+    }
+  }
+}

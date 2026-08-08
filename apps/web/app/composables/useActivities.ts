@@ -22,7 +22,7 @@ export const ACTIVITY_SELECT = `
   created_at,
   updated_at,
   metadata,
-  place:places (
+  place:places!inner (
     id,
     name_i18n,
     description_i18n,
@@ -92,6 +92,7 @@ export const useActivities = () => {
       .select(ACTIVITY_SELECT)
       .eq('id', id)
       .eq('status', 'approved')
+      .eq('place.status', 'active')
       .single()
 
     if (error) {
@@ -110,6 +111,7 @@ export const useActivities = () => {
       .from('activities')
       .select(ACTIVITY_SELECT)
       .eq('status', 'approved')
+      .eq('place.status', 'active')
       .order('created_at', { ascending: false })
       .limit(limit)
 
@@ -130,6 +132,7 @@ export const useActivities = () => {
       .from('activities')
       .select(ACTIVITY_SELECT)
       .eq('status', 'approved')
+      .eq('place.status', 'active')
       .limit(limit * 3)
 
     if (error) {
@@ -150,6 +153,7 @@ export const useActivities = () => {
       .from('activities')
       .select(ACTIVITY_SELECT)
       .eq('status', 'approved')
+      .eq('place.status', 'active')
       .limit(ageMonths !== undefined ? 50 : limit * 2)
 
     if (error) {
@@ -177,6 +181,7 @@ export const useActivities = () => {
       .from('activities')
       .select(ACTIVITY_SELECT)
       .eq('status', 'approved')
+      .eq('place.status', 'active')
       .order('created_at', { ascending: false })
 
     if (error) {

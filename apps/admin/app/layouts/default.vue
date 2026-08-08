@@ -1,156 +1,160 @@
 <script setup lang="ts">
 import type { NavigationMenuItem } from '@nuxt/ui'
 
+const { t } = useI18n()
 const open = ref(false)
 
-const links = [
-  [
-    {
-      label: 'Dashboard',
-      icon: 'i-lucide-layout-dashboard',
-      to: '/',
-      onSelect: () => {
-        open.value = false
-      },
-    },
-    {
-      label: 'Lugares',
-      icon: 'i-lucide-map-pin',
-      to: '/places',
-      onSelect: () => {
-        open.value = false
-      },
-    },
-    {
-      label: 'Actividades',
-      icon: 'i-lucide-zap',
-      to: '/activities',
-      onSelect: () => {
-        open.value = false
-      },
-    },
-    {
-      label: 'Sugerencias',
-      icon: 'i-lucide-lightbulb',
-      to: '/suggestions',
-      onSelect: () => {
-        open.value = false
-      },
-    },
-    {
-      label: 'Categorías',
-      icon: 'i-lucide-tag',
-      to: '/categories',
-      onSelect: () => {
-        open.value = false
-      },
-    },
-    {
-      label: 'Proveedores',
-      icon: 'i-lucide-store',
-      to: '/providers',
-      onSelect: () => {
-        open.value = false
-      },
-    },
-    {
-      label: 'Monitoreo',
-      icon: 'i-lucide-activity',
-      to: '/analytics',
-      defaultOpen: false,
-      type: 'trigger',
-      children: [
+const links = computed(
+  () =>
+    [
+      [
         {
-          label: 'Vista general',
+          label: t('nav.dashboard'),
           icon: 'i-lucide-layout-dashboard',
-          to: '/overview',
+          to: '/',
           onSelect: () => {
             open.value = false
           },
         },
         {
-          label: 'Logs del sistema',
-          icon: 'i-lucide-terminal',
-          to: '/system-logs',
+          label: t('nav.places'),
+          icon: 'i-lucide-map-pin',
+          to: '/places',
           onSelect: () => {
             open.value = false
           },
         },
         {
-          label: 'Actividad de usuarios',
+          label: t('nav.activities'),
+          icon: 'i-lucide-zap',
+          to: '/activities',
+          onSelect: () => {
+            open.value = false
+          },
+        },
+        {
+          label: t('nav.suggestions'),
+          icon: 'i-lucide-lightbulb',
+          to: '/suggestions',
+          onSelect: () => {
+            open.value = false
+          },
+        },
+        {
+          label: t('nav.categories'),
+          icon: 'i-lucide-tag',
+          to: '/categories',
+          onSelect: () => {
+            open.value = false
+          },
+        },
+        {
+          label: t('nav.providers'),
+          icon: 'i-lucide-store',
+          to: '/providers',
+          onSelect: () => {
+            open.value = false
+          },
+        },
+        {
+          label: t('nav.monitoring'),
           icon: 'i-lucide-activity',
-          to: '/user-events',
-          onSelect: () => {
-            open.value = false
-          },
+          to: '/analytics',
+          defaultOpen: false,
+          type: 'trigger',
+          children: [
+            {
+              label: t('nav.overview'),
+              icon: 'i-lucide-layout-dashboard',
+              to: '/overview',
+              onSelect: () => {
+                open.value = false
+              },
+            },
+            {
+              label: t('nav.systemLogs'),
+              icon: 'i-lucide-terminal',
+              to: '/system-logs',
+              onSelect: () => {
+                open.value = false
+              },
+            },
+            {
+              label: t('nav.userEvents'),
+              icon: 'i-lucide-activity',
+              to: '/user-events',
+              onSelect: () => {
+                open.value = false
+              },
+            },
+            {
+              label: t('nav.contactRequests'),
+              icon: 'i-lucide-inbox',
+              to: '/contact-requests',
+              onSelect: () => {
+                open.value = false
+              },
+            },
+          ],
         },
         {
-          label: 'Consultas',
-          icon: 'i-lucide-inbox',
-          to: '/contact-requests',
-          onSelect: () => {
-            open.value = false
-          },
-        },
-      ],
-    },
-    {
-      label: 'Soporte',
-      icon: 'i-lucide-life-buoy',
-      to: '/support',
-      defaultOpen: false,
-      type: 'trigger',
-      children: [
-        {
-          label: 'Help Desk',
+          label: t('nav.support'),
+          icon: 'i-lucide-life-buoy',
           to: '/support',
-          exact: true,
-          onSelect: () => {
-            open.value = false
-          },
+          defaultOpen: false,
+          type: 'trigger',
+          children: [
+            {
+              label: t('nav.helpDesk'),
+              to: '/support',
+              exact: true,
+              onSelect: () => {
+                open.value = false
+              },
+            },
+            {
+              label: t('nav.faqs'),
+              to: '/support/faqs',
+              onSelect: () => {
+                open.value = false
+              },
+            },
+          ],
         },
         {
-          label: 'FAQs',
-          to: '/support/faqs',
-          onSelect: () => {
-            open.value = false
-          },
-        },
-      ],
-    },
-    {
-      label: 'Settings',
-      to: '/settings',
-      icon: 'i-lucide-settings',
-      defaultOpen: false,
-      type: 'trigger',
-      children: [
-        {
-          label: 'General',
+          label: t('nav.settings'),
           to: '/settings',
-          exact: true,
-          onSelect: () => {
-            open.value = false
-          },
-        },
-        {
-          label: 'Notificaciones',
-          to: '/settings/notifications',
-          onSelect: () => {
-            open.value = false
-          },
-        },
-        {
-          label: 'Seguridad',
-          to: '/settings/security',
-          onSelect: () => {
-            open.value = false
-          },
+          icon: 'i-lucide-settings',
+          defaultOpen: false,
+          type: 'trigger',
+          children: [
+            {
+              label: t('nav.settingsGeneral'),
+              to: '/settings',
+              exact: true,
+              onSelect: () => {
+                open.value = false
+              },
+            },
+            {
+              label: t('nav.settingsNotifications'),
+              to: '/settings/notifications',
+              onSelect: () => {
+                open.value = false
+              },
+            },
+            {
+              label: t('nav.settingsSecurity'),
+              to: '/settings/security',
+              onSelect: () => {
+                open.value = false
+              },
+            },
+          ],
         },
       ],
-    },
-  ],
-] satisfies NavigationMenuItem[][]
+    ] satisfies NavigationMenuItem[][]
+)
 </script>
 
 <template>
@@ -168,7 +172,7 @@ const links = [
           <span class="font-bold text-primary text-lg">
             {{ collapsed ? 'P' : 'Pekes' }}
           </span>
-          <span v-if="!collapsed" class="text-xs text-muted">Admin</span>
+          <span v-if="!collapsed" class="text-xs text-muted">{{ t('nav.brand') }}</span>
         </div>
       </template>
 
@@ -184,7 +188,10 @@ const links = [
       </template>
 
       <template #footer="{ collapsed }">
-        <UserMenu :collapsed="collapsed" />
+        <div class="flex flex-col gap-1 w-full">
+          <LanguageSwitcher :collapsed="collapsed" />
+          <UserMenu :collapsed="collapsed" />
+        </div>
       </template>
     </UDashboardSidebar>
 

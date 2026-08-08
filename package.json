@@ -25,7 +25,9 @@
     "brace-expansion": "5.0.8",
     "ws": "8.21.1",
     "nitropack": "2.13.4",
-    "sharp": "0.35.3"
+    "sharp": "0.35.3",
+    "h3": "1.15.11",
+    "esbuild": "^0.28.1"
   },
   "engines": {
     "node": "22.x"
@@ -58,7 +60,9 @@
     "snyk": "^1.1304.0"
   },
   "dependencies": {
+    "@nuxt/image": "^2.0.0",
     "@vercel/analytics": "^2.0.1",
+    "h3": "1.15.11",
     "resend": "^6.12.3"
   }
 }

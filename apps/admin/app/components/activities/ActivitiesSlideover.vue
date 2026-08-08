@@ -14,26 +14,27 @@ const emit = defineEmits<{
   close: []
 }>()
 
+const { t } = useI18n()
 const toast = useToast()
 const overlay = useOverlay()
 const loading = ref(false)
 const { uploadFromUrl } = useImageUpload()
 
-const AGE_LABELS: Record<string, string> = {
-  'age.all': 'All ages',
-  'age.babies': 'Babies (0–11m)',
-  'age.toddlers': 'Toddlers (1–3)',
-  'age.preschool': 'Preschool (3–6)',
-  'age.school': 'School age (6–12)',
-  'age.teens': 'Teens (12+)',
-}
-const SEASON_LABELS: Record<string, string> = {
-  all: 'All seasons',
-  spring: 'Spring',
-  summer: 'Summer',
-  autumn: 'Autumn',
-  winter: 'Winter',
-}
+const AGE_LABELS = computed<Record<string, string>>(() => ({
+  'age.all': t('activitiesSlideover.ageLabels.all'),
+  'age.babies': t('activitiesSlideover.ageLabels.babies'),
+  'age.toddlers': t('activitiesSlideover.ageLabels.toddlers'),
+  'age.preschool': t('activitiesSlideover.ageLabels.preschool'),
+  'age.school': t('activitiesSlideover.ageLabels.school'),
+  'age.teens': t('activitiesSlideover.ageLabels.teens'),
+}))
+const SEASON_LABELS = computed<Record<string, string>>(() => ({
+  all: t('activitiesSlideover.seasonLabels.all'),
+  spring: t('activitiesSlideover.seasonLabels.spring'),
+  summer: t('activitiesSlideover.seasonLabels.summer'),
+  autumn: t('activitiesSlideover.seasonLabels.autumn'),
+  winter: t('activitiesSlideover.seasonLabels.winter'),
+}))
 
 interface ActivityMeta {
   schedule_structured?: WizardSchedule | null
@@ -96,6 +97,15 @@ const categoryOptions = computed(() =>
 const selectedPlace = computed(
   () => props.place ?? (places.value ?? []).find((p) => p.id === form.place_id) ?? null
 )
+
+// Toggle rápido activo/inactivo — atajo sobre form.status (approved <-> pending).
+// El select de abajo sigue permitiendo elegir 'rejected' explícitamente.
+const isActive = computed({
+  get: () => form.status === 'approved',
+  set: (val: boolean) => {
+    form.status = val ? 'approved' : 'pending'
+  },
+})
 
 // Horarios de Google del lugar seleccionado (para sembrar el editor)
 const googleHoursText = computed(() => {
@@ -176,20 +186,6 @@ watch(
   { immediate: true }
 )
 
-watch(
-  () => form.is_free,
-  (val) => {
-    if (val) form.price = null
-  }
-)
-
-watch(
-  () => form.price,
-  (val) => {
-    if (val && val > 0) form.is_free = false
-  }
-)
-
 // Crear lugar nuevo inline → autoseleccionar al volver
 const openCreatePlace = async () => {
   const slideover = overlay.create(PlacesSlideover, { props: { place: null } })
@@ -202,11 +198,11 @@ const openCreatePlace = async () => {
 
 const save = async () => {
   if (!Object.values(form.title_i18n).some((v) => v?.trim())) {
-    toast.add({ title: 'El título es requerido en al menos un idioma', color: 'error' })
+    toast.add({ title: t('activitiesSlideover.toast.titleRequired'), color: 'error' })
     return
   }
   if (!form.place_id) {
-    toast.add({ title: 'Seleccioná un lugar', color: 'error' })
+    toast.add({ title: t('activitiesSlideover.toast.placeRequired'), color: 'error' })
     return
   }
   loading.value = true
@@ -238,16 +234,16 @@ const save = async () => {
   try {
     if (props.activity?.id) {
       await $fetch(`/api/activities/${props.activity.id}`, { method: 'PUT', body })
-      toast.add({ title: 'Actividad actualizada', color: 'success' })
+      toast.add({ title: t('activitiesSlideover.toast.updated'), color: 'success' })
     } else {
       await $fetch('/api/activities', { method: 'POST', body })
-      toast.add({ title: 'Actividad creada', color: 'success' })
+      toast.add({ title: t('activitiesSlideover.toast.created'), color: 'success' })
     }
     emit('saved')
     emit('close')
   } catch (e) {
     toast.add({
-      title: 'Error',
+      title: t('activitiesSlideover.toast.errorTitle'),
       description: e instanceof Error ? e.message : String(e),
       color: 'error',
     })
@@ -258,19 +254,19 @@ const save = async () => {
 </script>
 
 <template>
-  <USlideover
-    :title="activity ? 'Editar actividad' : 'Nueva actividad'"
-    :close="{ onClick: () => emit('close') }"
+  <UiEntitySlideover
+    :title="activity ? t('activitiesSlideover.editTitle') : t('activitiesSlideover.createTitle')"
+    @close="emit('close')"
   >
     <template #body>
       <div class="flex flex-col gap-4 p-4">
         <!-- Selector de lugar (solo cuando NO viene placeId fijo) -->
-        <UFormField v-if="!placeId" label="Place" required>
+        <UFormField v-if="!placeId" :label="t('activitiesSlideover.form.place')" required>
           <div class="flex gap-2">
             <USelect
               v-model="form.place_id"
               :items="placeOptions"
-              placeholder="Select a place"
+              :placeholder="t('activitiesSlideover.form.placePlaceholder')"
               searchable
               class="flex-1"
             />
@@ -278,104 +274,100 @@ const save = async () => {
               color="neutral"
               variant="outline"
               icon="i-lucide-plus"
-              title="Crear lugar nuevo"
+              :title="t('activitiesSlideover.createPlaceTitle')"
               @click="openCreatePlace"
             >
-              Nuevo
+              {{ t('activitiesSlideover.newButton') }}
             </UButton>
           </div>
         </UFormField>
 
-        <UiI18nTabs v-model="form.title_i18n" label="Title" required />
+        <UiI18nTabs
+          v-model="form.title_i18n"
+          :label="t('activitiesSlideover.form.title')"
+          required
+        />
 
-        <UiI18nTabs v-model="form.description_i18n" label="Description" type="textarea" :rows="3" />
+        <UiI18nTabs
+          v-model="form.description_i18n"
+          :label="t('activitiesSlideover.form.description')"
+          type="textarea"
+          :rows="3"
+        />
 
-        <UFormField label="Category">
+        <UFormField :label="t('activitiesSlideover.form.category')">
           <USelect
             v-model="form.category_id"
             :items="categoryOptions"
-            placeholder="Select a category"
+            :placeholder="t('activitiesSlideover.form.categoryPlaceholder')"
             class="w-full"
           />
         </UFormField>
 
-        <UFormField label="Age ranges">
-          <UiAgeRangeSelector
-            v-model="form.age_range_ids"
-            :options="reference?.ageRanges ?? []"
-            :labels="AGE_LABELS"
-            :all-id="allAgeId"
-          />
+        <UFormField
+          :label="t('activitiesSlideover.form.active')"
+          :description="t('activitiesSlideover.form.activeDescription')"
+          class="flex items-center justify-between gap-2"
+        >
+          <USwitch v-model="isActive" />
         </UFormField>
 
-        <UFormField label="Seasons">
-          <UiSeasonSelector
-            v-model="form.best_season"
-            :options="reference?.seasons ?? []"
-            :labels="SEASON_LABELS"
-          />
-        </UFormField>
-
-        <UFormField label="Status">
+        <UFormField :label="t('activitiesSlideover.form.status')">
           <USelect
             v-model="form.status"
             :items="[
-              { label: 'Approved', value: 'approved' },
-              { label: 'Pending', value: 'pending' },
-              { label: 'Rejected', value: 'rejected' },
+              { label: t('activitiesSlideover.status.approved'), value: 'approved' },
+              { label: t('activitiesSlideover.status.pending'), value: 'pending' },
+              { label: t('activitiesSlideover.status.rejected'), value: 'rejected' },
             ]"
             class="w-full"
           />
         </UFormField>
 
-        <UFormField label="Price">
-          <div class="flex flex-col gap-2 w-full">
-            <UCheckbox v-model="form.is_free" label="Free" />
-            <UInput
-              v-if="!form.is_free"
-              v-model="form.price"
-              type="number"
-              placeholder="150"
-              class="w-full"
-            >
-              <template #leading>
-                <span class="text-muted text-sm">₪</span>
-              </template>
-            </UInput>
-          </div>
-        </UFormField>
-
-        <!-- Horarios estructurados (autollenados desde Google, editables) -->
-        <UiScheduleEditor
-          v-model:schedule="form.schedule_structured"
+        <UiActivityFields
+          v-model:age-range-ids="form.age_range_ids"
+          v-model:best-season="form.best_season"
+          v-model:schedule-structured="form.schedule_structured"
           v-model:hours-unknown="form.hours_unknown"
+          v-model:is-free="form.is_free"
+          v-model:price="form.price"
+          v-model:stroller-friendly="form.stroller_friendly"
+          v-model:open-weekends="form.open_weekends"
+          v-model:has-shadow="form.has_shadow"
+          v-model:has-bathrooms="form.has_bathrooms"
+          v-model:images="form.images"
+          :age-range-options="reference?.ageRanges ?? []"
+          :season-options="reference?.seasons ?? []"
+          :age-labels="AGE_LABELS"
+          :season-labels="SEASON_LABELS"
+          :all-age-id="allAgeId"
           :google-hours-text="googleHoursText"
-        />
-
-        <UFormField label="Options">
-          <div class="flex flex-col gap-2">
-            <UCheckbox v-model="form.stroller_friendly" label="Stroller / wheelchair friendly" />
-            <UCheckbox v-model="form.open_weekends" label="Open on weekends" />
-            <UCheckbox v-model="form.has_shadow" label="Has shade" />
-            <UCheckbox v-model="form.has_bathrooms" label="Has bathrooms" />
-          </div>
-        </UFormField>
-
-        <UiImageUploader
-          v-model="form.images"
           :google-photos="googlePhotos"
           :upload-fn="uploadFromUrl"
+          :ages-label="t('activitiesSlideover.form.ageRanges')"
+          :seasons-label="t('activitiesSlideover.form.seasons')"
+          :price-label="t('activitiesSlideover.form.price')"
+          :free-label="t('activitiesSlideover.form.free')"
+          :options-label="t('activitiesSlideover.form.options')"
+          :stroller-friendly-label="t('activitiesSlideover.form.strollerFriendly')"
+          :open-weekends-label="t('activitiesSlideover.form.openWeekends')"
+          :has-shadow-label="t('activitiesSlideover.form.hasShade')"
+          :has-bathrooms-label="t('activitiesSlideover.form.hasBathrooms')"
         />
       </div>
     </template>
 
     <template #footer>
       <div class="flex justify-end gap-3 w-full">
-        <UButton color="neutral" variant="outline" @click="emit('close')"> Cancelar </UButton>
+        <UButton color="neutral" variant="outline" @click="emit('close')">
+          {{ t('activitiesSlideover.cancel') }}
+        </UButton>
         <UButton :loading="loading" @click="save">
-          {{ activity ? 'Guardar cambios' : 'Crear actividad' }}
+          {{
+            activity ? t('activitiesSlideover.saveChanges') : t('activitiesSlideover.createButton')
+          }}
         </UButton>
       </div>
     </template>
-  </USlideover>
+  </UiEntitySlideover>
 </template>

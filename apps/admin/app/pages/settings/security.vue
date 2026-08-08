@@ -2,18 +2,22 @@
 import * as z from 'zod'
 import type { FormError } from '@nuxt/ui'
 
+const { t } = useI18n()
+
 // ── Password ──────────────────────────────────────────────
-const passwordSchema = z.object({
-  current: z.string().min(8, 'Mínimo 8 caracteres'),
-  new: z.string().min(8, 'Mínimo 8 caracteres'),
-})
-type PasswordSchema = z.output<typeof passwordSchema>
+const passwordSchema = computed(() =>
+  z.object({
+    current: z.string().min(8, t('settings.security.password.errors.minLength')),
+    new: z.string().min(8, t('settings.security.password.errors.minLength')),
+  })
+)
+type PasswordSchema = z.output<typeof passwordSchema.value>
 
 const password = reactive<Partial<PasswordSchema>>({ current: '', new: '' })
 
 const validate = (state: Partial<PasswordSchema>): FormError[] => {
   if (state.current && state.new && state.current === state.new) {
-    return [{ name: 'new', message: 'La nueva contraseña debe ser diferente' }]
+    return [{ name: 'new', message: t('settings.security.password.errors.samePassword') }]
   }
   return []
 }
@@ -50,8 +54,13 @@ const startMfaSetup = async () => {
     qrCode.value = data.totp.qr_code
     secret.value = data.totp.secret
     mfaStep.value = 'setup'
-  } catch (error: any) {
-    toast.add({ title: 'Error al configurar MFA', description: error.message, color: 'error' })
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error)
+    toast.add({
+      title: t('settings.security.mfa.toastSetupErrorTitle'),
+      description: message,
+      color: 'error',
+    })
   } finally {
     loadingMfa.value = false
   }
@@ -77,15 +86,15 @@ const verifyAndActivateMfa = async () => {
     hasMfa.value = true
     mfaStep.value = 'enabled'
     toast.add({
-      title: 'MFA activado',
-      description: 'Tu cuenta ahora requiere verificación en dos pasos',
+      title: t('settings.security.mfa.toastEnabledTitle'),
+      description: t('settings.security.mfa.toastEnabledDescription'),
       color: 'success',
       icon: 'i-lucide-shield-check',
     })
-  } catch (error: any) {
+  } catch {
     toast.add({
-      title: 'Código incorrecto',
-      description: 'Verificá el código en tu app autenticadora',
+      title: t('settings.security.mfa.toastWrongCodeTitle'),
+      description: t('settings.security.mfa.toastWrongCodeDescription'),
       color: 'error',
     })
   } finally {
@@ -106,13 +115,18 @@ const disableMfa = async () => {
     hasMfa.value = false
     mfaStep.value = 'idle'
     toast.add({
-      title: 'MFA desactivado',
-      description: 'La verificación en dos pasos fue removida',
+      title: t('settings.security.mfa.toastDisabledTitle'),
+      description: t('settings.security.mfa.toastDisabledDescription'),
       color: 'warning',
       icon: 'i-lucide-shield-off',
     })
-  } catch (error: any) {
-    toast.add({ title: 'Error al desactivar MFA', description: error.message, color: 'error' })
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error)
+    toast.add({
+      title: t('settings.security.mfa.toastDisableErrorTitle'),
+      description: message,
+      color: 'error',
+    })
   } finally {
     loadingMfa.value = false
   }
@@ -122,8 +136,8 @@ const disableMfa = async () => {
 <template>
   <!-- Password -->
   <UPageCard
-    title="Contraseña"
-    description="Confirmá tu contraseña actual antes de establecer una nueva."
+    :title="t('settings.security.password.title')"
+    :description="t('settings.security.password.description')"
     variant="subtle"
   >
     <UForm
@@ -136,7 +150,7 @@ const disableMfa = async () => {
         <UInput
           v-model="password.current"
           type="password"
-          placeholder="Contraseña actual"
+          :placeholder="t('settings.security.password.currentPlaceholder')"
           class="w-full"
         />
       </UFormField>
@@ -144,24 +158,24 @@ const disableMfa = async () => {
         <UInput
           v-model="password.new"
           type="password"
-          placeholder="Nueva contraseña"
+          :placeholder="t('settings.security.password.newPlaceholder')"
           class="w-full"
         />
       </UFormField>
-      <UButton label="Actualizar" class="w-fit" type="submit" />
+      <UButton :label="t('settings.security.password.updateButton')" class="w-fit" type="submit" />
     </UForm>
   </UPageCard>
 
   <!-- MFA -->
   <UPageCard
-    title="Verificación en dos pasos (MFA)"
-    description="Usá una app como Google Authenticator o Authy para mayor seguridad."
+    :title="t('settings.security.mfa.title')"
+    :description="t('settings.security.mfa.description')"
     variant="subtle"
   >
     <!-- Idle: no tiene MFA -->
     <div v-if="mfaStep === 'idle'" class="flex flex-col gap-3 max-w-xs">
       <UBadge color="warning" variant="subtle" icon="i-lucide-shield-alert">
-        MFA no configurado
+        {{ t('settings.security.mfa.notConfigured') }}
       </UBadge>
       <UButton
         icon="i-lucide-shield-plus"
@@ -169,26 +183,25 @@ const disableMfa = async () => {
         :loading="loadingMfa"
         @click="startMfaSetup"
       >
-        Activar MFA
+        {{ t('settings.security.mfa.activateButton') }}
       </UButton>
     </div>
 
     <!-- Setup: mostrar QR -->
     <div v-else-if="mfaStep === 'setup'" class="flex flex-col gap-4 max-w-sm">
       <p class="text-sm text-(--ui-text-muted)">
-        Escaneá el código QR con tu app autenticadora, luego ingresá el código de 6 dígitos para
-        confirmar.
+        {{ t('settings.security.mfa.setupInstructions') }}
       </p>
       <div class="bg-white p-3 rounded-lg w-fit">
-        <img :src="qrCode" alt="QR MFA" class="w-40 h-40" />
+        <img :src="qrCode" :alt="t('settings.security.mfa.qrAlt')" class="w-40 h-40" />
       </div>
       <p class="text-xs text-(--ui-text-muted)">
-        ¿No podés escanear? Ingresá este código manualmente:
+        {{ t('settings.security.mfa.manualCodeHint') }}
         <code class="font-mono text-xs bg-(--ui-bg-accented) px-1 py-0.5 rounded">{{
           secret
         }}</code>
       </p>
-      <UFormField label="Código de verificación" class="max-w-xs">
+      <UFormField :label="t('settings.security.mfa.codeLabel')" class="max-w-xs">
         <UInput
           v-model="verifyCode"
           placeholder="123456"
@@ -201,15 +214,19 @@ const disableMfa = async () => {
       </UFormField>
       <div class="flex gap-2">
         <UButton icon="i-lucide-check" :loading="loadingMfa" @click="verifyAndActivateMfa">
-          Confirmar
+          {{ t('settings.security.mfa.confirmButton') }}
         </UButton>
-        <UButton variant="ghost" @click="mfaStep = 'idle'"> Cancelar </UButton>
+        <UButton variant="ghost" @click="mfaStep = 'idle'">
+          {{ t('settings.security.mfa.cancelButton') }}
+        </UButton>
       </div>
     </div>
 
     <!-- Enabled: MFA activo -->
     <div v-else-if="mfaStep === 'enabled'" class="flex flex-col gap-3 max-w-xs">
-      <UBadge color="success" variant="subtle" icon="i-lucide-shield-check"> MFA activado </UBadge>
+      <UBadge color="success" variant="subtle" icon="i-lucide-shield-check">
+        {{ t('settings.security.mfa.enabledBadge') }}
+      </UBadge>
       <UButton
         color="error"
         variant="ghost"
@@ -218,19 +235,19 @@ const disableMfa = async () => {
         :loading="loadingMfa"
         @click="disableMfa"
       >
-        Desactivar MFA
+        {{ t('settings.security.mfa.deactivateButton') }}
       </UButton>
     </div>
   </UPageCard>
 
   <!-- Danger zone -->
   <UPageCard
-    title="Cuenta"
-    description="¿Ya no querés usar el servicio? Podés eliminar tu cuenta. Esta acción no tiene vuelta atrás."
+    :title="t('settings.security.account.title')"
+    :description="t('settings.security.account.description')"
     class="bg-gradient-to-tl from-error/10 from-5% to-default"
   >
     <template #footer>
-      <UButton label="Eliminar cuenta" color="error" />
+      <UButton :label="t('settings.security.account.deleteButton')" color="error" />
     </template>
   </UPageCard>
 </template>

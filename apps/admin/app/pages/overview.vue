@@ -16,6 +16,8 @@ interface AnalyticsSummary {
   }>
 }
 
+const { t } = useI18n()
+
 const summary = ref<AnalyticsSummary | null>(null)
 const isLoading = ref(false)
 
@@ -37,37 +39,37 @@ const cards = computed(() => {
   if (!summary.value) return []
   return [
     {
-      label: 'Actividades',
+      label: t('overview.cards.activities'),
       value: summary.value.totalActivities,
       icon: 'i-lucide-zap',
       color: 'text-primary',
     },
     {
-      label: 'Lugares',
+      label: t('overview.cards.places'),
       value: summary.value.totalPlaces,
       icon: 'i-lucide-map-pin',
       color: 'text-primary',
     },
     {
-      label: 'Sugerencias',
+      label: t('overview.cards.suggestions'),
       value: summary.value.totalSuggestions,
       icon: 'i-lucide-lightbulb',
       color: 'text-primary',
     },
     {
-      label: 'Sugerencias pendientes',
+      label: t('overview.cards.pendingSuggestions'),
       value: summary.value.pendingSuggestions,
       icon: 'i-lucide-clock',
       color: 'text-warning-500',
     },
     {
-      label: 'Consultas totales',
+      label: t('overview.cards.totalContactRequests'),
       value: summary.value.totalContactRequests,
       icon: 'i-lucide-message-circle',
       color: 'text-primary',
     },
     {
-      label: 'Consultas pendientes',
+      label: t('overview.cards.pendingContactRequests'),
       value: summary.value.pendingContactRequests,
       icon: 'i-lucide-inbox',
       color: 'text-warning-500',
@@ -81,7 +83,7 @@ await load()
 <template>
   <UDashboardPanel>
     <template #header>
-      <UDashboardNavbar title="Vista general">
+      <UDashboardNavbar :title="t('overview.title')">
         <template #leading>
           <UDashboardSidebarCollapse />
         </template>
@@ -118,7 +120,7 @@ await load()
         <!-- Feedbacks recientes -->
         <div v-if="summary && summary.recentFeedbacks.length > 0">
           <h2 class="text-sm font-semibold mb-3 text-(--ui-text-muted) uppercase tracking-wider">
-            Feedbacks recientes
+            {{ t('overview.recentFeedbacks') }}
           </h2>
           <div class="flex flex-col gap-2">
             <div

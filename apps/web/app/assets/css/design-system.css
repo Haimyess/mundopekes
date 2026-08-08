@@ -5,6 +5,9 @@
 
 :root {
   /* ===== COLORES ===== */
+
+  /* TEST COLOR */
+  --test-color: #00A896;
   
   /* Primary - Familia/Kids (Naranja cálido) */
   --color-primary-50: #fff7ed;

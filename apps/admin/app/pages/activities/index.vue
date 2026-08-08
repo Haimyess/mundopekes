@@ -3,6 +3,7 @@ import type { TableColumn } from '@nuxt/ui'
 import type { Row } from '@tanstack/table-core'
 import type { Activity, Category, Place } from '~/types'
 import ActivitiesSlideover from '~/components/activities/ActivitiesSlideover.vue'
+import { syncUrlPage } from '~/composables/useUrlPage'
 
 const UButton = resolveComponent('UButton')
 const UBadge = resolveComponent('UBadge')
@@ -23,6 +24,8 @@ const {
   remove,
   removeMany,
 } = useActivities()
+
+syncUrlPage(toRef(filters, 'page'))
 
 // Datos para los filtros — en paralelo entre sí y con el fetch inicial de
 // actividades (antes eran 3 awaits secuenciales, cada uno un round-trip completo)
@@ -230,7 +233,7 @@ const selectionText = computed(() =>
 </script>
 
 <template>
-  <UDashboardPanel id="activities">
+  <UDashboardPanel id="activities" :ui="{ body: 'flex flex-col flex-1 overflow-hidden p-0 gap-0' }">
     <template #header>
       <UDashboardNavbar :title="t('activities.title')">
         <template #leading>
@@ -245,8 +248,10 @@ const selectionText = computed(() =>
     </template>
 
     <template #body>
-      <!-- Toolbar: search + filtros -->
-      <div class="flex flex-wrap items-center justify-between gap-1.5">
+      <!-- Zona fija: search + filtros, nunca scrollea -->
+      <div
+        class="shrink-0 flex flex-wrap items-center justify-between gap-1.5 p-4 border-b border-default"
+      >
         <UInput
           v-model="filters.q"
           icon="i-lucide-search"
@@ -312,45 +317,46 @@ const selectionText = computed(() =>
         </div>
       </div>
 
-      <!-- Tabla -->
-      <UTable
-        v-model:row-selection="rowSelection"
-        class="shrink-0 mt-4"
-        :data="activities"
-        :columns="columns"
-        :loading="loading"
-        :ui="{
-          base: 'table-fixed border-separate border-spacing-0',
-          thead: '[&>tr]:bg-elevated/50 [&>tr]:after:content-none',
-          tbody:
-            '[&>tr]:last:[&>td]:border-b-0 [&>tr]:hover:bg-elevated/50 [&>tr]:cursor-pointer [&>tr]:transition-colors',
-          th: 'py-2 first:rounded-l-lg last:rounded-r-lg border-y border-default first:border-l last:border-r',
-          td: 'border-b border-default',
-          separator: 'h-0',
-        }"
-        @click="
-          (e: MouseEvent) => {
-            const target = e.target as HTMLElement
-            if (target.closest('[data-radix-popper-content-wrapper]')) return
-            if (target.closest('button')) return
-            if (target.closest('input[type=checkbox]')) return
-            if (target.closest('label')) return
+      <!-- Zona scrolleable: solo la tabla -->
+      <div class="flex-1 min-h-0 overflow-y-auto p-4">
+        <UTable
+          v-model:row-selection="rowSelection"
+          :data="activities"
+          :columns="columns"
+          :loading="loading"
+          :ui="{
+            base: 'table-fixed border-separate border-spacing-0',
+            thead: '[&>tr]:bg-elevated/50 [&>tr]:after:content-none',
+            tbody:
+              '[&>tr]:last:[&>td]:border-b-0 [&>tr]:hover:bg-elevated/50 [&>tr]:cursor-pointer [&>tr]:transition-colors',
+            th: 'py-2 first:rounded-l-lg last:rounded-r-lg border-y border-default first:border-l last:border-r',
+            td: 'border-b border-default',
+            separator: 'h-0',
+          }"
+          @click="
+            (e: MouseEvent) => {
+              const target = e.target as HTMLElement
+              if (target.closest('[data-radix-popper-content-wrapper]')) return
+              if (target.closest('button')) return
+              if (target.closest('input[type=checkbox]')) return
+              if (target.closest('label')) return
 
-            const tr = target.closest('tbody tr')
-            if (!tr) return
+              const tr = target.closest('tbody tr')
+              if (!tr) return
 
-            const tbody = tr.closest('tbody')
-            if (!tbody) return
-            const rows = Array.from(tbody.querySelectorAll('tr'))
-            const index = rows.indexOf(tr as HTMLTableRowElement)
-            const activity = activities[index]
-            if (activity) openEdit(activity)
-          }
-        "
-      />
+              const tbody = tr.closest('tbody')
+              if (!tbody) return
+              const rows = Array.from(tbody.querySelectorAll('tr'))
+              const index = rows.indexOf(tr as HTMLTableRowElement)
+              const activity = activities[index]
+              if (activity) openEdit(activity)
+            }
+          "
+        />
+      </div>
 
-      <!-- Paginación -->
-      <div class="flex items-center justify-between gap-3 border-t border-default pt-4 mt-auto">
+      <!-- Zona fija: paginación, siempre visible abajo -->
+      <div class="shrink-0 flex items-center justify-between gap-3 p-4 border-t border-default">
         <div class="text-sm text-muted">
           {{ selectionText }}
         </div>

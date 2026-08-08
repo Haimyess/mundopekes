@@ -2,24 +2,35 @@
 import type { TableColumn } from '@nuxt/ui'
 import type { Place } from '~/types'
 import PlacesSlideover from '~/components/places/PlacesSlideover.vue'
+import { syncUrlPage } from '~/composables/useUrlPage'
 
 const UButton = resolveComponent('UButton')
 const UBadge = resolveComponent('UBadge')
 const UDropdownMenu = resolveComponent('UDropdownMenu')
 
 const { tc } = useI18nContent()
-const toast = useToast()
+const { t } = useI18n()
 const overlay = useOverlay()
 const router = useRouter()
 
-const { data, status, refresh } = await useFetch<Place[]>('/api/places', { lazy: true })
+const { places, total, loading, filters, fetch: loadPlaces, remove } = usePlaces()
+
+syncUrlPage(toRef(filters, 'page'))
+
+const pageCount = computed(() => Math.max(1, Math.ceil(total.value / filters.pageSize)))
+
+const { data: cities } = await useFetch<{ name: string }[]>('/api/cities')
+const cityOptions = computed(() => [
+  { label: t('places.filters.allCities'), value: '' },
+  ...(cities.value ?? []).map((c) => ({ label: c.name, value: c.name })),
+])
 
 const openCreate = async () => {
   const slideover = overlay.create(PlacesSlideover, {
     props: { place: null },
   })
   await slideover.open()
-  refresh()
+  loadPlaces()
 }
 
 const openEdit = async (place: Place) => {
@@ -27,67 +38,56 @@ const openEdit = async (place: Place) => {
     props: { place },
   })
   await slideover.open()
-  refresh()
+  loadPlaces()
 }
 
 const deletePlace = async (id: string) => {
   try {
-    await $fetch(`/api/places/${id}`, { method: 'DELETE' })
-    toast.add({ title: 'Lugar eliminado', color: 'success' })
-    refresh()
-  } catch (e) {
-    toast.add({
-      title: 'Error',
-      description: e instanceof Error ? e.message : String(e),
-      color: 'error',
-    })
+    await remove(id)
+  } catch {
+    // ya se mostró el toast de error dentro del composable
   }
 }
 
-const search = ref('')
-const cityFilter = ref('all')
-const hasActivitiesFilter = ref('all')
+const statusColor = {
+  active: 'success',
+  inactive: 'neutral',
+} as const
 
-const cityOptions = computed(() => [
-  { label: 'Todas las ciudades', value: 'all' },
-  ...Array.from(new Set((data.value ?? []).map((p) => p.city?.name).filter(Boolean) as string[]))
-    .sort((a, b) => a.localeCompare(b, 'es'))
-    .map((name) => ({ label: name, value: name })),
-])
+const statusLabel = computed(() => ({
+  active: t('places.status.active'),
+  inactive: t('places.status.inactive'),
+}))
 
-const filtered = computed(() =>
-  (data.value ?? []).filter((p) => {
-    const name = tc(p.name_i18n ?? {})
-    if (!name.toLowerCase().includes(search.value.toLowerCase())) return false
-    if (cityFilter.value !== 'all' && p.city?.name !== cityFilter.value) return false
-    if (hasActivitiesFilter.value !== 'all') {
-      const count = p.activities?.[0]?.count ?? 0
-      if (hasActivitiesFilter.value === 'yes' && count === 0) return false
-      if (hasActivitiesFilter.value === 'no' && count > 0) return false
-    }
-    return true
-  })
-)
-
-const columns: TableColumn<Place>[] = [
+const columns = computed<TableColumn<Place>[]>(() => [
   {
     accessorKey: 'name_i18n',
-    header: 'Nombre',
+    header: t('places.table.name'),
     cell: ({ row }) =>
       h('span', { 'data-place-id': row.original.id }, tc(row.original.name_i18n ?? {})),
   },
   {
     accessorKey: 'city',
-    header: 'Ciudad',
+    header: t('places.table.city'),
     cell: ({ row }) => row.original.city?.name ?? '—',
   },
   {
     accessorKey: 'activities',
-    header: 'Actividades',
+    header: t('places.table.activities'),
     cell: ({ row }) => {
       const count = row.original.activities?.[0]?.count ?? 0
       return h(UBadge, { variant: 'subtle', color: 'primary' }, () => count)
     },
+  },
+  {
+    accessorKey: 'status',
+    header: t('places.table.status'),
+    cell: ({ row }) =>
+      h(
+        UBadge,
+        { variant: 'subtle', color: statusColor[row.original.status] },
+        () => statusLabel.value[row.original.status]
+      ),
   },
   {
     id: 'actions',
@@ -101,13 +101,13 @@ const columns: TableColumn<Place>[] = [
             content: { align: 'end' },
             items: [
               {
-                label: 'Editar',
+                label: t('places.actions.edit'),
                 icon: 'i-lucide-pencil',
                 onSelect: () => openEdit(row.original),
               },
               { type: 'separator' },
               {
-                label: 'Eliminar',
+                label: t('places.actions.delete'),
                 icon: 'i-lucide-trash',
                 color: 'error',
                 onSelect: () => deletePlace(row.original.id),
@@ -124,75 +124,88 @@ const columns: TableColumn<Place>[] = [
         )
       ),
   },
-]
+])
+
+await loadPlaces()
 </script>
 
 <template>
-  <UDashboardPanel id="places">
+  <UDashboardPanel id="places" :ui="{ body: 'flex flex-col flex-1 overflow-hidden p-0 gap-0' }">
     <template #header>
-      <UDashboardNavbar title="Lugares">
+      <UDashboardNavbar :title="t('places.title')">
         <template #leading>
           <UDashboardSidebarCollapse />
         </template>
         <template #right>
-          <UButton icon="i-lucide-plus" @click="openCreate"> Nuevo lugar </UButton>
+          <UButton icon="i-lucide-plus" @click="openCreate"> {{ t('places.newButton') }} </UButton>
         </template>
       </UDashboardNavbar>
     </template>
 
     <template #body>
-      <div class="flex flex-wrap items-center justify-between gap-1.5 mb-4">
+      <!-- Zona fija: búsqueda + filtros -->
+      <div
+        class="shrink-0 flex flex-wrap items-center justify-between gap-1.5 p-4 border-b border-default"
+      >
         <UInput
-          v-model="search"
+          v-model="filters.q"
           icon="i-lucide-search"
-          placeholder="Buscar lugares..."
+          :placeholder="t('places.searchPlaceholder')"
           class="max-w-sm"
         />
 
         <div class="flex flex-wrap items-center gap-1.5">
-          <USelect v-model="cityFilter" :items="cityOptions" class="min-w-44" />
+          <USelect v-model="filters.city" :items="cityOptions" class="min-w-44" />
           <USelect
-            v-model="hasActivitiesFilter"
+            v-model="filters.status"
             :items="[
-              { label: 'Todas', value: 'all' },
-              { label: 'Con actividades', value: 'yes' },
-              { label: 'Sin actividades', value: 'no' },
+              { label: t('places.filters.allStatus'), value: '' },
+              { label: t('places.status.active'), value: 'active' },
+              { label: t('places.status.inactive'), value: 'inactive' },
             ]"
-            class="min-w-40"
+            class="min-w-36"
           />
         </div>
       </div>
 
-      <UTable
-        :data="filtered"
-        :columns="columns"
-        :loading="status === 'pending'"
-        :ui="{
-          base: 'table-fixed border-separate border-spacing-0',
-          thead: '[&>tr]:bg-elevated/50 [&>tr]:after:content-none',
-          tbody:
-            '[&>tr]:last:[&>td]:border-b-0 [&>tr]:hover:bg-elevated/50 [&>tr]:cursor-pointer [&>tr]:transition-colors',
-          th: 'py-2 first:rounded-l-lg last:rounded-r-lg border-y border-default first:border-l last:border-r',
-          td: 'border-b border-default',
-        }"
-        @click="
-          (e: MouseEvent) => {
-            const target = e.target as HTMLElement
+      <!-- Zona scrolleable: solo la tabla -->
+      <div class="flex-1 min-h-0 overflow-y-auto p-4">
+        <UTable
+          :data="places"
+          :columns="columns"
+          :loading="loading"
+          :ui="{
+            base: 'table-fixed border-separate border-spacing-0',
+            thead: '[&>tr]:bg-elevated/50 [&>tr]:after:content-none',
+            tbody:
+              '[&>tr]:last:[&>td]:border-b-0 [&>tr]:hover:bg-elevated/50 [&>tr]:cursor-pointer [&>tr]:transition-colors',
+            th: 'py-2 first:rounded-l-lg last:rounded-r-lg border-y border-default first:border-l last:border-r',
+            td: 'border-b border-default',
+          }"
+          @click="
+            (e: MouseEvent) => {
+              const target = e.target as HTMLElement
+              if (target.closest('[data-radix-popper-content-wrapper]')) return
+              if (target.closest('button')) return
+              const tr = target.closest('tbody tr')
+              if (!tr) return
+              const idEl = tr.querySelector('[data-place-id]')
+              const placeId = idEl?.getAttribute('data-place-id')
+              if (placeId) router.push(`/places/${placeId}`)
+            }
+          "
+        />
+      </div>
 
-            // Si el click viene del dropdown o sus hijos, ignorar
-            if (target.closest('[data-radix-popper-content-wrapper]')) return
-            if (target.closest('button')) return
-
-            const tr = target.closest('tbody tr')
-            if (!tr) return
-
-            // Leer el id desde el data attribute — más robusto que usar el índice de fila
-            const idEl = tr.querySelector('[data-place-id]')
-            const placeId = idEl?.getAttribute('data-place-id')
-            if (placeId) router.push(`/places/${placeId}`)
-          }
-        "
-      />
+      <!-- Zona fija: paginación, siempre visible abajo -->
+      <div v-if="pageCount > 1" class="shrink-0 flex justify-end p-4 border-t border-default">
+        <UPagination
+          :default-page="filters.page"
+          :items-per-page="filters.pageSize"
+          :total="total"
+          @update:page="(p: number) => (filters.page = p)"
+        />
+      </div>
     </template>
   </UDashboardPanel>
 </template>

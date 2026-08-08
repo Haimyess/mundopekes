@@ -7,10 +7,11 @@ const supabase = useSupabaseClient()
 const toast = useToast()
 const colorMode = useColorMode()
 const appConfig = useAppConfig()
+const { t } = useI18n()
 
 const user = ref({
   name: 'Pekes Admin',
-  avatar: { src: '', alt: 'Pekes Admin' }
+  avatar: { src: '', alt: 'Pekes Admin' },
 })
 
 const logout = async () => {
@@ -18,42 +19,49 @@ const logout = async () => {
   navigateTo('/login')
 }
 
-const items = computed<DropdownMenuItem[][]>(() => ([[
-  {
-    type: 'label',
-    label: user.value.name
-  }
-], [
-  {
-    label: 'Appearance',
-    icon: 'i-lucide-sun-moon',
-    children: [{
-      label: 'Light',
-      icon: 'i-lucide-sun',
-      type: 'checkbox',
-      checked: colorMode.value === 'light',
-      onSelect(e: Event) {
-        e.preventDefault()
-        colorMode.preference = 'light'
-      }
-    }, {
-      label: 'Dark',
-      icon: 'i-lucide-moon',
-      type: 'checkbox',
-      checked: colorMode.value === 'dark',
-      onSelect(e: Event) {
-        e.preventDefault()
-        colorMode.preference = 'dark'
-      }
-    }]
-  }
-], [
-  {
-    label: 'Cerrar sesión',
-    icon: 'i-lucide-log-out',
-    onSelect: logout
-  }
-]]))
+const items = computed<DropdownMenuItem[][]>(() => [
+  [
+    {
+      type: 'label',
+      label: user.value.name,
+    },
+  ],
+  [
+    {
+      label: t('userMenu.appearance'),
+      icon: 'i-lucide-sun-moon',
+      children: [
+        {
+          label: t('userMenu.light'),
+          icon: 'i-lucide-sun',
+          type: 'checkbox',
+          checked: colorMode.value === 'light',
+          onSelect(e: Event) {
+            e.preventDefault()
+            colorMode.preference = 'light'
+          },
+        },
+        {
+          label: t('userMenu.dark'),
+          icon: 'i-lucide-moon',
+          type: 'checkbox',
+          checked: colorMode.value === 'dark',
+          onSelect(e: Event) {
+            e.preventDefault()
+            colorMode.preference = 'dark'
+          },
+        },
+      ],
+    },
+  ],
+  [
+    {
+      label: t('userMenu.logout'),
+      icon: 'i-lucide-log-out',
+      onSelect: logout,
+    },
+  ],
+])
 </script>
 
 <template>
@@ -65,7 +73,7 @@ const items = computed<DropdownMenuItem[][]>(() => ([[
     <UButton
       v-bind="{
         label: collapsed ? undefined : user?.name,
-        trailingIcon: collapsed ? undefined : 'i-lucide-chevrons-up-down'
+        trailingIcon: collapsed ? undefined : 'i-lucide-chevrons-up-down',
       }"
       color="neutral"
       variant="ghost"

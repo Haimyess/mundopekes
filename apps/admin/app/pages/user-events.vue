@@ -20,14 +20,16 @@ interface UserEventsSummary {
   }>
 }
 
-const EVENT_TYPE_LABELS: Record<string, string> = {
-  page_view: 'Vista de página',
-  search: 'Búsqueda',
-  activity_view: 'Actividad vista',
-  contact_send: 'Contacto enviado',
-  suggestion_submit: 'Sugerencia',
-  provider_interest: 'Interés proveedor',
-}
+const { t } = useI18n()
+
+const eventTypeLabels = computed<Record<string, string>>(() => ({
+  page_view: t('userEvents.eventTypes.pageView'),
+  search: t('userEvents.eventTypes.search'),
+  activity_view: t('userEvents.eventTypes.activityView'),
+  contact_send: t('userEvents.eventTypes.contactSend'),
+  suggestion_submit: t('userEvents.eventTypes.suggestionSubmit'),
+  provider_interest: t('userEvents.eventTypes.providerInterest'),
+}))
 
 const summary = ref<UserEventsSummary | null>(null)
 const isLoading = ref(false)
@@ -51,10 +53,10 @@ const load = async () => {
 
 type RecentEvent = UserEventsSummary['recentEvents'][number]
 
-const columns: TableColumn<RecentEvent>[] = [
+const columns = computed<TableColumn<RecentEvent>[]>(() => [
   {
     accessorKey: 'created_at',
-    header: 'Fecha',
+    header: t('userEvents.columns.date'),
     cell: ({ row }) =>
       h(
         'span',
@@ -64,17 +66,17 @@ const columns: TableColumn<RecentEvent>[] = [
   },
   {
     accessorKey: 'event_type',
-    header: 'Tipo',
+    header: t('userEvents.columns.type'),
     cell: ({ row }) =>
       h(
         UBadge,
         { color: 'neutral', variant: 'subtle', size: 'sm' },
-        () => EVENT_TYPE_LABELS[row.original.event_type] ?? row.original.event_type
+        () => eventTypeLabels.value[row.original.event_type] ?? row.original.event_type
       ),
   },
   {
     accessorKey: 'session_id',
-    header: 'Sesión',
+    header: t('userEvents.columns.session'),
     cell: ({ row }) => {
       const sid = row.original.session_id
       return h('span', { class: 'font-mono text-xs' }, sid ? sid.slice(0, 8) + '…' : '—')
@@ -82,7 +84,7 @@ const columns: TableColumn<RecentEvent>[] = [
   },
   {
     accessorKey: 'locale',
-    header: 'Locale',
+    header: t('userEvents.columns.locale'),
     cell: ({ row }) => {
       const loc = row.original.locale
       if (!loc) return h('span', {}, '—')
@@ -91,7 +93,7 @@ const columns: TableColumn<RecentEvent>[] = [
   },
   {
     id: 'payload',
-    header: 'Payload',
+    header: t('userEvents.columns.payload'),
     cell: ({ row }) =>
       h(
         UButton,
@@ -104,10 +106,10 @@ const columns: TableColumn<RecentEvent>[] = [
             payloadModal.value = true
           },
         },
-        () => 'Ver'
+        () => t('userEvents.view')
       ),
   },
-]
+])
 
 await load()
 </script>
@@ -115,7 +117,7 @@ await load()
 <template>
   <UDashboardPanel>
     <template #header>
-      <UDashboardNavbar title="Actividad de usuarios">
+      <UDashboardNavbar :title="t('userEvents.title')">
         <template #leading>
           <UDashboardSidebarCollapse />
         </template>
@@ -139,14 +141,14 @@ await load()
           <div class="bg-elevated rounded-xl p-4 flex flex-col gap-2 border border-default">
             <div class="flex items-center gap-2">
               <UIcon name="i-lucide-activity" class="size-4 text-primary" />
-              <span class="text-xs text-(--ui-text-muted)">Total eventos</span>
+              <span class="text-xs text-(--ui-text-muted)">{{ t('userEvents.totalEvents') }}</span>
             </div>
             <span class="text-2xl font-bold">{{ summary?.totalEvents ?? '—' }}</span>
           </div>
           <div class="bg-elevated rounded-xl p-4 flex flex-col gap-2 border border-default">
             <div class="flex items-center gap-2">
               <UIcon name="i-lucide-trending-up" class="size-4 text-primary" />
-              <span class="text-xs text-(--ui-text-muted)">Últimos 7 días</span>
+              <span class="text-xs text-(--ui-text-muted)">{{ t('userEvents.last7Days') }}</span>
             </div>
             <span class="text-2xl font-bold">{{ summary?.eventsLast7Days ?? '—' }}</span>
           </div>
@@ -155,7 +157,7 @@ await load()
         <!-- SECTION 2 — Distribución por tipo -->
         <div v-if="summary && summary.eventsByType.length > 0">
           <h2 class="text-sm font-semibold mb-3 text-(--ui-text-muted) uppercase tracking-wider">
-            Distribución por tipo
+            {{ t('userEvents.sections.byType') }}
           </h2>
           <div class="flex flex-col gap-2">
             <div
@@ -164,7 +166,7 @@ await load()
               class="flex items-center gap-3"
             >
               <span class="text-sm w-40 flex-shrink-0">
-                {{ EVENT_TYPE_LABELS[item.event_type] ?? item.event_type }}
+                {{ eventTypeLabels[item.event_type] ?? item.event_type }}
               </span>
               <div class="bg-elevated rounded h-1.5 flex-1">
                 <div
@@ -182,13 +184,13 @@ await load()
         <!-- SECTION 3 — Top búsquedas -->
         <div>
           <h2 class="text-sm font-semibold mb-3 text-(--ui-text-muted) uppercase tracking-wider">
-            Top búsquedas · 7 días
+            {{ t('userEvents.sections.topSearches') }}
           </h2>
           <p
             v-if="!summary || summary.topSearches.length === 0"
             class="text-sm text-(--ui-text-muted) text-center py-4"
           >
-            Sin búsquedas registradas aún
+            {{ t('userEvents.emptySearches') }}
           </p>
           <ol v-else class="flex flex-col gap-2">
             <li
@@ -210,13 +212,13 @@ await load()
         <!-- SECTION 4 — Actividades más vistas -->
         <div>
           <h2 class="text-sm font-semibold mb-3 text-(--ui-text-muted) uppercase tracking-wider">
-            Actividades más vistas · 7 días
+            {{ t('userEvents.sections.topActivities') }}
           </h2>
           <p
             v-if="!summary || summary.topActivities.length === 0"
             class="text-sm text-(--ui-text-muted) text-center py-4"
           >
-            Sin vistas registradas aún
+            {{ t('userEvents.emptyActivities') }}
           </p>
           <ol v-else class="flex flex-col gap-2">
             <li
@@ -238,7 +240,7 @@ await load()
         <!-- SECTION 5 — Eventos recientes -->
         <div>
           <h2 class="text-sm font-semibold mb-3 text-(--ui-text-muted) uppercase tracking-wider">
-            Eventos recientes
+            {{ t('userEvents.sections.recentEvents') }}
           </h2>
           <UTable
             :data="summary?.recentEvents ?? []"
@@ -260,7 +262,7 @@ await load()
   </UDashboardPanel>
 
   <!-- Modal payload -->
-  <UModal v-model:open="payloadModal" title="Payload del evento">
+  <UModal v-model:open="payloadModal" :title="t('userEvents.payloadModalTitle')">
     <template #body>
       <pre class="text-xs overflow-auto max-h-96 bg-elevated rounded p-3">{{
         JSON.stringify(selectedPayload, null, 2)

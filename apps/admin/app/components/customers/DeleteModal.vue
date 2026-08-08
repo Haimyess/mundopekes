@@ -1,14 +1,19 @@
 <script setup lang="ts">
-withDefaults(defineProps<{
-  count?: number
-}>(), {
-  count: 0
-})
+const { t } = useI18n()
+
+withDefaults(
+  defineProps<{
+    count?: number
+  }>(),
+  {
+    count: 0,
+  }
+)
 
 const open = ref(false)
 
 async function onSubmit() {
-  await new Promise(resolve => setTimeout(resolve, 1000))
+  await new Promise((resolve) => setTimeout(resolve, 1000))
   open.value = false
 }
 </script>
@@ -16,21 +21,21 @@ async function onSubmit() {
 <template>
   <UModal
     v-model:open="open"
-    :title="`Delete ${count} customer${count > 1 ? 's' : ''}`"
-    :description="`Are you sure, this action cannot be undone.`"
+    :title="t('customers.deleteModal.title', { count })"
+    :description="t('customers.deleteModal.description')"
   >
     <slot />
 
     <template #body>
       <div class="flex justify-end gap-2">
         <UButton
-          label="Cancel"
+          :label="t('customers.deleteModal.cancel')"
           color="neutral"
           variant="subtle"
           @click="open = false"
         />
         <UButton
-          label="Delete"
+          :label="t('customers.deleteModal.confirm')"
           color="error"
           variant="solid"
           loading-auto

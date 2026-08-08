@@ -1,0 +1,794 @@
+{
+  "nav": {
+    "dashboard": "Dashboard",
+    "places": "Lugares",
+    "activities": "Actividades",
+    "suggestions": "Sugerencias",
+    "categories": "Categorías",
+    "providers": "Proveedores",
+    "monitoring": "Monitoreo",
+    "overview": "Vista general",
+    "systemLogs": "Logs del sistema",
+    "userEvents": "Actividad de usuarios",
+    "contactRequests": "Consultas",
+    "support": "Soporte",
+    "helpDesk": "Help Desk",
+    "faqs": "FAQs",
+    "settings": "Ajustes",
+    "settingsGeneral": "General",
+    "settingsNotifications": "Notificaciones",
+    "settingsSecurity": "Seguridad",
+    "brand": "Admin"
+  },
+  "language": {
+    "label": "Idioma"
+  },
+  "login": {
+    "title": "MundoPekes Admin",
+    "subtitleMfa": "Ingresá el código de tu app autenticadora",
+    "subtitleDefault": "Ingresá con tu cuenta de administrador",
+    "email": "Email",
+    "password": "Contraseña",
+    "signIn": "Iniciar sesión",
+    "mfaCode": "Código de verificación",
+    "verify": "Verificar",
+    "backToLogin": "← Volver al login",
+    "footer": "MundoPekes Admin · Solo acceso autorizado"
+  },
+  "dashboard": {
+    "home": "Home",
+    "notifications": "Notificaciones",
+    "newMail": "Nuevo correo",
+    "newCustomer": "Nuevo cliente"
+  },
+  "userMenu": {
+    "appearance": "Apariencia",
+    "light": "Claro",
+    "dark": "Oscuro",
+    "logout": "Cerrar sesión"
+  },
+  "notifications": {
+    "title": "Notificaciones"
+  },
+  "customers": {
+    "title": "Clientes",
+    "filterEmailPlaceholder": "Filtrar por email...",
+    "deleteSelected": "Eliminar",
+    "statusFilterPlaceholder": "Filtrar por estado",
+    "status": {
+      "all": "Todos",
+      "subscribed": "Suscripto",
+      "unsubscribed": "No suscripto",
+      "bounced": "Rebotado"
+    },
+    "display": "Mostrar",
+    "selectAll": "Seleccionar todo",
+    "selectRow": "Seleccionar fila",
+    "columns": {
+      "id": "ID",
+      "name": "Nombre",
+      "email": "Email",
+      "location": "Ubicación",
+      "status": "Estado"
+    },
+    "rowsSelected": "{selected} de {total} fila(s) seleccionada(s).",
+    "actionsLabel": "Acciones",
+    "copyId": "Copiar ID del cliente",
+    "viewDetails": "Ver detalles del cliente",
+    "viewPayments": "Ver pagos del cliente",
+    "deleteCustomer": "Eliminar cliente",
+    "toast": {
+      "copiedTitle": "Copiado al portapapeles",
+      "copiedDescription": "ID del cliente copiado al portapapeles",
+      "deletedTitle": "Cliente eliminado",
+      "deletedDescription": "El cliente ha sido eliminado."
+    },
+    "addModal": {
+      "openButton": "Nuevo cliente",
+      "title": "Nuevo cliente",
+      "description": "Agregar un nuevo cliente a la base de datos",
+      "nameLabel": "Nombre",
+      "namePlaceholder": "Juan Pérez",
+      "emailLabel": "Email",
+      "emailPlaceholder": "juan.perez{'@'}ejemplo.com",
+      "cancel": "Cancelar",
+      "create": "Crear",
+      "nameTooShort": "Muy corto",
+      "emailInvalid": "Email inválido",
+      "toastSuccessTitle": "Éxito",
+      "toastSuccessDescription": "Nuevo cliente {name} agregado"
+    },
+    "deleteModal": {
+      "title": "Eliminar {count} cliente(s)",
+      "description": "Esta acción no se puede deshacer. ¿Estás seguro?",
+      "cancel": "Cancelar",
+      "confirm": "Eliminar"
+    }
+  },
+  "contactRequests": {
+    "title": "Consultas de contacto",
+    "totalBadge": "{total} consultas",
+    "analytics": {
+      "title": "Analytics de Feedback",
+      "total": "Total",
+      "thisMonth": "Este mes",
+      "pending": "Pendientes",
+      "resolved": "Resueltos"
+    },
+    "providerBanner": {
+      "text": "Los registros completos de proveedores se gestionan en la página de Proveedores",
+      "button": "Ir a Proveedores"
+    },
+    "tabs": {
+      "all": "Todos",
+      "outdated": "🐛 Desactualizado",
+      "feedback": "💬 Feedback",
+      "provider": "🏢 Proveedor",
+      "other": "💡 Otro"
+    },
+    "statusPlaceholder": "Estado",
+    "intent": {
+      "outdated": "Desactualizado",
+      "feedback": "Feedback",
+      "provider": "Proveedor",
+      "other": "Otro"
+    },
+    "status": {
+      "all": "Todos",
+      "pending": "Pendiente",
+      "read": "Leído",
+      "resolved": "Resuelto"
+    },
+    "columns": {
+      "date": "Fecha",
+      "intent": "Intent",
+      "contact": "Contacto",
+      "activity": "Actividad",
+      "message": "Mensaje",
+      "status": "Estado"
+    },
+    "actions": {
+      "viewDetail": "Ver detalle",
+      "markRead": "Marcar como leído",
+      "markResolved": "Marcar como resuelto",
+      "markPending": "Marcar como pendiente"
+    },
+    "slideover": {
+      "defaultTitle": "Consulta"
+    }
+  },
+  "inbox": {
+    "title": "Bandeja de entrada",
+    "tabs": {
+      "all": "Todos",
+      "unread": "No leídos"
+    },
+    "dropdown": {
+      "markUnread": "Marcar como no leído",
+      "markImportant": "Marcar como importante",
+      "starThread": "Destacar hilo",
+      "muteThread": "Silenciar hilo"
+    },
+    "tooltip": {
+      "archive": "Archivar",
+      "reply": "Responder",
+      "attachFile": "Adjuntar archivo"
+    },
+    "toast": {
+      "sentTitle": "Correo enviado",
+      "sentDescription": "Tu correo fue enviado con éxito"
+    },
+    "replyTo": "Responder a {name} ({email})",
+    "replyPlaceholder": "Escribe tu respuesta...",
+    "saveDraft": "Guardar borrador",
+    "send": "Enviar"
+  },
+  "overview": {
+    "title": "Vista general",
+    "cards": {
+      "activities": "Actividades",
+      "places": "Lugares",
+      "suggestions": "Sugerencias",
+      "pendingSuggestions": "Sugerencias pendientes",
+      "totalContactRequests": "Consultas totales",
+      "pendingContactRequests": "Consultas pendientes"
+    },
+    "recentFeedbacks": "Feedbacks recientes"
+  },
+  "systemLogs": {
+    "title": "Logs del sistema",
+    "recordsCount": "{count} registros",
+    "errorsLast24h": "{count} errores (24h)",
+    "filters": {
+      "allLevels": "Todos los niveles",
+      "levelPlaceholder": "Nivel",
+      "allContexts": "Todos los contextos",
+      "contextPlaceholder": "Contexto"
+    },
+    "levels": {
+      "error": "Error",
+      "warn": "Advertencia",
+      "info": "Información"
+    },
+    "columns": {
+      "date": "Fecha",
+      "level": "Nivel",
+      "context": "Contexto",
+      "message": "Mensaje",
+      "metadata": "Metadata"
+    },
+    "view": "Ver",
+    "metadataModalTitle": "Metadata del log"
+  },
+  "userEvents": {
+    "title": "Actividad de usuarios",
+    "totalEvents": "Total eventos",
+    "last7Days": "Últimos 7 días",
+    "sections": {
+      "byType": "Distribución por tipo",
+      "topSearches": "Top búsquedas · 7 días",
+      "topActivities": "Actividades más vistas · 7 días",
+      "recentEvents": "Eventos recientes"
+    },
+    "emptySearches": "Sin búsquedas registradas aún",
+    "emptyActivities": "Sin vistas registradas aún",
+    "eventTypes": {
+      "pageView": "Vista de página",
+      "search": "Búsqueda",
+      "activityView": "Actividad vista",
+      "contactSend": "Contacto enviado",
+      "suggestionSubmit": "Sugerencia",
+      "providerInterest": "Interés proveedor"
+    },
+    "columns": {
+      "date": "Fecha",
+      "type": "Tipo",
+      "session": "Sesión",
+      "locale": "Locale",
+      "payload": "Payload"
+    },
+    "view": "Ver",
+    "payloadModalTitle": "Payload del evento"
+  },
+  "home": {
+    "chart": {
+      "revenue": "Ingresos"
+    },
+    "dateRangePicker": {
+      "pickDate": "Elegir fecha",
+      "last7Days": "Últimos 7 días",
+      "last14Days": "Últimos 14 días",
+      "last30Days": "Últimos 30 días",
+      "last3Months": "Últimos 3 meses",
+      "last6Months": "Últimos 6 meses",
+      "lastYear": "Último año"
+    },
+    "periodSelect": {
+      "daily": "Diario",
+      "weekly": "Semanal",
+      "monthly": "Mensual"
+    },
+    "sales": {
+      "id": "ID",
+      "date": "Fecha",
+      "status": "Estado",
+      "email": "Email",
+      "amount": "Monto"
+    },
+    "stats": {
+      "customers": "Clientes",
+      "conversions": "Conversiones",
+      "revenue": "Ingresos",
+      "orders": "Pedidos"
+    }
+  },
+  "places": {
+    "title": "Lugares",
+    "newButton": "Nuevo lugar",
+    "searchPlaceholder": "Buscar lugares...",
+    "filters": {
+      "allCities": "Todas las ciudades",
+      "allActivities": "Todas",
+      "withActivities": "Con actividades",
+      "withoutActivities": "Sin actividades",
+      "allStatus": "Todos los estados"
+    },
+    "status": {
+      "active": "Activo",
+      "inactive": "Inactivo"
+    },
+    "table": {
+      "name": "Nombre",
+      "city": "Ciudad",
+      "activities": "Actividades",
+      "status": "Estado"
+    },
+    "actions": {
+      "edit": "Editar",
+      "delete": "Eliminar"
+    },
+    "toast": {
+      "deleted": "Lugar eliminado",
+      "errorTitle": "Error"
+    }
+  },
+  "placeDetail": {
+    "status": {
+      "approved": "Aprobada",
+      "pending": "Pendiente",
+      "rejected": "Rechazada",
+      "placeActive": "Activo",
+      "placeInactive": "Inactivo"
+    },
+    "table": {
+      "title": "Título",
+      "category": "Categoría",
+      "price": "Precio",
+      "status": "Estado"
+    },
+    "free": "Gratis",
+    "actions": {
+      "edit": "Editar",
+      "delete": "Eliminar"
+    },
+    "error": {
+      "title": "No se pudo cargar el lugar",
+      "retry": "Reintentar"
+    },
+    "noDescription": "Sin descripción",
+    "openingHours": "Horarios",
+    "editButton": "Editar lugar",
+    "activitiesHeading": "Actividades",
+    "newActivityButton": "Nueva actividad",
+    "activityWord": {
+      "singular": "actividad",
+      "plural": "actividades"
+    }
+  },
+  "placesSlideover": {
+    "editTitle": "Editar lugar",
+    "createTitle": "Nuevo lugar",
+    "form": {
+      "name": "Nombre",
+      "description": "Descripción",
+      "city": "Ciudad",
+      "cityPlaceholder": "Seleccioná una ciudad",
+      "latitude": "Latitud",
+      "longitude": "Longitud",
+      "active": "Activo",
+      "activeDescription": "Visible en la web. Si lo desactivás, el lugar y sus actividades dejan de mostrarse."
+    },
+    "getCoordinatesButton": "Obtener coordenadas de la ciudad",
+    "cancel": "Cancelar",
+    "saveChanges": "Guardar cambios",
+    "createButton": "Crear lugar",
+    "toast": {
+      "selectCityFirst": "Seleccioná una ciudad primero",
+      "noCoordinates": "No se encontraron coordenadas",
+      "nameRequired": "El nombre es requerido en al menos un idioma",
+      "updated": "Lugar actualizado",
+      "created": "Lugar creado",
+      "errorTitle": "Error"
+    }
+  },
+  "activities": {
+    "title": "Actividades",
+    "newButton": "Nueva actividad",
+    "searchPlaceholder": "Buscar actividades...",
+    "deleteButton": "Eliminar",
+    "editButton": "Editar",
+    "filters": {
+      "allCategories": "Todas",
+      "allPlaces": "Todos",
+      "allStatuses": "Todos los estados",
+      "categoryPlaceholder": "Categoría",
+      "placePlaceholder": "Lugar"
+    },
+    "status": {
+      "approved": "Aprobada",
+      "pending": "Pendiente",
+      "rejected": "Rechazada"
+    },
+    "table": {
+      "selectAll": "Seleccionar todas",
+      "selectRow": "Seleccionar fila",
+      "title": "Título",
+      "place": "Lugar",
+      "category": "Categoría",
+      "price": "Precio",
+      "status": "Estado"
+    },
+    "free": "Gratis",
+    "actions": {
+      "edit": "Editar",
+      "viewPlace": "Ver lugar",
+      "delete": "Eliminar"
+    },
+    "pagination": {
+      "selected": "{selected} de {total} actividades seleccionadas"
+    }
+  },
+  "activitiesSlideover": {
+    "editTitle": "Editar actividad",
+    "createTitle": "Nueva actividad",
+    "form": {
+      "place": "Lugar",
+      "placePlaceholder": "Seleccioná un lugar",
+      "title": "Título",
+      "description": "Descripción",
+      "category": "Categoría",
+      "categoryPlaceholder": "Seleccioná una categoría",
+      "ageRanges": "Rangos de edad",
+      "seasons": "Temporadas",
+      "active": "Activa",
+      "activeDescription": "Visible en la web. Equivale a Aprobada / Pendiente — usá el selector de abajo para rechazarla.",
+      "status": "Estado",
+      "price": "Precio",
+      "free": "Gratis",
+      "options": "Opciones",
+      "strollerFriendly": "Apto para cochecitos / sillas de ruedas",
+      "openWeekends": "Abierto los fines de semana",
+      "hasShade": "Tiene sombra",
+      "hasBathrooms": "Tiene baños"
+    },
+    "createPlaceTitle": "Crear lugar nuevo",
+    "newButton": "Nuevo",
+    "status": {
+      "approved": "Aprobada",
+      "pending": "Pendiente",
+      "rejected": "Rechazada"
+    },
+    "cancel": "Cancelar",
+    "saveChanges": "Guardar cambios",
+    "createButton": "Crear actividad",
+    "toast": {
+      "titleRequired": "El título es requerido en al menos un idioma",
+      "placeRequired": "Seleccioná un lugar",
+      "updated": "Actividad actualizada",
+      "created": "Actividad creada",
+      "errorTitle": "Error"
+    },
+    "ageLabels": {
+      "all": "Todas las edades",
+      "babies": "Bebés (0–11m)",
+      "toddlers": "Niños pequeños (1–3)",
+      "preschool": "Preescolar (3–6)",
+      "school": "Edad escolar (6–12)",
+      "teens": "Adolescentes (12+)"
+    },
+    "seasonLabels": {
+      "all": "Todas las temporadas",
+      "spring": "Primavera",
+      "summer": "Verano",
+      "autumn": "Otoño",
+      "winter": "Invierno"
+    }
+  },
+  "activitiesDeleteModal": {
+    "titleSingular": "Eliminar {count} actividad",
+    "titlePlural": "Eliminar {count} actividades",
+    "description": "Esta acción no se puede deshacer.",
+    "cancel": "Cancelar",
+    "confirm": "Eliminar"
+  },
+  "settings": {
+    "header": {
+      "title": "Ajustes"
+    },
+    "tabs": {
+      "general": "General",
+      "members": "Miembros",
+      "notifications": "Notificaciones",
+      "security": "Seguridad",
+      "documentation": "Documentación"
+    },
+    "general": {
+      "profile": {
+        "title": "Perfil",
+        "description": "Esta información será visible públicamente.",
+        "save": "Guardar cambios",
+        "nameLabel": "Nombre",
+        "nameDescription": "Aparecerá en recibos, facturas y otras comunicaciones.",
+        "emailLabel": "Email",
+        "emailDescription": "Se usa para iniciar sesión, recibos por email y novedades del producto.",
+        "usernameLabel": "Nombre de usuario",
+        "usernameDescription": "Tu nombre de usuario único para iniciar sesión y la URL de tu perfil.",
+        "avatarLabel": "Avatar",
+        "avatarDescription": "JPG, GIF o PNG. Máximo 1MB.",
+        "avatarChoose": "Elegir",
+        "bioLabel": "Bio",
+        "bioDescription": "Breve descripción para tu perfil. Las URLs se convierten en enlaces.",
+        "toastSuccessTitle": "Listo",
+        "toastSuccessDescription": "Tus ajustes se actualizaron correctamente.",
+        "errors": {
+          "tooShort": "Muy corto",
+          "invalidEmail": "Email inválido"
+        }
+      }
+    },
+    "notifications": {
+      "channels": {
+        "title": "Canales de notificación",
+        "description": "¿Dónde podemos notificarte?",
+        "email": {
+          "label": "Email",
+          "description": "Recibí un resumen diario por email."
+        },
+        "desktop": {
+          "label": "Escritorio",
+          "description": "Recibí notificaciones de escritorio."
+        }
+      },
+      "account": {
+        "title": "Actualizaciones de la cuenta",
+        "description": "Recibí novedades sobre el panel de administración.",
+        "weeklyDigest": {
+          "label": "Resumen semanal",
+          "description": "Recibí un resumen semanal de novedades."
+        },
+        "productUpdates": {
+          "label": "Novedades del producto",
+          "description": "Recibí un email mensual con todas las funciones y actualizaciones nuevas."
+        },
+        "importantUpdates": {
+          "label": "Actualizaciones importantes",
+          "description": "Recibí emails sobre actualizaciones importantes como parches de seguridad, mantenimiento, etc."
+        }
+      }
+    },
+    "security": {
+      "password": {
+        "title": "Contraseña",
+        "description": "Confirmá tu contraseña actual antes de establecer una nueva.",
+        "currentPlaceholder": "Contraseña actual",
+        "newPlaceholder": "Nueva contraseña",
+        "updateButton": "Actualizar",
+        "errors": {
+          "minLength": "Mínimo 8 caracteres",
+          "samePassword": "La nueva contraseña debe ser diferente"
+        }
+      },
+      "mfa": {
+        "title": "Verificación en dos pasos (MFA)",
+        "description": "Usá una app como Google Authenticator o Authy para mayor seguridad.",
+        "notConfigured": "MFA no configurado",
+        "activateButton": "Activar MFA",
+        "setupInstructions": "Escaneá el código QR con tu app autenticadora, luego ingresá el código de 6 dígitos para confirmar.",
+        "qrAlt": "QR MFA",
+        "manualCodeHint": "¿No podés escanear? Ingresá este código manualmente:",
+        "codeLabel": "Código de verificación",
+        "confirmButton": "Confirmar",
+        "cancelButton": "Cancelar",
+        "enabledBadge": "MFA activado",
+        "deactivateButton": "Desactivar MFA",
+        "toastSetupErrorTitle": "Error al configurar MFA",
+        "toastEnabledTitle": "MFA activado",
+        "toastEnabledDescription": "Tu cuenta ahora requiere verificación en dos pasos",
+        "toastWrongCodeTitle": "Código incorrecto",
+        "toastWrongCodeDescription": "Verificá el código en tu app autenticadora",
+        "toastDisabledTitle": "MFA desactivado",
+        "toastDisabledDescription": "La verificación en dos pasos fue removida",
+        "toastDisableErrorTitle": "Error al desactivar MFA"
+      },
+      "account": {
+        "title": "Cuenta",
+        "description": "¿Ya no querés usar el servicio? Podés eliminar tu cuenta. Esta acción no tiene vuelta atrás.",
+        "deleteButton": "Eliminar cuenta"
+      }
+    },
+    "members": {
+      "editMember": "Editar miembro",
+      "removeMember": "Eliminar miembro"
+    }
+  },
+  "support": {
+    "helpDesk": {
+      "title": "Help Desk",
+      "comingSoon": "Help Desk — próximamente"
+    },
+    "faqs": {
+      "header": {
+        "title": "FAQs",
+        "newButton": "Nueva FAQ"
+      },
+      "filter": {
+        "allCategories": "Todas las categorías"
+      },
+      "status": {
+        "published": "Publicada",
+        "draft": "Borrador"
+      },
+      "empty": "No hay FAQs todavía. Creá la primera.",
+      "slideover": {
+        "editTitle": "Editar FAQ",
+        "createTitle": "Nueva FAQ"
+      },
+      "form": {
+        "questionLabel": "Pregunta",
+        "questionPlaceholder": "¿Cómo puedo...?",
+        "answerLabel": "Respuesta",
+        "answerPlaceholder": "La respuesta detallada...",
+        "categoryLabel": "Categoría",
+        "categoryPlaceholder": "Seleccioná una categoría",
+        "statusLabel": "Estado",
+        "cancelButton": "Cancelar",
+        "saveButton": "Guardar cambios",
+        "createButton": "Crear FAQ"
+      },
+      "toast": {
+        "validationError": "Pregunta y respuesta son requeridas"
+      }
+    }
+  },
+  "suggestions": {
+    "title": "Sugerencias",
+    "pendingBadge": "pendientes",
+    "tabs": {
+      "pending": "Pendientes",
+      "approved": "Aprobadas",
+      "rejected": "Rechazadas",
+      "all": "Todas"
+    },
+    "status": {
+      "pending": "Pendiente",
+      "approved": "Aprobada",
+      "rejected": "Rechazada"
+    },
+    "columns": {
+      "name": "Nombre",
+      "city": "Ciudad",
+      "type": "Tipo",
+      "free": "Gratuito",
+      "source": "Fuente",
+      "date": "Fecha",
+      "status": "Estado"
+    },
+    "filters": {
+      "allCategories": "Todas las categorías",
+      "allCities": "Todas las ciudades",
+      "allPrices": "Gratis y de pago",
+      "free": "Gratis",
+      "paid": "De pago"
+    },
+    "source": {
+      "agent": "Agente",
+      "manual": "Manual"
+    }
+  },
+  "suggestionsSlideover": {
+    "fallbackTitle": "Sugerencia",
+    "editingPrefix": "Editando",
+    "cancel": "Cancelar",
+    "edit": "Editar",
+    "delete": "Eliminar",
+    "reject": "Rechazar",
+    "saveChanges": "Guardar cambios",
+    "approveAndCreate": "Aprobar y crear lugar",
+    "loading": "Cargando…",
+    "activityTitleLabel": "Título de la actividad",
+    "descriptionLabel": "Descripción",
+    "locationLabel": "Ubicación",
+    "contactLabel": "Contacto",
+    "typeLabel": "Tipo",
+    "bestSeasonLabel": "Mejor temporada",
+    "featuresLabel": "Características",
+    "scheduleLabel": "Horario",
+    "rejectionReasonLabel": "Motivo de rechazo",
+    "hoursUnknownTitle": "Horarios pendientes de revisión",
+    "hoursUnknownDescription": "El usuario no conocía los horarios al enviar la sugerencia.",
+    "status": {
+      "pending": "Pendiente",
+      "approved": "Aprobada",
+      "rejected": "Rechazada"
+    },
+    "features": {
+      "free": "Gratuito",
+      "strollerFriendly": "Apto cochecito",
+      "weekends": "Fines de semana",
+      "shadow": "Sombra",
+      "bathrooms": "Baños"
+    },
+    "ageLabels": {
+      "all": "Todas las edades",
+      "babies": "Bebés (0-11m)",
+      "toddlers": "Pequeños (1-3 años)",
+      "preschool": "Preescolar (3-6 años)",
+      "school": "Escolar (6-12 años)",
+      "teens": "Adolescentes (12+)"
+    },
+    "seasonLabels": {
+      "all": "Todas",
+      "spring": "Primavera",
+      "summer": "Verano",
+      "autumn": "Otoño",
+      "winter": "Invierno"
+    },
+    "toast": {
+      "rejectReasonRequired": "Ingresá un motivo de rechazo",
+      "nameRequired": "El nombre es requerido en al menos un idioma",
+      "updated": "Sugerencia actualizada",
+      "saveError": "Error al guardar"
+    },
+    "rejectForm": {
+      "label": "Motivo del rechazo",
+      "placeholder": "Explicá por qué se rechaza esta sugerencia...",
+      "confirm": "Confirmar rechazo"
+    },
+    "form": {
+      "placeNameLabel": "Nombre del lugar",
+      "cityLabel": "Ciudad",
+      "addressLabel": "Dirección",
+      "addressPlaceholder": "Calle 123",
+      "categoryLabel": "Categoría",
+      "seasonsLabel": "Temporadas",
+      "agesLabel": "Edades",
+      "phoneLabel": "Teléfono",
+      "websiteLabel": "Website",
+      "openWeekendsLabel": "Abre fines de semana",
+      "priceLabel": "Precio"
+    }
+  },
+  "categories": {
+    "title": "Categorías",
+    "newCategory": "Nueva categoría",
+    "categoryNamePlaceholder": "Nombre de la categoría",
+    "subcategoryNamePlaceholder": "Nombre subcategoría",
+    "addSubcategory": "Agregar subcategoría",
+    "subCount": "sub",
+    "empty": "No hay categorías todavía. Creá la primera."
+  },
+  "providers": {
+    "title": "Proveedores",
+    "recordsBadge": "registros",
+    "slideoverFallbackTitle": "Proveedor",
+    "closed": "Cerrado",
+    "notesPlaceholder": "Agregar notas...",
+    "tabs": {
+      "pending": "Pendientes",
+      "active": "Activos",
+      "suspended": "Suspendidos",
+      "rejected": "Rechazados",
+      "all": "Todos"
+    },
+    "status": {
+      "pending": "Pendiente",
+      "active": "Activo",
+      "suspended": "Suspendido",
+      "rejected": "Rechazado"
+    },
+    "columns": {
+      "date": "Fecha",
+      "business": "Negocio",
+      "activities": "Actividades",
+      "city": "Ciudad",
+      "status": "Estado"
+    },
+    "actions": {
+      "viewDetail": "Ver detalle",
+      "approve": "Aprobar",
+      "suspend": "Suspender",
+      "reject": "Rechazar"
+    },
+    "sections": {
+      "contact": "Contacto",
+      "description": "Descripción",
+      "activityTypes": "Tipos de actividad",
+      "location": "Ubicación",
+      "schedule": "Horarios",
+      "prices": "Precios",
+      "internalNotes": "Notas internas"
+    },
+    "dayLabels": {
+      "sunday": "Dom",
+      "monday": "Lun",
+      "tuesday": "Mar",
+      "wednesday": "Mié",
+      "thursday": "Jue",
+      "friday": "Vie",
+      "saturday": "Sáb"
+    },
+    "buttons": {
+      "approveProvider": "Aprobar proveedor"
+    }
+  }
+}

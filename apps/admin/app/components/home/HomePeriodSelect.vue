@@ -2,6 +2,8 @@
 import { eachDayOfInterval } from 'date-fns'
 import type { Period, Range } from '~/types'
 
+const { t } = useI18n()
+
 const model = defineModel<Period>({ required: true })
 
 const props = defineProps<{
@@ -10,25 +12,27 @@ const props = defineProps<{
 
 const days = computed(() => eachDayOfInterval(props.range))
 
+const periodLabels = computed<Record<Period, string>>(() => ({
+  daily: t('home.periodSelect.daily'),
+  weekly: t('home.periodSelect.weekly'),
+  monthly: t('home.periodSelect.monthly'),
+}))
+
 const periods = computed<Period[]>(() => {
   if (days.value.length <= 8) {
-    return [
-      'daily'
-    ]
+    return ['daily']
   }
 
   if (days.value.length <= 31) {
-    return [
-      'daily',
-      'weekly'
-    ]
+    return ['daily', 'weekly']
   }
 
-  return [
-    'weekly',
-    'monthly'
-  ]
+  return ['weekly', 'monthly']
 })
+
+const periodItems = computed(() =>
+  periods.value.map((p) => ({ label: periodLabels.value[p], value: p }))
+)
 
 // Ensure the model value is always a valid period
 watch(periods, () => {
@@ -41,9 +45,11 @@ watch(periods, () => {
 <template>
   <USelect
     v-model="model"
-    :items="periods"
+    :items="periodItems"
+    value-key="value"
+    label-key="label"
     variant="ghost"
     class="data-[state=open]:bg-elevated"
-    :ui="{ value: 'capitalize', itemLabel: 'capitalize', trailingIcon: 'group-data-[state=open]:rotate-180 transition-transform duration-200' }"
+    :ui="{ trailingIcon: 'group-data-[state=open]:rotate-180 transition-transform duration-200' }"
   />
 </template>

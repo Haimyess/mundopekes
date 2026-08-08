@@ -11,6 +11,7 @@ import { fetchDetails } from './steps/3-details.js'
 import { scrapeWebsite, detectsPricingInText } from './steps/4-scrape.js'
 import { enrichWithHaiku } from './steps/5-enrich.js'
 import { extractCity, ingestSuggestion } from './steps/6-ingest.js'
+import { logSuggestionReceived } from './utils/app-logger.js'
 
 import { sendRunReport } from './reporting/email.js'
 import { updateConfluenceReports } from './reporting/confluence.js'
@@ -124,6 +125,12 @@ async function main(): Promise<void> {
         } else {
           const { id } = await ingestSuggestion(place, details, enriched, supabase)
           logSuccess(`Inserted suggestion ${id}: ${details.name_i18n.he}`)
+          await logSuggestionReceived(supabase, {
+            suggestionId: id,
+            name: details.name_i18n.he,
+            city,
+            category: categoryName,
+          })
           report.inserted++
           existingPlaceIds.add(place.place_id)
         }

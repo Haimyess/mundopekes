@@ -17,7 +17,7 @@ export interface Place {
   lat: number | null
   lng: number | null
   images: string[]
-  status: 'active' | 'inactive' | 'draft'
+  status: 'active' | 'inactive'
   city: City | null
 }
 

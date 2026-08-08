@@ -1,9 +1,8 @@
 import { serverSupabaseClient } from '#supabase/server'
 import { enrichI18nField } from '../../utils/translate'
+import { syncActivityPivots } from '../../utils/activity-pivots'
 
 export default defineEventHandler(async (event) => {
-  await requireAdminUser(event)
-
   const body = await readBody(event)
   const supabase = await serverSupabaseClient(event)
   const config = useRuntimeConfig(event)
@@ -17,8 +16,14 @@ export default defineEventHandler(async (event) => {
     }
   }
 
-  const { data, error } = await supabase.from('activities').insert(body).select().single()
+  // Pivots no son columnas de `activities` — se escriben aparte en las tablas pivote
+  const { age_range_ids, best_season, ...activityRow } = body
+
+  const { data, error } = await supabase.from('activities').insert(activityRow).select().single()
 
   if (error) throw createError({ statusCode: 500, message: error.message })
+
+  await syncActivityPivots(supabase, data.id, age_range_ids, best_season)
+
   return data
 })

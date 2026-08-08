@@ -1,41 +1,53 @@
 <script setup lang="ts">
+const { t } = useI18n()
+
 const state = reactive<{ [key: string]: boolean }>({
   email: true,
   desktop: false,
   product_updates: true,
   weekly_digest: false,
-  important_updates: true
+  important_updates: true,
 })
 
-const sections = [{
-  title: 'Notification channels',
-  description: 'Where can we notify you?',
-  fields: [{
-    name: 'email',
-    label: 'Email',
-    description: 'Receive a daily email digest.'
-  }, {
-    name: 'desktop',
-    label: 'Desktop',
-    description: 'Receive desktop notifications.'
-  }]
-}, {
-  title: 'Account updates',
-  description: 'Receive updates about Nuxt UI.',
-  fields: [{
-    name: 'weekly_digest',
-    label: 'Weekly digest',
-    description: 'Receive a weekly digest of news.'
-  }, {
-    name: 'product_updates',
-    label: 'Product updates',
-    description: 'Receive a monthly email with all new features and updates.'
-  }, {
-    name: 'important_updates',
-    label: 'Important updates',
-    description: 'Receive emails about important updates like security fixes, maintenance, etc.'
-  }]
-}]
+const sections = computed(() => [
+  {
+    title: t('settings.notifications.channels.title'),
+    description: t('settings.notifications.channels.description'),
+    fields: [
+      {
+        name: 'email',
+        label: t('settings.notifications.channels.email.label'),
+        description: t('settings.notifications.channels.email.description'),
+      },
+      {
+        name: 'desktop',
+        label: t('settings.notifications.channels.desktop.label'),
+        description: t('settings.notifications.channels.desktop.description'),
+      },
+    ],
+  },
+  {
+    title: t('settings.notifications.account.title'),
+    description: t('settings.notifications.account.description'),
+    fields: [
+      {
+        name: 'weekly_digest',
+        label: t('settings.notifications.account.weeklyDigest.label'),
+        description: t('settings.notifications.account.weeklyDigest.description'),
+      },
+      {
+        name: 'product_updates',
+        label: t('settings.notifications.account.productUpdates.label'),
+        description: t('settings.notifications.account.productUpdates.description'),
+      },
+      {
+        name: 'important_updates',
+        label: t('settings.notifications.account.importantUpdates.label'),
+        description: t('settings.notifications.account.importantUpdates.description'),
+      },
+    ],
+  },
+])
 
 async function onChange() {
   // Do something with data
@@ -61,10 +73,7 @@ async function onChange() {
         :description="field.description"
         class="flex items-center justify-between not-last:pb-4 gap-2"
       >
-        <USwitch
-          v-model="state[field.name]"
-          @update:model-value="onChange"
-        />
+        <USwitch v-model="state[field.name]" @update:model-value="onChange" />
       </UFormField>
     </UPageCard>
   </div>

@@ -10,12 +10,14 @@ interface Props {
 
 const props = defineProps<Props>()
 
+const { locale } = useI18n()
+
 const maxCount = computed(() => Math.max(...props.data.map((d) => d.count), 1))
 
 const formatMonth = (month: string) => {
   const [year, m] = month.split('-')
   const date = new Date(Number(year), Number(m) - 1, 1)
-  return date.toLocaleString('es-AR', { month: 'short' })
+  return date.toLocaleString(locale.value === 'en' ? 'en-US' : 'es-AR', { month: 'short' })
 }
 </script>
 

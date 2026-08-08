@@ -579,7 +579,9 @@ const seasonIcons: Record<string, string> = {
   justify-content: center;
   gap: var(--space-2);
   border-radius: var(--border-radius-lg);
-  background-color: var(--color-secondary-500);
+  /* background-color: var(--color-secondary-500); */
+  background-color: var(--test-color);
+
   color: white;
   font-weight: var(--font-weight-semibold);
   border: none;

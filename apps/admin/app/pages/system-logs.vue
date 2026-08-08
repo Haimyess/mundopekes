@@ -2,9 +2,12 @@
 <script setup lang="ts">
 import type { TableColumn } from '@nuxt/ui'
 import type { AppLog } from '~/composables/useLogs'
+import { syncUrlPage } from '~/composables/useUrlPage'
 
 const UBadge = resolveComponent('UBadge')
 const UButton = resolveComponent('UButton')
+
+const { t } = useI18n()
 
 const {
   logs,
@@ -18,6 +21,8 @@ const {
   fetch: loadLogs,
   fetchErrorCount,
 } = useLogs()
+
+syncUrlPage(page)
 
 const contexts = ref<string[]>([])
 const metadataModal = ref(false)
@@ -36,15 +41,15 @@ const levelColor = (lvl: string) =>
     info: 'info' as const,
   })[lvl] ?? 'neutral'
 
-const levelOptions = [
-  { label: 'Todos los niveles', value: undefined },
-  { label: 'Error', value: 'error' },
-  { label: 'Warn', value: 'warn' },
-  { label: 'Info', value: 'info' },
-]
+const levelOptions = computed(() => [
+  { label: t('systemLogs.filters.allLevels'), value: undefined },
+  { label: t('systemLogs.levels.error'), value: 'error' },
+  { label: t('systemLogs.levels.warn'), value: 'warn' },
+  { label: t('systemLogs.levels.info'), value: 'info' },
+])
 
 const contextOptions = computed(() => [
-  { label: 'Todos los contextos', value: undefined },
+  { label: t('systemLogs.filters.allContexts'), value: undefined },
   ...contexts.value.map((c) => ({ label: c, value: c })),
 ])
 
@@ -53,10 +58,10 @@ const openMetadata = (metadata: unknown) => {
   metadataModal.value = true
 }
 
-const columns: TableColumn<AppLog>[] = [
+const columns = computed<TableColumn<AppLog>[]>(() => [
   {
     accessorKey: 'created_at',
-    header: 'Fecha',
+    header: t('systemLogs.columns.date'),
     cell: ({ row }) =>
       h(
         'span',
@@ -66,7 +71,7 @@ const columns: TableColumn<AppLog>[] = [
   },
   {
     accessorKey: 'level',
-    header: 'Nivel',
+    header: t('systemLogs.columns.level'),
     cell: ({ row }) =>
       h(
         UBadge,
@@ -80,12 +85,12 @@ const columns: TableColumn<AppLog>[] = [
   },
   {
     accessorKey: 'context',
-    header: 'Contexto',
+    header: t('systemLogs.columns.context'),
     cell: ({ row }) => h('span', { class: 'font-mono text-xs' }, row.original.context),
   },
   {
     accessorKey: 'message',
-    header: 'Mensaje',
+    header: t('systemLogs.columns.message'),
     cell: ({ row }) => {
       const msg = row.original.message
       const truncated = msg.length > 60 ? msg.slice(0, 60) + '…' : msg
@@ -94,7 +99,7 @@ const columns: TableColumn<AppLog>[] = [
   },
   {
     id: 'metadata',
-    header: 'Metadata',
+    header: t('systemLogs.columns.metadata'),
     cell: ({ row }) => {
       if (!row.original.metadata) return h('span', { class: 'text-(--ui-text-muted) text-xs' }, '—')
       return h(
@@ -105,11 +110,11 @@ const columns: TableColumn<AppLog>[] = [
           variant: 'outline',
           onClick: () => openMetadata(row.original.metadata),
         },
-        () => 'Ver'
+        () => t('systemLogs.view')
       )
     },
   },
-]
+])
 
 onMounted(async () => {
   const ctxList = await $fetch<string[]>('/api/logs/contexts')
@@ -119,16 +124,18 @@ onMounted(async () => {
 </script>
 
 <template>
-  <UDashboardPanel>
+  <UDashboardPanel :ui="{ body: 'flex flex-col flex-1 overflow-hidden p-0 gap-0' }">
     <template #header>
-      <UDashboardNavbar title="Logs del sistema">
+      <UDashboardNavbar :title="t('systemLogs.title')">
         <template #leading>
           <UDashboardSidebarCollapse />
         </template>
         <template #right>
-          <UBadge color="neutral" variant="subtle"> {{ total }} registros </UBadge>
+          <UBadge color="neutral" variant="subtle">
+            {{ t('systemLogs.recordsCount', { count: total }) }}
+          </UBadge>
           <UBadge v-if="errorsLast24h > 0" color="error" variant="subtle">
-            {{ errorsLast24h }} errores (24h)
+            {{ t('systemLogs.errorsLast24h', { count: errorsLast24h }) }}
           </UBadge>
           <UButton
             icon="i-lucide-refresh-cw"
@@ -143,14 +150,14 @@ onMounted(async () => {
     </template>
 
     <template #body>
-      <!-- Filtros -->
-      <div class="flex gap-3 px-4 pt-4 flex-wrap">
+      <!-- Zona fija: filtros, nunca scrollea -->
+      <div class="shrink-0 flex gap-3 p-4 flex-wrap border-b border-default">
         <USelect
           v-model="level"
           :items="levelOptions"
           value-key="value"
           label-key="label"
-          placeholder="Nivel"
+          :placeholder="t('systemLogs.filters.levelPlaceholder')"
           class="w-48"
         />
         <USelect
@@ -158,13 +165,13 @@ onMounted(async () => {
           :items="contextOptions"
           value-key="value"
           label-key="label"
-          placeholder="Contexto"
+          :placeholder="t('systemLogs.filters.contextPlaceholder')"
           class="w-56"
         />
       </div>
 
-      <!-- Tabla -->
-      <div class="p-4">
+      <!-- Zona scrolleable: solo la tabla -->
+      <div class="flex-1 min-h-0 overflow-y-auto p-4">
         <UTable
           :data="logs"
           :columns="columns"
@@ -181,15 +188,15 @@ onMounted(async () => {
         />
       </div>
 
-      <!-- Paginación -->
-      <div v-if="totalPages > 1" class="flex justify-center pb-4">
+      <!-- Zona fija: paginación, siempre visible abajo -->
+      <div v-if="totalPages > 1" class="shrink-0 flex justify-center p-4 border-t border-default">
         <UPagination v-model:page="page" :total="total" :items-per-page="50" />
       </div>
     </template>
   </UDashboardPanel>
 
   <!-- Modal metadata -->
-  <UModal v-model:open="metadataModal" title="Metadata del log">
+  <UModal v-model:open="metadataModal" :title="t('systemLogs.metadataModalTitle')">
     <template #body>
       <pre class="text-xs overflow-auto max-h-96 bg-elevated rounded p-3">{{
         JSON.stringify(selectedMetadata, null, 2)
