@@ -125,7 +125,7 @@ export default defineEventHandler(async (event) => {
         // ── Editable place info ───────────────────────────────────
         google_url: meta.google_url ?? null,
         phone: meta.phone ?? null,
-        website: meta.website ?? null,
+        website: sanitizeHttpUrl(meta.website),
         wheelchair: meta.wheelchair ?? null,
         opening_hours_text: meta.opening_hours_text?.length ? meta.opening_hours_text : null,
         photos: meta.photos?.length ? meta.photos : null,

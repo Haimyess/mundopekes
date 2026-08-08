@@ -32,6 +32,15 @@ vi.stubGlobal(
   'requireAdminUser',
   vi.fn().mockResolvedValue({ id: 'admin-001', app_metadata: { role: 'admin' } })
 )
+vi.stubGlobal('sanitizeHttpUrl', (value: string | null | undefined) => {
+  if (!value) return null
+  try {
+    const url = new URL(value)
+    return url.protocol === 'http:' || url.protocol === 'https:' ? value : null
+  } catch {
+    return null
+  }
+})
 
 // ── Nuxt / h3 globals (also set in tests/setup.ts, repeated for safety) ──
 vi.stubGlobal('defineEventHandler', (fn: (e: unknown) => unknown) => fn)

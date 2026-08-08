@@ -1,6 +1,8 @@
 import { serverSupabaseClient } from '#supabase/server'
 
 export default defineEventHandler(async (event) => {
+  await requireAdminUser(event)
+
   const query = getQuery(event)
   const supabase = await serverSupabaseClient(event)
 

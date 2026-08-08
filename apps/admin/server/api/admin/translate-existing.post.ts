@@ -2,12 +2,9 @@ import { createClient } from '@supabase/supabase-js'
 import { enrichI18nField } from '../../utils/translate'
 
 export default defineEventHandler(async (event) => {
-  const config = useRuntimeConfig(event)
+  await requireAdminUser(event)
 
-  const authHeader = getHeader(event, 'x-admin-secret')
-  if (authHeader !== config.supabaseServiceKey) {
-    throw createError({ statusCode: 403, message: 'Forbidden' })
-  }
+  const config = useRuntimeConfig(event)
 
   if (!config.deeplApiKey) {
     throw createError({ statusCode: 500, message: 'DeepL API key not configured' })

@@ -42,6 +42,15 @@ const h3 = await import('h3')
 vi.stubGlobal('defineEventHandler', h3.defineEventHandler)
 vi.stubGlobal('createError', h3.createError)
 vi.stubGlobal('readBody', mockReadBody)
+vi.stubGlobal('sanitizeHttpUrl', (value: string | null | undefined) => {
+  if (!value) return null
+  try {
+    const url = new URL(value)
+    return url.protocol === 'http:' || url.protocol === 'https:' ? value : null
+  } catch {
+    return null
+  }
+})
 
 // ── Load handler ───────────────────────────────────────────────────────────
 const { default: handler } = await import('../../server/api/suggestions/index.post')

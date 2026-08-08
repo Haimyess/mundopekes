@@ -9,6 +9,8 @@ const bodySchema = z.object({
 })
 
 export default defineEventHandler(async (event) => {
+  await requireAdminUser(event)
+
   const supabase = serverSupabaseServiceRole<Database>(event)
   const id = getRouterParam(event, 'id')
 
@@ -44,6 +46,8 @@ export default defineEventHandler(async (event) => {
 
   if (process.env.RESEND_API_KEY && (status === 'active' || status === 'rejected')) {
     const resend = new Resend(process.env.RESEND_API_KEY)
+    const safeName = escapeHtml(existing.name)
+    const safeNotes = notes ? escapeHtml(notes) : ''
     const subject =
       status === 'active'
         ? '¡Tu solicitud fue aprobada! — MundoPekes'
@@ -52,7 +56,7 @@ export default defineEventHandler(async (event) => {
       status === 'active'
         ? `
         <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
-          <h1 style="color: #16a34a;">¡Bienvenido a MundoPekes, ${existing.name}!</h1>
+          <h1 style="color: #16a34a;">¡Bienvenido a MundoPekes, ${safeName}!</h1>
           <p>Nos complace informarte que tu solicitud para unirte como proveedor ha sido <strong>aprobada</strong>.</p>
           <p>En los próximos días te contactaremos para darte acceso a tu perfil y ayudarte a configurar tu presencia en MundoPekes.</p>
           <p style="color: #6b7280; font-size: 0.875rem; margin-top: 2rem; border-top: 1px solid #e5e7eb; padding-top: 1rem;">
@@ -62,9 +66,9 @@ export default defineEventHandler(async (event) => {
       `
         : `
         <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
-          <h1 style="color: #374151;">Hola, ${existing.name}</h1>
+          <h1 style="color: #374151;">Hola, ${safeName}</h1>
           <p>Hemos revisado tu solicitud para unirte a MundoPekes como proveedor y en este momento no podemos aprobarla.</p>
-          ${notes ? `<p><strong>Motivo:</strong> ${notes}</p>` : ''}
+          ${safeNotes ? `<p><strong>Motivo:</strong> ${safeNotes}</p>` : ''}
           <p>No te desanimes — puedes volver a aplicar en el futuro con información actualizada. Estaremos encantados de revisarla.</p>
           <p>Si tienes preguntas, no dudes en contactarnos respondiendo a este email.</p>
           <p style="color: #6b7280; font-size: 0.875rem; margin-top: 2rem; border-top: 1px solid #e5e7eb; padding-top: 1rem;">

@@ -60,6 +60,14 @@ vi.stubGlobal('readBody', mockReadBody)
 vi.stubGlobal('getRequestHeader', mockGetRequestHeader)
 vi.stubGlobal('getRequestIP', mockGetRequestIP)
 vi.stubGlobal('useRuntimeConfig', () => ({}))
+vi.stubGlobal('escapeHtml', (value: string) =>
+  value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+)
 
 // ── Load handler ───────────────────────────────────────────────────────────
 const { default: handler } = await import('../../server/api/contact/index.post')

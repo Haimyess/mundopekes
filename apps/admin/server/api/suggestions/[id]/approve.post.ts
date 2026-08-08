@@ -144,7 +144,7 @@ export default defineEventHandler(async (event) => {
   // ── 7. Create Place ────────────────────────────────────────────────────
   const placePayload = {
     name_i18n,
-    description_i18n: Object.keys(description_i18n).length > 0 ? description_i18n : null,
+    description_i18n,
     city_id,
     lat,
     lng,
@@ -155,7 +155,7 @@ export default defineEventHandler(async (event) => {
       google_place_id: meta.google_place_id ?? null,
       // Contact & info (editable by user in wizard, then stored in suggestion.metadata)
       phone: meta.phone ?? null,
-      website: meta.website ?? null,
+      website: sanitizeHttpUrl(meta.website),
       google_url: meta.google_url ?? null,
       wheelchair: meta.wheelchair ?? null,
       opening_hours_text: meta.opening_hours_text?.length ? meta.opening_hours_text : null,
@@ -196,7 +196,7 @@ export default defineEventHandler(async (event) => {
     category_id: suggestion.category_id ?? null,
     // Activity title (wizard-authored, DeepL-enriched above)
     title_i18n,
-    description_i18n: Object.keys(description_i18n).length > 0 ? description_i18n : null,
+    description_i18n,
     is_free: suggestion.is_free ?? true,
     price: activityPrice,
     stroller_friendly: suggestion.stroller_friendly ?? false,

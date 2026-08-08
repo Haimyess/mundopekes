@@ -10,6 +10,7 @@ const UDropdownMenu = resolveComponent('UDropdownMenu')
 const UCheckbox = resolveComponent('UCheckbox')
 
 const { tc } = useI18nContent()
+const { t } = useI18n()
 const overlay = useOverlay()
 const router = useRouter()
 
@@ -23,17 +24,21 @@ const {
   removeMany,
 } = useActivities()
 
-// Datos para los filtros
-const { data: categories } = await useFetch<Category[]>('/api/categories')
-const { data: places } = await useFetch<Place[]>('/api/places')
+// Datos para los filtros — en paralelo entre sí y con el fetch inicial de
+// actividades (antes eran 3 awaits secuenciales, cada uno un round-trip completo)
+const [{ data: categories }, { data: places }] = await Promise.all([
+  useFetch<Category[]>('/api/categories'),
+  useFetch<Place[]>('/api/places'),
+  fetchActivities(),
+])
 
 const categoryOptions = computed(() => [
-  { label: 'Todas', value: 'all' },
+  { label: t('activities.filters.allCategories'), value: 'all' },
   ...(categories.value ?? []).map((c) => ({ label: tc(c.name_i18n ?? {}), value: c.id })),
 ])
 
 const placeOptions = computed(() => [
-  { label: 'Todos', value: 'all' },
+  { label: t('activities.filters.allPlaces'), value: 'all' },
   ...(places.value ?? []).map((p) => ({
     label: p.city?.name ? `${tc(p.name_i18n ?? {})} — ${p.city.name}` : tc(p.name_i18n ?? {}),
     value: p.id,
@@ -99,28 +104,28 @@ const statusColor = {
   rejected: 'error',
 } as const
 
-const statusLabel = {
-  approved: 'Aprobada',
-  pending: 'Pendiente',
-  rejected: 'Rechazada',
-}
+const statusLabel = computed(() => ({
+  approved: t('activities.status.approved'),
+  pending: t('activities.status.pending'),
+  rejected: t('activities.status.rejected'),
+}))
 
 // Row dropdown items
 function getRowItems(row: Row<Activity>) {
   return [
     {
-      label: 'Editar',
+      label: t('activities.actions.edit'),
       icon: 'i-lucide-pencil',
       onSelect: () => openEdit(row.original),
     },
     {
-      label: 'Ver lugar',
+      label: t('activities.actions.viewPlace'),
       icon: 'i-lucide-map-pin',
       onSelect: () => router.push(`/places/${row.original.place_id}`),
     },
     { type: 'separator' as const },
     {
-      label: 'Eliminar',
+      label: t('activities.actions.delete'),
       icon: 'i-lucide-trash',
       color: 'error' as const,
       onSelect: () => handleDelete([row.original.id]),
@@ -129,7 +134,7 @@ function getRowItems(row: Row<Activity>) {
 }
 
 // Columnas
-const columns: TableColumn<Activity>[] = [
+const columns = computed<TableColumn<Activity>[]>(() => [
   {
     id: 'select',
     header: ({ table }) =>
@@ -139,23 +144,23 @@ const columns: TableColumn<Activity>[] = [
           : table.getIsAllPageRowsSelected(),
         'onUpdate:modelValue': (value: boolean | 'indeterminate') =>
           table.toggleAllPageRowsSelected(!!value),
-        ariaLabel: 'Seleccionar todas',
+        ariaLabel: t('activities.table.selectAll'),
       }),
     cell: ({ row }) =>
       h(UCheckbox, {
         modelValue: row.getIsSelected(),
         'onUpdate:modelValue': (value: boolean | 'indeterminate') => row.toggleSelected(!!value),
-        ariaLabel: 'Seleccionar fila',
+        ariaLabel: t('activities.table.selectRow'),
       }),
   },
   {
     accessorKey: 'title_i18n',
-    header: 'Título',
+    header: t('activities.table.title'),
     cell: ({ row }) => tc(row.original.title_i18n ?? {}),
   },
   {
     accessorKey: 'place',
-    header: 'Lugar',
+    header: t('activities.table.place'),
     cell: ({ row }) => {
       const place = row.original.place
       if (!place) return '—'
@@ -167,25 +172,25 @@ const columns: TableColumn<Activity>[] = [
   },
   {
     accessorKey: 'category',
-    header: 'Categoría',
+    header: t('activities.table.category'),
     cell: ({ row }) => (row.original.category ? tc(row.original.category.name_i18n ?? {}) : '—'),
   },
   {
     accessorKey: 'price',
-    header: 'Precio',
+    header: t('activities.table.price'),
     cell: ({ row }) =>
       row.original.is_free
-        ? h(UBadge, { variant: 'subtle', color: 'success' }, () => 'Gratis')
+        ? h(UBadge, { variant: 'subtle', color: 'success' }, () => t('activities.free'))
         : `₪${row.original.price ?? 0}`,
   },
   {
     accessorKey: 'status',
-    header: 'Estado',
+    header: t('activities.table.status'),
     cell: ({ row }) =>
       h(
         UBadge,
         { variant: 'subtle', color: statusColor[row.original.status] },
-        () => statusLabel[row.original.status]
+        () => statusLabel.value[row.original.status]
       ),
   },
   {
@@ -210,24 +215,31 @@ const columns: TableColumn<Activity>[] = [
         )
       ),
   },
-]
+])
 
 // Total de páginas
 const pageCount = computed(() => Math.max(1, Math.ceil(total.value / filters.pageSize)))
 
-// Fetch inicial
-await fetchActivities()
+// Texto de selección en el pie de la tabla
+const selectionText = computed(() =>
+  t('activities.pagination.selected', {
+    selected: selectedRows.value.length,
+    total: total.value,
+  })
+)
 </script>
 
 <template>
   <UDashboardPanel id="activities">
     <template #header>
-      <UDashboardNavbar title="Actividades">
+      <UDashboardNavbar :title="t('activities.title')">
         <template #leading>
           <UDashboardSidebarCollapse />
         </template>
         <template #right>
-          <UButton icon="i-lucide-plus" @click="openCreate"> Nueva actividad </UButton>
+          <UButton icon="i-lucide-plus" @click="openCreate">
+            {{ t('activities.newButton') }}
+          </UButton>
         </template>
       </UDashboardNavbar>
     </template>
@@ -238,7 +250,7 @@ await fetchActivities()
         <UInput
           v-model="filters.q"
           icon="i-lucide-search"
-          placeholder="Buscar actividades..."
+          :placeholder="t('activities.searchPlaceholder')"
           class="max-w-sm"
         />
 
@@ -250,7 +262,12 @@ await fetchActivities()
             :loading="deleteLoading"
             @confirm="handleDelete(selectedRows.map((r) => r.id))"
           >
-            <UButton label="Eliminar" color="error" variant="subtle" icon="i-lucide-trash">
+            <UButton
+              :label="t('activities.deleteButton')"
+              color="error"
+              variant="subtle"
+              icon="i-lucide-trash"
+            >
               <template #trailing>
                 <UKbd>{{ selectedRows.length }}</UKbd>
               </template>
@@ -259,7 +276,7 @@ await fetchActivities()
 
           <UButton
             v-if="selectedRows.length === 1"
-            label="Editar"
+            :label="t('activities.editButton')"
             color="neutral"
             variant="subtle"
             icon="i-lucide-pencil"
@@ -270,10 +287,10 @@ await fetchActivities()
           <USelect
             v-model="filters.status"
             :items="[
-              { label: 'Todos los estados', value: 'all' },
-              { label: 'Aprobada', value: 'approved' },
-              { label: 'Pendiente', value: 'pending' },
-              { label: 'Rechazada', value: 'rejected' },
+              { label: t('activities.filters.allStatuses'), value: 'all' },
+              { label: t('activities.status.approved'), value: 'approved' },
+              { label: t('activities.status.pending'), value: 'pending' },
+              { label: t('activities.status.rejected'), value: 'rejected' },
             ]"
             class="min-w-36"
           />
@@ -281,14 +298,14 @@ await fetchActivities()
           <USelect
             v-model="categoryFilter"
             :items="categoryOptions"
-            placeholder="Categoría"
+            :placeholder="t('activities.filters.categoryPlaceholder')"
             class="min-w-36"
           />
 
           <USelect
             v-model="placeFilter"
             :items="placeOptions"
-            placeholder="Lugar"
+            :placeholder="t('activities.filters.placePlaceholder')"
             searchable
             class="min-w-44"
           />
@@ -335,10 +352,7 @@ await fetchActivities()
       <!-- Paginación -->
       <div class="flex items-center justify-between gap-3 border-t border-default pt-4 mt-auto">
         <div class="text-sm text-muted">
-          {{ selectedRows.length }} de {{ total }} actividad{{
-            total !== 1 ? 'es' : ''
-          }}
-          seleccionada{{ selectedRows.length !== 1 ? 's' : '' }}.
+          {{ selectionText }}
         </div>
 
         <UPagination

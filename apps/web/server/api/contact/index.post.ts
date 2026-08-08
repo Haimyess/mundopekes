@@ -84,8 +84,9 @@ export default defineEventHandler(async (event) => {
     }
 
     const resend = new Resend(process.env.RESEND_API_KEY)
-    const activityInfo = activityTitle
-      ? `<p><strong>Actividad:</strong> ${activityTitle}${activityId ? ` (ID: ${activityId})` : ''}</p>`
+    const safeActivityTitle = activityTitle ? escapeHtml(activityTitle) : ''
+    const activityInfo = safeActivityTitle
+      ? `<p><strong>Actividad:</strong> ${safeActivityTitle}${activityId ? ` (ID: ${escapeHtml(activityId)})` : ''}</p>`
       : ''
 
     await resend.emails.send({
@@ -95,13 +96,13 @@ export default defineEventHandler(async (event) => {
       html: `
         <h2>Nueva consulta desde MundoPekes</h2>
         <p><strong>Tipo:</strong> ${INTENT_LABELS[intent]}</p>
-        <p><strong>Nombre:</strong> ${name}</p>
-        <p><strong>Email:</strong> ${email}</p>
+        <p><strong>Nombre:</strong> ${escapeHtml(name)}</p>
+        <p><strong>Email:</strong> ${escapeHtml(email)}</p>
         ${activityInfo}
         <p><strong>Mensaje:</strong></p>
-        <blockquote>${message.replace(/\n/g, '<br>')}</blockquote>
+        <blockquote>${escapeHtml(message).replace(/\n/g, '<br>')}</blockquote>
         <hr>
-        <small>Locale: ${locale}</small>
+        <small>Locale: ${escapeHtml(locale)}</small>
       `,
     })
 

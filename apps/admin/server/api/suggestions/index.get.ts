@@ -2,13 +2,12 @@
 import { serverSupabaseClient } from '#supabase/server'
 
 export default defineEventHandler(async (event) => {
+  await requireAdminUser(event)
+
   const supabase = await serverSupabaseClient(event)
   const query = getQuery(event)
 
-  let q = supabase
-    .from('suggestions')
-    .select('*')
-    .order('created_at', { ascending: false })
+  let q = supabase.from('suggestions').select('*').order('created_at', { ascending: false })
 
   // Filtro por status opcional: /api/suggestions?status=pending
   if (query.status) {

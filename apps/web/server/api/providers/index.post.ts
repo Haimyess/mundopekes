@@ -113,7 +113,15 @@ export default defineEventHandler(async (event) => {
     }
 
     const resend = new Resend(process.env.RESEND_API_KEY)
-    const typesHtml = activity_types.map((t) => `<li>${t}</li>`).join('')
+    const safeName = escapeHtml(name)
+    const safeEmail = escapeHtml(email)
+    const safePhone = phone ? escapeHtml(phone) : ''
+    const safeWebsite = website ? escapeHtml(website) : ''
+    const safeDescription = escapeHtml(description)
+    const safeAddress = address ? escapeHtml(address) : ''
+    const safeCity = city ? escapeHtml(city) : ''
+    const typesHtml = activity_types.map((t) => `<li>${escapeHtml(t)}</li>`).join('')
+    const safeTypesList = activity_types.map(escapeHtml).join(', ')
 
     await Promise.allSettled([
       resend.emails.send({
@@ -122,14 +130,14 @@ export default defineEventHandler(async (event) => {
         subject: '¡Recibimos tu solicitud! — MundoPekes',
         html: `
           <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
-            <h1 style="color: #2563eb;">¡Hola, ${name}!</h1>
+            <h1 style="color: #2563eb;">¡Hola, ${safeName}!</h1>
             <p>Hemos recibido tu solicitud para unirte a <strong>MundoPekes</strong> como proveedor de actividades familiares.</p>
             <h3>Resumen de tu solicitud:</h3>
             <ul>
-              <li><strong>Negocio:</strong> ${name}</li>
-              <li><strong>Email:</strong> ${email}</li>
-              ${phone ? `<li><strong>Teléfono:</strong> ${phone}</li>` : ''}
-              <li><strong>Descripción:</strong> ${description}</li>
+              <li><strong>Negocio:</strong> ${safeName}</li>
+              <li><strong>Email:</strong> ${safeEmail}</li>
+              ${safePhone ? `<li><strong>Teléfono:</strong> ${safePhone}</li>` : ''}
+              <li><strong>Descripción:</strong> ${safeDescription}</li>
             </ul>
             <h3>Tipos de actividades:</h3>
             <ul>${typesHtml}</ul>
@@ -146,14 +154,14 @@ export default defineEventHandler(async (event) => {
         subject: `[MundoPekes] Nuevo proveedor: ${name}`,
         html: `
           <h2>Nueva solicitud de proveedor</h2>
-          <p><strong>Nombre:</strong> ${name}</p>
-          <p><strong>Email:</strong> ${email}</p>
-          ${phone ? `<p><strong>Teléfono:</strong> ${phone}</p>` : ''}
-          ${website ? `<p><strong>Web:</strong> ${website}</p>` : ''}
-          <p><strong>Descripción:</strong><br>${description}</p>
-          <p><strong>Tipos:</strong> ${activity_types.join(', ')}</p>
-          ${address ? `<p><strong>Dirección:</strong> ${address}</p>` : ''}
-          ${city ? `<p><strong>Ciudad:</strong> ${city}</p>` : ''}
+          <p><strong>Nombre:</strong> ${safeName}</p>
+          <p><strong>Email:</strong> ${safeEmail}</p>
+          ${safePhone ? `<p><strong>Teléfono:</strong> ${safePhone}</p>` : ''}
+          ${safeWebsite ? `<p><strong>Web:</strong> ${safeWebsite}</p>` : ''}
+          <p><strong>Descripción:</strong><br>${safeDescription}</p>
+          <p><strong>Tipos:</strong> ${safeTypesList}</p>
+          ${safeAddress ? `<p><strong>Dirección:</strong> ${safeAddress}</p>` : ''}
+          ${safeCity ? `<p><strong>Ciudad:</strong> ${safeCity}</p>` : ''}
           ${price_range ? `<p><strong>Precios:</strong> ${price_range.from ?? '?'} - ${price_range.to ?? '?'} ${price_range.currency ?? 'ILS'}</p>` : ''}
           <hr>
           <p><a href="${process.env.ADMIN_URL ?? 'https://admin.mundopekes.com'}/providers">Ver en el admin</a></p>

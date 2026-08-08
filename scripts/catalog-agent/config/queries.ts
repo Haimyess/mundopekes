@@ -1,0 +1,17 @@
+export const DISCOVERY_QUERIES: string[] = [
+  'פעילויות לילדים חינם ישראל',
+  'גנים ציבוריים לילדים ישראל',
+  'מגרשי משחקים ישראל',
+  'בריכות ציבוריות לילדים ישראל',
+  'מוזיאוני ילדים ישראל חינם',
+  'חוות חינם לילדים ישראל',
+  'פארקים לילדים ישראל',
+  'אטרקציות חינמיות לילדים ישראל',
+  'חוף ים לילדים ישראל',
+  'גן חיות חינם ישראל',
+  'free activities kids Israel',
+  'free parks children Israel',
+  'free museum children Israel',
+  'outdoor activities babies Israel',
+  'פעילויות לתינוקות ישראל',
+]
