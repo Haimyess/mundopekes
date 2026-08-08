@@ -2,8 +2,6 @@ import { serverSupabaseServiceRole } from '#supabase/server'
 import type { Database } from '~/types/database.types'
 
 export default defineEventHandler(async (event) => {
-  await requireAdminUser(event)
-
   const supabase = serverSupabaseServiceRole<Database>(event)
 
   const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useSuggestionWizard } from '~/composables/useSuggestionWizard'
 
-const props = defineProps<{ open: boolean }>()
+defineProps<{ open: boolean }>()
 const emit = defineEmits<{ 'update:open': [value: boolean] }>()
 
 const wizard = useSuggestionWizard()
@@ -76,10 +76,11 @@ const submit = async () => {
       duration: 5000,
     })
     handleClose()
-  } catch (e: any) {
+  } catch (e) {
+    const err = e as { data?: { message?: string }; message?: string }
     toast.add({
       title: t('suggest.error_title'),
-      description: e?.data?.message ?? e?.message ?? t('common.error'),
+      description: err?.data?.message ?? err?.message ?? t('common.error'),
       color: 'error',
       duration: 6000,
     })

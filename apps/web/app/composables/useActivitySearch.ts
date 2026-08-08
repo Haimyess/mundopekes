@@ -7,7 +7,7 @@ import { useDebounceFn, useLocalStorage } from '@vueuse/core'
 
 export const useActivitySearch = () => {
   const { fetchFilteredActivities } = useActivityFilters()
-  
+
   const searchTerm = ref('')
   const results = ref<Activity[]>([])
   const loading = ref(false)
@@ -36,8 +36,8 @@ export const useActivitySearch = () => {
       if (!searchHistory.value.includes(term)) {
         searchHistory.value = [term, ...searchHistory.value].slice(0, 10)
       }
-    } catch (e: any) {
-      error.value = e.message
+    } catch (e) {
+      error.value = e instanceof Error ? e.message : String(e)
       console.error('Search error:', e)
     } finally {
       loading.value = false
@@ -84,6 +84,6 @@ export const useActivitySearch = () => {
     searchHistory: readonly(searchHistory),
     performSearch,
     clearSearch,
-    clearHistory
+    clearHistory,
   }
 }

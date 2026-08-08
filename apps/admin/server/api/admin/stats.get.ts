@@ -1,8 +1,6 @@
 import { serverSupabaseClient } from '#supabase/server'
 
 export default defineEventHandler(async (event) => {
-  await requireAdminUser(event)
-
   const supabase = await serverSupabaseClient(event)
   const [places, activities, categories] = await Promise.all([
     supabase.from('places').select('*', { count: 'exact', head: true }),

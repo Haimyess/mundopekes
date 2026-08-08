@@ -2,8 +2,6 @@ import { createClient } from '@supabase/supabase-js'
 import { enrichI18nField } from '../../utils/translate'
 
 export default defineEventHandler(async (event) => {
-  await requireAdminUser(event)
-
   const config = useRuntimeConfig(event)
 
   if (!config.deeplApiKey) {

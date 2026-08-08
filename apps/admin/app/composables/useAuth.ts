@@ -40,10 +40,11 @@ export const useAuth = () => {
         icon: 'i-lucide-check-circle',
       })
       await router.push('/')
-    } catch (error: any) {
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error)
       toast.add({
         title: 'Error al iniciar sesión',
-        description: traducirError(error.message),
+        description: traducirError(message),
         color: 'error',
         icon: 'i-lucide-alert-circle',
       })
@@ -86,7 +87,7 @@ export const useAuth = () => {
         icon: 'i-lucide-check-circle',
       })
       await router.push('/')
-    } catch (error: any) {
+    } catch {
       toast.add({
         title: 'Código incorrecto',
         description: 'Verificá el código en tu app autenticadora',
@@ -106,10 +107,10 @@ export const useAuth = () => {
     try {
       await supabase.auth.signOut()
       await router.push('/login')
-    } catch (error: any) {
+    } catch (error) {
       toast.add({
         title: 'Error al cerrar sesión',
-        description: error.message,
+        description: error instanceof Error ? error.message : String(error),
         color: 'error',
       })
     } finally {

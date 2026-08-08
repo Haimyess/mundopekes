@@ -3,8 +3,6 @@ import { serverSupabaseClient } from '#supabase/server'
 import type { Database, TablesUpdate } from '~/types/database.types'
 
 export default defineEventHandler(async (event) => {
-  await requireAdminUser(event)
-
   const id = getRouterParam(event, 'id')
   if (!id) throw createError({ statusCode: 400, message: 'ID requerido' })
 

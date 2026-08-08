@@ -28,10 +28,9 @@ vi.stubGlobal('geocodeAddress', (...args: unknown[]) => mockGeocode(...args))
 vi.stubGlobal('logInfo', vi.fn().mockResolvedValue(undefined))
 vi.stubGlobal('logWarn', vi.fn().mockResolvedValue(undefined))
 vi.stubGlobal('logError', vi.fn().mockResolvedValue(undefined))
-vi.stubGlobal(
-  'requireAdminUser',
-  vi.fn().mockResolvedValue({ id: 'admin-001', app_metadata: { role: 'admin' } })
-)
+// requireAdminUser is no longer called from approve.post.ts itself — the
+// admin auth check moved to server/middleware/require-admin.ts (global for
+// every /api/** request), covered by tests/server/require-admin-middleware.test.ts
 vi.stubGlobal('sanitizeHttpUrl', (value: string | null | undefined) => {
   if (!value) return null
   try {

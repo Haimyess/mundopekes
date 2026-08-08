@@ -4,8 +4,6 @@ import { serverSupabaseClient } from '#supabase/server'
 import type { Database } from '~/types/database.types'
 
 export default defineEventHandler(async (event) => {
-  await requireAdminUser(event)
-
   const body = (await readBody(event)) as { items: { id: string; order: number }[] }
 
   if (!body.items?.length) {

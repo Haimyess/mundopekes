@@ -9,8 +9,6 @@ const bodySchema = z.object({
 })
 
 export default defineEventHandler(async (event) => {
-  await requireAdminUser(event)
-
   const supabase = serverSupabaseServiceRole<Database>(event)
   const id = getRouterParam(event, 'id')
 
