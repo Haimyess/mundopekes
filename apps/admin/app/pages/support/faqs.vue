@@ -89,8 +89,11 @@ const categoryOptions = computed(() => [
 const statusColor = (status: string) =>
   status === 'published' ? ('success' as const) : ('neutral' as const)
 
-// Cargar datos
-await Promise.all([fetch(), fetchCategories()])
+// Sequential, not Promise.all — see activities/index.vue for why two
+// parallel authenticated requests on first load can race Supabase's
+// refresh-token rotation and 401 when the token is near expiry.
+await fetch()
+await fetchCategories()
 </script>
 
 <template>

@@ -190,7 +190,12 @@ const columns = computed<TableColumn<ContactRequest>[]>(() => [
   },
 ])
 
-await Promise.all([loadRequests(), fetchFeedbackStats()])
+// Sequential, not Promise.all — two parallel authenticated requests on first
+// load can race Supabase's refresh-token rotation when the token is near
+// expiry (whichever loses gets 401 on an already-consumed refresh token).
+// See activities/index.vue for the full explanation.
+await loadRequests()
+await fetchFeedbackStats()
 </script>
 
 <template>

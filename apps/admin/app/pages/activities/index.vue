@@ -27,12 +27,18 @@ const {
 
 syncUrlPage(toRef(filters, 'page'))
 
-// Datos para los filtros — en paralelo entre sí y con el fetch inicial de
-// actividades (antes eran 3 awaits secuenciales, cada uno un round-trip completo)
+// fetchActivities() va primero y solo — no en Promise.all con las otras dos.
+// Iban las 3 en paralelo antes, pero eso dispara 3 llamadas server-side a
+// serverSupabaseUser() al mismo tiempo, y cuando el access token está por
+// vencer, Supabase rota el refresh token en la primera que gana la carrera:
+// las otras dos usan el refresh token ya consumido y responden 401 — eso es
+// lo que rompía la página al entrar a Activities. Esperar esta primera deja
+// la cookie ya renovada (el browser la aplica antes de que sigan las otras
+// dos), así que categories/places sí pueden ir en paralelo entre sí sin riesgo.
+await fetchActivities()
 const [{ data: categories }, { data: places }] = await Promise.all([
   useFetch<Category[]>('/api/categories'),
   useFetch<Place[]>('/api/places'),
-  fetchActivities(),
 ])
 
 const categoryOptions = computed(() => [
