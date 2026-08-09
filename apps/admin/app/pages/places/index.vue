@@ -21,7 +21,7 @@ const pageCount = computed(() => Math.max(1, Math.ceil(total.value / filters.pag
 
 const { data: cities } = await useFetch<{ name: string }[]>('/api/cities')
 const cityOptions = computed(() => [
-  { label: t('places.filters.allCities'), value: '' },
+  { label: t('places.filters.allCities'), value: 'all' },
   ...(cities.value ?? []).map((c) => ({ label: c.name, value: c.name })),
 ])
 
@@ -159,7 +159,7 @@ await loadPlaces()
           <USelect
             v-model="filters.status"
             :items="[
-              { label: t('places.filters.allStatus'), value: '' },
+              { label: t('places.filters.allStatus'), value: 'all' },
               { label: t('places.status.active'), value: 'active' },
               { label: t('places.status.inactive'), value: 'inactive' },
             ]"

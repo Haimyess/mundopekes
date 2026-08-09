@@ -33,8 +33,8 @@ export const useSuggestions = () => {
 
   // Filtros
   const statusFilter = ref<SuggestionStatus | 'all'>('pending')
-  const categoryFilter = ref<string | undefined>(undefined)
-  const cityFilter = ref<string | undefined>(undefined)
+  const categoryFilter = ref('all')
+  const cityFilter = ref('all')
   const isFreeFilter = ref<'all' | 'true' | 'false'>('all')
   const page = ref(1)
   const pageSize = ref(10)
@@ -45,8 +45,8 @@ export const useSuggestions = () => {
     try {
       const params: Record<string, string | number> = { page: page.value, pageSize: pageSize.value }
       if (statusFilter.value !== 'all') params.status = statusFilter.value
-      if (categoryFilter.value) params.category_id = categoryFilter.value
-      if (cityFilter.value) params.city = cityFilter.value
+      if (categoryFilter.value !== 'all') params.category_id = categoryFilter.value
+      if (cityFilter.value !== 'all') params.city = cityFilter.value
       if (isFreeFilter.value !== 'all') params.is_free = isFreeFilter.value
 
       const result = await $fetch<{ data: Suggestion[]; count: number }>('/api/suggestions', {

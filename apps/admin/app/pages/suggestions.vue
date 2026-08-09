@@ -34,11 +34,11 @@ const { data: categories } =
 const { data: cities } = await useFetch<string[]>('/api/suggestions/cities')
 
 const categoryOptions = computed(() => [
-  { label: t('suggestions.filters.allCategories'), value: '' },
+  { label: t('suggestions.filters.allCategories'), value: 'all' },
   ...(categories.value ?? []).map((c) => ({ label: tc(c.name_i18n ?? {}), value: c.id })),
 ])
 const cityOptions = computed(() => [
-  { label: t('suggestions.filters.allCities'), value: '' },
+  { label: t('suggestions.filters.allCities'), value: 'all' },
   ...(cities.value ?? []).map((c) => ({ label: c, value: c })),
 ])
 const freeOptions = computed(() => [

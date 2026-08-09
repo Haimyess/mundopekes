@@ -19,8 +19,8 @@ export const usePlaces = () => {
 
   const filters = reactive<PlacesFilters>({
     q: '',
-    city: undefined,
-    status: undefined,
+    city: 'all',
+    status: 'all',
     page: 1,
     pageSize: 10,
   })
@@ -36,8 +36,8 @@ export const usePlaces = () => {
         pageSize: filters.pageSize,
       }
       if (debouncedQ.value) params.q = debouncedQ.value
-      if (filters.city) params.city = filters.city
-      if (filters.status) params.status = filters.status
+      if (filters.city && filters.city !== 'all') params.city = filters.city
+      if (filters.status && filters.status !== 'all') params.status = filters.status
 
       const res = await $fetch<{ data: Place[]; count: number }>('/api/places', { params })
       places.value = res.data

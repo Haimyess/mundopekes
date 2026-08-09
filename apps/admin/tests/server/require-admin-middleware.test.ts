@@ -22,6 +22,11 @@ describe('require-admin middleware', () => {
     expect(mockRequireAdminUser).not.toHaveBeenCalled()
   })
 
+  it('skips the check for internal module routes under /api/_* (e.g. @nuxt/icon)', async () => {
+    await middleware({ path: '/api/_nuxt_icon/lucide.json?icons=lock' } as never)
+    expect(mockRequireAdminUser).not.toHaveBeenCalled()
+  })
+
   it('propagates the 401/403 thrown by requireAdminUser', async () => {
     const err = Object.assign(new Error('No autenticado'), { statusCode: 401 })
     mockRequireAdminUser.mockRejectedValue(err)

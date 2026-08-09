@@ -2,18 +2,19 @@ export default defineNuxtRouteMiddleware(async (to) => {
   const publicRoutes = ['/login']
   if (publicRoutes.includes(to.path)) return
 
-  // getSession() reads the session from local storage — no network round-trip,
-  // unlike getUser() which always revalidates against Supabase Auth. Running on
-  // every navigation, getUser() here would add a network hop to every single
-  // page change. The authoritative check still happens server-side via
-  // requireAdminUser() (serverSupabaseUser) on every admin API endpoint — this
-  // middleware is just the client-side UX gate.
+  // getUser() always revalidates against Supabase Auth (unlike getSession(),
+  // which only reads whatever's in local storage without checking if the
+  // access token is still valid). This used to be getSession() for a faster
+  // navigation, but that traded away the one thing that reliably catches a
+  // stale/near-expiry token before the page renders — with getSession(), the
+  // client would wave the user through to a page whose data-fetch then hit
+  // the server and legitimately 401'd, with nothing to send them back to
+  // /login. Correctness over the extra round-trip.
   const supabase = useSupabaseClient()
   const {
-    data: { session },
+    data: { user },
     error,
-  } = await supabase.auth.getSession()
-  const user = session?.user
+  } = await supabase.auth.getUser()
 
   if (error || !user) {
     return navigateTo('/login')
