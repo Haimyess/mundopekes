@@ -3,7 +3,14 @@ import type { TableColumn } from '@nuxt/ui'
 import type { Row } from '@tanstack/table-core'
 import type { Activity, Category, Place } from '~/types'
 import ActivitiesSlideover from '~/components/activities/ActivitiesSlideover.vue'
-import { syncUrlPage } from '~/composables/useUrlPage'
+import { syncUrlPage, syncUrlParam } from '~/composables/useUrlPage'
+import { useFacets } from '~/composables/useFacets'
+
+interface ActivityFacetRow {
+  status: string
+  category_id: string | null
+  place_id: string | null
+}
 
 const UButton = resolveComponent('UButton')
 const UBadge = resolveComponent('UBadge')
@@ -26,37 +33,13 @@ const {
 } = useActivities()
 
 syncUrlPage(toRef(filters, 'page'))
-
-// fetchActivities() va primero y solo — no en Promise.all con las otras dos.
-// Iban las 3 en paralelo antes, pero eso dispara 3 llamadas server-side a
-// serverSupabaseUser() al mismo tiempo, y cuando el access token está por
-// vencer, Supabase rota el refresh token en la primera que gana la carrera:
-// las otras dos usan el refresh token ya consumido y responden 401 — eso es
-// lo que rompía la página al entrar a Activities. Esperar esta primera deja
-// la cookie ya renovada (el browser la aplica antes de que sigan las otras
-// dos), así que categories/places sí pueden ir en paralelo entre sí sin riesgo.
-await fetchActivities()
-const [{ data: categories }, { data: places }] = await Promise.all([
-  useFetch<Category[]>('/api/categories'),
-  useFetch<Place[]>('/api/places'),
-])
-
-const categoryOptions = computed(() => [
-  { label: t('activities.filters.allCategories'), value: 'all' },
-  ...(categories.value ?? []).map((c) => ({ label: tc(c.name_i18n ?? {}), value: c.id })),
-])
-
-const placeOptions = computed(() => [
-  { label: t('activities.filters.allPlaces'), value: 'all' },
-  ...(places.value ?? []).map((p) => ({
-    label: p.city?.name ? `${tc(p.name_i18n ?? {})} — ${p.city.name}` : tc(p.name_i18n ?? {}),
-    value: p.id,
-  })),
-])
+syncUrlParam(toRef(filters, 'status') as unknown as Ref<string>, 'status')
 
 // Selectores con 'all' → undefined
 const categoryFilter = ref('all')
 const placeFilter = ref('all')
+syncUrlParam(categoryFilter, 'category')
+syncUrlParam(placeFilter, 'place')
 
 watch(categoryFilter, (val) => {
   filters.category_id = val === 'all' ? undefined : val
@@ -64,6 +47,81 @@ watch(categoryFilter, (val) => {
 watch(placeFilter, (val) => {
   filters.place_id = val === 'all' ? undefined : val
 })
+
+// fetchActivities() va primero y solo — no en Promise.all con las otras.
+// Iban en paralelo antes, pero eso dispara varias llamadas server-side a
+// serverSupabaseUser() al mismo tiempo, y cuando el access token está por
+// vencer, Supabase rota el refresh token en la primera que gana la carrera:
+// las otras usan el refresh token ya consumido y responden 401 — eso es
+// lo que rompía la página al entrar a Activities. Esperar esta primera deja
+// la cookie ya renovada (el browser la aplica antes de que sigan las demás),
+// así que categories/places sí pueden ir en paralelo entre sí sin riesgo.
+// facets.load() va aparte y al final, secuencial — es un tercer consumidor
+// más del mismo patrón y no vale la pena arriesgar otra carrera por sumar
+// unos ms; además ya tolera fallos solo (ver useFacets.ts) así que si algo
+// sale mal acá no se cae la página, solo faltan los conteos.
+await fetchActivities()
+const facets = useFacets<ActivityFacetRow>('/api/activities/facets', {
+  status: toRef(filters, 'status') as unknown as Ref<string>,
+  category_id: categoryFilter,
+  place_id: placeFilter,
+})
+const [{ data: categories }, { data: places }] = await Promise.all([
+  useFetch<Category[]>('/api/categories'),
+  useFetch<Place[]>('/api/places'),
+])
+await facets.load()
+
+const withCount = (label: string, count: number) => `${label} (${count})`
+
+const statusOptions = computed(() => [
+  {
+    label: withCount(t('activities.filters.allStatuses'), facets.countFor('status', 'all')),
+    value: 'all',
+  },
+  {
+    label: withCount(t('activities.status.approved'), facets.countFor('status', 'approved')),
+    value: 'approved',
+    disabled: facets.isDisabled('status', 'approved'),
+  },
+  {
+    label: withCount(t('activities.status.pending'), facets.countFor('status', 'pending')),
+    value: 'pending',
+    disabled: facets.isDisabled('status', 'pending'),
+  },
+  {
+    label: withCount(t('activities.status.rejected'), facets.countFor('status', 'rejected')),
+    value: 'rejected',
+    disabled: facets.isDisabled('status', 'rejected'),
+  },
+])
+
+const categoryOptions = computed(() => [
+  {
+    label: withCount(t('activities.filters.allCategories'), facets.countFor('category_id', 'all')),
+    value: 'all',
+  },
+  ...(categories.value ?? []).map((c) => ({
+    label: withCount(tc(c.name_i18n ?? {}), facets.countFor('category_id', c.id)),
+    value: c.id,
+    disabled: facets.isDisabled('category_id', c.id),
+  })),
+])
+
+const placeOptions = computed(() => [
+  {
+    label: withCount(t('activities.filters.allPlaces'), facets.countFor('place_id', 'all')),
+    value: 'all',
+  },
+  ...(places.value ?? []).map((p) => ({
+    label: withCount(
+      p.city?.name ? `${tc(p.name_i18n ?? {})} — ${p.city.name}` : tc(p.name_i18n ?? {}),
+      facets.countFor('place_id', p.id)
+    ),
+    value: p.id,
+    disabled: facets.isDisabled('place_id', p.id),
+  })),
+])
 
 // Selección de filas
 const rowSelection = ref<Record<string, boolean>>({})
@@ -78,7 +136,7 @@ const openCreate = async () => {
     props: { place: null },
   })
   await slideover.open()
-  fetchActivities()
+  await Promise.all([fetchActivities(), facets.load()])
 }
 
 const openEdit = async (activity: Activity) => {
@@ -86,7 +144,7 @@ const openEdit = async (activity: Activity) => {
     props: { activity },
   })
   await slideover.open()
-  fetchActivities()
+  await Promise.all([fetchActivities(), facets.load()])
 }
 
 // Delete
@@ -100,6 +158,7 @@ const handleDelete = async (ids: string[]) => {
     } else {
       await removeMany(ids)
     }
+    await facets.load()
     rowSelection.value = {}
   } finally {
     deleteLoading.value = false
@@ -295,16 +354,7 @@ const selectionText = computed(() =>
           />
 
           <!-- Filtros -->
-          <USelect
-            v-model="filters.status"
-            :items="[
-              { label: t('activities.filters.allStatuses'), value: 'all' },
-              { label: t('activities.status.approved'), value: 'approved' },
-              { label: t('activities.status.pending'), value: 'pending' },
-              { label: t('activities.status.rejected'), value: 'rejected' },
-            ]"
-            class="min-w-36"
-          />
+          <USelect v-model="filters.status" :items="statusOptions" class="min-w-36" />
 
           <USelect
             v-model="categoryFilter"

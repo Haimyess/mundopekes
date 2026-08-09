@@ -2,7 +2,15 @@
 <script setup lang="ts">
 import type { TableColumn } from '@nuxt/ui'
 import type { Suggestion } from '~/composables/useSuggestions'
-import { syncUrlPage } from '~/composables/useUrlPage'
+import { syncUrlPage, syncUrlParam } from '~/composables/useUrlPage'
+import { useFacets } from '~/composables/useFacets'
+
+interface SuggestionFacetRow {
+  status: string
+  category_id: string | null
+  city: string | null
+  is_free: boolean
+}
 
 const UBadge = resolveComponent('UBadge')
 const UButton = resolveComponent('UButton')
@@ -25,6 +33,10 @@ const {
 } = useSuggestions()
 
 syncUrlPage(page)
+syncUrlParam(statusFilter as unknown as Ref<string>, 'status')
+syncUrlParam(categoryFilter, 'category')
+syncUrlParam(cityFilter, 'city')
+syncUrlParam(isFreeFilter as unknown as Ref<string>, 'free')
 
 const pageCount = computed(() => Math.max(1, Math.ceil(total.value / pageSize.value)))
 
@@ -33,18 +45,54 @@ const { data: categories } =
   await useFetch<{ id: string; name_i18n: Record<string, string> }[]>('/api/categories')
 const { data: cities } = await useFetch<string[]>('/api/suggestions/cities')
 
+// Conteos por faceta — cuántas sugerencias quedarían con cada opción,
+// manteniendo el resto de filtros fijos (mismo patrón que apps/web).
+const facets = useFacets<SuggestionFacetRow>('/api/suggestions/facets', {
+  status: statusFilter as unknown as Ref<string>,
+  category_id: categoryFilter,
+  city: cityFilter,
+  is_free: isFreeFilter as unknown as Ref<string>,
+})
+
+const withCount = (label: string, count: number) => `${label} (${count})`
+
 const categoryOptions = computed(() => [
-  { label: t('suggestions.filters.allCategories'), value: 'all' },
-  ...(categories.value ?? []).map((c) => ({ label: tc(c.name_i18n ?? {}), value: c.id })),
+  {
+    label: withCount(t('suggestions.filters.allCategories'), facets.countFor('category_id', 'all')),
+    value: 'all',
+  },
+  ...(categories.value ?? []).map((c) => ({
+    label: withCount(tc(c.name_i18n ?? {}), facets.countFor('category_id', c.id)),
+    value: c.id,
+    disabled: facets.isDisabled('category_id', c.id),
+  })),
 ])
 const cityOptions = computed(() => [
-  { label: t('suggestions.filters.allCities'), value: 'all' },
-  ...(cities.value ?? []).map((c) => ({ label: c, value: c })),
+  {
+    label: withCount(t('suggestions.filters.allCities'), facets.countFor('city', 'all')),
+    value: 'all',
+  },
+  ...(cities.value ?? []).map((c) => ({
+    label: withCount(c, facets.countFor('city', c)),
+    value: c,
+    disabled: facets.isDisabled('city', c),
+  })),
 ])
 const freeOptions = computed(() => [
-  { label: t('suggestions.filters.allPrices'), value: 'all' },
-  { label: t('suggestions.filters.free'), value: 'true' },
-  { label: t('suggestions.filters.paid'), value: 'false' },
+  {
+    label: withCount(t('suggestions.filters.allPrices'), facets.countFor('is_free', 'all')),
+    value: 'all',
+  },
+  {
+    label: withCount(t('suggestions.filters.free'), facets.countFor('is_free', 'true')),
+    value: 'true',
+    disabled: facets.isDisabled('is_free', 'true'),
+  },
+  {
+    label: withCount(t('suggestions.filters.paid'), facets.countFor('is_free', 'false')),
+    value: 'false',
+    disabled: facets.isDisabled('is_free', 'false'),
+  },
 ])
 
 const selected = ref<Suggestion | null>(null)
@@ -63,15 +111,31 @@ const onClose = () => {
 }
 
 const onAction = async () => {
-  await loadSuggestions()
+  await Promise.all([loadSuggestions(), facets.load()])
 }
 
-// Tabs de filtro
+// Tabs de filtro — con conteo por status (facetas, no solo la página actual)
 const tabs = computed(() => [
-  { label: t('suggestions.tabs.pending'), value: 'pending', icon: 'i-lucide-clock' },
-  { label: t('suggestions.tabs.approved'), value: 'approved', icon: 'i-lucide-check-circle' },
-  { label: t('suggestions.tabs.rejected'), value: 'rejected', icon: 'i-lucide-x-circle' },
-  { label: t('suggestions.tabs.all'), value: 'all', icon: 'i-lucide-list' },
+  {
+    label: `${t('suggestions.tabs.pending')} (${facets.countFor('status', 'pending')})`,
+    value: 'pending',
+    icon: 'i-lucide-clock',
+  },
+  {
+    label: `${t('suggestions.tabs.approved')} (${facets.countFor('status', 'approved')})`,
+    value: 'approved',
+    icon: 'i-lucide-check-circle',
+  },
+  {
+    label: `${t('suggestions.tabs.rejected')} (${facets.countFor('status', 'rejected')})`,
+    value: 'rejected',
+    icon: 'i-lucide-x-circle',
+  },
+  {
+    label: `${t('suggestions.tabs.all')} (${facets.countFor('status', 'all')})`,
+    value: 'all',
+    icon: 'i-lucide-list',
+  },
 ])
 
 const formatDate = (date: string) =>
@@ -182,7 +246,12 @@ const columns = computed<TableColumn<Suggestion>[]>(() => [
   },
 ])
 
+// Secuencial, no Promise.all — dos llamadas internas concurrentes a /api/*
+// protegidas en el mismo render SSR pueden pisarse (mismo problema ya visto
+// en Activities: la primera en ganar la carrera renueva la cookie de sesión,
+// la otra usa el token ya consumido y devuelve 401).
 await loadSuggestions()
+await facets.load()
 </script>
 
 <template>
@@ -203,8 +272,10 @@ await loadSuggestions()
     </template>
 
     <template #body>
-      <!-- Zona fija: tabs + filtros, nunca scrollea -->
-      <div class="shrink-0 flex flex-col gap-3 p-4 border-b border-default">
+      <!-- Zona fija: tabs a la izquierda, filtros a la derecha, nunca scrollea -->
+      <div
+        class="shrink-0 flex flex-wrap items-center justify-between gap-3 p-4 border-b border-default"
+      >
         <div class="flex gap-2 flex-wrap">
           <UButton
             v-for="tab in tabs"

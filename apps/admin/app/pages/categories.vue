@@ -195,11 +195,11 @@ await fetch()
                 />
               </template>
 
-              <!-- Modo vista -->
+              <!-- Modo vista — bold/grande/con color para distinguirla de las subcategorías -->
               <template v-else>
-                <span class="flex-1 font-medium text-sm">{{ parent.name }}</span>
+                <span class="flex-1 font-bold text-base text-primary">{{ parent.name }}</span>
                 <span class="text-xs text-muted">{{ parent.slug }}</span>
-                <UBadge color="neutral" variant="subtle" size="xs">
+                <UBadge color="primary" variant="subtle" size="sm">
                   {{ parent.children.length }} {{ t('categories.subCount') }}
                 </UBadge>
                 <UButton
@@ -262,7 +262,7 @@ await fetch()
                   </template>
 
                   <template v-else>
-                    <span class="flex-1 text-sm">{{ child.name }}</span>
+                    <span class="flex-1 text-sm text-(--ui-text-muted)">{{ child.name }}</span>
                     <span class="text-xs text-muted">{{ child.slug }}</span>
                     <UButton
                       size="xs"

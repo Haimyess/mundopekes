@@ -2,7 +2,13 @@
 import type { TableColumn } from '@nuxt/ui'
 import type { Place } from '~/types'
 import PlacesSlideover from '~/components/places/PlacesSlideover.vue'
-import { syncUrlPage } from '~/composables/useUrlPage'
+import { syncUrlPage, syncUrlParam } from '~/composables/useUrlPage'
+import { useFacets } from '~/composables/useFacets'
+
+interface PlaceFacetRow {
+  status: string
+  city: string | null
+}
 
 const UButton = resolveComponent('UButton')
 const UBadge = resolveComponent('UBadge')
@@ -16,13 +22,46 @@ const router = useRouter()
 const { places, total, loading, filters, fetch: loadPlaces, remove } = usePlaces()
 
 syncUrlPage(toRef(filters, 'page'))
+syncUrlParam(toRef(filters, 'city') as unknown as Ref<string>, 'city')
+syncUrlParam(toRef(filters, 'status') as unknown as Ref<string>, 'status')
 
 const pageCount = computed(() => Math.max(1, Math.ceil(total.value / filters.pageSize)))
 
 const { data: cities } = await useFetch<{ name: string }[]>('/api/cities')
+
+// Conteos por faceta — cuántos lugares quedarían con cada opción, manteniendo
+// el resto de filtros fijos (mismo patrón que Sugerencias/apps/web).
+const facets = useFacets<PlaceFacetRow>('/api/places/facets', {
+  city: toRef(filters, 'city') as unknown as Ref<string>,
+  status: toRef(filters, 'status') as unknown as Ref<string>,
+})
+await facets.load()
+
+const withCount = (label: string, count: number) => `${label} (${count})`
+
 const cityOptions = computed(() => [
-  { label: t('places.filters.allCities'), value: 'all' },
-  ...(cities.value ?? []).map((c) => ({ label: c.name, value: c.name })),
+  { label: withCount(t('places.filters.allCities'), facets.countFor('city', 'all')), value: 'all' },
+  ...(cities.value ?? []).map((c) => ({
+    label: withCount(c.name, facets.countFor('city', c.name)),
+    value: c.name,
+    disabled: facets.isDisabled('city', c.name),
+  })),
+])
+const statusOptions = computed(() => [
+  {
+    label: withCount(t('places.filters.allStatus'), facets.countFor('status', 'all')),
+    value: 'all',
+  },
+  {
+    label: withCount(t('places.status.active'), facets.countFor('status', 'active')),
+    value: 'active',
+    disabled: facets.isDisabled('status', 'active'),
+  },
+  {
+    label: withCount(t('places.status.inactive'), facets.countFor('status', 'inactive')),
+    value: 'inactive',
+    disabled: facets.isDisabled('status', 'inactive'),
+  },
 ])
 
 const openCreate = async () => {
@@ -30,7 +69,7 @@ const openCreate = async () => {
     props: { place: null },
   })
   await slideover.open()
-  loadPlaces()
+  await Promise.all([loadPlaces(), facets.load()])
 }
 
 const openEdit = async (place: Place) => {
@@ -38,12 +77,13 @@ const openEdit = async (place: Place) => {
     props: { place },
   })
   await slideover.open()
-  loadPlaces()
+  await Promise.all([loadPlaces(), facets.load()])
 }
 
 const deletePlace = async (id: string) => {
   try {
     await remove(id)
+    await facets.load()
   } catch {
     // ya se mostró el toast de error dentro del composable
   }
@@ -156,15 +196,7 @@ await loadPlaces()
 
         <div class="flex flex-wrap items-center gap-1.5">
           <USelect v-model="filters.city" :items="cityOptions" class="min-w-44" />
-          <USelect
-            v-model="filters.status"
-            :items="[
-              { label: t('places.filters.allStatus'), value: 'all' },
-              { label: t('places.status.active'), value: 'active' },
-              { label: t('places.status.inactive'), value: 'inactive' },
-            ]"
-            class="min-w-36"
-          />
+          <USelect v-model="filters.status" :items="statusOptions" class="min-w-36" />
         </div>
       </div>
 

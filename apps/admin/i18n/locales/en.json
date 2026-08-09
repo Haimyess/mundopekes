@@ -378,8 +378,8 @@
     "deleteButton": "Delete",
     "editButton": "Edit",
     "filters": {
-      "allCategories": "All",
-      "allPlaces": "All",
+      "allCategories": "All categories",
+      "allPlaces": "All places",
       "allStatuses": "All statuses",
       "categoryPlaceholder": "Category",
       "placePlaceholder": "Place"
