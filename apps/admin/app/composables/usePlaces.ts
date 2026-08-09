@@ -13,6 +13,12 @@ export interface PlacesFilters {
 export const usePlaces = () => {
   const toast = useToast()
 
+  // $fetch a rutas internas durante el SSR es una request nueva del proceso
+  // Node, no del browser — no lleva la cookie de sesión salvo que se la
+  // pasemos explícito. Sin esto, el primer render siempre trae la lista
+  // vacía y recién se completa tras la re-fetch del cliente post-hidratación.
+  const cookieHeaders = import.meta.server ? useRequestHeaders(['cookie']) : undefined
+
   const places = ref<Place[]>([])
   const total = ref(0)
   const loading = ref(false)
@@ -39,7 +45,10 @@ export const usePlaces = () => {
       if (filters.city && filters.city !== 'all') params.city = filters.city
       if (filters.status && filters.status !== 'all') params.status = filters.status
 
-      const res = await $fetch<{ data: Place[]; count: number }>('/api/places', { params })
+      const res = await $fetch<{ data: Place[]; count: number }>('/api/places', {
+        params,
+        headers: cookieHeaders,
+      })
       places.value = res.data
       total.value = res.count
     } catch (e: unknown) {

@@ -27,7 +27,10 @@ syncUrlParam(toRef(filters, 'status') as unknown as Ref<string>, 'status')
 
 const pageCount = computed(() => Math.max(1, Math.ceil(total.value / filters.pageSize)))
 
-const { data: cities } = await useFetch<{ name: string }[]>('/api/cities')
+// headers: forward de la cookie de sesión al SSR — ver useFacets.ts
+const { data: cities } = await useFetch<{ name: string }[]>('/api/cities', {
+  headers: useRequestHeaders(['cookie']),
+})
 
 // Conteos por faceta — cuántos lugares quedarían con cada opción, manteniendo
 // el resto de filtros fijos (mismo patrón que Sugerencias/apps/web).

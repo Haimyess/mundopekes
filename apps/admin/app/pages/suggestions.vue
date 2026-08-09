@@ -41,9 +41,15 @@ syncUrlParam(isFreeFilter as unknown as Ref<string>, 'free')
 const pageCount = computed(() => Math.max(1, Math.ceil(total.value / pageSize.value)))
 
 // Opciones de filtro — categorías y ciudades reales, no derivadas de la página actual
-const { data: categories } =
-  await useFetch<{ id: string; name_i18n: Record<string, string> }[]>('/api/categories')
-const { data: cities } = await useFetch<string[]>('/api/suggestions/cities')
+// (headers: forward de la cookie de sesión al SSR — ver useFacets.ts)
+const ssrCookieHeaders = useRequestHeaders(['cookie'])
+const { data: categories } = await useFetch<{ id: string; name_i18n: Record<string, string> }[]>(
+  '/api/categories',
+  { headers: ssrCookieHeaders }
+)
+const { data: cities } = await useFetch<string[]>('/api/suggestions/cities', {
+  headers: ssrCookieHeaders,
+})
 
 // Conteos por faceta — cuántas sugerencias quedarían con cada opción,
 // manteniendo el resto de filtros fijos (mismo patrón que apps/web).

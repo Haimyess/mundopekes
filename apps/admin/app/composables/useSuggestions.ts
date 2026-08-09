@@ -26,6 +26,13 @@ export interface Suggestion {
 export const useSuggestions = () => {
   const toast = useToast()
 
+  // $fetch a rutas internas durante el SSR es una request nueva del proceso
+  // Node, no del browser — no lleva la cookie de sesión salvo que se la
+  // pasemos explícito. Sin esto, el primer render siempre trae la lista
+  // vacía (o 401 silencioso) y recién se completa tras la re-fetch del
+  // cliente post-hidratación: doble round-trip y un flash de datos vacíos.
+  const cookieHeaders = import.meta.server ? useRequestHeaders(['cookie']) : undefined
+
   const suggestions = ref<Suggestion[]>([])
   const total = ref(0)
   const loading = ref(false)
@@ -51,6 +58,7 @@ export const useSuggestions = () => {
 
       const result = await $fetch<{ data: Suggestion[]; count: number }>('/api/suggestions', {
         params,
+        headers: cookieHeaders,
       })
       suggestions.value = result.data
       total.value = result.count

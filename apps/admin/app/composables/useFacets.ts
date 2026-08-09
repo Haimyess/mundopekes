@@ -17,14 +17,20 @@ export function useFacets<Row extends object>(
   endpoint: string,
   dimensions: Record<string, Ref<string>>
 ) {
+  // $fetch a rutas internas durante el SSR es una request nueva del proceso
+  // Node, no del browser — no lleva la cookie de sesión salvo que se la
+  // pasemos explícito, o el primer render siempre trae 0 conteos.
+  const cookieHeaders = import.meta.server ? useRequestHeaders(['cookie']) : undefined
+
   const {
     data: rows,
     status,
     execute,
-  } = useAsyncData<Row[]>(`facets:${endpoint}`, () => $fetch<Row[]>(endpoint), {
-    immediate: false,
-    default: () => [] as Row[],
-  })
+  } = useAsyncData<Row[]>(
+    `facets:${endpoint}`,
+    () => $fetch<Row[]>(endpoint, { headers: cookieHeaders }),
+    { immediate: false, default: () => [] as Row[] }
+  )
   // useAsyncData no rechaza en error (queda en `error`, no en el catch del
   // llamador) — un facets endpoint caído solo pierde los "(N)"/grayed-out,
   // nunca tumba la página.

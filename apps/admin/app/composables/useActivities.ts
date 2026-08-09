@@ -24,6 +24,12 @@ export interface UseActivitiesOptions {
 export const useActivities = (options: UseActivitiesOptions = {}) => {
   const toast = useToast()
 
+  // $fetch a rutas internas durante el SSR es una request nueva del proceso
+  // Node, no del browser — no lleva la cookie de sesión salvo que se la
+  // pasemos explícito. Sin esto, el primer render siempre trae la lista
+  // vacía y recién se completa tras la re-fetch del cliente post-hidratación.
+  const cookieHeaders = import.meta.server ? useRequestHeaders(['cookie']) : undefined
+
   const activities = ref<Activity[]>([])
   const total = ref(0)
   const loading = ref(false)
@@ -36,7 +42,7 @@ export const useActivities = (options: UseActivitiesOptions = {}) => {
     place_id: options.placeId,
     is_free: undefined,
     page: 1,
-    pageSize: options.pageSize ?? 20
+    pageSize: options.pageSize ?? 20,
   })
 
   // Debounce sólo del search para no martillar el server al teclear
@@ -47,7 +53,7 @@ export const useActivities = (options: UseActivitiesOptions = {}) => {
     try {
       const params: Record<string, any> = {
         page: filters.page,
-        pageSize: filters.pageSize
+        pageSize: filters.pageSize,
       }
       if (debouncedQ.value) params.q = debouncedQ.value
       if (filters.category_id) params.category_id = filters.category_id
@@ -55,17 +61,17 @@ export const useActivities = (options: UseActivitiesOptions = {}) => {
       if (filters.place_id) params.place_id = filters.place_id
       if (filters.is_free !== undefined) params.is_free = filters.is_free
 
-      const res = await $fetch<{ data: Activity[], count: number }>(
-        '/api/activities',
-        { params }
-      )
+      const res = await $fetch<{ data: Activity[]; count: number }>('/api/activities', {
+        params,
+        headers: cookieHeaders,
+      })
       activities.value = res.data
       total.value = res.count
     } catch (e: any) {
       toast.add({
         title: 'Error cargando actividades',
         description: e.message,
-        color: 'error'
+        color: 'error',
       })
     } finally {
       loading.value = false
@@ -117,12 +123,10 @@ export const useActivities = (options: UseActivitiesOptions = {}) => {
   const removeMany = async (ids: string[]) => {
     saving.value = true
     try {
-      await Promise.all(
-        ids.map(id => $fetch(`/api/activities/${id}`, { method: 'DELETE' }))
-      )
+      await Promise.all(ids.map((id) => $fetch(`/api/activities/${id}`, { method: 'DELETE' })))
       toast.add({
         title: `${ids.length} actividad${ids.length > 1 ? 'es' : ''} eliminada${ids.length > 1 ? 's' : ''}`,
-        color: 'neutral'
+        color: 'neutral',
       })
       await fetch()
     } catch (e: any) {
@@ -135,7 +139,13 @@ export const useActivities = (options: UseActivitiesOptions = {}) => {
 
   // Reset a página 1 cuando cambian filtros (no cuando cambia la página misma)
   watch(
-    [debouncedQ, () => filters.category_id, () => filters.status, () => filters.place_id, () => filters.is_free],
+    [
+      debouncedQ,
+      () => filters.category_id,
+      () => filters.status,
+      () => filters.place_id,
+      () => filters.is_free,
+    ],
     () => {
       if (filters.page !== 1) {
         filters.page = 1 // dispara el otro watch
@@ -160,6 +170,6 @@ export const useActivities = (options: UseActivitiesOptions = {}) => {
     create,
     update,
     remove,
-    removeMany
+    removeMany,
   }
 }

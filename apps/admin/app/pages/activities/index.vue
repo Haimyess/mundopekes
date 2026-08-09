@@ -66,9 +66,11 @@ const facets = useFacets<ActivityFacetRow>('/api/activities/facets', {
   category_id: categoryFilter,
   place_id: placeFilter,
 })
+// headers: forward de la cookie de sesión al SSR — ver useFacets.ts
+const ssrCookieHeaders = useRequestHeaders(['cookie'])
 const [{ data: categories }, { data: places }] = await Promise.all([
-  useFetch<Category[]>('/api/categories'),
-  useFetch<Place[]>('/api/places'),
+  useFetch<Category[]>('/api/categories', { headers: ssrCookieHeaders }),
+  useFetch<Place[]>('/api/places', { headers: ssrCookieHeaders }),
 ])
 await facets.load()
 
