@@ -136,16 +136,36 @@ Web failed again with the _exact same_ `ERR_INVALID_ARG_TYPE` crash, on a
 build that logged `Restored build cache from previous deployment
 (3DfvetqCuisbfGFKc7jmyikAxDFT)` — **the identical cache ID as the original
 failure**, across two commits that both changed `package.json`/
-`package-lock.json`. That means Vercel kept reusing the same cached `.npm`
-package-metadata cache (a Vercel-side cache, distinct from `node_modules`)
-regardless of what changed in the repo — pointing to a stale/corrupted
-cache entry on Vercel's side, not something fixable by editing files here.
+`package-lock.json`. First guess was a stale/corrupted Vercel-side cache —
+**wrong, or at least not the fix**: redeploying from the dashboard with
+"Use existing Build Cache" unchecked still logged the same restored-cache
+line and hit the identical error. Whatever that toggle controls, it isn't
+whatever's actually causing this.
 
-**Actual fix:** manually clear it — Vercel dashboard → `mundopekes-web`
-project → Deployments → open the latest → Redeploy with **"Use existing
-Build Cache" unchecked**. This can't be done from the repo/CLI in this
-setup; if it recurs, that's the first thing to try before assuming it's a
-new code/config problem.
+**Actual root cause:** `ERR_INVALID_ARG_TYPE: The "from" argument must be
+of type string` is a known npm bug class tied to `npm install`'s
+dependency-resolution/diffing algorithm, not `npm ci`'s more literal
+install-from-lockfile path. The monorepo root `vercel.json` had
+`"installCommand": "npm install --legacy-peer-deps"` — meanwhile
+`bitbucket-pipelines.yml`'s install step already used
+`npm ci --legacy-peer-deps` against the exact same lockfile and had never
+once failed this way. That's the tell: same lockfile, different install
+command, only the `npm install` path breaks.
+
+**Fix:** changed `vercel.json`'s `installCommand` to
+`npm ci --legacy-peer-deps`, matching Bitbucket's already-proven-working
+command. `npm ci` is also the generally-recommended command for CI/deploy
+installs regardless (deterministic, fails loudly on a lockfile/package.json
+mismatch instead of silently reconciling one) — verified locally with a
+full `npm ci --legacy-peer-deps` from a clean install, then `nuxt prepare`
+in both apps, full lint, and both test suites, all green.
+
+**Prevention:** if a from-scratch install passes with `npm ci` locally and
+in Bitbucket but a deploy target still fails with an npm-internal crash
+(not a your-code error), check whether that target is invoking a
+_different_ install command than the one already proven to work elsewhere
+in the pipeline — don't assume all "npm install"-shaped commands are
+equivalent.
 
 ---
 
