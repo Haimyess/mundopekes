@@ -1,3 +1,6 @@
+# Before debugging a pipeline/Vercel-deploy failure that isn't an actual
+# code bug (missing dep, Node version mismatch, YAML schema issue, Snyk
+# quota, etc.), check docs/ci-cd-troubleshooting.md — log any new one there.
 image: node:22
 
 definitions:
