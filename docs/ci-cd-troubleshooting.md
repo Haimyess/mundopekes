@@ -68,7 +68,7 @@ in Bitbucket → Repository settings → Pipelines → Schedules → branch `mai
 
 **Prevention:** see checklist item 4 above. When adding a scheduled job,
 confirm the schedule is visible in the Pipelines → Schedules UI after
-pushing — a YAML change alone is never sufic ient.
+pushing — a YAML change alone is never sufficient.
 
 ---
 
