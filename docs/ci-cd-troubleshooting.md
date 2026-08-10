@@ -40,6 +40,13 @@ whenever a new package is added that's used by a shared Nuxt layer
       Bitbucket UI (Repository settings → Pipelines → Schedules), **not**
       as a `schedules:` key in the YAML — that key doesn't exist in
       Bitbucket's pipeline schema and is silently ignored/invalid.
+- [ ] Push to `dev` only, and wait for that pipeline to go green, before
+      merging and pushing to `main`. Pushing both at once (or merging to
+      `main` immediately after pushing `dev`) triggers two full pipelines
+      — install/prepare/lint/test/deploy, twice — for the exact same
+      commit. `main`'s security step is manual-trigger anyway, so there's
+      no verification benefit to running it in parallel with `dev`, only
+      doubled build minutes.
 
 ---
 
@@ -115,12 +122,30 @@ monorepo root, which Vercel's per-app builds never actually read.
 
 **Verified before committing:** clean `nuxt prepare` in both apps, full-repo
 lint (0 errors, same pre-existing warning count as before), and both test
-suites green.
+suites green — locally, not against Vercel's actual infrastructure (no
+Vercel access from this environment).
 
 **Prevention:** checklist items 1 and 2 above. In general: assume Vercel's
 monorepo build for each app only ever sees that app's own `package.json` —
 if a shared layer needs a package, every app that uses that layer needs to
 declare it too, and every app needs its own correct `engines.node`.
+
+**Follow-up, 2026-08-10 — the `engines.node` fix alone did NOT fix `apps/web`.**
+Admin's deploy went green (the `@nuxt/image` fix was the real fix there).
+Web failed again with the _exact same_ `ERR_INVALID_ARG_TYPE` crash, on a
+build that logged `Restored build cache from previous deployment
+(3DfvetqCuisbfGFKc7jmyikAxDFT)` — **the identical cache ID as the original
+failure**, across two commits that both changed `package.json`/
+`package-lock.json`. That means Vercel kept reusing the same cached `.npm`
+package-metadata cache (a Vercel-side cache, distinct from `node_modules`)
+regardless of what changed in the repo — pointing to a stale/corrupted
+cache entry on Vercel's side, not something fixable by editing files here.
+
+**Actual fix:** manually clear it — Vercel dashboard → `mundopekes-web`
+project → Deployments → open the latest → Redeploy with **"Use existing
+Build Cache" unchecked**. This can't be done from the repo/CLI in this
+setup; if it recurs, that's the first thing to try before assuming it's a
+new code/config problem.
 
 ---
 
