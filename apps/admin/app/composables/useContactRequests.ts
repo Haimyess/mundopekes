@@ -16,13 +16,19 @@ export const useContactRequests = () => {
   const requests = ref<ContactRequest[]>([])
   const total = ref(0)
   const page = ref(1)
-  const isLoading = ref(false)
+  // Arranca en true — ver el comentario equivalente en useSuggestions.ts.
+  const isLoading = ref(true)
   const feedbackStats = ref<FeedbackStats | null>(null)
 
   const intent = ref<string | undefined>(undefined)
   const status = ref<string | undefined>('pending') // mantiene el default 'pending'
 
   const totalPages = computed(() => Math.ceil(total.value / 20))
+
+  // Evita que los watchers de abajo disparen un fetch duplicado cuando la
+  // URL trae la página no-default al montar — ver el comentario equivalente
+  // en useSuggestions.ts.
+  const hasLoadedOnce = ref(false)
 
   const fetch = async () => {
     isLoading.value = true
@@ -44,6 +50,7 @@ export const useContactRequests = () => {
       toast.add({ title: 'Error cargando consultas', description: msg, color: 'error' })
     } finally {
       isLoading.value = false
+      hasLoadedOnce.value = true
     }
   }
 
@@ -70,11 +77,15 @@ export const useContactRequests = () => {
   }
 
   watch([intent, status], () => {
+    if (!hasLoadedOnce.value) return
     page.value = 1
     fetch()
   })
 
-  watch(page, fetch)
+  watch(page, () => {
+    if (!hasLoadedOnce.value) return
+    fetch()
+  })
 
   return {
     requests,

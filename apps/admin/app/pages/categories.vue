@@ -104,7 +104,11 @@ const onChildDragEnd = async (parent: CategoryWithChildren) => {
   await reorderChildren(parent.id, parent.children)
 }
 
-await fetch()
+// Carga inicial no bloqueante — la navegación a esta página no espera a
+// esto (la página ya tiene su propio spinner mientras `loading` es true).
+onMounted(() => {
+  fetch()
+})
 </script>
 
 <template>

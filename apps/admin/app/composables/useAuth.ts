@@ -106,6 +106,10 @@ export const useAuth = () => {
     loading.value = true
     try {
       await supabase.auth.signOut()
+      // Mismo useState que auth.global.ts — resetea el cache de 30s del
+      // middleware para que un login posterior en la misma pestaña siempre
+      // revalide de una, en vez de heredar el timestamp de esta sesión.
+      useState<number>('auth-checked-at', () => 0).value = 0
       await router.push('/login')
     } catch (error) {
       toast.add({

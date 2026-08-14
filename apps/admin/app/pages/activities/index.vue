@@ -48,31 +48,15 @@ watch(placeFilter, (val) => {
   filters.place_id = val === 'all' ? undefined : val
 })
 
-// fetchActivities() va primero y solo — no en Promise.all con las otras.
-// Iban en paralelo antes, pero eso dispara varias llamadas server-side a
-// serverSupabaseUser() al mismo tiempo, y cuando el access token está por
-// vencer, Supabase rota el refresh token en la primera que gana la carrera:
-// las otras usan el refresh token ya consumido y responden 401 — eso es
-// lo que rompía la página al entrar a Activities. Esperar esta primera deja
-// la cookie ya renovada (el browser la aplica antes de que sigan las demás),
-// así que categories/places sí pueden ir en paralelo entre sí sin riesgo.
-// facets.load() va aparte y al final, secuencial — es un tercer consumidor
-// más del mismo patrón y no vale la pena arriesgar otra carrera por sumar
-// unos ms; además ya tolera fallos solo (ver useFacets.ts) así que si algo
-// sale mal acá no se cae la página, solo faltan los conteos.
-await fetchActivities()
 const facets = useFacets<ActivityFacetRow>('/api/activities/facets', {
   status: toRef(filters, 'status') as unknown as Ref<string>,
   category_id: categoryFilter,
   place_id: placeFilter,
 })
-// headers: forward de la cookie de sesión al SSR — ver useFacets.ts
-const ssrCookieHeaders = useRequestHeaders(['cookie'])
-const [{ data: categories }, { data: places }] = await Promise.all([
-  useFetch<Category[]>('/api/categories', { headers: ssrCookieHeaders }),
-  useFetch<Place[]>('/api/places', { headers: ssrCookieHeaders }),
-])
-await facets.load()
+// Se cargan en onMounted, junto con el resto de la carga inicial — no
+// bloquean la navegación (ver el onMounted al final del script).
+const categories = ref<Category[]>([])
+const places = ref<Place[]>([])
 
 const withCount = (label: string, count: number) => `${label} (${count})`
 
@@ -297,6 +281,31 @@ const selectionText = computed(() =>
     total: total.value,
   })
 )
+
+// Carga inicial no bloqueante — la navegación a esta página no espera a
+// nada de esto (ver TableSkeleton en el template mientras `loading` es
+// true y todavía no hay datos). Antes fetchActivities() iba solo y primero,
+// y categories/places recién después, específicamente para evitar que
+// varias llamadas concurrentes al servidor durante el mismo render SSR se
+// pisaran la rotación del refresh token de Supabase (si el access token
+// estaba por vencer, la que ganaba la carrera renovaba la cookie, y las
+// demás usaban el refresh token ya consumido y devolvían 401). Ese riesgo
+// era específico de SSR — estos fetches ahora corren client-side
+// (post-mount, ya en el browser), pasando por el cliente singleton de
+// Supabase, que serializa sus propios refreshes en vez de que cada request
+// compita por separado — no hay motivo para seguir secuenciando esto.
+onMounted(async () => {
+  await Promise.all([
+    fetchActivities(),
+    facets.load(),
+    $fetch<Category[]>('/api/categories').then((r) => {
+      categories.value = r
+    }),
+    $fetch<Place[]>('/api/places').then((r) => {
+      places.value = r
+    }),
+  ])
+})
 </script>
 
 <template>
@@ -315,118 +324,122 @@ const selectionText = computed(() =>
     </template>
 
     <template #body>
-      <!-- Zona fija: search + filtros, nunca scrollea -->
-      <div
-        class="shrink-0 flex flex-wrap items-center justify-between gap-1.5 p-4 border-b border-default"
-      >
-        <UInput
-          v-model="filters.q"
-          icon="i-lucide-search"
-          :placeholder="t('activities.searchPlaceholder')"
-          class="max-w-sm"
-        />
+      <TableSkeleton v-if="loading && !activities.length" :filters="3" :columns="6" />
 
-        <div class="flex flex-wrap items-center gap-1.5">
-          <!-- Acciones bulk -->
-          <ActivitiesDeleteModal
-            v-if="selectedRows.length"
-            :count="selectedRows.length"
-            :loading="deleteLoading"
-            @confirm="handleDelete(selectedRows.map((r) => r.id))"
-          >
-            <UButton
-              :label="t('activities.deleteButton')"
-              color="error"
-              variant="subtle"
-              icon="i-lucide-trash"
+      <template v-else>
+        <!-- Zona fija: search + filtros, nunca scrollea -->
+        <div
+          class="shrink-0 flex flex-wrap items-center justify-between gap-1.5 p-4 border-b border-default"
+        >
+          <UInput
+            v-model="filters.q"
+            icon="i-lucide-search"
+            :placeholder="t('activities.searchPlaceholder')"
+            class="max-w-sm"
+          />
+
+          <div class="flex flex-wrap items-center gap-1.5">
+            <!-- Acciones bulk -->
+            <ActivitiesDeleteModal
+              v-if="selectedRows.length"
+              :count="selectedRows.length"
+              :loading="deleteLoading"
+              @confirm="handleDelete(selectedRows.map((r) => r.id))"
             >
-              <template #trailing>
-                <UKbd>{{ selectedRows.length }}</UKbd>
-              </template>
-            </UButton>
-          </ActivitiesDeleteModal>
+              <UButton
+                :label="t('activities.deleteButton')"
+                color="error"
+                variant="subtle"
+                icon="i-lucide-trash"
+              >
+                <template #trailing>
+                  <UKbd>{{ selectedRows.length }}</UKbd>
+                </template>
+              </UButton>
+            </ActivitiesDeleteModal>
 
-          <UButton
-            v-if="selectedRows.length === 1"
-            :label="t('activities.editButton')"
-            color="neutral"
-            variant="subtle"
-            icon="i-lucide-pencil"
-            @click="openEdit(selectedRows[0])"
-          />
+            <UButton
+              v-if="selectedRows.length === 1"
+              :label="t('activities.editButton')"
+              color="neutral"
+              variant="subtle"
+              icon="i-lucide-pencil"
+              @click="openEdit(selectedRows[0])"
+            />
 
-          <!-- Filtros -->
-          <USelect v-model="filters.status" :items="statusOptions" class="min-w-36" />
+            <!-- Filtros -->
+            <USelect v-model="filters.status" :items="statusOptions" class="min-w-36" />
 
-          <USelect
-            v-model="categoryFilter"
-            :items="categoryOptions"
-            :placeholder="t('activities.filters.categoryPlaceholder')"
-            class="min-w-36"
-          />
+            <USelect
+              v-model="categoryFilter"
+              :items="categoryOptions"
+              :placeholder="t('activities.filters.categoryPlaceholder')"
+              class="min-w-36"
+            />
 
-          <USelect
-            v-model="placeFilter"
-            :items="placeOptions"
-            :placeholder="t('activities.filters.placePlaceholder')"
-            searchable
-            class="min-w-44"
-          />
-        </div>
-      </div>
-
-      <!-- Zona scrolleable: solo la tabla -->
-      <div class="flex-1 min-h-0 overflow-y-auto p-4">
-        <UTable
-          v-model:row-selection="rowSelection"
-          :data="activities"
-          :columns="columns"
-          :loading="loading"
-          :ui="{
-            base: 'table-fixed border-separate border-spacing-0',
-            thead: '[&>tr]:bg-elevated/50 [&>tr]:after:content-none',
-            tbody:
-              '[&>tr]:last:[&>td]:border-b-0 [&>tr]:hover:bg-elevated/50 [&>tr]:cursor-pointer [&>tr]:transition-colors',
-            th: 'py-2 first:rounded-l-lg last:rounded-r-lg border-y border-default first:border-l last:border-r',
-            td: 'border-b border-default',
-            separator: 'h-0',
-          }"
-          @click="
-            (e: MouseEvent) => {
-              const target = e.target as HTMLElement
-              if (target.closest('[data-radix-popper-content-wrapper]')) return
-              if (target.closest('button')) return
-              if (target.closest('input[type=checkbox]')) return
-              if (target.closest('label')) return
-
-              const tr = target.closest('tbody tr')
-              if (!tr) return
-
-              const tbody = tr.closest('tbody')
-              if (!tbody) return
-              const rows = Array.from(tbody.querySelectorAll('tr'))
-              const index = rows.indexOf(tr as HTMLTableRowElement)
-              const activity = activities[index]
-              if (activity) openEdit(activity)
-            }
-          "
-        />
-      </div>
-
-      <!-- Zona fija: paginación, siempre visible abajo -->
-      <div class="shrink-0 flex items-center justify-between gap-3 p-4 border-t border-default">
-        <div class="text-sm text-muted">
-          {{ selectionText }}
+            <USelect
+              v-model="placeFilter"
+              :items="placeOptions"
+              :placeholder="t('activities.filters.placePlaceholder')"
+              searchable
+              class="min-w-44"
+            />
+          </div>
         </div>
 
-        <UPagination
-          v-if="pageCount > 1"
-          :default-page="filters.page"
-          :items-per-page="filters.pageSize"
-          :total="total"
-          @update:page="(p: number) => (filters.page = p)"
-        />
-      </div>
+        <!-- Zona scrolleable: solo la tabla -->
+        <div class="flex-1 min-h-0 overflow-y-auto p-4">
+          <UTable
+            v-model:row-selection="rowSelection"
+            :data="activities"
+            :columns="columns"
+            :loading="loading"
+            :ui="{
+              base: 'table-fixed border-separate border-spacing-0',
+              thead: '[&>tr]:bg-elevated/50 [&>tr]:after:content-none',
+              tbody:
+                '[&>tr]:last:[&>td]:border-b-0 [&>tr]:hover:bg-elevated/50 [&>tr]:cursor-pointer [&>tr]:transition-colors',
+              th: 'py-2 first:rounded-l-lg last:rounded-r-lg border-y border-default first:border-l last:border-r',
+              td: 'border-b border-default',
+              separator: 'h-0',
+            }"
+            @click="
+              (e: MouseEvent) => {
+                const target = e.target as HTMLElement
+                if (target.closest('[data-radix-popper-content-wrapper]')) return
+                if (target.closest('button')) return
+                if (target.closest('input[type=checkbox]')) return
+                if (target.closest('label')) return
+
+                const tr = target.closest('tbody tr')
+                if (!tr) return
+
+                const tbody = tr.closest('tbody')
+                if (!tbody) return
+                const rows = Array.from(tbody.querySelectorAll('tr'))
+                const index = rows.indexOf(tr as HTMLTableRowElement)
+                const activity = activities[index]
+                if (activity) openEdit(activity)
+              }
+            "
+          />
+        </div>
+
+        <!-- Zona fija: paginación, siempre visible abajo -->
+        <div class="shrink-0 flex items-center justify-between gap-3 p-4 border-t border-default">
+          <div class="text-sm text-muted">
+            {{ selectionText }}
+          </div>
+
+          <UPagination
+            v-if="pageCount > 1"
+            :default-page="filters.page"
+            :items-per-page="filters.pageSize"
+            :total="total"
+            @update:page="(p: number) => (filters.page = p)"
+          />
+        </div>
+      </template>
     </template>
   </UDashboardPanel>
 </template>

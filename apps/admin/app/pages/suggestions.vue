@@ -40,16 +40,11 @@ syncUrlParam(isFreeFilter as unknown as Ref<string>, 'free')
 
 const pageCount = computed(() => Math.max(1, Math.ceil(total.value / pageSize.value)))
 
-// Opciones de filtro — categorías y ciudades reales, no derivadas de la página actual
-// (headers: forward de la cookie de sesión al SSR — ver useFacets.ts)
-const ssrCookieHeaders = useRequestHeaders(['cookie'])
-const { data: categories } = await useFetch<{ id: string; name_i18n: Record<string, string> }[]>(
-  '/api/categories',
-  { headers: ssrCookieHeaders }
-)
-const { data: cities } = await useFetch<string[]>('/api/suggestions/cities', {
-  headers: ssrCookieHeaders,
-})
+// Opciones de filtro — categorías y ciudades reales, no derivadas de la página
+// actual. Se cargan en onMounted (no bloquean la navegación) — ver el
+// onMounted al final del script para el resto de la carga inicial.
+const categories = ref<{ id: string; name_i18n: Record<string, string> }[]>([])
+const cities = ref<string[]>([])
 
 // Conteos por faceta — cuántas sugerencias quedarían con cada opción,
 // manteniendo el resto de filtros fijos (mismo patrón que apps/web).
@@ -252,12 +247,29 @@ const columns = computed<TableColumn<Suggestion>[]>(() => [
   },
 ])
 
-// Secuencial, no Promise.all — dos llamadas internas concurrentes a /api/*
-// protegidas en el mismo render SSR pueden pisarse (mismo problema ya visto
-// en Activities: la primera en ganar la carrera renueva la cookie de sesión,
-// la otra usa el token ya consumido y devuelve 401).
-await loadSuggestions()
-await facets.load()
+// Carga inicial no bloqueante — la navegación a esta página no espera a
+// nada de esto (ver TableSkeleton en el template mientras `loading` es
+// true y todavía no hay datos). Antes estas llamadas iban en un await de
+// nivel superior del <script setup>, lo que congelaba la navegación del
+// router hasta que todas resolvían. Se paralelizan sin riesgo porque ahora
+// corren client-side (browser, post-mount), no durante SSR: el problema que
+// obligaba a la secuencia (dos requests concurrentes al servidor pisándose
+// la rotación del refresh token de Supabase durante el mismo render SSR,
+// visto en Activities) no aplica a fetches disparados desde el cliente ya
+// montado — pasan por el cliente singleton de Supabase, que serializa sus
+// propios refreshes en vez de que cada request compita por separado.
+onMounted(async () => {
+  await Promise.all([
+    loadSuggestions(),
+    facets.load(),
+    $fetch<{ id: string; name_i18n: Record<string, string> }[]>('/api/categories').then((r) => {
+      categories.value = r
+    }),
+    $fetch<string[]>('/api/suggestions/cities').then((r) => {
+      cities.value = r
+    }),
+  ])
+})
 </script>
 
 <template>
@@ -278,58 +290,62 @@ await facets.load()
     </template>
 
     <template #body>
-      <!-- Zona fija: tabs a la izquierda, filtros a la derecha, nunca scrollea -->
-      <div
-        class="shrink-0 flex flex-wrap items-center justify-between gap-3 p-4 border-b border-default"
-      >
-        <div class="flex gap-2 flex-wrap">
-          <UButton
-            v-for="tab in tabs"
-            :key="tab.value"
-            :color="statusFilter === tab.value ? 'primary' : 'neutral'"
-            :variant="statusFilter === tab.value ? 'solid' : 'outline'"
-            :icon="tab.icon"
-            size="sm"
-            @click="statusFilter = tab.value as any"
-          >
-            {{ tab.label }}
-          </UButton>
+      <TableSkeleton v-if="loading && !suggestions.length" :tabs="4" :filters="3" :columns="7" />
+
+      <template v-else>
+        <!-- Zona fija: tabs a la izquierda, filtros a la derecha, nunca scrollea -->
+        <div
+          class="shrink-0 flex flex-wrap items-center justify-between gap-3 p-4 border-b border-default"
+        >
+          <div class="flex gap-2 flex-wrap">
+            <UButton
+              v-for="tab in tabs"
+              :key="tab.value"
+              :color="statusFilter === tab.value ? 'primary' : 'neutral'"
+              :variant="statusFilter === tab.value ? 'solid' : 'outline'"
+              :icon="tab.icon"
+              size="sm"
+              @click="statusFilter = tab.value as any"
+            >
+              {{ tab.label }}
+            </UButton>
+          </div>
+
+          <div class="flex gap-2 flex-wrap">
+            <USelect v-model="categoryFilter" :items="categoryOptions" class="min-w-44" />
+            <USelect v-model="cityFilter" :items="cityOptions" class="min-w-40" />
+            <USelect v-model="isFreeFilter" :items="freeOptions" class="min-w-36" />
+          </div>
         </div>
 
-        <div class="flex gap-2 flex-wrap">
-          <USelect v-model="categoryFilter" :items="categoryOptions" class="min-w-44" />
-          <USelect v-model="cityFilter" :items="cityOptions" class="min-w-40" />
-          <USelect v-model="isFreeFilter" :items="freeOptions" class="min-w-36" />
+        <!-- Zona scrolleable: solo la tabla -->
+        <div class="flex-1 min-h-0 overflow-y-auto p-4">
+          <UTable
+            :data="suggestions"
+            :columns="columns"
+            :loading="loading"
+            class="w-full"
+            :ui="{
+              base: 'table-fixed border-separate border-spacing-0',
+              thead: '[&>tr]:bg-elevated/50 [&>tr]:after:content-none',
+              tbody:
+                '[&>tr]:last:[&>td]:border-b-0 [&>tr]:hover:bg-elevated/50 [&>tr]:cursor-pointer [&>tr]:transition-colors',
+              th: 'py-2 first:rounded-l-lg last:rounded-r-lg border-y border-default first:border-l last:border-r',
+              td: 'border-b border-default',
+            }"
+          />
         </div>
-      </div>
 
-      <!-- Zona scrolleable: solo la tabla -->
-      <div class="flex-1 min-h-0 overflow-y-auto p-4">
-        <UTable
-          :data="suggestions"
-          :columns="columns"
-          :loading="loading"
-          class="w-full"
-          :ui="{
-            base: 'table-fixed border-separate border-spacing-0',
-            thead: '[&>tr]:bg-elevated/50 [&>tr]:after:content-none',
-            tbody:
-              '[&>tr]:last:[&>td]:border-b-0 [&>tr]:hover:bg-elevated/50 [&>tr]:cursor-pointer [&>tr]:transition-colors',
-            th: 'py-2 first:rounded-l-lg last:rounded-r-lg border-y border-default first:border-l last:border-r',
-            td: 'border-b border-default',
-          }"
-        />
-      </div>
-
-      <!-- Zona fija: paginación, siempre visible abajo -->
-      <div v-if="pageCount > 1" class="shrink-0 flex justify-end p-4 border-t border-default">
-        <UPagination
-          :default-page="page"
-          :items-per-page="pageSize"
-          :total="total"
-          @update:page="(p: number) => (page = p)"
-        />
-      </div>
+        <!-- Zona fija: paginación, siempre visible abajo -->
+        <div v-if="pageCount > 1" class="shrink-0 flex justify-end p-4 border-t border-default">
+          <UPagination
+            :default-page="page"
+            :items-per-page="pageSize"
+            :total="total"
+            @update:page="(p: number) => (page = p)"
+          />
+        </div>
+      </template>
     </template>
   </UDashboardPanel>
 

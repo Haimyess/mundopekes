@@ -27,10 +27,9 @@ syncUrlParam(toRef(filters, 'status') as unknown as Ref<string>, 'status')
 
 const pageCount = computed(() => Math.max(1, Math.ceil(total.value / filters.pageSize)))
 
-// headers: forward de la cookie de sesión al SSR — ver useFacets.ts
-const { data: cities } = await useFetch<{ name: string }[]>('/api/cities', {
-  headers: useRequestHeaders(['cookie']),
-})
+// Se carga en onMounted, junto con el resto de la carga inicial — no
+// bloquea la navegación (ver el onMounted al final del script).
+const cities = ref<{ name: string }[]>([])
 
 // Conteos por faceta — cuántos lugares quedarían con cada opción, manteniendo
 // el resto de filtros fijos (mismo patrón que Sugerencias/apps/web).
@@ -38,7 +37,6 @@ const facets = useFacets<PlaceFacetRow>('/api/places/facets', {
   city: toRef(filters, 'city') as unknown as Ref<string>,
   status: toRef(filters, 'status') as unknown as Ref<string>,
 })
-await facets.load()
 
 const withCount = (label: string, count: number) => `${label} (${count})`
 
@@ -169,7 +167,17 @@ const columns = computed<TableColumn<Place>[]>(() => [
   },
 ])
 
-await loadPlaces()
+// Carga inicial no bloqueante — ver el comentario equivalente en
+// suggestions.vue para por qué es seguro paralelizar esto client-side.
+onMounted(async () => {
+  await Promise.all([
+    loadPlaces(),
+    facets.load(),
+    $fetch<{ name: string }[]>('/api/cities').then((r) => {
+      cities.value = r
+    }),
+  ])
+})
 </script>
 
 <template>
@@ -186,61 +194,65 @@ await loadPlaces()
     </template>
 
     <template #body>
-      <!-- Zona fija: búsqueda + filtros -->
-      <div
-        class="shrink-0 flex flex-wrap items-center justify-between gap-1.5 p-4 border-b border-default"
-      >
-        <UInput
-          v-model="filters.q"
-          icon="i-lucide-search"
-          :placeholder="t('places.searchPlaceholder')"
-          class="max-w-sm"
-        />
+      <TableSkeleton v-if="loading && !places.length" :filters="2" :columns="4" />
 
-        <div class="flex flex-wrap items-center gap-1.5">
-          <USelect v-model="filters.city" :items="cityOptions" class="min-w-44" />
-          <USelect v-model="filters.status" :items="statusOptions" class="min-w-36" />
+      <template v-else>
+        <!-- Zona fija: búsqueda + filtros -->
+        <div
+          class="shrink-0 flex flex-wrap items-center justify-between gap-1.5 p-4 border-b border-default"
+        >
+          <UInput
+            v-model="filters.q"
+            icon="i-lucide-search"
+            :placeholder="t('places.searchPlaceholder')"
+            class="max-w-sm"
+          />
+
+          <div class="flex flex-wrap items-center gap-1.5">
+            <USelect v-model="filters.city" :items="cityOptions" class="min-w-44" />
+            <USelect v-model="filters.status" :items="statusOptions" class="min-w-36" />
+          </div>
         </div>
-      </div>
 
-      <!-- Zona scrolleable: solo la tabla -->
-      <div class="flex-1 min-h-0 overflow-y-auto p-4">
-        <UTable
-          :data="places"
-          :columns="columns"
-          :loading="loading"
-          :ui="{
-            base: 'table-fixed border-separate border-spacing-0',
-            thead: '[&>tr]:bg-elevated/50 [&>tr]:after:content-none',
-            tbody:
-              '[&>tr]:last:[&>td]:border-b-0 [&>tr]:hover:bg-elevated/50 [&>tr]:cursor-pointer [&>tr]:transition-colors',
-            th: 'py-2 first:rounded-l-lg last:rounded-r-lg border-y border-default first:border-l last:border-r',
-            td: 'border-b border-default',
-          }"
-          @click="
-            (e: MouseEvent) => {
-              const target = e.target as HTMLElement
-              if (target.closest('[data-radix-popper-content-wrapper]')) return
-              if (target.closest('button')) return
-              const tr = target.closest('tbody tr')
-              if (!tr) return
-              const idEl = tr.querySelector('[data-place-id]')
-              const placeId = idEl?.getAttribute('data-place-id')
-              if (placeId) router.push(`/places/${placeId}`)
-            }
-          "
-        />
-      </div>
+        <!-- Zona scrolleable: solo la tabla -->
+        <div class="flex-1 min-h-0 overflow-y-auto p-4">
+          <UTable
+            :data="places"
+            :columns="columns"
+            :loading="loading"
+            :ui="{
+              base: 'table-fixed border-separate border-spacing-0',
+              thead: '[&>tr]:bg-elevated/50 [&>tr]:after:content-none',
+              tbody:
+                '[&>tr]:last:[&>td]:border-b-0 [&>tr]:hover:bg-elevated/50 [&>tr]:cursor-pointer [&>tr]:transition-colors',
+              th: 'py-2 first:rounded-l-lg last:rounded-r-lg border-y border-default first:border-l last:border-r',
+              td: 'border-b border-default',
+            }"
+            @click="
+              (e: MouseEvent) => {
+                const target = e.target as HTMLElement
+                if (target.closest('[data-radix-popper-content-wrapper]')) return
+                if (target.closest('button')) return
+                const tr = target.closest('tbody tr')
+                if (!tr) return
+                const idEl = tr.querySelector('[data-place-id]')
+                const placeId = idEl?.getAttribute('data-place-id')
+                if (placeId) router.push(`/places/${placeId}`)
+              }
+            "
+          />
+        </div>
 
-      <!-- Zona fija: paginación, siempre visible abajo -->
-      <div v-if="pageCount > 1" class="shrink-0 flex justify-end p-4 border-t border-default">
-        <UPagination
-          :default-page="filters.page"
-          :items-per-page="filters.pageSize"
-          :total="total"
-          @update:page="(p: number) => (filters.page = p)"
-        />
-      </div>
+        <!-- Zona fija: paginación, siempre visible abajo -->
+        <div v-if="pageCount > 1" class="shrink-0 flex justify-end p-4 border-t border-default">
+          <UPagination
+            :default-page="filters.page"
+            :items-per-page="filters.pageSize"
+            :total="total"
+            @update:page="(p: number) => (filters.page = p)"
+          />
+        </div>
+      </template>
     </template>
   </UDashboardPanel>
 </template>

@@ -21,7 +21,8 @@ export const usePlaces = () => {
 
   const places = ref<Place[]>([])
   const total = ref(0)
-  const loading = ref(false)
+  // Arranca en true — ver el comentario equivalente en useSuggestions.ts.
+  const loading = ref(true)
 
   const filters = reactive<PlacesFilters>({
     q: '',
@@ -33,6 +34,11 @@ export const usePlaces = () => {
 
   // Debounce sólo del search para no martillar el server al teclear
   const debouncedQ = refDebounced(toRef(filters, 'q'), 300)
+
+  // Evita que los watchers de abajo disparen un fetch duplicado cuando la
+  // URL trae filtros/página no-default al montar — ver el comentario
+  // equivalente en useSuggestions.ts.
+  const hasLoadedOnce = ref(false)
 
   const fetch = async () => {
     loading.value = true
@@ -59,6 +65,7 @@ export const usePlaces = () => {
       })
     } finally {
       loading.value = false
+      hasLoadedOnce.value = true
     }
   }
 
@@ -79,6 +86,7 @@ export const usePlaces = () => {
 
   // Reset a página 1 cuando cambian filtros (no cuando cambia la página misma)
   watch([debouncedQ, () => filters.city, () => filters.status], () => {
+    if (!hasLoadedOnce.value) return
     if (filters.page !== 1) {
       filters.page = 1
     } else {
@@ -87,7 +95,10 @@ export const usePlaces = () => {
   })
 
   // Re-fetch cuando cambia página o pageSize
-  watch([() => filters.page, () => filters.pageSize], fetch)
+  watch([() => filters.page, () => filters.pageSize], () => {
+    if (!hasLoadedOnce.value) return
+    fetch()
+  })
 
   return {
     places,

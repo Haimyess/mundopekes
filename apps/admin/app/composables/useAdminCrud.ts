@@ -21,7 +21,8 @@ export const useAdminCrud = <T, TCreate = Partial<T>, TUpdate = Partial<T>>(
 ) => {
   const toast = useToast()
   const items = ref<T[]>([]) as Ref<T[]>
-  const loading = ref(false)
+  // Arranca en true — ver el comentario equivalente en useSuggestions.ts.
+  const loading = ref(true)
   const saving = ref(false)
 
   const errorMessage = (e: unknown) => (e instanceof Error ? e.message : String(e))

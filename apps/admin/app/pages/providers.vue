@@ -219,7 +219,12 @@ const columns = computed<TableColumn<Provider>[]>(() => [
   },
 ])
 
-await loadProviders()
+// Carga inicial no bloqueante — la navegación a esta página no espera a
+// nada de esto (ver TableSkeleton en el template mientras `isLoading` es
+// true y todavía no hay datos).
+onMounted(() => {
+  loadProviders()
+})
 </script>
 
 <template>
@@ -246,45 +251,49 @@ await loadProviders()
     </template>
 
     <template #body>
-      <!-- Zona fija: tabs, nunca scrollea -->
-      <div class="shrink-0 flex gap-1 p-4 flex-wrap border-b border-default">
-        <button
-          v-for="tab in tabs"
-          :key="tab.value"
-          class="px-3 py-1.5 text-sm rounded-lg transition-colors"
-          :class="
-            status === tab.value
-              ? 'bg-primary text-white font-medium'
-              : 'text-(--ui-text-muted) hover:bg-elevated'
-          "
-          @click="status = tab.value"
-        >
-          {{ tab.label }}
-        </button>
-      </div>
+      <TableSkeleton v-if="isLoading && !providers.length" :tabs="5" :filters="0" :columns="5" />
 
-      <!-- Zona scrolleable: solo la tabla -->
-      <div class="flex-1 min-h-0 overflow-y-auto p-4">
-        <UTable
-          :data="providers"
-          :columns="columns"
-          :loading="isLoading"
-          class="w-full"
-          :ui="{
-            base: 'table-fixed border-separate border-spacing-0',
-            thead: '[&>tr]:bg-elevated/50 [&>tr]:after:content-none',
-            tbody:
-              '[&>tr]:last:[&>td]:border-b-0 [&>tr]:hover:bg-elevated/50 [&>tr]:transition-colors',
-            th: 'py-2 first:rounded-l-lg last:rounded-r-lg border-y border-default first:border-l last:border-r',
-            td: 'border-b border-default',
-          }"
-        />
-      </div>
+      <template v-else>
+        <!-- Zona fija: tabs, nunca scrollea -->
+        <div class="shrink-0 flex gap-1 p-4 flex-wrap border-b border-default">
+          <button
+            v-for="tab in tabs"
+            :key="tab.value"
+            class="px-3 py-1.5 text-sm rounded-lg transition-colors"
+            :class="
+              status === tab.value
+                ? 'bg-primary text-white font-medium'
+                : 'text-(--ui-text-muted) hover:bg-elevated'
+            "
+            @click="status = tab.value"
+          >
+            {{ tab.label }}
+          </button>
+        </div>
 
-      <!-- Zona fija: paginación, siempre visible abajo -->
-      <div v-if="totalPages > 1" class="shrink-0 flex justify-center p-4 border-t border-default">
-        <UPagination v-model:page="page" :total="total" :items-per-page="20" />
-      </div>
+        <!-- Zona scrolleable: solo la tabla -->
+        <div class="flex-1 min-h-0 overflow-y-auto p-4">
+          <UTable
+            :data="providers"
+            :columns="columns"
+            :loading="isLoading"
+            class="w-full"
+            :ui="{
+              base: 'table-fixed border-separate border-spacing-0',
+              thead: '[&>tr]:bg-elevated/50 [&>tr]:after:content-none',
+              tbody:
+                '[&>tr]:last:[&>td]:border-b-0 [&>tr]:hover:bg-elevated/50 [&>tr]:transition-colors',
+              th: 'py-2 first:rounded-l-lg last:rounded-r-lg border-y border-default first:border-l last:border-r',
+              td: 'border-b border-default',
+            }"
+          />
+        </div>
+
+        <!-- Zona fija: paginación, siempre visible abajo -->
+        <div v-if="totalPages > 1" class="shrink-0 flex justify-center p-4 border-t border-default">
+          <UPagination v-model:page="page" :total="total" :items-per-page="20" />
+        </div>
+      </template>
     </template>
   </UDashboardPanel>
 

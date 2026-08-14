@@ -8,11 +8,17 @@ export const useProviders = () => {
   const providers = ref<Provider[]>([])
   const total = ref(0)
   const page = ref(1)
-  const isLoading = ref(false)
+  // Arranca en true — ver el comentario equivalente en useSuggestions.ts.
+  const isLoading = ref(true)
   const status = ref('pending')
   const selectedProvider = ref<Provider | null>(null)
 
   const totalPages = computed(() => Math.ceil(total.value / 20))
+
+  // Evita que los watchers de abajo disparen un fetch duplicado cuando la
+  // URL trae la página no-default al montar — ver el comentario equivalente
+  // en useSuggestions.ts.
+  const hasLoadedOnce = ref(false)
 
   const fetch = async () => {
     isLoading.value = true
@@ -33,6 +39,7 @@ export const useProviders = () => {
       toast.add({ title: 'Error cargando proveedores', description: msg, color: 'error' })
     } finally {
       isLoading.value = false
+      hasLoadedOnce.value = true
     }
   }
 
@@ -64,11 +71,15 @@ export const useProviders = () => {
   }
 
   watch([status], () => {
+    if (!hasLoadedOnce.value) return
     page.value = 1
     fetch()
   })
 
-  watch(page, fetch)
+  watch(page, () => {
+    if (!hasLoadedOnce.value) return
+    fetch()
+  })
 
   return {
     providers,

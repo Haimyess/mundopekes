@@ -190,12 +190,17 @@ const columns = computed<TableColumn<ContactRequest>[]>(() => [
   },
 ])
 
-// Sequential, not Promise.all — two parallel authenticated requests on first
-// load can race Supabase's refresh-token rotation when the token is near
-// expiry (whichever loses gets 401 on an already-consumed refresh token).
-// See activities/index.vue for the full explanation.
-await loadRequests()
-await fetchFeedbackStats()
+// Carga inicial no bloqueante — la navegación a esta página no espera a
+// nada de esto (ver TableSkeleton en el template mientras `isLoading` es
+// true y todavía no hay datos). Antes iban secuenciales, no en Promise.all,
+// para evitar que dos requests concurrentes al servidor durante el mismo
+// render SSR se pisaran la rotación del refresh token de Supabase — ver la
+// explicación completa en activities/index.vue. Ese riesgo era específico
+// de SSR; corriendo client-side (post-mount) no aplica, así que se
+// paralelizan sin problema.
+onMounted(async () => {
+  await Promise.all([loadRequests(), fetchFeedbackStats()])
+})
 </script>
 
 <template>
@@ -222,127 +227,133 @@ await fetchFeedbackStats()
     </template>
 
     <template #body>
-      <!-- Zona fija: paneles + tabs + filtros, nunca scrollea -->
-      <div class="shrink-0 border-b border-default">
-        <!-- Feedback Analytics Panel -->
-        <Transition name="fade">
-          <div
-            v-if="isFeedbackTab && feedbackStats"
-            class="mx-4 mt-4 p-4 rounded-xl border border-default bg-elevated flex flex-col gap-4"
-          >
-            <h3 class="text-xs font-semibold text-(--ui-text-muted) uppercase tracking-wider">
-              {{ t('contactRequests.analytics.title') }}
-            </h3>
-            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              <div class="flex flex-col gap-0.5">
-                <span class="text-xs text-(--ui-text-muted)">{{
-                  t('contactRequests.analytics.total')
-                }}</span>
-                <span class="text-2xl font-bold">{{ feedbackStats.total }}</span>
+      <TableSkeleton v-if="isLoading && !requests.length" :tabs="5" :filters="1" :columns="6" />
+
+      <template v-else>
+        <!-- Zona fija: paneles + tabs + filtros, nunca scrollea -->
+        <div class="shrink-0 border-b border-default">
+          <!-- Feedback Analytics Panel -->
+          <Transition name="fade">
+            <div
+              v-if="isFeedbackTab && feedbackStats"
+              class="mx-4 mt-4 p-4 rounded-xl border border-default bg-elevated flex flex-col gap-4"
+            >
+              <h3 class="text-xs font-semibold text-(--ui-text-muted) uppercase tracking-wider">
+                {{ t('contactRequests.analytics.title') }}
+              </h3>
+              <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div class="flex flex-col gap-0.5">
+                  <span class="text-xs text-(--ui-text-muted)">{{
+                    t('contactRequests.analytics.total')
+                  }}</span>
+                  <span class="text-2xl font-bold">{{ feedbackStats.total }}</span>
+                </div>
+                <div class="flex flex-col gap-0.5">
+                  <span class="text-xs text-(--ui-text-muted)">{{
+                    t('contactRequests.analytics.thisMonth')
+                  }}</span>
+                  <span class="text-2xl font-bold text-primary">{{ feedbackStats.thisMonth }}</span>
+                </div>
+                <div class="flex flex-col gap-0.5">
+                  <span class="text-xs text-(--ui-text-muted)">{{
+                    t('contactRequests.analytics.pending')
+                  }}</span>
+                  <span class="text-2xl font-bold text-warning-500">{{
+                    feedbackStats.pending
+                  }}</span>
+                </div>
+                <div class="flex flex-col gap-0.5">
+                  <span class="text-xs text-(--ui-text-muted)">{{
+                    t('contactRequests.analytics.resolved')
+                  }}</span>
+                  <span class="text-2xl font-bold text-success-500">{{
+                    feedbackStats.resolved
+                  }}</span>
+                </div>
               </div>
-              <div class="flex flex-col gap-0.5">
-                <span class="text-xs text-(--ui-text-muted)">{{
-                  t('contactRequests.analytics.thisMonth')
-                }}</span>
-                <span class="text-2xl font-bold text-primary">{{ feedbackStats.thisMonth }}</span>
-              </div>
-              <div class="flex flex-col gap-0.5">
-                <span class="text-xs text-(--ui-text-muted)">{{
-                  t('contactRequests.analytics.pending')
-                }}</span>
-                <span class="text-2xl font-bold text-warning-500">{{ feedbackStats.pending }}</span>
-              </div>
-              <div class="flex flex-col gap-0.5">
-                <span class="text-xs text-(--ui-text-muted)">{{
-                  t('contactRequests.analytics.resolved')
-                }}</span>
-                <span class="text-2xl font-bold text-success-500">{{
-                  feedbackStats.resolved
-                }}</span>
-              </div>
+              <ContactFeedbackBarChart
+                v-if="feedbackStats.byMonth.length"
+                :data="feedbackStats.byMonth"
+              />
             </div>
-            <ContactFeedbackBarChart
-              v-if="feedbackStats.byMonth.length"
-              :data="feedbackStats.byMonth"
+          </Transition>
+
+          <!-- Provider tab banner -->
+          <Transition name="fade">
+            <div
+              v-if="intent === 'provider_inquiry'"
+              class="mx-4 mt-4 p-4 rounded-xl border border-default bg-elevated flex items-center gap-4"
+            >
+              <UIcon name="i-lucide-store" class="size-5 text-(--ui-text-muted) flex-shrink-0" />
+              <div class="flex-1 text-sm text-(--ui-text-muted)">
+                {{ t('contactRequests.providerBanner.text') }}
+              </div>
+              <UButton
+                size="sm"
+                color="primary"
+                variant="outline"
+                icon="i-lucide-arrow-right"
+                trailing
+                @click="navigateTo('/providers')"
+              >
+                {{ t('contactRequests.providerBanner.button') }}
+              </UButton>
+            </div>
+          </Transition>
+
+          <!-- Intent Tabs -->
+          <div class="flex gap-1 px-4 pt-4 flex-wrap">
+            <button
+              v-for="tab in tabs"
+              :key="tab.value ?? 'all'"
+              class="px-3 py-1.5 text-sm rounded-lg transition-colors"
+              :class="
+                intent === tab.value
+                  ? 'bg-primary text-white font-medium'
+                  : 'text-(--ui-text-muted) hover:bg-elevated'
+              "
+              @click="intent = tab.value"
+            >
+              {{ tab.label }}
+            </button>
+          </div>
+
+          <!-- Status Filter -->
+          <div class="flex gap-3 px-4 py-3 flex-wrap">
+            <USelect
+              v-model="status"
+              :items="statusOptions"
+              value-key="value"
+              label-key="label"
+              :placeholder="t('contactRequests.statusPlaceholder')"
+              class="w-44"
             />
           </div>
-        </Transition>
-
-        <!-- Provider tab banner -->
-        <Transition name="fade">
-          <div
-            v-if="intent === 'provider_inquiry'"
-            class="mx-4 mt-4 p-4 rounded-xl border border-default bg-elevated flex items-center gap-4"
-          >
-            <UIcon name="i-lucide-store" class="size-5 text-(--ui-text-muted) flex-shrink-0" />
-            <div class="flex-1 text-sm text-(--ui-text-muted)">
-              {{ t('contactRequests.providerBanner.text') }}
-            </div>
-            <UButton
-              size="sm"
-              color="primary"
-              variant="outline"
-              icon="i-lucide-arrow-right"
-              trailing
-              @click="navigateTo('/providers')"
-            >
-              {{ t('contactRequests.providerBanner.button') }}
-            </UButton>
-          </div>
-        </Transition>
-
-        <!-- Intent Tabs -->
-        <div class="flex gap-1 px-4 pt-4 flex-wrap">
-          <button
-            v-for="tab in tabs"
-            :key="tab.value ?? 'all'"
-            class="px-3 py-1.5 text-sm rounded-lg transition-colors"
-            :class="
-              intent === tab.value
-                ? 'bg-primary text-white font-medium'
-                : 'text-(--ui-text-muted) hover:bg-elevated'
-            "
-            @click="intent = tab.value"
-          >
-            {{ tab.label }}
-          </button>
         </div>
 
-        <!-- Status Filter -->
-        <div class="flex gap-3 px-4 py-3 flex-wrap">
-          <USelect
-            v-model="status"
-            :items="statusOptions"
-            value-key="value"
-            label-key="label"
-            :placeholder="t('contactRequests.statusPlaceholder')"
-            class="w-44"
+        <!-- Zona scrolleable: solo la tabla -->
+        <div class="flex-1 min-h-0 overflow-y-auto p-4">
+          <UTable
+            :data="requests"
+            :columns="columns"
+            :loading="isLoading"
+            class="w-full"
+            :ui="{
+              base: 'table-fixed border-separate border-spacing-0',
+              thead: '[&>tr]:bg-elevated/50 [&>tr]:after:content-none',
+              tbody:
+                '[&>tr]:last:[&>td]:border-b-0 [&>tr]:hover:bg-elevated/50 [&>tr]:transition-colors',
+              th: 'py-2 first:rounded-l-lg last:rounded-r-lg border-y border-default first:border-l last:border-r',
+              td: 'border-b border-default',
+            }"
           />
         </div>
-      </div>
 
-      <!-- Zona scrolleable: solo la tabla -->
-      <div class="flex-1 min-h-0 overflow-y-auto p-4">
-        <UTable
-          :data="requests"
-          :columns="columns"
-          :loading="isLoading"
-          class="w-full"
-          :ui="{
-            base: 'table-fixed border-separate border-spacing-0',
-            thead: '[&>tr]:bg-elevated/50 [&>tr]:after:content-none',
-            tbody:
-              '[&>tr]:last:[&>td]:border-b-0 [&>tr]:hover:bg-elevated/50 [&>tr]:transition-colors',
-            th: 'py-2 first:rounded-l-lg last:rounded-r-lg border-y border-default first:border-l last:border-r',
-            td: 'border-b border-default',
-          }"
-        />
-      </div>
-
-      <!-- Zona fija: paginación, siempre visible abajo -->
-      <div v-if="totalPages > 1" class="shrink-0 flex justify-center p-4 border-t border-default">
-        <UPagination v-model:page="page" :total="total" :items-per-page="20" />
-      </div>
+        <!-- Zona fija: paginación, siempre visible abajo -->
+        <div v-if="totalPages > 1" class="shrink-0 flex justify-center p-4 border-t border-default">
+          <UPagination v-model:page="page" :total="total" :items-per-page="20" />
+        </div>
+      </template>
     </template>
   </UDashboardPanel>
 

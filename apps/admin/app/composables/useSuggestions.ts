@@ -35,7 +35,11 @@ export const useSuggestions = () => {
 
   const suggestions = ref<Suggestion[]>([])
   const total = ref(0)
-  const loading = ref(false)
+  // Arranca en true — la página muestra un skeleton mientras esto es true y
+  // no hay datos aún; el fetch inicial se dispara desde onMounted (no
+  // bloquea la navegación), así que loading debe empezar "cargando" y no
+  // depender de que onMounted alcance a correr en el mismo tick del render.
+  const loading = ref(true)
   const actionLoading = ref(false)
 
   // Filtros
@@ -45,6 +49,14 @@ export const useSuggestions = () => {
   const isFreeFilter = ref<'all' | 'true' | 'false'>('all')
   const page = ref(1)
   const pageSize = ref(10)
+
+  // Evita que los watchers de abajo disparen un fetch duplicado cuando la
+  // URL trae filtros/página no-default al montar (syncUrlPage/syncUrlParam
+  // asignan esos valores de forma síncrona antes de onMounted, lo que ya
+  // dispara estos watchers) — el fetch inicial real lo hace onMounted, una
+  // sola vez. Sin esto también se podía pisar un ?page=2 de un deep-link,
+  // reseteándolo a 1 antes de que el fetch inicial llegara a usarlo.
+  const hasLoadedOnce = ref(false)
 
   // Fetch con filtros y paginación
   const fetch = async () => {
@@ -70,6 +82,7 @@ export const useSuggestions = () => {
       })
     } finally {
       loading.value = false
+      hasLoadedOnce.value = true
     }
   }
 
@@ -158,12 +171,16 @@ export const useSuggestions = () => {
 
   // Reset a página 1 cuando cambia cualquier filtro (dispara el watch de página)
   watch([statusFilter, categoryFilter, cityFilter, isFreeFilter], () => {
+    if (!hasLoadedOnce.value) return
     if (page.value !== 1) page.value = 1
     else fetch()
   })
 
   // Re-fetch cuando cambia de página
-  watch(page, fetch)
+  watch(page, () => {
+    if (!hasLoadedOnce.value) return
+    fetch()
+  })
 
   return {
     suggestions,
