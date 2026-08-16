@@ -56,7 +56,7 @@ export default defineNuxtConfig({
       // Default img-src es 'self' + data: — el dashboard template trae
       // algunos avatares/og-images de hosts externos (github.com, ui.nuxt.com).
       contentSecurityPolicy: {
-        'img-src': ["'self'", 'data:', 'https:'],
+        'img-src': ['\'self\'', 'data:', 'https:'],
       },
     },
     // Ya tenemos rate limiting propio DB-backed (checkRateLimit) en los
