@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { SeasonValue } from '~/types'
 
-const { t } = useI18n()
+const { t, tm } = useI18n()
 const { tc } = useI18nContent()
 const router = useRouter()
 
@@ -134,6 +134,54 @@ const seasonIcons: Record<string, string> = {
   fall: 'i-heroicons-cloud',
   winter: 'i-heroicons-snowflake',
 }
+
+// ── Placeholder dinámico (estilo Fever) ───────────────────────────
+// Rota frases de ejemplo cuando el input está vacío; el placeholder
+// nativo del <input> queda vacío y esta capa lo reemplaza visualmente.
+const rotatingExamples = computed<string[]>(() => {
+  const list = tm('hero.search_placeholder_examples') as unknown as string[]
+  return Array.isArray(list) && list.length ? list : [t('hero.search_placeholder')]
+})
+const rotatingIndex = ref(0)
+const showRotatingPlaceholder = computed(() => !searchText.value)
+let rotatingTimer: ReturnType<typeof setInterval> | undefined
+
+onMounted(() => {
+  rotatingTimer = setInterval(() => {
+    rotatingIndex.value = (rotatingIndex.value + 1) % rotatingExamples.value.length
+  }, 2800)
+})
+onBeforeUnmount(() => {
+  if (rotatingTimer) clearInterval(rotatingTimer)
+})
+
+// ── Scroll hints de los pills mobile ──────────────────────────────
+// Muestra una flecha animada en el borde que aún tiene contenido
+// para indicar que se puede hacer scroll horizontal.
+const pillsScrollEl = ref<HTMLElement | null>(null)
+const canScrollPillsRight = ref(false)
+const canScrollPillsLeft = ref(false)
+
+function updatePillsScrollHints() {
+  const el = pillsScrollEl.value
+  if (!el) return
+  const maxScroll = el.scrollWidth - el.clientWidth
+  if (maxScroll <= 4) {
+    canScrollPillsRight.value = false
+    canScrollPillsLeft.value = false
+    return
+  }
+  canScrollPillsLeft.value = el.scrollLeft > 4
+  canScrollPillsRight.value = el.scrollLeft < maxScroll - 4
+}
+
+onMounted(() => {
+  nextTick(updatePillsScrollHints)
+  window.addEventListener('resize', updatePillsScrollHints)
+})
+onBeforeUnmount(() => {
+  window.removeEventListener('resize', updatePillsScrollHints)
+})
 </script>
 
 <template>
@@ -144,68 +192,97 @@ const seasonIcons: Record<string, string> = {
         <!-- Input bordeado — ícono y texto en la misma fila -->
         <div class="sf-search-row sf-search-row--bordered">
           <UIcon name="i-heroicons-magnifying-glass" class="sf-search-icon" />
-          <input
-            v-model="searchText"
-            class="sf-search-input"
-            :placeholder="t('hero.search_placeholder')"
-            type="text"
-          />
+          <div class="sf-search-input-wrap">
+            <input
+              v-model="searchText"
+              class="sf-search-input"
+              :aria-label="t('hero.search_placeholder')"
+              type="text"
+            />
+            <Transition name="sf-rotate" mode="out-in">
+              <span
+                v-if="showRotatingPlaceholder"
+                :key="rotatingIndex"
+                class="sf-rotating-placeholder"
+              >
+                {{ rotatingExamples[rotatingIndex] }}
+              </span>
+            </Transition>
+          </div>
         </div>
 
         <!-- Pills con scroll horizontal -->
-        <div class="sf-mobile-pills">
-          <button
-            type="button"
-            class="sf-pill"
-            :class="{ 'sf-pill--active': selectedCategory !== undefined }"
-            @click="categoryDrawerOpen = true"
-          >
-            <UIcon name="i-heroicons-squares-2x2" class="sf-pill-icon" />
-            {{ categoryLabelMobile }}
-            <UIcon name="i-heroicons-chevron-down" class="sf-pill-x" />
-          </button>
-          <button
-            type="button"
-            class="sf-pill"
-            :class="{ 'sf-pill--active': selectedAge !== undefined }"
-            @click="ageDrawerOpen = true"
-          >
-            <UIcon name="i-heroicons-user" class="sf-pill-icon" />
-            {{ ageLabelMobile }}
-            <UIcon name="i-heroicons-chevron-down" class="sf-pill-x" />
-          </button>
+        <div class="sf-mobile-pills-wrap">
+          <div ref="pillsScrollEl" class="sf-mobile-pills" @scroll="updatePillsScrollHints">
+            <button
+              type="button"
+              class="sf-pill"
+              :class="{ 'sf-pill--active': selectedCategory !== undefined }"
+              @click="categoryDrawerOpen = true"
+            >
+              <UIcon name="i-heroicons-squares-2x2" class="sf-pill-icon" />
+              {{ categoryLabelMobile }}
+              <UIcon name="i-heroicons-chevron-down" class="sf-pill-x" />
+            </button>
+            <button
+              type="button"
+              class="sf-pill"
+              :class="{ 'sf-pill--active': selectedAge !== undefined }"
+              @click="ageDrawerOpen = true"
+            >
+              <UIcon name="i-heroicons-user" class="sf-pill-icon" />
+              {{ ageLabelMobile }}
+              <UIcon name="i-heroicons-chevron-down" class="sf-pill-x" />
+            </button>
 
-          <button
-            type="button"
-            class="sf-pill"
-            :class="{ 'sf-pill--active': selectedCities.length > 0 }"
-            @click="cityDrawerOpen = true"
-          >
-            <UIcon name="i-heroicons-map-pin" class="sf-pill-icon" />
-            {{ cityLabelMobile }}
-            <UIcon name="i-heroicons-chevron-down" class="sf-pill-x" />
-          </button>
+            <button
+              type="button"
+              class="sf-pill"
+              :class="{ 'sf-pill--active': selectedCities.length > 0 }"
+              @click="cityDrawerOpen = true"
+            >
+              <UIcon name="i-heroicons-map-pin" class="sf-pill-icon" />
+              {{ cityLabelMobile }}
+              <UIcon name="i-heroicons-chevron-down" class="sf-pill-x" />
+            </button>
 
-          <button
-            type="button"
-            class="sf-pill"
-            :class="{ 'sf-pill--active': selectedSeason }"
-            @click="seasonDrawerOpen = true"
-          >
-            <UIcon name="i-heroicons-calendar" class="sf-pill-icon" />
-            {{ seasonLabelMobile }}
-            <UIcon name="i-heroicons-chevron-down" class="sf-pill-x" />
-          </button>
+            <button
+              type="button"
+              class="sf-pill"
+              :class="{ 'sf-pill--active': selectedSeason }"
+              @click="seasonDrawerOpen = true"
+            >
+              <UIcon name="i-heroicons-calendar" class="sf-pill-icon" />
+              {{ seasonLabelMobile }}
+              <UIcon name="i-heroicons-chevron-down" class="sf-pill-x" />
+            </button>
 
-          <button
-            type="button"
-            class="sf-pill"
-            :class="{ 'sf-pill--active': isFree }"
-            @click="isFree = !isFree"
+            <button
+              type="button"
+              class="sf-pill"
+              :class="{ 'sf-pill--active': isFree }"
+              @click="isFree = !isFree"
+            >
+              <UIcon name="i-heroicons-tag" class="sf-pill-icon" />
+              {{ t('search.free') }}
+            </button>
+          </div>
+
+          <!-- Flechas indicadoras de scroll horizontal -->
+          <div
+            v-if="canScrollPillsRight"
+            class="sf-scroll-hint sf-scroll-hint--right"
+            aria-hidden="true"
           >
-            <UIcon name="i-heroicons-tag" class="sf-pill-icon" />
-            {{ t('search.free') }}
-          </button>
+            <UIcon name="i-heroicons-chevron-right" class="sf-scroll-hint__icon" />
+          </div>
+          <div
+            v-if="canScrollPillsLeft"
+            class="sf-scroll-hint sf-scroll-hint--left"
+            aria-hidden="true"
+          >
+            <UIcon name="i-heroicons-chevron-left" class="sf-scroll-hint__icon" />
+          </div>
         </div>
 
         <!-- Botón buscar mobile — full width -->
@@ -220,12 +297,23 @@ const seasonIcons: Record<string, string> = {
         <!-- Input bordeado desktop -->
         <div class="sf-search-row sf-search-row--bordered">
           <UIcon name="i-heroicons-magnifying-glass" class="sf-search-icon" />
-          <input
-            v-model="searchText"
-            class="sf-search-input"
-            :placeholder="t('hero.search_placeholder')"
-            type="text"
-          />
+          <div class="sf-search-input-wrap">
+            <input
+              v-model="searchText"
+              class="sf-search-input"
+              :aria-label="t('hero.search_placeholder')"
+              type="text"
+            />
+            <Transition name="sf-rotate" mode="out-in">
+              <span
+                v-if="showRotatingPlaceholder"
+                :key="rotatingIndex"
+                class="sf-rotating-placeholder"
+              >
+                {{ rotatingExamples[rotatingIndex] }}
+              </span>
+            </Transition>
+          </div>
         </div>
 
         <!-- Selects en grid -->
@@ -434,6 +522,51 @@ const seasonIcons: Record<string, string> = {
   color: var(--color-text-tertiary);
 }
 
+/* ── Placeholder dinámico (overlay sobre el input) ────────────────── */
+.sf-search-input-wrap {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+}
+
+.sf-search-input-wrap .sf-search-input {
+  position: relative;
+  z-index: 1;
+}
+
+.sf-rotating-placeholder {
+  position: absolute;
+  inset-inline-start: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--color-text-tertiary);
+  font-size: var(--font-size-base);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+  pointer-events: none;
+}
+
+.sf-rotate-enter-active,
+.sf-rotate-leave-active {
+  transition:
+    opacity 0.35s ease,
+    transform 0.35s ease;
+}
+
+.sf-rotate-enter-from {
+  opacity: 0;
+  transform: translateY(-50%) translateY(6px);
+}
+
+.sf-rotate-leave-to {
+  opacity: 0;
+  transform: translateY(-50%) translateY(-6px);
+}
+
 .sf-search-row--bordered {
   border: 1.5px solid var(--color-neutral-200);
   border-radius: var(--border-radius-lg);
@@ -455,11 +588,16 @@ const seasonIcons: Record<string, string> = {
 }
 
 /* ── Pills con scroll horizontal ────────────────────────────────── */
+.sf-mobile-pills-wrap {
+  position: relative;
+}
+
 .sf-mobile-pills {
   display: flex;
   flex-wrap: nowrap;
-  gap: var(--space-2);
+  gap: var(--space-1-5, 0.375rem);
   overflow-x: auto;
+  scroll-snap-type: x proximity;
   scrollbar-width: none;
   -ms-overflow-style: none;
   padding-bottom: var(--space-1);
@@ -469,12 +607,73 @@ const seasonIcons: Record<string, string> = {
   display: none;
 }
 
+/* ── Flechas indicadoras de scroll ─────────────────────────────── */
+.sf-scroll-hint {
+  position: absolute;
+  top: 0;
+  bottom: var(--space-1);
+  display: flex;
+  align-items: center;
+  width: 2.25rem;
+  pointer-events: none;
+}
+
+.sf-scroll-hint--right {
+  right: 0;
+  justify-content: flex-end;
+  background: linear-gradient(to right, transparent, var(--color-bg-primary) 65%);
+}
+
+.sf-scroll-hint--left {
+  left: 0;
+  justify-content: flex-start;
+  background: linear-gradient(to left, transparent, var(--color-bg-primary) 65%);
+}
+
+.sf-scroll-hint__icon {
+  width: 1.1rem;
+  height: 1.1rem;
+  color: var(--color-accent-600);
+}
+
+.sf-scroll-hint--right .sf-scroll-hint__icon {
+  animation: sf-hint-bounce-right 1.4s ease-in-out infinite;
+}
+
+.sf-scroll-hint--left .sf-scroll-hint__icon {
+  animation: sf-hint-bounce-left 1.4s ease-in-out infinite;
+}
+
+@keyframes sf-hint-bounce-right {
+  0%,
+  100% {
+    transform: translateX(0);
+    opacity: 0.7;
+  }
+  50% {
+    transform: translateX(5px);
+    opacity: 1;
+  }
+}
+
+@keyframes sf-hint-bounce-left {
+  0%,
+  100% {
+    transform: translateX(0);
+    opacity: 0.7;
+  }
+  50% {
+    transform: translateX(-5px);
+    opacity: 1;
+  }
+}
+
 /* ── Pill ────────────────────────────────────────────────────────── */
 .sf-pill {
   display: inline-flex;
   align-items: center;
-  gap: var(--space-2);
-  padding: var(--space-2) var(--space-4);
+  gap: var(--space-1-5, 0.375rem);
+  padding: var(--space-2) var(--space-3);
   border-radius: var(--border-radius-full);
   border: 1.5px solid var(--color-secondary-300);
   background: var(--color-bg-primary);
@@ -487,6 +686,7 @@ const seasonIcons: Record<string, string> = {
   flex-shrink: 0;
   line-height: 1;
   min-height: 2.25rem;
+  scroll-snap-align: start;
 }
 
 .sf-pill:hover {
@@ -579,9 +779,7 @@ const seasonIcons: Record<string, string> = {
   justify-content: center;
   gap: var(--space-2);
   border-radius: var(--border-radius-lg);
-  /* background-color: var(--color-secondary-500); */
-  background-color: var(--test-color);
-
+  background-color: var(--color-accent-500);
   color: white;
   font-weight: var(--font-weight-semibold);
   border: none;
@@ -590,7 +788,7 @@ const seasonIcons: Record<string, string> = {
 }
 
 .sf-btn-search:hover {
-  background-color: var(--color-secondary-600);
+  background-color: var(--color-accent-600);
 }
 
 .sf-btn-icon {
@@ -736,82 +934,3 @@ const seasonIcons: Record<string, string> = {
   color: white;
 }
 </style>
-/* ── Card ────────────────────────────────────────────────────────── */ .sf-card { background:
-var(--color-bg-primary); border-radius: var(--border-radius-2xl); box-shadow: var(--shadow-lg);
-padding: var(--space-6); width: 100%; } /* ── Input búsqueda — base
-───────────────────────────────────────── */ .sf-search-row { display: flex; flex-direction: row; /*
-← fuerza row para que ícono y input estén en línea */ align-items: center; gap: var(--space-3); }
-.sf-search-icon { width: 1.25rem; height: 1.25rem; color: var(--color-text-tertiary); flex-shrink:
-0; } .sf-search-input { flex: 1; border: none; outline: none; font-size: var(--font-size-base);
-color: var(--color-text-primary); background: transparent; font-family: var(--font-family-base); }
-.sf-search-input::placeholder { color: var(--color-text-tertiary); } /* ── Input bordeado — mismo
-estilo en mobile y desktop ──────────── */ .sf-search-row--bordered { border: 1.5px solid
-var(--color-neutral-200); border-radius: var(--border-radius-lg); padding: var(--space-3)
-var(--space-4); margin-bottom: var(--space-3); transition: border-color var(--transition-fast); }
-.sf-search-row--bordered:focus-within { border-color: var(--color-secondary-400); } /* ── Mobile
-wrapper — visible solo en mobile ─────────────────────── */ .sf-mobile-wrapper { display: flex;
-flex-direction: column; gap: var(--space-2); } /* ── Pills con scroll horizontal — una sola línea
-───────────────── */ .sf-mobile-pills { display: flex; flex-wrap: nowrap; gap: var(--space-2);
-overflow-x: auto; scrollbar-width: none; -ms-overflow-style: none; padding-bottom: var(--space-1); }
-.sf-mobile-pills::-webkit-scrollbar { display: none; } /* ── Drawer scrolleable (ciudad con muchas
-opciones) ─────────────── */ .drawer--scrollable { max-height: 70vh; display: flex; flex-direction:
-column; } .drawer__options--scroll { overflow-y: auto; flex: 1; /* data-vaul-no-drag evita que el
-scroll cierre el drawer en Vaul */ } /* ── Pill
-────────────────────────────────────────────────────────── */ .sf-pill { display: inline-flex;
-align-items: center; gap: var(--space-2); padding: var(--space-2) var(--space-4); border-radius:
-var(--border-radius-full); border: 1.5px solid var(--color-secondary-300); background: transparent;
-color: var(--color-secondary-700); font-size: var(--font-size-sm); font-weight:
-var(--font-weight-medium); cursor: pointer; transition: all var(--transition-fast); white-space:
-nowrap; flex-shrink: 0; line-height: 1; min-height: 2.25rem; /* touch-friendly */ } .sf-pill:hover {
-border-color: var(--color-secondary-400); background-color: var(--color-secondary-50); }
-.sf-pill--active { border-color: var(--color-secondary-500); background-color:
-var(--color-secondary-100); color: var(--color-secondary-800); } .sf-pill--active:hover {
-background-color: var(--color-secondary-200); } .sf-pill-icon { width: 0.875rem; height: 0.875rem;
-flex-shrink: 0; } .sf-pill-x { width: 0.75rem; height: 0.75rem; opacity: 0.6; flex-shrink: 0; } /*
-── Desktop — oculto en mobile ──────────────────────────────────── */ .sf-desktop { display: none; }
-/* ── Desktop filters: 4 columnas ────────────────────────────────── */ .sf-desktop-filters {
-display: grid; grid-template-columns: 1fr 1fr 1fr 1fr auto; gap: var(--space-3); align-items:
-center; margin-bottom: var(--space-4); } .sf-select-wrap--checkbox { display: flex; align-items:
-center; justify-content: center; padding: var(--space-2); } /* ── Checkbox custom
-─────────────────────────────────────────────── */ .sf-free-label { display: flex; align-items:
-center; gap: var(--space-2); cursor: pointer; font-size: var(--font-size-sm); color:
-var(--color-text-secondary); user-select: none; white-space: nowrap; } .sf-checkbox { width:
-1.125rem; height: 1.125rem; border-radius: var(--border-radius-sm); border: 1.5px solid
-var(--color-neutral-300); display: flex; align-items: center; justify-content: center; flex-shrink:
-0; transition: all var(--transition-fast); background: var(--color-bg-primary); }
-.sf-checkbox--checked { border-color: var(--color-secondary-500); background-color:
-var(--color-secondary-500); } .sf-checkbox-icon { width: 0.75rem; height: 0.75rem; color: white; }
-/* ── Botones buscar ──────────────────────────────────────────────── */ .sf-btn-search { display:
-inline-flex; align-items: center; justify-content: center; gap: var(--space-2); border-radius:
-var(--border-radius-lg); background-color: var(--color-secondary-500); color: white; font-weight:
-var(--font-weight-semibold); border: none; cursor: pointer; transition: background-color
-var(--transition-fast); } .sf-btn-search:hover { background-color: var(--color-secondary-600); }
-.sf-btn-icon { width: 1rem; height: 1rem; flex-shrink: 0; } /* Desktop: 50% centrado */
-.sf-btn-search--desktop { width: 50%; margin: 0 auto; display: flex; padding: var(--space-3);
-font-size: var(--font-size-base); margin-top: 2rem; } /* Mobile: full width */
-.sf-btn-search--mobile { width: 100%; padding: var(--space-3); font-size: var(--font-size-base); }
-/* Drawer: full width */ .sf-btn-search--drawer { width: 100%; padding: var(--space-2)
-var(--space-4); font-size: var(--font-size-sm); } /* ── Responsive
-──────────────────────────────────────────────────── */ @media (min-width: 768px) { .sf-card {
-padding: var(--space-8); } /* Ocultar mobile wrapper, mostrar desktop */ .sf-mobile-wrapper {
-display: none; } .sf-desktop { display: block; } } /* ── Drawers
-─────────────────────────────────────────────────────── */ .drawer { padding: var(--space-6);
-display: flex; flex-direction: column; gap: var(--space-4); } .drawer__title { font-family:
-var(--font-family-display); font-size: var(--font-size-lg); font-weight:
-var(--font-weight-semibold); color: var(--color-text-primary); } .drawer__options { display: flex;
-flex-direction: column; gap: var(--space-1); } .drawer__option { display: flex; align-items: center;
-gap: var(--space-3); padding: var(--space-2) 0; background: none; border: none; width: 100%;
-text-align: start; font-size: var(--font-size-sm); color: var(--color-text-primary); cursor:
-pointer; transition: color var(--transition-fast); } .drawer__option:hover { color:
-var(--color-secondary-600); } .drawer__radio { width: 1.25rem; height: 1.25rem; border-radius:
-var(--border-radius-full); border: 2px solid var(--color-neutral-300); display: flex; align-items:
-center; justify-content: center; flex-shrink: 0; transition: all var(--transition-fast); }
-.drawer__radio--selected { border-color: var(--color-secondary-500); background-color:
-var(--color-secondary-500); } .drawer__radio-dot { width: 0.5rem; height: 0.5rem; border-radius:
-var(--border-radius-full); background: white; } .drawer__checkbox { width: 1.25rem; height: 1.25rem;
-border-radius: var(--border-radius-sm); border: 2px solid var(--color-neutral-300); display: flex;
-align-items: center; justify-content: center; flex-shrink: 0; transition: all
-var(--transition-fast); } .drawer__checkbox--selected { border-color: var(--color-secondary-500);
-background-color: var(--color-secondary-500); } .drawer__check-icon { width: 0.75rem; height:
-0.75rem; color: white; }
-<!-- </style>  -->

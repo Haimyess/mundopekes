@@ -10,6 +10,14 @@
     "title": "Discover amazing activities for kids",
     "subtitle": "Thousands of family experiences in Israel",
     "search_placeholder": "What are you looking for? (e.g. museum, park)",
+    "search_placeholder_examples": [
+      "Find amazing museums",
+      "Find parks nearby",
+      "Find art workshops",
+      "Find free activities",
+      "Find music classes",
+      "Find kids birthday parties"
+    ],
     "badge": "Israel · Families · Kids",
     "title_start": "Discover",
     "title_accent": "amazing",
@@ -78,7 +86,9 @@
     "closed": "Closed",
     "all_hours": "See hours",
     "how_to_get": "How to get there",
-    "more_info": "More information"
+    "more_info": "More information",
+    "show_description": "Show description",
+    "hide_description": "Hide description"
   },
   "age": {
     "months": "{count} months",

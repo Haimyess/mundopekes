@@ -1,5 +1,6 @@
+import { z } from 'zod'
 import { serverSupabaseServiceRole } from '#supabase/server'
-import type { Database } from '~/types/database.types'
+import type { Database, Json } from '~/types/database.types'
 
 const VALID_EVENT_TYPES = [
   'page_view',
@@ -10,25 +11,37 @@ const VALID_EVENT_TYPES = [
   'provider_interest',
 ] as const
 
-export default defineEventHandler(async (event) => {
-  const body = await readBody<{
-    event_type: string
-    session_id: string
-    locale: string
-    payload: object
-  }>(event)
+const bodySchema = z.object({
+  event_type: z.enum(VALID_EVENT_TYPES),
+  session_id: z.string().min(1).max(100),
+  locale: z.string().min(1).max(10),
+  payload: z
+    .record(z.string(), z.unknown())
+    .refine((p) => JSON.stringify(p).length <= 4000, 'payload too large'),
+})
 
-  if (!VALID_EVENT_TYPES.includes(body.event_type as (typeof VALID_EVENT_TYPES)[number])) {
-    throw createError({ statusCode: 400, message: 'Invalid event_type' })
+export default defineEventHandler(async (event) => {
+  await checkRateLimit(event, 'track', { limit: 60, windowSeconds: 60 })
+
+  const raw = await readBody(event)
+  const parsed = bodySchema.safeParse(raw)
+
+  if (!parsed.success) {
+    throw createError({
+      statusCode: 400,
+      message: parsed.error.issues[0]?.message ?? 'Invalid event_type',
+    })
   }
 
+  const body = parsed.data
   const client = serverSupabaseServiceRole<Database>(event)
 
   const { error } = await client.from('activity_events').insert({
     event_type: body.event_type,
     session_id: body.session_id,
     locale: body.locale,
-    payload: body.payload,
+    // Ya validado como JSON-serializable arriba (refine sobre JSON.stringify).
+    payload: body.payload as Json,
   })
 
   if (error) {

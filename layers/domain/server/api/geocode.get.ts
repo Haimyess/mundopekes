@@ -3,7 +3,12 @@
 // Uso: /api/geocode?address=Hermon, Israel
 // Límite: 1 req/seg — suficiente para formularios
 
+const RATE_LIMIT = 20
+const RATE_WINDOW_SECONDS = 60
+
 export default defineEventHandler(async (event) => {
+  await checkRateLimit(event, 'geocode', { limit: RATE_LIMIT, windowSeconds: RATE_WINDOW_SECONDS })
+
   const query = getQuery(event)
   const address = query.address as string
 

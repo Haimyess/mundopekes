@@ -100,11 +100,12 @@ const providerSubmitDisabled = computed(
           @input="emit('update:briefDesc', ($event.target as HTMLTextAreaElement).value)"
         />
       </div>
-      <div class="contact-form__provider-link">
+      <!-- Deshabilitado temporalmente — ver pages/become-provider.vue -->
+      <!-- <div class="contact-form__provider-link">
         <NuxtLink to="/become-provider" class="contact-form__register-link" @click="emit('cancel')">
           {{ t('provider.drawer_register_link') }} →
         </NuxtLink>
-      </div>
+      </div> -->
     </template>
 
     <!-- Generic intent: message textarea -->

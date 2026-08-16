@@ -14,26 +14,6 @@ const bodySchema = z.object({
   locale: z.string().optional().default('es'),
 })
 
-// In-memory rate limiter: max 3 requests per IP per hour
-const rateLimitMap = new Map<string, { count: number; resetAt: number }>()
-const RATE_LIMIT = 3
-const RATE_WINDOW_MS = 60 * 60 * 1000
-
-function checkRateLimit(ip: string): boolean {
-  const now = Date.now()
-  const entry = rateLimitMap.get(ip)
-
-  if (!entry || now > entry.resetAt) {
-    rateLimitMap.set(ip, { count: 1, resetAt: now + RATE_WINDOW_MS })
-    return true
-  }
-
-  if (entry.count >= RATE_LIMIT) return false
-
-  entry.count++
-  return true
-}
-
 const INTENT_LABELS: Record<ContactIntent, string> = {
   outdated_activity: '🐛 Información desactualizada',
   feedback: '💬 Feedback sobre la web',
@@ -44,11 +24,7 @@ const INTENT_LABELS: Record<ContactIntent, string> = {
 export default defineEventHandler(async (event) => {
   await logInfo(event, 'contact/create', 'Contact form submission received')
 
-  const ip = getRequestHeader(event, 'x-forwarded-for') ?? getRequestIP(event) ?? 'unknown'
-
-  if (!checkRateLimit(ip)) {
-    throw createError({ statusCode: 429, statusMessage: 'Too many requests. Try again later.' })
-  }
+  await checkRateLimit(event, 'contact/create', { limit: 3, windowSeconds: 3600 })
 
   const raw = await readBody(event)
   const parsed = bodySchema.safeParse(raw)

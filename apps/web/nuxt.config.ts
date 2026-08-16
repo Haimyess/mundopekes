@@ -26,6 +26,13 @@ export default defineNuxtConfig({
       callback: '/confirm',
       exclude: ['/*'],
     },
+    // Fijado explícitamente (antes implícito por defaults del módulo) para que
+    // la postura de seguridad de la cookie de sesión quede versionada.
+    cookieOptions: {
+      maxAge: 60 * 60 * 8,
+      sameSite: 'lax',
+      secure: true,
+    },
   },
 
   // Forzar siempre Modo Claro — bloquea dark mode del OS en Android e iOS
@@ -67,7 +74,29 @@ export default defineNuxtConfig({
     '@nuxt/ui',
     '@sentry/nuxt/module',
     'nuxt-gtag',
+    'nuxt-security',
   ],
+
+  security: {
+    headers: {
+      // Default img-src es 'self' + data: — esta app carga fotos de Google
+      // Places, tiles de Leaflet y storage de Supabase desde hosts externos.
+      contentSecurityPolicy: {
+        'img-src': ["'self'", 'data:', 'https:'],
+      },
+    },
+    // Rate limiting propio (DB-backed, ver checkRateLimit) ya cubre los
+    // endpoints públicos — el limiter en memoria del módulo sería redundante
+    // y reintroduciría el mismo problema que se corrigió (no comparte estado
+    // entre instancias serverless).
+    rateLimiter: false,
+    // Validador heurístico de XSS sobre query/body: no se probó contra los
+    // formularios públicos reales (sugerencias, contacto) en un browser —
+    // preferible sanitizar en los puntos de salida (ya hecho vía
+    // escapeHtml()/sanitizeHttpUrl()) antes que arriesgar falsos positivos
+    // bloqueando envíos legítimos el día del lanzamiento.
+    xssValidator: false,
+  },
 
   gtag: {
     id: process.env.NUXT_PUBLIC_GA4_ID,

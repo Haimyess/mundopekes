@@ -51,6 +51,7 @@ vi.stubGlobal('sanitizeHttpUrl', (value: string | null | undefined) => {
     return null
   }
 })
+vi.stubGlobal('checkRateLimit', vi.fn().mockResolvedValue(undefined))
 
 // ── Load handler ───────────────────────────────────────────────────────────
 const { default: handler } = await import('../../server/api/suggestions/index.post')

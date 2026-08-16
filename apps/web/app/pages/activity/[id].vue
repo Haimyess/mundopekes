@@ -520,6 +520,7 @@ const hasFeatures = computed(
   margin-inline: auto;
   background: #fff;
   min-height: 100vh;
+  padding-top: var(--space-4);
 }
 
 /* ── Top row: back + share ────────────────────────────────────── */
@@ -939,6 +940,7 @@ const hasFeatures = computed(
   .act-page {
     max-width: none;
     display: block;
+    padding-top: var(--space-6);
   }
 
   /* Ocultar el top-row mobile, mostrar el desktop */
@@ -960,13 +962,26 @@ const hasFeatures = computed(
   }
 
   /*
+   * min-width: 0 en ambas columnas: por defecto un ítem de grid no
+   * puede achicarse más allá del ancho mínimo de su contenido (p.ej.
+   * los badges de Features en una fila sin wrap). Sin esto, al abrir
+   * un acordeón con muchos badges la columna info empuja el grid y
+   * la galería se achica/agranda. Con min-width: 0 el contenido que
+   * no entra hace su propio scroll interno en vez de estirar la pista.
+   */
+  .act-col--gallery,
+  .act-col--info {
+    min-width: 0;
+  }
+
+  /*
    * Galería: sticky al scroll.
    * top: var(--space-3) → pequeño respiro entre la imagen y el borde superior
    * cuando el navbar (no-sticky) desaparece al scrollear.
    */
   .act-col--gallery {
     position: sticky;
-    top: var(--space-3);
+    top: var(--space-5);
   }
 
   /* Imagen mantiene 4:3 natural, con border-radius y sombra leve */

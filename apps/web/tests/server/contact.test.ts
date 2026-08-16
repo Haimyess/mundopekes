@@ -4,6 +4,7 @@ import { describe, it, expect, vi } from 'vitest'
 const mockGetRequestIP = vi.fn().mockReturnValue('1.2.3.4')
 const mockGetRequestHeader = vi.fn().mockReturnValue(null)
 const mockReadBody = vi.fn()
+const mockCheckRateLimit = vi.fn().mockResolvedValue(undefined)
 
 vi.mock('h3', async (importOriginal) => {
   const h3 = await importOriginal<typeof import('h3')>()
@@ -60,6 +61,7 @@ vi.stubGlobal('readBody', mockReadBody)
 vi.stubGlobal('getRequestHeader', mockGetRequestHeader)
 vi.stubGlobal('getRequestIP', mockGetRequestIP)
 vi.stubGlobal('useRuntimeConfig', () => ({}))
+vi.stubGlobal('checkRateLimit', mockCheckRateLimit)
 vi.stubGlobal('escapeHtml', (value: string) =>
   value
     .replace(/&/g, '&amp;')
@@ -107,12 +109,22 @@ describe('POST /api/contact', () => {
     expect(result).toEqual({ success: true })
   })
 
-  it('rate-limits after 3 requests from the same IP', async () => {
-    const ip = '77.77.77.77'
-    const event = makeEvent(validBody, ip)
-    await handler(event)
-    await handler(event)
-    await handler(event)
-    await expect(handler(event)).rejects.toMatchObject({ statusCode: 429 })
+  it('checks the DB-backed rate limiter before touching the DB/email', async () => {
+    mockCheckRateLimit.mockClear()
+    await handler(makeEvent(validBody, '77.77.77.77'))
+    expect(mockCheckRateLimit).toHaveBeenCalledWith(expect.anything(), 'contact/create', {
+      limit: 3,
+      windowSeconds: 3600,
+    })
+  })
+
+  it('propagates a 429 from the rate limiter without rewrapping it', async () => {
+    mockCheckRateLimit.mockRejectedValueOnce(
+      Object.assign(new Error('Too many requests'), { statusCode: 429 })
+    )
+    await expect(handler(makeEvent(validBody, '77.77.77.77'))).rejects.toMatchObject({
+      statusCode: 429,
+    })
+    mockCheckRateLimit.mockResolvedValue(undefined)
   })
 })

@@ -38,29 +38,10 @@ const bodySchema = z.object({
     .optional(),
 })
 
-const rateLimitMap = new Map<string, { count: number; resetAt: number }>()
-const RATE_LIMIT = 2
-const RATE_WINDOW_MS = 60 * 60 * 1000
-
-function checkRateLimit(ip: string): boolean {
-  const now = Date.now()
-  const entry = rateLimitMap.get(ip)
-  if (!entry || now > entry.resetAt) {
-    rateLimitMap.set(ip, { count: 1, resetAt: now + RATE_WINDOW_MS })
-    return true
-  }
-  if (entry.count >= RATE_LIMIT) return false
-  entry.count++
-  return true
-}
-
 export default defineEventHandler(async (event) => {
   await logInfo(event, 'providers/create', 'Provider registration request received')
 
-  const ip = getRequestHeader(event, 'x-forwarded-for') ?? getRequestIP(event) ?? 'unknown'
-  if (!checkRateLimit(ip)) {
-    throw createError({ statusCode: 429, statusMessage: 'Too many requests. Try again later.' })
-  }
+  await checkRateLimit(event, 'providers/create', { limit: 2, windowSeconds: 3600 })
 
   const raw = await readBody(event)
   const parsed = bodySchema.safeParse(raw)

@@ -44,8 +44,7 @@ const { t } = useI18n()
 }
 
 .hero__accent {
-  /* color: var(--color-secondary-500); */
-  color: var(--test-color);
+  color: var(--color-accent-500);
 }
 
 .hero__subtitle {

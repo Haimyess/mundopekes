@@ -28,6 +28,7 @@
     "@vueuse/nuxt": "^14.2.1",
     "dayjs": "^1.11.20",
     "nuxt": "^4.4.6",
+    "nuxt-security": "^2.5.1",
     "pinia": "^3.0.4",
     "resend": "^6.12.0",
     "validator": "^13.15.35",

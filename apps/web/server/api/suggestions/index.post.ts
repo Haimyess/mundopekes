@@ -1,85 +1,96 @@
+import { z } from 'zod'
 import { serverSupabaseClient } from '#supabase/server'
 import { logError, logInfo } from '../../utils/logger'
 
-interface ScheduleDay {
-  open: boolean
-  start: string
-  end: string
-}
+const scheduleDaySchema = z.object({
+  open: z.boolean(),
+  start: z.string().max(10),
+  end: z.string().max(10),
+})
 
-interface WizardSchedule {
-  sunday: ScheduleDay
-  monday: ScheduleDay
-  tuesday: ScheduleDay
-  wednesday: ScheduleDay
-  thursday: ScheduleDay
-  friday: ScheduleDay
-  saturday: ScheduleDay
-}
+const wizardScheduleSchema = z.object({
+  sunday: scheduleDaySchema,
+  monday: scheduleDaySchema,
+  tuesday: scheduleDaySchema,
+  wednesday: scheduleDaySchema,
+  thursday: scheduleDaySchema,
+  friday: scheduleDaySchema,
+  saturday: scheduleDaySchema,
+})
 
-interface SuggestionPayload {
-  // ── Lugar ──────────────────────────────────────────────────────
-  name_i18n: Record<string, string>
-  description_i18n?: Record<string, string>
-  location: {
-    address: string
-    city: string
-    lat?: number
-    lng?: number
-  }
-  // ── Actividad ──────────────────────────────────────────────────
-  // Título de la actividad (distinto de name_i18n que es el nombre del lugar)
-  title_i18n?: Record<string, string>
-  category_id: string
-  age_range_ids: number[]
-  best_season: string[]
-  type: string[]
-  // ── Detalles ───────────────────────────────────────────────────
-  is_free: boolean
-  price?: number
-  stroller_friendly: boolean
-  has_shadow: boolean
-  has_bathrooms: boolean
-  open_weekends: boolean
-  // Undefined when hours_unknown=true; null/structured when known
-  schedule_structured?: WizardSchedule | null
-  // ── Metadata ───────────────────────────────────────────────────
-  metadata?: {
-    // Google Place identifiers
-    google_place_id?: string
-    place_photo_url?: string
-    google_types?: string[]
-    // Editable place info (seeded from Google, may be user-edited)
-    google_url?: string
-    phone?: string
-    website?: string
-    wheelchair?: boolean | null
-    opening_hours_text?: string[]
-    photos?: string[]
-    // Activity metadata
-    generated_title?: string
-    custom_activity?: string
-    // Schedule
-    hours_unknown?: boolean
-  }
-}
+type WizardSchedule = z.infer<typeof wizardScheduleSchema>
+
+const bodySchema = z
+  .object({
+    // ── Lugar ──────────────────────────────────────────────────────
+    name_i18n: z.record(z.string(), z.string().max(200)),
+    description_i18n: z.record(z.string(), z.string().max(2000)).optional(),
+    location: z.object({
+      address: z.string().max(300).optional().default(''),
+      city: z.string().max(120).optional().default(''),
+      lat: z.number().optional(),
+      lng: z.number().optional(),
+    }),
+    // ── Actividad ──────────────────────────────────────────────────
+    title_i18n: z.record(z.string(), z.string().max(200)).optional(),
+    category_id: z.string().min(1, 'El tipo de actividad es requerido'),
+    age_range_ids: z.array(z.number()).max(20).default([]),
+    best_season: z.array(z.string().max(50)).max(10).default([]),
+    type: z.array(z.string().max(50)).max(20).default([]),
+    // ── Detalles ───────────────────────────────────────────────────
+    is_free: z.boolean().default(true),
+    price: z.number().min(0).max(1_000_000).optional(),
+    stroller_friendly: z.boolean().default(false),
+    has_shadow: z.boolean().default(false),
+    has_bathrooms: z.boolean().default(false),
+    open_weekends: z.boolean().default(false),
+    schedule_structured: wizardScheduleSchema.nullish(),
+    // ── Metadata ───────────────────────────────────────────────────
+    metadata: z
+      .object({
+        google_place_id: z.string().max(200).optional(),
+        place_photo_url: z.string().max(2000).optional(),
+        google_types: z.array(z.string().max(100)).max(30).optional(),
+        google_url: z.string().max(2000).optional(),
+        phone: z.string().max(50).optional(),
+        website: z.string().max(2000).optional(),
+        wheelchair: z.boolean().nullish(),
+        opening_hours_text: z.array(z.string().max(200)).max(20).optional(),
+        photos: z.array(z.string().max(2000)).max(30).optional(),
+        generated_title: z.string().max(300).optional(),
+        custom_activity: z.string().max(2000).optional(),
+        hours_unknown: z.boolean().optional(),
+      })
+      .optional(),
+  })
+  .superRefine((body, ctx) => {
+    if (Object.keys(body.name_i18n).length === 0) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['name_i18n'],
+        message: 'El nombre es requerido en al menos un idioma',
+      })
+    }
+    if (!body.location.city.trim() && !body.location.address.trim()) {
+      ctx.addIssue({ code: 'custom', path: ['location'], message: 'La ubicación es requerida' })
+    }
+  })
 
 export default defineEventHandler(async (event) => {
-  const client = await serverSupabaseClient(event)
-  const body = await readBody<SuggestionPayload>(event)
+  await checkRateLimit(event, 'suggestions/create', { limit: 5, windowSeconds: 3600 })
 
-  if (!body.name_i18n || Object.keys(body.name_i18n).length === 0) {
+  const client = await serverSupabaseClient(event)
+  const raw = await readBody(event)
+  const parsed = bodySchema.safeParse(raw)
+
+  if (!parsed.success) {
     throw createError({
       statusCode: 400,
-      statusMessage: 'El nombre es requerido en al menos un idioma',
+      statusMessage: parsed.error.issues[0]?.message ?? 'Invalid request body',
     })
   }
-  if (!body.location?.city?.trim() && !body.location?.address?.trim()) {
-    throw createError({ statusCode: 400, statusMessage: 'La ubicación es requerida' })
-  }
-  if (!body.category_id) {
-    throw createError({ statusCode: 400, statusMessage: 'El tipo de actividad es requerido' })
-  }
+
+  const body = parsed.data
 
   const firstName = Object.values(body.name_i18n)[0] ?? 'unknown'
   await logInfo(event, 'suggestions/create', 'Creating suggestion', { name: firstName })

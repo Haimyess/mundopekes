@@ -1,4 +1,11 @@
 <script setup lang="ts">
+// Feature deshabilitada temporalmente: se deja el código listo para
+// retomarla más adelante, pero la ruta no debe quedar accesible a
+// usuarios mientras tanto (ver también Footer.vue y ContactFormBody.vue).
+definePageMeta({
+  middleware: () => navigateTo('/', { redirectCode: 302 }),
+})
+
 const { t, locale } = useI18n()
 
 useHead({ title: () => t('provider.page_title') })

@@ -23,14 +23,15 @@ const showBadges = computed(() => {
 
   const badges = []
 
-  if (props.activity.is_free)
-    badges.push({ label: t('activity.free'), variant: 'success' as const })
+  if (props.activity.is_free) badges.push(t('activity.free'))
 
-  if (props.activity.stroller_friendly)
-    badges.push({ label: t('activity.stroller_friendly'), variant: 'info' as const })
+  if (props.activity.stroller_friendly) badges.push(t('activity.stroller_friendly'))
 
   return badges.slice(0, props.variant === 'compact' ? 2 : 4)
 })
+
+// Descripción: visible por defecto en variant detailed, ocultable por el usuario
+const showDescription = ref(true)
 
 // location: viene de place → city (join en Supabase)
 const cityName = computed(() => props.activity?.place?.city?.name ?? null)
@@ -79,22 +80,23 @@ const hasMeta = computed(() => !!(cityName.value || categoryName.value))
           </template>
         </div>
 
-        <p
-          v-if="variant === 'detailed' && tc(activity.description_i18n ?? {})"
-          class="activity-card__description"
-        >
-          {{ tc(activity.description_i18n ?? {}) }}
-        </p>
-
-        <div class="activity-card__badges">
-          <UiBadge
-            v-for="(badge, index) in showBadges"
-            :key="index"
-            :variant="badge.variant"
-            size="sm"
+        <template v-if="variant === 'detailed' && tc(activity.description_i18n ?? {})">
+          <p v-if="showDescription" class="activity-card__description">
+            {{ tc(activity.description_i18n ?? {}) }}
+          </p>
+          <button
+            type="button"
+            class="activity-card__desc-toggle"
+            @click.stop.prevent="showDescription = !showDescription"
           >
-            {{ badge.label }}
-          </UiBadge>
+            {{ showDescription ? t('activity.hide_description') : t('activity.show_description') }}
+          </button>
+        </template>
+
+        <div v-if="showBadges.length" class="activity-card__badges">
+          <span v-for="badge in showBadges" :key="badge" class="activity-card__badge">
+            {{ badge }}
+          </span>
         </div>
       </div>
     </UiCard>
@@ -121,8 +123,8 @@ const hasMeta = computed(() => !!(cityName.value || categoryName.value))
 }
 
 .activity-card:hover .activity-card__card {
-  box-shadow: var(--shadow-lg);
-  transform: translateY(-4px);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
 }
 
 /* ── Imagen ──────────────────────────────────────────────────── */
@@ -143,7 +145,7 @@ const hasMeta = computed(() => !!(cityName.value || categoryName.value))
 }
 
 .activity-card:hover .activity-card__image {
-  transform: scale(1.05);
+  transform: scale(1.03);
 }
 
 /* ── Body ────────────────────────────────────────────────────── */
@@ -191,12 +193,41 @@ const hasMeta = computed(() => !!(cityName.value || categoryName.value))
   -webkit-box-orient: vertical;
 }
 
-/* ── Badges ──────────────────────────────────────────────────── */
+.activity-card__desc-toggle {
+  align-self: flex-start;
+  background: none;
+  border: none;
+  padding: 0;
+  margin-top: calc(-1 * var(--space-1));
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-accent-600);
+  cursor: pointer;
+}
+
+.activity-card__desc-toggle:hover {
+  text-decoration: underline;
+}
+
+/* ── Badges — chips minimalistas con el color de acento ───────── */
 .activity-card__badges {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--space-2);
+  gap: var(--space-1-5, 0.375rem);
   margin-top: var(--space-1);
+}
+
+.activity-card__badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem var(--space-2-5, 0.625rem);
+  border-radius: 9999px;
+  background: var(--color-accent-50);
+  color: var(--color-accent-700);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  line-height: 1.4;
+  white-space: nowrap;
 }
 
 /* ══ VARIANT COMPACT en mobile: layout horizontal ══════════════ */

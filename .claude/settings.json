@@ -9,7 +9,11 @@
       "Read(//c/c/Users/Witch/Desktop/Haim_projects/mundopekes-monorepo/apps/web/**)",
       "Bash(Remove-Item -Recurse -Force apps/web/.nuxt -ErrorAction SilentlyContinue)",
       "Bash(Remove-Item -Recurse -Force apps/admin/.nuxt -ErrorAction SilentlyContinue)",
-      "Bash(git add *)"
+      "Bash(git add *)",
+      "Bash(grep -rn \"storageKey\\\\|sb-.*-auth-token\\\\|createBrowserClient\\\\|localStorage\" /c/Users/Witch/Desktop/Haim_projects/mundopekes-monorepo/node_modules/@nuxtjs/supabase/dist/runtime/*.mjs 2>/dev/null | head -20)",
+      "Read(//c/Users/Witch/Desktop/Haim_projects/mundopekes-monorepo/node_modules/@nuxtjs/supabase/dist/runtime/**)",
+      "Read(//c/Users/Witch/Desktop/Haim_projects/mundopekes-monorepo/node_modules/@nuxtjs/supabase/**)",
+      "Bash(xargs grep -ln \"createBrowserClient\\\\|storageKey\\\\|auth-token\")"
     ]
   }
 }

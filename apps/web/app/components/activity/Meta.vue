@@ -92,43 +92,53 @@ function ageLabel(labelKey: string): string {
 </template>
 
 <style scoped>
-/* Max 2 filas con scroll oculto */
+/*
+ * Una sola fila, scroll horizontal si no entran todos los badges.
+ * min-width: 0 para que el contenedor pueda achicarse dentro de su
+ * columna en vez de forzarla a crecer (ver [id].vue: min-width en
+ * .act-col--info).
+ */
 .act-meta__chips {
   display: flex;
-  /* flex-wrap: wrap; */
+  flex-wrap: nowrap;
   gap: var(--space-2);
-  max-height: calc(2 * 2.25rem + var(--space-2));
-  overflow-y: auto;
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x proximity;
   scrollbar-width: none;
   -ms-overflow-style: none;
+  padding-block: 2px;
 }
 
 .act-meta__chips::-webkit-scrollbar {
   display: none;
 }
 
-/* Chip — igual a sf-pill del homepage: sin background */
+/* Chip — diseño moderno con el color de acento del design system */
 .act-chip {
   display: inline-flex;
   align-items: center;
   gap: var(--space-1-5, 0.375rem);
   padding: var(--space-2) var(--space-3);
   border-radius: 9999px;
-  border: 1.5px solid var(--color-secondary-300, #86efac);
-  background: transparent;
-  color: var(--color-secondary-700, #15803d);
+  border: 1px solid transparent;
+  background: var(--color-accent-50, #e6f7f4);
+  color: var(--color-accent-700, #007a6c);
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-medium);
   white-space: nowrap;
   line-height: 1;
   min-height: 2.25rem;
   flex-shrink: 0;
+  scroll-snap-align: start;
 }
 
 .act-chip__icon {
   width: 0.875rem;
   height: 0.875rem;
   flex-shrink: 0;
-  opacity: 0.9;
+  opacity: 0.85;
+  color: var(--color-accent-600, #009484);
 }
 </style>
