@@ -189,7 +189,6 @@
     "step_progress": "Шаг {n} из {total}",
     "step_lugar": "Место",
     "step_actividad": "Активность",
-    "step_detalles": "Детали",
     "step_resumen": "Итог",
     "free": "Бесплатно",
     "toggle_stroller": "Подходит для колясок",
@@ -215,7 +214,16 @@
     "not_this_place": "Не то место? Искать снова",
     "cant_find_place": "Не можете найти?",
     "add_new_place": "Добавить новое место",
-    "back_to_local_search": "Назад к поиску"
+    "back_to_local_search": "Назад к поиску",
+    "existing_activity": "Уже есть",
+    "new_activity": "Новое",
+    "new_place": "Новое место",
+    "add_another_activity": "Добавить ещё занятие",
+    "save_activity": "Добавить занятие",
+    "activity_untitled": "Занятие без названия",
+    "activities_count": "Добавлено занятий: {n}",
+    "activity_search_label": "Это уже есть здесь?",
+    "activity_search_placeholder": "Искать занятия в этом месте"
   },
   "contact": {
     "title": "Связаться с нами",
@@ -324,6 +332,7 @@
     "back": "Назад",
     "done": "Готово",
     "edit": "Редактировать",
+    "save": "Сохранить",
     "continue": "Продолжить",
     "day_sunday": "Воскресенье",
     "day_monday": "Понедельник",

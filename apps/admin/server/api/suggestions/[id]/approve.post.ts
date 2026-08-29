@@ -1,38 +1,12 @@
 import { serverSupabaseServiceRole } from '#supabase/server'
 import { getDeeplApiKey, getGooglePlacesApiKey } from '../../../utils/admin-runtime-config'
-import { translateI18nField } from '../../../utils/translate'
 import type { FieldI18nStatus } from '../../../utils/translate'
-import type { Json } from '~/types/database.types'
 import { syncActivityPivots } from '../../../utils/activity-pivots'
-import { buildActivityInsertFromSuggestion } from '../../../utils/suggestion-approval'
+import {
+  buildActivityInsertFromSuggestion,
+  createPlaceFromSuggestion,
+} from '../../../utils/suggestion-approval'
 import { resolveSuggestionImages } from '../../../utils/resolve-suggestion-images'
-
-// Full shape of suggestion.metadata as written by the wizard (Fase 6)
-type SuggestionMeta = {
-  // Google Place identifiers
-  google_place_id?: string | null
-  place_photo_url?: string | null
-  google_types?: string[] | null
-  // Editable place info
-  google_url?: string | null
-  phone?: string | null
-  website?: string | null
-  wheelchair?: boolean | null
-  opening_hours_text?: string[] | null
-  photos?: string[] | null
-  // Activity
-  generated_title?: string | null
-  custom_activity?: string | null
-  title_i18n?: Record<string, string> | null
-  // Details
-  has_shadow?: boolean | null
-  has_bathrooms?: boolean | null
-  price?: number | null
-  // Schedule
-  hours_unknown?: boolean | null
-  schedule_structured?: unknown
-  age_range_ids?: number[]
-}
 
 export default defineEventHandler(async (event) => {
   const id = getRouterParam(event, 'id')
@@ -60,6 +34,125 @@ export default defineEventHandler(async (event) => {
       status: suggestion.status,
     })
     throw createError({ statusCode: 400, message: `La sugerencia ya fue ${suggestion.status}` })
+  }
+
+  // ── Claim this suggestion (and any group siblings) before doing anything
+  // else — a conditional update that only succeeds if nothing else has
+  // touched `reviewed_at` yet. Guards against a double-click or two admins
+  // approving/merging the same (grouped) suggestion concurrently: whichever
+  // request's claim affects zero rows backs off instead of creating a
+  // second place/activity.
+  const groupId = suggestion.suggestion_group_id
+  let claim = supabase
+    .from('suggestions')
+    .update({ reviewed_at: new Date().toISOString() })
+    .eq('status', 'pending')
+    .is('reviewed_at', null)
+  claim = groupId ? claim.eq('suggestion_group_id', groupId) : claim.eq('id', id)
+  const { data: claimed, error: claimError } = await claim.select('id')
+
+  if (claimError) {
+    await logError(event, 'suggestions/approve', 'Failed to claim suggestion(s)', {
+      id,
+      error: claimError.message,
+    })
+    throw createError({ statusCode: 500, message: 'Error al reservar la sugerencia' })
+  }
+  if (!claimed || claimed.length === 0) {
+    await logWarn(event, 'suggestions/approve', 'Suggestion already claimed by another request', {
+      id,
+    })
+    throw createError({
+      statusCode: 409,
+      message: 'La sugerencia ya está siendo procesada en otra solicitud',
+    })
+  }
+
+  // ── Branch: a group of one-or-more experiences for a brand-new place ────
+  // (see supabase/migrations/20260829090000_suggestion_groups.sql). All
+  // siblings share `suggestion_group_id`; exactly one is `is_primary` and
+  // carries the place's fields. The place is created once here, then one
+  // activity per sibling.
+  if (groupId && suggestion.suggestion_type === 'new_place_with_experience') {
+    const { data: siblings, error: siblingsError } = await supabase
+      .from('suggestions')
+      .select('*')
+      .eq('suggestion_group_id', groupId)
+
+    if (siblingsError || !siblings || siblings.length === 0) {
+      await logError(event, 'suggestions/approve', 'Failed to load suggestion group', {
+        id,
+        groupId,
+        error: siblingsError?.message,
+      })
+      throw createError({ statusCode: 500, message: 'Error cargando el grupo de sugerencias' })
+    }
+
+    const primary = siblings.find((s) => s.is_primary) ?? suggestion
+    const resolvedImages = await resolveSuggestionImages(supabase, primary, googlePlacesApiKey)
+
+    const {
+      place,
+      error: placeErr,
+      freshDuplicatePlaceId,
+    } = await createPlaceFromSuggestion(supabase, primary, deeplApiKey, resolvedImages)
+    if (placeErr || !place) {
+      throw createError({ statusCode: 500, message: `Error creando lugar: ${placeErr}` })
+    }
+
+    const built = await Promise.all(
+      siblings.map((sib) =>
+        buildActivityInsertFromSuggestion(sib, place.id, deeplApiKey, {
+          descriptionI18nOverride: sib.is_primary ? place.description_i18n : undefined,
+          imagesOverride: resolvedImages,
+        })
+      )
+    )
+
+    const { data: createdActivities, error: activitiesError } = await supabase
+      .from('activities')
+      .insert(built.map((b) => b.payload))
+      .select()
+
+    if (activitiesError || !createdActivities) {
+      await supabase.from('places').delete().eq('id', place.id)
+      await logError(event, 'suggestions/approve', 'Failed to create grouped activities', {
+        id,
+        groupId,
+        place_id: place.id,
+        error: activitiesError?.message,
+      })
+      throw createError({
+        statusCode: 500,
+        message: `Error creando actividades: ${activitiesError?.message}`,
+      })
+    }
+
+    for (const activity of createdActivities) {
+      const meta = activity.metadata as { from_suggestion?: string } | null
+      const match = built.find((b) => b.payload.metadata.from_suggestion === meta?.from_suggestion)
+      if (match)
+        await syncActivityPivots(supabase, activity.id, match.ageRangeIds, match.bestSeasons)
+    }
+
+    await supabase
+      .from('suggestions')
+      .update({
+        status: 'approved',
+        place_id: place.id,
+        ...(freshDuplicatePlaceId
+          ? { flagged_possible_duplicate: true, possible_duplicate_of: freshDuplicatePlaceId }
+          : {}),
+      })
+      .eq('suggestion_group_id', groupId)
+
+    await logInfo(event, 'suggestions/approve', 'Suggestion group approved successfully', {
+      groupId,
+      place_id: place.id,
+      activity_ids: createdActivities.map((a) => a.id),
+    })
+
+    return { place, activities: createdActivities }
   }
 
   // ── Branch: experience for an already-existing place ────────────────────
@@ -199,179 +292,44 @@ export default defineEventHandler(async (event) => {
     name: suggestion.name_i18n,
   })
 
-  const meta = (suggestion.metadata as SuggestionMeta | null) ?? {}
-
-  // ── 2. Enrich place name ───────────────────────────────────────────────
-  const rawName = (suggestion.name_i18n as Record<string, string>) ?? {}
-  let name_i18n = rawName
-  let nameStatus: FieldI18nStatus | undefined
-  if (deeplApiKey) {
-    const translated = await translateI18nField({ existing: rawName, apiKey: deeplApiKey })
-    name_i18n = translated.value
-    nameStatus = translated.status
-  }
-
-  // ── 3. Enrich place description ────────────────────────────────────────
-  const rawDesc = (suggestion.description_i18n as Record<string, string>) ?? {}
-  let description_i18n = rawDesc
-  let descriptionStatus: FieldI18nStatus | undefined
-  if (deeplApiKey && Object.keys(rawDesc).length > 0) {
-    const translated = await translateI18nField({ existing: rawDesc, apiKey: deeplApiKey })
-    description_i18n = translated.value
-    descriptionStatus = translated.status
-  }
-
-  // ── 4. Resolve city_id — upsert if not found ──────────────────────────
-  const location = suggestion.location as {
-    city?: string
-    address?: string
-    lat?: number
-    lng?: number
-  } | null
-
-  let city_id: number | null = null
-  if (location?.city) {
-    const { data: existingCity } = await supabase
-      .from('cities')
-      .select('id')
-      .ilike('name', location.city)
-      .single()
-
-    if (existingCity) {
-      city_id = existingCity.id
-    } else {
-      const { data: newCity } = await supabase
-        .from('cities')
-        .insert({ name: location.city })
-        .select('id')
-        .single()
-      city_id = newCity?.id ?? null
-    }
-  }
-
-  // ── 5. Resolve coordinates (geocoding fallback for manual entries) ──────
-  let lat: number | null = location?.lat ?? null
-  let lng: number | null = location?.lng ?? null
-
-  if (lat === null) {
-    const geoQuery = [location?.address, location?.city].filter(Boolean).join(', ')
-    if (geoQuery) {
-      const coords = await geocodeAddress(geoQuery)
-      if (coords) {
-        lat = coords.lat
-        lng = coords.lng
-        await logInfo(event, 'suggestions/approve', 'Geocoded missing coordinates', { lat, lng })
-      } else {
-        await logWarn(
-          event,
-          'suggestions/approve',
-          'Geocoding fallback failed — place.lat/lng will be null',
-          { id }
-        )
-      }
-    }
-  }
-
-  // ── 6. Create Place ────────────────────────────────────────────────────
-  const nameText = Object.values(name_i18n)[0] ?? ''
-
   // Promote suggestion.metadata.photos into permanent Storage images (§K) —
   // computed once here and reused for the Activity below, so a suggestion's
   // photos aren't downloaded/re-uploaded twice.
   const resolvedImages = await resolveSuggestionImages(supabase, suggestion, googlePlacesApiKey)
 
-  // Re-check for duplicates right before inserting — same staleness-window
-  // reasoning as the experience_for_existing_place branch above.
-  let freshDuplicatePlaceId: string | null = null
-  if (!suggestion.flagged_possible_duplicate && nameText) {
-    const freshDuplicates = await findPlaceDuplicates(supabase, {
-      name: nameText,
-      lat,
-      lng,
-      googlePlaceId: meta.google_place_id ?? null,
-      cityId: city_id,
-    })
-    const firstFreshDuplicate = freshDuplicates[0]
-    if (firstFreshDuplicate) {
-      freshDuplicatePlaceId = firstFreshDuplicate.id
-      await logWarn(
-        event,
-        'suggestions/approve',
-        'Fresh duplicate place detected at approval time',
-        {
-          id,
-          matches: freshDuplicates.map((m) => m.id),
-        }
-      )
-    }
-  }
-
-  const placePayload = {
-    name_i18n,
-    description_i18n,
-    city_id,
-    lat,
-    lng,
-    images: resolvedImages,
-    status: 'active',
-    google_place_id: meta.google_place_id ?? null,
-    name_normalized: normalizeName(nameText),
-    i18n_status: {
-      ...(nameStatus ? { name: nameStatus } : {}),
-      ...(descriptionStatus ? { description: descriptionStatus } : {}),
-    } as Json,
-    metadata: {
-      // Identification
-      google_place_id: meta.google_place_id ?? null,
-      // Contact & info (editable by user in wizard, then stored in suggestion.metadata)
-      phone: meta.phone ?? null,
-      website: sanitizeHttpUrl(meta.website),
-      google_url: meta.google_url ?? null,
-      wheelchair: meta.wheelchair ?? null,
-      opening_hours_text: meta.opening_hours_text?.length ? meta.opening_hours_text : null,
-      // Media
-      place_photo_url: meta.place_photo_url ?? null,
-      photos: meta.photos?.length ? meta.photos : null,
-      // Place-level attributes — additive copy alongside the same fields on the
-      // Activity below. The public site still filters/displays via Activity;
-      // this just gives the place its own record of shared physical attributes
-      // (e.g. "does this park have shade") for future activities added under it.
-      stroller_friendly: suggestion.stroller_friendly ?? false,
-      open_weekends: suggestion.open_weekends ?? false,
-      has_shadow: meta.has_shadow ?? false,
-      has_bathrooms: meta.has_bathrooms ?? false,
-      hours_unknown: meta.hours_unknown === true,
-      schedule_structured: meta.hours_unknown === true ? null : (meta.schedule_structured ?? null),
-      // Traceability
-      from_suggestion: id,
-    },
-  }
-
-  const { data: place, error: placeError } = await supabase
-    .from('places')
-    .insert(placePayload)
-    .select()
-    .single()
+  const {
+    place,
+    error: placeError,
+    freshDuplicatePlaceId,
+  } = await createPlaceFromSuggestion(supabase, suggestion, deeplApiKey, resolvedImages)
 
   if (placeError || !place) {
     await logError(event, 'suggestions/approve', 'Failed to create place', {
       id,
-      error: placeError?.message,
+      error: placeError,
     })
-    throw createError({ statusCode: 500, message: `Error creando lugar: ${placeError?.message}` })
+    throw createError({ statusCode: 500, message: `Error creando lugar: ${placeError}` })
+  }
+
+  if (freshDuplicatePlaceId) {
+    await logWarn(event, 'suggestions/approve', 'Fresh duplicate place detected at approval time', {
+      id,
+      match: freshDuplicatePlaceId,
+    })
   }
 
   // ── 7. Create Activity ─────────────────────────────────────────────────
   // Reuses the place's enriched description for the activity too — there is
   // no separate activity-level description field collected by the wizard
   // for a brand-new place, so this preserves current behavior exactly.
+  const placeI18nStatus = place.i18n_status as { description?: FieldI18nStatus } | null
   const {
     ageRangeIds,
     bestSeasons,
     payload: activityPayload,
   } = await buildActivityInsertFromSuggestion(suggestion, place.id, deeplApiKey, {
-    descriptionI18nOverride: description_i18n,
-    descriptionI18nStatusOverride: descriptionStatus,
+    descriptionI18nOverride: (place.description_i18n as Record<string, string> | null) ?? {},
+    descriptionI18nStatusOverride: placeI18nStatus?.description,
     imagesOverride: resolvedImages,
   })
 

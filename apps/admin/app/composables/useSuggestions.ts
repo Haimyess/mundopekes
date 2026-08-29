@@ -64,6 +64,11 @@ export const useSuggestions = () => {
   const categoryFilter = ref('all')
   const cityFilter = ref('all')
   const isFreeFilter = ref<'all' | 'true' | 'false'>('all')
+  // El endpoint ya soporta ambos como query params — antes se filtraban sólo
+  // del lado del cliente sobre la página ya paginada, lo que podía mostrar
+  // "0 resultados" con duplicados/tipo reales en otra página.
+  const suggestionTypeFilter = ref<'all' | SuggestionType>('all')
+  const duplicateFilter = ref<'all' | 'true'>('all')
   const page = ref(1)
   const pageSize = ref(10)
 
@@ -84,6 +89,8 @@ export const useSuggestions = () => {
       if (categoryFilter.value !== 'all') params.category_id = categoryFilter.value
       if (cityFilter.value !== 'all') params.city = cityFilter.value
       if (isFreeFilter.value !== 'all') params.is_free = isFreeFilter.value
+      if (suggestionTypeFilter.value !== 'all') params.suggestion_type = suggestionTypeFilter.value
+      if (duplicateFilter.value !== 'all') params.flagged_possible_duplicate = duplicateFilter.value
 
       const result = await $fetch<{ data: Suggestion[]; count: number }>('/api/suggestions', {
         params,
@@ -168,6 +175,38 @@ export const useSuggestions = () => {
     }
   }
 
+  // Resolve against an existing ACTIVITY the target place already has —
+  // nothing gets created, the suggestion is just marked approved/resolved.
+  const mergeActivity = async (id: string, targetActivityId: string) => {
+    actionLoading.value = true
+    try {
+      const result = await $fetch<{ activity?: { title_i18n?: Record<string, string> } }>(
+        `/api/suggestions/${id}/merge`,
+        { method: 'POST', body: { target_activity_id: targetActivityId } }
+      )
+      const activityName =
+        result.activity?.title_i18n?.['es'] ||
+        result.activity?.title_i18n?.['he'] ||
+        Object.values(result.activity?.title_i18n ?? {})[0] ||
+        t('suggestions.toast.defaultExistingPlaceName')
+      toast.add({
+        title: t('suggestions.toast.merged'),
+        description: t('suggestions.toast.mergedDescription', { name: activityName }),
+        color: 'success',
+        icon: 'i-lucide-merge',
+      })
+      await fetch()
+    } catch (e) {
+      toast.add({
+        title: t('suggestions.toast.mergeError'),
+        description: e instanceof Error ? e.message : String(e),
+        color: 'error',
+      })
+    } finally {
+      actionLoading.value = false
+    }
+  }
+
   // Rechazar con motivo
   const reject = async (id: string, reason: string) => {
     actionLoading.value = true
@@ -219,11 +258,14 @@ export const useSuggestions = () => {
   }))
 
   // Reset a página 1 cuando cambia cualquier filtro (dispara el watch de página)
-  watch([statusFilter, categoryFilter, cityFilter, isFreeFilter], () => {
-    if (!hasLoadedOnce.value) return
-    if (page.value !== 1) page.value = 1
-    else fetch()
-  })
+  watch(
+    [statusFilter, categoryFilter, cityFilter, isFreeFilter, suggestionTypeFilter, duplicateFilter],
+    () => {
+      if (!hasLoadedOnce.value) return
+      if (page.value !== 1) page.value = 1
+      else fetch()
+    }
+  )
 
   // Re-fetch cuando cambia de página
   watch(page, () => {
@@ -240,12 +282,15 @@ export const useSuggestions = () => {
     categoryFilter,
     cityFilter,
     isFreeFilter,
+    suggestionTypeFilter,
+    duplicateFilter,
     page,
     pageSize,
     counts,
     fetch,
     approve,
     merge,
+    mergeActivity,
     reject,
     remove,
   }

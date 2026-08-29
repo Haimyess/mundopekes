@@ -1,7 +1,7 @@
 <!-- app/pages/suggestions.vue -->
 <script setup lang="ts">
 import type { TableColumn } from '@nuxt/ui'
-import type { Suggestion, SuggestionType } from '~/composables/useSuggestions'
+import type { Suggestion } from '~/composables/useSuggestions'
 import { syncUrlPage, syncUrlParam } from '~/composables/useUrlPage'
 import { useFacets } from '~/composables/useFacets'
 
@@ -42,16 +42,12 @@ const {
   categoryFilter,
   cityFilter,
   isFreeFilter,
+  suggestionTypeFilter,
+  duplicateFilter,
   page,
   pageSize,
   fetch: loadSuggestions,
 } = useSuggestions()
-
-// Place/Experience discriminator + duplicate-flag filters — client-side only
-// (not part of useSuggestions' own filter state) since they're new and this
-// keeps the change scoped to this page.
-const suggestionTypeFilter = ref<'all' | SuggestionType>('all')
-const duplicateFilter = ref<'all' | 'true'>('all')
 
 syncUrlPage(page)
 syncUrlParam(statusFilter as unknown as Ref<string>, 'status')
@@ -60,18 +56,6 @@ syncUrlParam(cityFilter, 'city')
 syncUrlParam(isFreeFilter as unknown as Ref<string>, 'free')
 syncUrlParam(suggestionTypeFilter as unknown as Ref<string>, 'type')
 syncUrlParam(duplicateFilter as unknown as Ref<string>, 'duplicate')
-
-// Client-side filter on top of the server-paginated list — same pattern as
-// `is_free`/`category` would use if this page filtered fully server-side;
-// kept local since these two are new and low-cardinality.
-const visibleSuggestions = computed(() =>
-  suggestions.value.filter((s) => {
-    if (suggestionTypeFilter.value !== 'all' && s.suggestion_type !== suggestionTypeFilter.value)
-      return false
-    if (duplicateFilter.value === 'true' && !s.flagged_possible_duplicate) return false
-    return true
-  })
-)
 
 const pageCount = computed(() => Math.max(1, Math.ceil(total.value / pageSize.value)))
 
@@ -442,7 +426,7 @@ onMounted(async () => {
         <!-- Zona scrolleable: solo la tabla -->
         <div class="flex-1 min-h-0 overflow-y-auto p-4">
           <UTable
-            :data="visibleSuggestions"
+            :data="suggestions"
             :columns="columns"
             :loading="loading"
             class="w-full"

@@ -21,6 +21,8 @@ const { loading, run } = useEntitySave()
 const { geocode, isLoading: geocoding } = useGeocode()
 const { uploadFromUrl } = useImageUpload()
 
+const placeI18nStatus = computed(() => props.place?.i18n_status)
+
 const labels = computed(() => ({
   placeName: t('entityForm.placeName'),
   activityTitle: t('entityForm.activityTitle'),
@@ -257,6 +259,8 @@ const save = async () => {
           v-model:has-safe-room="form.metadata.has_safe_room"
           v-model:images="form.images"
           type="place"
+          :name-i18n-status="placeI18nStatus?.name"
+          :description-i18n-status="placeI18nStatus?.description"
           :age-range-ids="[]"
           :best-season="[]"
           :stroller-friendly="false"

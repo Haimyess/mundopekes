@@ -1,3 +1,5 @@
+import type { FieldI18nStatus } from '../../../../layers/domain/types/i18n-status'
+
 export interface Place {
   id: string
   name_i18n: Record<string, string>
@@ -12,6 +14,7 @@ export interface Place {
   updated_at: string
   city?: { id: number; name: string; region: string }
   activities?: { count: number }[]
+  i18n_status?: Record<string, FieldI18nStatus> | null
 }
 
 export interface Activity {
@@ -31,6 +34,7 @@ export interface Activity {
   updated_at: string
   place?: { id: string; name_i18n: Record<string, string>; city: { name: string } }
   category?: { id: string; name_i18n: Record<string, string>; slug: string }
+  i18n_status?: Record<string, FieldI18nStatus> | null
 }
 
 export interface Category {

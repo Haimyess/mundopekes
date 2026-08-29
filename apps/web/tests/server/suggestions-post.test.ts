@@ -21,12 +21,12 @@ vi.mock('h3', async (importOriginal) => {
 })
 
 // ── Supabase mock ──────────────────────────────────────────────────────────
-const mockInsertData = vi.fn()
-const mockSingle = vi.fn()
+// insert(rows).select() resolves directly (no .single() — a submission can
+// insert several suggestion rows at once).
 const mockSelect = vi.fn()
 const mockInsert = vi.fn(() => ({ select: mockSelect }))
 
-// `places` lookup chain used by the experience_for_existing_place branch:
+// `places` lookup chain used when the place already exists:
 // client.from('places').select('id').eq('id', ...).eq('status', 'active').single()
 const mockPlacesSingle = vi.fn()
 const mockPlacesChain = {
@@ -73,11 +73,10 @@ vi.stubGlobal('findExperienceDuplicates', mockFindExperienceDuplicates)
 // ── Load handler ───────────────────────────────────────────────────────────
 const { default: handler } = await import('../../server/api/suggestions/index.post')
 
-// ── Base valid body ────────────────────────────────────────────────────────
-const baseBody = () => ({
-  suggestion_type: 'new_place_with_experience' as const,
-  name_i18n: { es: 'Parque HaYarkon' },
-  location: { city: 'Tel Aviv', address: 'Sderot Rokach', lat: 32.1, lng: 34.8 },
+// ── Base valid bodies ────────────────────────────────────────────────────────
+const newActivity = (overrides = {}) => ({
+  mode: 'new' as const,
+  title_i18n: { es: 'Juegos en Parque HaYarkon' },
   category_id: 'cat-001',
   age_range_ids: [1, 2],
   best_season: ['spring'],
@@ -88,13 +87,24 @@ const baseBody = () => ({
   has_bathrooms: false,
   open_weekends: true,
   schedule_structured: undefined,
-  title_i18n: { es: 'Juegos en Parque HaYarkon' },
-  metadata: {
-    google_place_id: 'gp-001',
-    phone: '+972-3-123',
-    website: 'https://park.il',
-    opening_hours_text: ['Lunes: 8am–6pm'],
+  metadata: {},
+  ...overrides,
+})
+
+const baseBody = () => ({
+  place: {
+    mode: 'new' as const,
+    name_i18n: { es: 'Parque HaYarkon' },
+    location: { city: 'Tel Aviv', address: 'Sderot Rokach', lat: 32.1, lng: 34.8 },
+    metadata: {
+      google_place_id: 'gp-001',
+      phone: '+972-3-123',
+      website: 'https://park.il',
+      opening_hours_text: ['Lunes: 8am–6pm'],
+    },
   },
+  activities: [newActivity()],
+  locale: 'es',
 })
 
 function makeEvent(body: unknown) {
@@ -102,16 +112,14 @@ function makeEvent(body: unknown) {
   return {} as Parameters<typeof handler>[0]
 }
 
-function mockInsertSuccess(returnData = { id: 'sug-001' }) {
-  mockSelect.mockReturnValue({ single: mockSingle })
-  mockSingle.mockResolvedValue({ data: returnData, error: null })
+function mockInsertSuccess(returnData: Record<string, unknown>[] = [{ id: 'sug-001' }]) {
+  mockSelect.mockResolvedValue({ data: returnData, error: null })
 }
 
 beforeEach(() => {
   vi.clearAllMocks()
   mockInsert.mockReturnValue({ select: mockSelect })
-  mockSelect.mockReturnValue({ single: mockSingle })
-  mockSingle.mockResolvedValue({ data: { id: 'sug-001' }, error: null })
+  mockSelect.mockResolvedValue({ data: [{ id: 'sug-001' }], error: null })
   mockFrom.mockImplementation((table: string) =>
     table === 'places' ? mockPlacesChain : { insert: mockInsert }
   )
@@ -127,64 +135,62 @@ beforeEach(() => {
 //  Validation
 // ═══════════════════════════════════════════════════════════════════════════
 describe('POST /api/suggestions — validation', () => {
-  it('throws 400 when name_i18n is empty', async () => {
-    await expect(handler(makeEvent({ ...baseBody(), name_i18n: {} }))).rejects.toMatchObject({
-      statusCode: 400,
-    })
-  })
-
-  it('throws 400 when name_i18n is missing', async () => {
-    const { name_i18n: _n, ...noName } = baseBody()
-    await expect(handler(makeEvent(noName))).rejects.toMatchObject({ statusCode: 400 })
+  it('throws 400 when place.name_i18n is empty', async () => {
+    const body = baseBody()
+    body.place.name_i18n = {}
+    await expect(handler(makeEvent(body))).rejects.toMatchObject({ statusCode: 400 })
   })
 
   it('throws 400 when location city and address are both empty', async () => {
-    await expect(
-      handler(makeEvent({ ...baseBody(), location: { city: '', address: '' } }))
-    ).rejects.toMatchObject({ statusCode: 400 })
+    const body = baseBody()
+    body.place.location = { city: '', address: '', lat: undefined, lng: undefined }
+    await expect(handler(makeEvent(body))).rejects.toMatchObject({ statusCode: 400 })
   })
 
   it('succeeds when only address is provided (city empty)', async () => {
     mockInsertSuccess()
-    const body = { ...baseBody(), location: { city: '', address: 'Sderot Rokach' } }
+    const body = baseBody()
+    body.place.location = { city: '', address: 'Sderot Rokach', lat: undefined, lng: undefined }
     await expect(handler(makeEvent(body))).resolves.toMatchObject({ success: true })
   })
 
-  it('succeeds when only city is provided (address empty)', async () => {
-    mockInsertSuccess()
-    const body = { ...baseBody(), location: { city: 'Tel Aviv', address: '' } }
-    await expect(handler(makeEvent(body))).resolves.toMatchObject({ success: true })
+  it('throws 400 when category_id is missing on a new activity', async () => {
+    const body = { ...baseBody(), activities: [newActivity({ category_id: '' })] }
+    await expect(handler(makeEvent(body))).rejects.toMatchObject({ statusCode: 400 })
   })
 
-  it('throws 400 when category_id is missing', async () => {
-    await expect(handler(makeEvent({ ...baseBody(), category_id: '' }))).rejects.toMatchObject({
-      statusCode: 400,
-    })
+  it('throws 400 when there are no new activities at all', async () => {
+    const body = {
+      ...baseBody(),
+      activities: [
+        { mode: 'existing' as const, activity_id: '22222222-2222-4222-8222-222222222222' },
+      ],
+    }
+    await expect(handler(makeEvent(body))).rejects.toMatchObject({ statusCode: 400 })
   })
 })
 
 // ═══════════════════════════════════════════════════════════════════════════
-//  Payload persistence
+//  Payload persistence — new place, single activity
 // ═══════════════════════════════════════════════════════════════════════════
 describe('POST /api/suggestions — payload persistence', () => {
   it('persists title_i18n in metadata', async () => {
     mockInsertSuccess()
     await handler(makeEvent(baseBody()))
-    const insertedRow = mockInsert.mock.calls[0][0]
-    expect(insertedRow.metadata.title_i18n).toEqual({ es: 'Juegos en Parque HaYarkon' })
+    const rows = mockInsert.mock.calls[0][0]
+    expect(rows[0].metadata.title_i18n).toEqual({ es: 'Juegos en Parque HaYarkon' })
   })
 
   it('hours_unknown=true → schedule_structured null in metadata', async () => {
     mockInsertSuccess()
     const body = {
       ...baseBody(),
-      schedule_structured: undefined,
-      metadata: { ...baseBody().metadata, hours_unknown: true },
+      activities: [newActivity({ metadata: { hours_unknown: true } })],
     }
     await handler(makeEvent(body))
-    const insertedRow = mockInsert.mock.calls[0][0]
-    expect(insertedRow.metadata.hours_unknown).toBe(true)
-    expect(insertedRow.metadata.schedule_structured).toBeNull()
+    const rows = mockInsert.mock.calls[0][0]
+    expect(rows[0].metadata.hours_unknown).toBe(true)
+    expect(rows[0].metadata.schedule_structured).toBeNull()
   })
 
   it('hours_unknown=false → schedule_structured preserved', async () => {
@@ -200,79 +206,165 @@ describe('POST /api/suggestions — payload persistence', () => {
     }
     const body = {
       ...baseBody(),
-      schedule_structured: schedule,
-      metadata: { ...baseBody().metadata, hours_unknown: false },
+      activities: [
+        newActivity({ schedule_structured: schedule, metadata: { hours_unknown: false } }),
+      ],
     }
     await handler(makeEvent(body))
-    const insertedRow = mockInsert.mock.calls[0][0]
-    expect(insertedRow.metadata.schedule_structured).toEqual(schedule)
-  })
-
-  it('does not lose phone/website/opening_hours_text from metadata', async () => {
-    mockInsertSuccess()
-    await handler(makeEvent(baseBody()))
-    const insertedRow = mockInsert.mock.calls[0][0]
-    expect(insertedRow.metadata.phone).toBe('+972-3-123')
-    expect(insertedRow.metadata.website).toBe('https://park.il')
-    expect(insertedRow.metadata.opening_hours_text).toEqual(['Lunes: 8am–6pm'])
+    const rows = mockInsert.mock.calls[0][0]
+    expect(rows[0].metadata.schedule_structured).toEqual(schedule)
   })
 
   it('is_free=true → price stored as null in metadata', async () => {
     mockInsertSuccess()
-    const body = { ...baseBody(), is_free: true }
-    await handler(makeEvent(body))
-    const insertedRow = mockInsert.mock.calls[0][0]
-    expect(insertedRow.metadata.price).toBeNull()
+    await handler(makeEvent(baseBody()))
+    const rows = mockInsert.mock.calls[0][0]
+    expect(rows[0].metadata.price).toBeNull()
   })
 
   it('is_free=false → price stored from payload', async () => {
     mockInsertSuccess()
-    const body = { ...baseBody(), is_free: false, price: 50 }
+    const body = { ...baseBody(), activities: [newActivity({ is_free: false, price: 50 })] }
     await handler(makeEvent(body))
-    const insertedRow = mockInsert.mock.calls[0][0]
-    expect(insertedRow.metadata.price).toBe(50)
+    const rows = mockInsert.mock.calls[0][0]
+    expect(rows[0].metadata.price).toBe(50)
   })
 
-  it('inserts google_place_id from metadata', async () => {
+  it('is_free=false and price=0 → price stored as 0, not dropped', async () => {
+    mockInsertSuccess()
+    const body = { ...baseBody(), activities: [newActivity({ is_free: false, price: 0 })] }
+    await handler(makeEvent(body))
+    const rows = mockInsert.mock.calls[0][0]
+    expect(rows[0].metadata.price).toBe(0)
+  })
+
+  it('inserts google_place_id from place metadata onto the primary row', async () => {
     mockInsertSuccess()
     await handler(makeEvent(baseBody()))
-    const insertedRow = mockInsert.mock.calls[0][0]
-    expect(insertedRow.metadata.google_place_id).toBe('gp-001')
+    const rows = mockInsert.mock.calls[0][0]
+    expect(rows[0].metadata.google_place_id).toBe('gp-001')
+    expect(rows[0].is_primary).toBe(true)
   })
 })
 
 describe('POST /api/suggestions — schedule text', () => {
-  it('generates human-readable schedule text from schedule_structured', async () => {
+  it('generates human-readable schedule text in the submitter locale', async () => {
     mockInsertSuccess()
     const body = {
       ...baseBody(),
-      schedule_structured: {
-        monday: { open: true, start: '09:00', end: '17:00' },
-        tuesday: { open: false, start: '09:00', end: '17:00' },
-        wednesday: { open: false, start: '09:00', end: '17:00' },
-        thursday: { open: false, start: '09:00', end: '17:00' },
-        friday: { open: false, start: '09:00', end: '14:00' },
-        saturday: { open: false, start: '10:00', end: '16:00' },
-        sunday: { open: false, start: '09:00', end: '17:00' },
-      },
-      metadata: { ...baseBody().metadata, hours_unknown: false },
+      locale: 'en',
+      activities: [
+        newActivity({
+          schedule_structured: {
+            monday: { open: true, start: '09:00', end: '17:00' },
+            tuesday: { open: false, start: '09:00', end: '17:00' },
+            wednesday: { open: false, start: '09:00', end: '17:00' },
+            thursday: { open: false, start: '09:00', end: '17:00' },
+            friday: { open: false, start: '09:00', end: '14:00' },
+            saturday: { open: false, start: '10:00', end: '16:00' },
+            sunday: { open: false, start: '09:00', end: '17:00' },
+          },
+          metadata: { hours_unknown: false },
+        }),
+      ],
     }
     await handler(makeEvent(body))
-    const insertedRow = mockInsert.mock.calls[0][0]
-    expect(insertedRow.schedule).toContain('Lunes')
-    expect(insertedRow.schedule).toContain('09:00')
+    const rows = mockInsert.mock.calls[0][0]
+    expect(rows[0].schedule).toContain('Monday')
+    expect(rows[0].schedule).toContain('09:00')
+  })
+
+  it('falls back to Spanish day names for an unknown locale', async () => {
+    mockInsertSuccess()
+    const body = {
+      ...baseBody(),
+      locale: 'fr',
+      activities: [
+        newActivity({
+          schedule_structured: {
+            monday: { open: true, start: '09:00', end: '17:00' },
+            tuesday: { open: false, start: '09:00', end: '17:00' },
+            wednesday: { open: false, start: '09:00', end: '17:00' },
+            thursday: { open: false, start: '09:00', end: '17:00' },
+            friday: { open: false, start: '09:00', end: '14:00' },
+            saturday: { open: false, start: '10:00', end: '16:00' },
+            sunday: { open: false, start: '09:00', end: '17:00' },
+          },
+          metadata: { hours_unknown: false },
+        }),
+      ],
+    }
+    await handler(makeEvent(body))
+    const rows = mockInsert.mock.calls[0][0]
+    expect(rows[0].schedule).toContain('Lunes')
   })
 
   it('schedule is empty string when hours_unknown=true', async () => {
     mockInsertSuccess()
+    const body = { ...baseBody(), activities: [newActivity({ metadata: { hours_unknown: true } })] }
+    await handler(makeEvent(body))
+    const rows = mockInsert.mock.calls[0][0]
+    expect(rows[0].schedule).toBe('')
+  })
+})
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  Multiple activities for a new place
+// ═══════════════════════════════════════════════════════════════════════════
+describe('POST /api/suggestions — new place with multiple activities', () => {
+  it('inserts one row per new activity, sharing a suggestion_group_id', async () => {
+    mockInsertSuccess()
     const body = {
       ...baseBody(),
-      schedule_structured: undefined,
-      metadata: { ...baseBody().metadata, hours_unknown: true },
+      activities: [
+        newActivity({ title_i18n: { es: 'Toboganes' } }),
+        newActivity({ title_i18n: { es: 'Hamacas' } }),
+      ],
     }
     await handler(makeEvent(body))
-    const insertedRow = mockInsert.mock.calls[0][0]
-    expect(insertedRow.schedule).toBe('')
+    const rows = mockInsert.mock.calls[0][0]
+    expect(rows).toHaveLength(2)
+    expect(rows[0].suggestion_group_id).toBeTruthy()
+    expect(rows[0].suggestion_group_id).toBe(rows[1].suggestion_group_id)
+  })
+
+  it('only the first (primary) row carries the place fields', async () => {
+    mockInsertSuccess()
+    const body = {
+      ...baseBody(),
+      activities: [
+        newActivity({ title_i18n: { es: 'Toboganes' } }),
+        newActivity({ title_i18n: { es: 'Hamacas' } }),
+      ],
+    }
+    await handler(makeEvent(body))
+    const rows = mockInsert.mock.calls[0][0]
+    expect(rows[0].is_primary).toBe(true)
+    expect(rows[0].name_i18n).toEqual({ es: 'Parque HaYarkon' })
+    expect(rows[1].is_primary).toBe(false)
+    expect(rows[1].name_i18n).toEqual({})
+    expect(rows[1].location).toBeNull()
+  })
+
+  it('no suggestion_group_id when there is only one new activity', async () => {
+    mockInsertSuccess()
+    await handler(makeEvent(baseBody()))
+    const rows = mockInsert.mock.calls[0][0]
+    expect(rows[0].suggestion_group_id).toBeNull()
+  })
+
+  it('existing-activity items are not inserted', async () => {
+    mockInsertSuccess()
+    const body = {
+      ...baseBody(),
+      activities: [
+        newActivity({ title_i18n: { es: 'Toboganes' } }),
+        { mode: 'existing' as const, activity_id: '22222222-2222-4222-8222-222222222222' },
+      ],
+    }
+    await handler(makeEvent(body))
+    const rows = mockInsert.mock.calls[0][0]
+    expect(rows).toHaveLength(1)
   })
 })
 
@@ -280,31 +372,21 @@ describe('POST /api/suggestions — schedule text', () => {
 //  experience_for_existing_place branch
 // ═══════════════════════════════════════════════════════════════════════════
 describe('POST /api/suggestions — experience_for_existing_place', () => {
-  const existingPlaceBody = () => ({
-    suggestion_type: 'experience_for_existing_place' as const,
-    place_id: '11111111-1111-4111-8111-111111111111',
-    title_i18n: { es: 'Toboganes' },
-    category_id: 'cat-001',
-    age_range_ids: [1, 2],
-    best_season: ['spring'],
-    type: ['Parques'],
-    is_free: true,
-    stroller_friendly: false,
-    has_shadow: false,
-    has_bathrooms: false,
-    open_weekends: true,
-    schedule_structured: undefined,
-    metadata: {},
+  const existingPlaceBody = (overrides = {}) => ({
+    place: { mode: 'existing' as const, place_id: '11111111-1111-4111-8111-111111111111' },
+    activities: [newActivity({ title_i18n: { es: 'Toboganes' } })],
+    locale: 'es',
+    ...overrides,
   })
 
-  it('inserts only an activity-shaped suggestion with no place_id lookup fields', async () => {
+  it('inserts an activity-shaped suggestion with no place fields', async () => {
     mockInsertSuccess()
     await handler(makeEvent(existingPlaceBody()))
-    const insertedRow = mockInsert.mock.calls[0][0]
-    expect(insertedRow.suggestion_type).toBe('experience_for_existing_place')
-    expect(insertedRow.place_id).toBe('11111111-1111-4111-8111-111111111111')
-    expect(insertedRow.location).toBeNull()
-    expect(insertedRow.name_i18n).toEqual({})
+    const rows = mockInsert.mock.calls[0][0]
+    expect(rows[0].suggestion_type).toBe('experience_for_existing_place')
+    expect(rows[0].place_id).toBe('11111111-1111-4111-8111-111111111111')
+    expect(rows[0].location).toBeNull()
+    expect(rows[0].name_i18n).toEqual({})
   })
 
   it('checks the place exists and is active before inserting', async () => {
@@ -325,13 +407,13 @@ describe('POST /api/suggestions — experience_for_existing_place', () => {
 
   it('throws 400 when place_id is not a valid uuid', async () => {
     await expect(
-      handler(makeEvent({ ...existingPlaceBody(), place_id: 'not-a-uuid' }))
+      handler(makeEvent(existingPlaceBody({ place: { mode: 'existing', place_id: 'not-a-uuid' } })))
     ).rejects.toMatchObject({ statusCode: 400 })
   })
 
-  it('throws 400 when title_i18n is missing', async () => {
-    const { title_i18n: _t, ...noTitle } = existingPlaceBody()
-    await expect(handler(makeEvent(noTitle))).rejects.toMatchObject({ statusCode: 400 })
+  it('throws 400 when title_i18n is missing on a new activity', async () => {
+    const body = existingPlaceBody({ activities: [newActivity({ title_i18n: undefined })] })
+    await expect(handler(makeEvent(body))).rejects.toMatchObject({ statusCode: 400 })
   })
 
   it('flags flagged_possible_duplicate when a matching activity is found', async () => {
@@ -340,8 +422,28 @@ describe('POST /api/suggestions — experience_for_existing_place', () => {
       { id: 'act-existing', title: 'Toboganes', confidence: 'high', reason: 'exact_title' },
     ])
     await handler(makeEvent(existingPlaceBody()))
-    const insertedRow = mockInsert.mock.calls[0][0]
-    expect(insertedRow.flagged_possible_duplicate).toBe(true)
-    expect(insertedRow.possible_duplicate_activity_id).toBe('act-existing')
+    const rows = mockInsert.mock.calls[0][0]
+    expect(rows[0].flagged_possible_duplicate).toBe(true)
+    expect(rows[0].possible_duplicate_activity_id).toBe('act-existing')
+  })
+
+  it('checks each new activity independently for duplicates when there are several', async () => {
+    mockInsertSuccess()
+    mockFindExperienceDuplicates
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([
+        { id: 'act-x', title: 'Hamacas', confidence: 'high', reason: 'exact_title' },
+      ])
+    const body = existingPlaceBody({
+      activities: [
+        newActivity({ title_i18n: { es: 'Toboganes' } }),
+        newActivity({ title_i18n: { es: 'Hamacas' } }),
+      ],
+    })
+    await handler(makeEvent(body))
+    const rows = mockInsert.mock.calls[0][0]
+    expect(rows[0].flagged_possible_duplicate).toBe(false)
+    expect(rows[1].flagged_possible_duplicate).toBe(true)
+    expect(rows[1].possible_duplicate_activity_id).toBe('act-x')
   })
 })

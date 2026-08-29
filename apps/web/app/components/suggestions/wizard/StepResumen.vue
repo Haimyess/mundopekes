@@ -7,59 +7,35 @@ const { t } = useI18n()
 const { tc } = useI18nContent()
 const store = useActivitiesStore()
 
-onMounted(async () => {
-  if (!store.filterOptionsLoaded) await store.loadFilterOptions()
-})
+const emit = defineEmits<{ 'edit-activities': [] }>()
 
-// ── Title ─────────────────────────────────────────────────────────
-// Two-way binding that marks titleTouched when the user types
-const titleValue = computed({
-  get: () => wizard.effectiveTitle.value,
-  set: (val: string) => {
-    wizard.state.value.titleManual = val
-    wizard.state.value.titleTouched = true
-  },
-})
-
-// ── Seasons ───────────────────────────────────────────────────────
 const seasonLabelMap = computed(() =>
   Object.fromEntries(store.filterOptions.seasons.map((s) => [s.value, t(s.label_key)]))
 )
 
-// ── Feature toggles (same keys as StepDetalles) ──────────────────
-const TOGGLES = computed(() => [
-  { key: 'stroller' as const, label: t('suggest.toggle_stroller'), icon: 'i-lucide-baby' },
-  { key: 'shadow' as const, label: t('suggest.toggle_shadow'), icon: 'i-lucide-tree-pine' },
-  { key: 'bathrooms' as const, label: t('suggest.toggle_bathrooms'), icon: 'i-lucide-toilet' },
-  { key: 'weekends' as const, label: t('suggest.toggle_weekends'), icon: 'i-lucide-calendar' },
-])
+const activitySummary = (a: (typeof wizard.state.value.activities)[number]) => {
+  if (a.mode === 'existing') return a.title
+  return wizard.effectiveDraftTitle(a) || t('suggest.activity_untitled')
+}
 
-// ── Hours display ─────────────────────────────────────────────────
-const firstOpeningHour = computed(() => {
-  const text = wizard.state.value.placeInfo?.openingHoursText ?? ''
-  return text.split('\n').find((l) => l.trim()) ?? ''
-})
+const activityBadges = (a: (typeof wizard.state.value.activities)[number]) => {
+  if (a.mode === 'existing') return []
+  const out: string[] = []
+  if (a.category) out.push(tc(a.category.name_i18n))
+  if (a.customActivity) out.push(a.customActivity)
+  a.selectedSeasons.forEach((sv) => out.push(seasonLabelMap.value[sv] ?? sv))
+  a.selectedAgeLabels.forEach((l) => out.push(l))
+  out.push(a.isFree ? t('suggest.free') : `₪${a.price}`)
+  return out
+}
 </script>
 
 <template>
   <div class="step-resumen">
-    <!-- ── TÍTULO ──────────────────────────────────────────────── -->
-    <section class="step-resumen__section">
-      <span class="step-resumen__label">{{ t('suggest.activity_title') }}</span>
-      <input
-        :value="titleValue"
-        type="text"
-        class="step-resumen__title-input"
-        @input="titleValue = ($event.target as HTMLInputElement).value"
-      />
-    </section>
-
     <!-- ── LUGAR ──────────────────────────────────────────────── -->
     <section class="step-resumen__section">
       <span class="step-resumen__label">{{ t('suggest.step_lugar') }}</span>
 
-      <!-- Matched an existing place: compact, non-editable — the place data
-           already lives in our DB, this suggestion only adds an experience -->
       <div v-if="wizard.state.value.matchedPlace" class="step-resumen__place-header">
         <span class="step-resumen__place-name">{{ wizard.placeName.value }}</span>
         <span class="step-resumen__place-addr">{{ wizard.placeAddress.value }}</span>
@@ -73,6 +49,10 @@ const firstOpeningHour = computed(() => {
         <div class="step-resumen__place-header">
           <span class="step-resumen__place-name">{{ wizard.placeName.value }}</span>
           <span class="step-resumen__place-addr">{{ wizard.placeAddress.value }}</span>
+          <span class="step-resumen__place-new">
+            <UiIcon name="i-lucide-sparkles" size="xs" />
+            {{ t('suggest.new_place') }}
+          </span>
         </div>
 
         <UFormField :label="t('suggest.description')">
@@ -95,114 +75,39 @@ const firstOpeningHour = computed(() => {
       </template>
     </section>
 
-    <!-- ── ACTIVIDAD ──────────────────────────────────────────── -->
+    <!-- ── ACTIVIDADES ────────────────────────────────────────── -->
     <section class="step-resumen__section">
       <div class="step-resumen__section-header">
         <span class="step-resumen__label">{{ t('suggest.step_actividad') }}</span>
-        <button class="step-resumen__edit-btn" @click="wizard.toggleEdit()">
+        <button class="step-resumen__edit-btn" @click="emit('edit-activities')">
           <UiIcon name="i-lucide-pencil" size="xs" />
           {{ t('common.edit') }}
         </button>
       </div>
 
-      <div class="step-resumen__chips">
-        <!-- Categoría -->
-        <template v-if="wizard.state.value.selectedCategories.length">
-          <UiBadge
-            v-for="cat in wizard.state.value.selectedCategories"
-            :key="cat.id"
-            variant="success"
-            size="sm"
+      <div v-if="!wizard.state.value.activities.length" class="step-resumen__empty">
+        {{ t('suggest.edit_empty') }}
+      </div>
+
+      <div
+        v-for="a in wizard.state.value.activities"
+        :key="a.localId"
+        class="step-resumen__activity"
+      >
+        <div class="step-resumen__activity-head">
+          <span class="step-resumen__activity-title">{{ activitySummary(a) }}</span>
+          <span
+            class="step-resumen__activity-tag"
+            :class="{ 'step-resumen__activity-tag--existing': a.mode === 'existing' }"
           >
-            {{ tc(cat.name_i18n) }}
+            {{ a.mode === 'existing' ? t('suggest.existing_activity') : t('suggest.new_activity') }}
+          </span>
+        </div>
+        <div v-if="activityBadges(a).length" class="step-resumen__chips">
+          <UiBadge v-for="(b, i) in activityBadges(a)" :key="i" variant="secondary" size="sm">
+            {{ b }}
           </UiBadge>
-        </template>
-
-        <!-- Actividad personalizada -->
-        <UiBadge v-if="wizard.state.value.customActivity" variant="primary" size="sm">
-          {{ wizard.state.value.customActivity }}
-        </UiBadge>
-
-        <!-- Temporadas -->
-        <UiBadge
-          v-for="sv in wizard.state.value.selectedSeasons"
-          :key="sv"
-          variant="info"
-          size="sm"
-        >
-          {{ seasonLabelMap[sv] ?? sv }}
-        </UiBadge>
-
-        <!-- Edades -->
-        <UiBadge
-          v-for="label in wizard.state.value.selectedAgeLabels"
-          :key="label"
-          variant="secondary"
-          size="sm"
-        >
-          {{ label }}
-        </UiBadge>
-
-        <span
-          v-if="
-            !wizard.state.value.selectedCategories.length &&
-            !wizard.state.value.customActivity &&
-            !wizard.state.value.selectedSeasons.length &&
-            !wizard.state.value.selectedAgeLabels.length
-          "
-          class="step-resumen__empty"
-        >
-          {{ t('suggest.edit_empty') }}
-        </span>
-      </div>
-    </section>
-
-    <!-- ── DETALLES ────────────────────────────────────────────── -->
-    <section class="step-resumen__section">
-      <span class="step-resumen__label">{{ t('suggest.step_detalles') }}</span>
-
-      <!-- Precio -->
-      <div class="step-resumen__toggle-row">
-        <div class="step-resumen__toggle-info">
-          <UiIcon name="i-lucide-ticket" size="sm" />
-          <span class="step-resumen__toggle-label">{{ t('suggest.free') }}</span>
         </div>
-        <UCheckbox v-model="wizard.state.value.isFree" />
-      </div>
-      <Transition name="slide-down">
-        <div v-if="!wizard.state.value.isFree" class="step-resumen__price">
-          <UFormField :label="t('suggest.price')">
-            <UiInput
-              v-model="wizard.state.value.price"
-              type="number"
-              placeholder="45"
-              icon="i-lucide-shekel-sign"
-            />
-          </UFormField>
-        </div>
-      </Transition>
-
-      <!-- Características -->
-      <div v-for="toggle in TOGGLES" :key="toggle.key" class="step-resumen__toggle-row">
-        <div class="step-resumen__toggle-info">
-          <UiIcon :name="toggle.icon" size="sm" />
-          <span class="step-resumen__toggle-label">{{ toggle.label }}</span>
-        </div>
-        <UCheckbox v-model="wizard.state.value[toggle.key]" />
-      </div>
-
-      <!-- Horarios -->
-      <div class="step-resumen__hours">
-        <UiIcon name="i-lucide-clock" size="xs" />
-        <span v-if="wizard.state.value.hoursUnknown" class="step-resumen__hours-pending">
-          {{ t('suggest.hours_pending_review') }}
-        </span>
-        <span v-else-if="firstOpeningHour" class="step-resumen__hours-text">
-          {{ firstOpeningHour }}
-        </span>
-        <span v-else class="step-resumen__hours-text">
-          {{ t('suggest.schedule') }}
-        </span>
       </div>
     </section>
   </div>
@@ -236,26 +141,6 @@ const firstOpeningHour = computed(() => {
   letter-spacing: 0.05em;
 }
 
-/* Prominent title input */
-.step-resumen__title-input {
-  width: 100%;
-  font-size: var(--font-size-lg, 1.125rem);
-  font-weight: var(--font-weight-medium);
-  font-family: var(--font-family-base);
-  color: var(--color-text-primary);
-  background: transparent;
-  border: none;
-  border-bottom: 1.5px solid var(--color-border-secondary);
-  border-radius: 0;
-  padding: var(--space-1) 0;
-  outline: none;
-  transition: border-color 0.15s;
-}
-
-.step-resumen__title-input:focus {
-  border-bottom-color: var(--color-secondary-500);
-}
-
 .step-resumen__place-header {
   display: flex;
   flex-direction: column;
@@ -273,13 +158,21 @@ const firstOpeningHour = computed(() => {
   color: var(--color-text-secondary);
 }
 
-.step-resumen__place-existing {
+.step-resumen__place-existing,
+.step-resumen__place-new {
   display: inline-flex;
   align-items: center;
   gap: 4px;
   font-size: var(--font-size-xs);
-  color: var(--color-success-700, #15803d);
   margin-top: 2px;
+}
+
+.step-resumen__place-existing {
+  color: var(--color-success-700, #15803d);
+}
+
+.step-resumen__place-new {
+  color: var(--color-primary-700, #1d4ed8);
 }
 
 .step-resumen__place-meta {
@@ -314,78 +207,49 @@ const firstOpeningHour = computed(() => {
   background: var(--color-secondary-100);
 }
 
-.step-resumen__chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-1);
-}
-
 .step-resumen__empty {
   font-size: var(--font-size-xs);
   color: var(--color-text-tertiary);
 }
 
-.step-resumen__toggle-row {
+.step-resumen__activity {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: var(--space-1) 0;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-2) 0;
   border-bottom: 0.5px solid var(--color-border-tertiary);
 }
 
-.step-resumen__toggle-row:last-of-type {
+.step-resumen__activity:last-child {
   border-bottom: none;
 }
 
-.step-resumen__toggle-info {
+.step-resumen__activity-head {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: var(--space-2);
-  color: var(--color-text-secondary);
 }
 
-.step-resumen__toggle-label {
+.step-resumen__activity-title {
   font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
   color: var(--color-text-primary);
 }
 
-.step-resumen__price {
-  padding-top: var(--space-1);
+.step-resumen__activity-tag {
+  font-size: var(--font-size-xs);
+  color: var(--color-primary-700, #1d4ed8);
+  white-space: nowrap;
 }
 
-.step-resumen__hours {
+.step-resumen__activity-tag--existing {
+  color: var(--color-success-700, #15803d);
+}
+
+.step-resumen__chips {
   display: flex;
-  align-items: center;
+  flex-wrap: wrap;
   gap: var(--space-1);
-  padding-top: var(--space-1);
-}
-
-.step-resumen__hours-text {
-  font-size: var(--font-size-xs);
-  color: var(--color-text-secondary);
-}
-
-.step-resumen__hours-pending {
-  font-size: var(--font-size-xs);
-  color: var(--color-warning-600, #d97706);
-  font-style: italic;
-}
-
-.slide-down-enter-active,
-.slide-down-leave-active {
-  transition: all 0.2s ease;
-  overflow: hidden;
-}
-
-.slide-down-enter-from,
-.slide-down-leave-to {
-  opacity: 0;
-  max-height: 0;
-}
-
-.slide-down-enter-to,
-.slide-down-leave-from {
-  opacity: 1;
-  max-height: 80px;
 }
 </style>

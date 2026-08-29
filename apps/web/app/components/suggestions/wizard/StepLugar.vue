@@ -164,7 +164,8 @@ const hasPlaceExtra = computed(() => {
         class="step-lugar__manual-link step-lugar__back-link"
         @click="wizard.toggleNewPlaceForm()"
       >
-        ← {{ t('suggest.back_to_local_search') }}
+        <UiIcon name="i-lucide-arrow-left" size="xs" class="step-lugar__back-icon" />
+        {{ t('suggest.back_to_local_search') }}
       </button>
 
       <template v-if="!wizard.state.value.isManual">
@@ -405,6 +406,17 @@ const hasPlaceExtra = computed(() => {
 
 .step-lugar__back-link {
   align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.step-lugar__back-icon {
+  transform: scaleX(var(--icon-flip, 1));
+}
+
+[dir='rtl'] .step-lugar__back-icon {
+  --icon-flip: -1;
 }
 
 .step-lugar__search {

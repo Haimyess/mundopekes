@@ -19,7 +19,7 @@ const emit = defineEmits<{
   close: []
 }>()
 
-const { approve, reject, remove, merge, actionLoading } = useSuggestions()
+const { approve, reject, remove, merge, mergeActivity, actionLoading } = useSuggestions()
 const toast = useToast()
 const { t, locale } = useI18n()
 const { uploadFromUrl } = useImageUpload()
@@ -73,6 +73,13 @@ watch(
 const handleMerge = async (targetPlaceId: string) => {
   if (!props.suggestion) return
   await merge(props.suggestion.id, targetPlaceId)
+  emit('approved')
+  emit('close')
+}
+
+const handleMergeActivity = async (targetActivityId: string) => {
+  if (!props.suggestion) return
+  await mergeActivity(props.suggestion.id, targetActivityId)
   emit('approved')
   emit('close')
 }
@@ -555,6 +562,16 @@ const pickI18n = (obj: Record<string, string> | null | undefined): string => {
                 >
                   {{ t('suggestionsSlideover.mergeIntoThis') }}
                 </UButton>
+                <UButton
+                  v-else-if="duplicateActivity"
+                  size="xs"
+                  color="warning"
+                  icon="i-lucide-check"
+                  :loading="actionLoading"
+                  @click="handleMergeActivity(duplicateActivity.id)"
+                >
+                  {{ t('suggestionsSlideover.alreadyExistsResolve') }}
+                </UButton>
               </div>
             </template>
           </UAlert>
@@ -855,8 +872,11 @@ const pickI18n = (obj: Record<string, string> | null | undefined): string => {
             v-model:has-bathrooms="editForm.meta_has_bathrooms"
             v-model:activity-website="editForm.meta_activity_website"
             v-model:images="editForm.images"
-            :show-place-identity="suggestion.suggestion_type !== 'experience_for_existing_place'"
             type="suggestion"
+            :name-i18n-status="suggestion?.i18n_status?.name"
+            :description-i18n-status="suggestion?.i18n_status?.description"
+            :title-i18n-status="suggestion?.i18n_status?.title"
+            :show-place-identity="suggestion.suggestion_type !== 'experience_for_existing_place'"
             :subcategory-options="subcategories"
             :age-range-options="dbAgeRanges"
             :season-options="dbSeasons"

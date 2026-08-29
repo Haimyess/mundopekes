@@ -10,34 +10,18 @@ const toast = useToast()
 const isMobile = useMediaQuery('(max-width: 768px)')
 const currentStep = ref(1)
 const submitting = ref(false)
-// const editOpen    = ref(false)
 const TOTAL_STEPS = wizard.STEPS.length
 
-// const canContinue = computed(() => {
-//   if (currentStep.value === 1) return wizard.hasPlace.value
-//   if (currentStep.value === 2) return wizard.hasActivity.value
-//   return true
-// })
-
-// const canContinue = computed(() => {
-//   if (currentStep.value === 1) return wizard.hasPlace.value
-//   // paso 2 siempre puede continuar — categoría es opcional
-//   // el admin puede asignarla al revisar
-//   return true
-// })
-
-// Step order: 1=Actividad, 2=Lugar, 3=Detalles, 4=Resumen (ver WIZARD_STEPS)
+// Step order: 1=Lugar, 2=Actividad(es), 3=Resumen (see WIZARD_STEPS)
 const canContinue = computed(() => {
-  if (currentStep.value === 1) return wizard.hasActivity.value
-  if (currentStep.value === 2) return wizard.hasPlace.value
+  if (currentStep.value === 1) return wizard.hasPlace.value
+  if (currentStep.value === 2) return wizard.hasActivity.value
   return true
 })
 
 const next = async () => {
   if (currentStep.value < TOTAL_STEPS) {
     currentStep.value++
-    // editOpen.value = false
-    wizard.closeEdit()
     return
   }
   await submit()
@@ -47,23 +31,8 @@ const prev = () => {
   if (currentStep.value > 1) currentStep.value--
 }
 
-// const submit = async () => {
-//   submitting.value = true
-//   try {
-//     await $fetch('/api/suggestions', {
-//       method: 'POST',
-//       body: wizard.buildPayload(),
-//     })
-//     toast.add({ title: t('suggest.success'), color: 'success' })
-//     handleClose()
-//   } catch (e: any) {
-//     toast.add({ title: e?.message ?? t('common.error'), color: 'error' })
-//   } finally {
-//     submitting.value = false
-//   }
-// }
-
 const submit = async () => {
+  if (submitting.value) return
   submitting.value = true
   try {
     await $fetch('/api/suggestions', {
@@ -94,12 +63,9 @@ const handleClose = () => {
   emit('update:open', false)
   setTimeout(() => {
     currentStep.value = 1
-    wizard.closeEdit()
     wizard.reset()
   }, 300)
 }
-
-const toggleEdit = () => wizard.toggleEdit()
 </script>
 
 <template>
@@ -122,25 +88,12 @@ const toggleEdit = () => wizard.toggleEdit()
           :total="TOTAL_STEPS"
           @close="handleClose"
         />
-        <!-- <SuggestionsWizardBody
-  :current-step="currentStep"
-  :edit-open="wizard.editOpen.value"
-  :submitting="submitting"
-  :can-continue="canContinue"
-  @next="next"
-  @prev="prev"
-  @toggle-edit="toggleEdit"
-/> -->
-
         <SuggestionsWizardBody
           :current-step="currentStep"
-          :edit-open="wizard.editOpen.value"
           :submitting="submitting"
           :can-continue="canContinue"
-          :is-mobile="isMobile"
           @next="next"
           @prev="prev"
-          @toggle-edit="toggleEdit"
         />
       </div>
     </template>
@@ -166,35 +119,15 @@ const toggleEdit = () => wizard.toggleEdit()
         />
         <SuggestionsWizardBody
           :current-step="currentStep"
-          :edit-open="wizard.editOpen.value"
           :submitting="submitting"
           :can-continue="canContinue"
-          :is-mobile="isMobile"
           @next="next"
           @prev="prev"
-          @toggle-edit="toggleEdit"
         />
       </div>
     </template>
   </UModal>
 </template>
-
-<style scoped>
-.wizard-layout {
-  display: flex;
-  flex-direction: column;
-  height: 92vh;
-  max-height: 92vh;
-  overflow: hidden;
-}
-
-@media (min-width: 768px) {
-  .wizard-layout {
-    height: 580px;
-    max-height: 580px;
-  }
-}
-</style>
 
 <style scoped>
 .wizard-layout {

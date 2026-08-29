@@ -122,6 +122,21 @@ type TableMock = {
   inResult?: unknown[]
 }
 
+// Chainable + thenable `.update(...)` result — supports both the old direct
+// `await ...update(...).eq('id', id)` pattern (resolves via `.then`) and the
+// new claim-guard pattern `...update(...).eq(...).is(...).select('id')`
+// (resolves to a truthy row so the claim succeeds).
+function makeChainableUpdate(resolvedRows: unknown[] = [{ id: 'sug-001' }]) {
+  const node = {
+    eq: vi.fn(() => node),
+    is: vi.fn(() => node),
+    select: vi.fn().mockResolvedValue({ data: resolvedRows, error: null }),
+    then: (resolve: (v: { data: null; error: null }) => void) =>
+      resolve({ data: null, error: null }),
+  }
+  return node
+}
+
 function setupSupabase(tables: Record<string, TableMock> = {}) {
   const defaultPlace = { id: 'place-001' }
   const defaultActivity = { id: 'act-001' }
@@ -165,9 +180,7 @@ function setupSupabase(tables: Record<string, TableMock> = {}) {
       delete: vi.fn(() => ({
         eq: vi.fn().mockResolvedValue({ error: null }),
       })),
-      update: vi.fn(() => ({
-        eq: vi.fn().mockResolvedValue({ error: null }),
-      })),
+      update: vi.fn(() => makeChainableUpdate()),
     }
   })
 }
@@ -625,7 +638,7 @@ describe('approve.post — duplicate re-check', () => {
           })),
           update: vi.fn((data) => {
             capturedSuggestionUpdate = data as Record<string, unknown>
-            return { eq: vi.fn().mockResolvedValue({ error: null }) }
+            return makeChainableUpdate()
           }),
         }
       }
@@ -680,7 +693,7 @@ describe('approve.post — duplicate re-check', () => {
           })),
           update: vi.fn((data) => {
             capturedSuggestionUpdate = data as Record<string, unknown>
-            return { eq: vi.fn().mockResolvedValue({ error: null }) }
+            return makeChainableUpdate()
           }),
         }
       }
@@ -744,7 +757,7 @@ function buildTableMock(table: string, metas: { suggestions?: unknown } = {}) {
           single: vi.fn().mockResolvedValue({ data: metas.suggestions ?? null, error: null }),
         })),
       })),
-      update: vi.fn(() => ({ eq: vi.fn().mockResolvedValue({ error: null }) })),
+      update: vi.fn(() => makeChainableUpdate()),
     }
   }
   if (table === 'cities') {

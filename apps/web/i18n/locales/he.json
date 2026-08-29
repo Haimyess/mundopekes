@@ -189,7 +189,6 @@
     "step_progress": "שלב {n} מתוך {total}",
     "step_lugar": "מקום",
     "step_actividad": "פעילות",
-    "step_detalles": "פרטים",
     "step_resumen": "סיכום",
     "free": "הכניסה חינם",
     "toggle_stroller": "מתאים לעגלות",
@@ -215,7 +214,16 @@
     "not_this_place": "לא זה המקום? חפש שוב",
     "cant_find_place": "לא מוצא אותו?",
     "add_new_place": "הוסף מקום חדש",
-    "back_to_local_search": "חזרה לחיפוש"
+    "back_to_local_search": "חזרה לחיפוש",
+    "existing_activity": "כבר קיים",
+    "new_activity": "חדש",
+    "new_place": "מקום חדש",
+    "add_another_activity": "הוסף פעילות נוספת",
+    "save_activity": "הוסף פעילות",
+    "activity_untitled": "פעילות ללא כותרת",
+    "activities_count": "{n} פעילויות נוספו",
+    "activity_search_label": "כבר מוצע כאן?",
+    "activity_search_placeholder": "חפש פעילויות במקום הזה"
   },
   "contact": {
     "title": "צור קשר",
@@ -324,6 +332,7 @@
     "back": "חזור",
     "done": "סיום",
     "edit": "ערוך",
+    "save": "שמור",
     "continue": "המשך",
     "day_sunday": "ראשון",
     "day_monday": "שני",

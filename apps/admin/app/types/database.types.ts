@@ -595,6 +595,7 @@ export type Database = {
           id: string
           images: string[] | null
           is_free: boolean | null
+          is_primary: boolean
           location: Json | null
           metadata: Json | null
           name_i18n: Json
@@ -607,6 +608,7 @@ export type Database = {
           schedule: string | null
           status: string | null
           stroller_friendly: boolean | null
+          suggestion_group_id: string | null
           suggestion_type: string
           type: string[]
         }
@@ -621,6 +623,7 @@ export type Database = {
           id?: string
           images?: string[] | null
           is_free?: boolean | null
+          is_primary?: boolean
           location?: Json | null
           metadata?: Json | null
           name_i18n?: Json
@@ -633,6 +636,7 @@ export type Database = {
           schedule?: string | null
           status?: string | null
           stroller_friendly?: boolean | null
+          suggestion_group_id?: string | null
           suggestion_type?: string
           type: string[]
         }
@@ -647,6 +651,7 @@ export type Database = {
           id?: string
           images?: string[] | null
           is_free?: boolean | null
+          is_primary?: boolean
           location?: Json | null
           metadata?: Json | null
           name_i18n?: Json
@@ -659,6 +664,7 @@ export type Database = {
           schedule?: string | null
           status?: string | null
           stroller_friendly?: boolean | null
+          suggestion_group_id?: string | null
           suggestion_type?: string
           type?: string[]
         }

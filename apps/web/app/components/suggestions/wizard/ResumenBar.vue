@@ -1,49 +1,11 @@
 <script setup lang="ts">
 import { useSuggestionWizard } from '~/composables/useSuggestionWizard'
-import { useI18nContent } from '~/composables/useI18nContent'
 
-const props = defineProps<{ currentStep: number; onEdit: () => void }>()
+defineProps<{ currentStep: number }>()
 const wizard = useSuggestionWizard()
 const { t } = useI18n()
-const { tc } = useI18nContent()
-const store = useActivitiesStore()
 
 const expanded = ref(false)
-
-// value → translated label, for converting stored season values to display text
-const seasonLabelMap = computed(() =>
-  Object.fromEntries(store.filterOptions.seasons.map((s) => [s.value, t(s.label_key)]))
-)
-
-const badges = computed(() => {
-  const s = wizard.state.value
-  if (!s) return []
-
-  const out: {
-    label: string
-    color: 'success' | 'info' | 'primary' | 'warning' | 'error' | 'secondary'
-  }[] = []
-
-  if (s.selectedCategories?.length)
-    out.push({ label: tc(s.selectedCategories[0]!.name_i18n), color: 'success' })
-
-  s.selectedSeasons?.forEach((sv) =>
-    out.push({ label: seasonLabelMap.value[sv] ?? sv, color: 'info' })
-  )
-
-  s.selectedAgeLabels?.forEach((label) => out.push({ label, color: 'secondary' }))
-
-  if (props.currentStep >= 3) {
-    if (s.isFree) out.push({ label: t('suggest.free'), color: 'success' })
-    else if (s.price) out.push({ label: `₪${s.price}`, color: 'primary' })
-    if (s.stroller) out.push({ label: t('suggest.toggle_stroller'), color: 'info' })
-    if (s.shadow) out.push({ label: t('suggest.toggle_shadow'), color: 'success' })
-    if (s.bathrooms) out.push({ label: t('suggest.toggle_bathrooms'), color: 'success' })
-    if (s.weekends) out.push({ label: t('suggest.toggle_weekends'), color: 'success' })
-  }
-
-  return out
-})
 
 // Whether there is any extra place info to show when expanded
 const hasExtra = computed(() => {
@@ -52,7 +14,7 @@ const hasExtra = computed(() => {
 })
 
 const descriptionExcerpt = computed(() => {
-  const desc = wizard.state.value.description || tc(wizard.state.value.description_i18n)
+  const desc = wizard.state.value.description
   if (!desc) return ''
   return desc.length > 120 ? desc.slice(0, 117) + '…' : desc
 })
@@ -83,18 +45,12 @@ const firstOpeningHour = computed(() => {
       <div class="resumen-bar__content">
         <span class="resumen-bar__name">{{ wizard.placeName.value }}</span>
         <span class="resumen-bar__addr">{{ wizard.placeAddress.value }}</span>
-        <div v-if="badges.length" class="resumen-bar__badges">
-          <UiBadge v-for="(badge, i) in badges" :key="i" :variant="badge.color" size="xs">
-            {{ badge.label }}
-          </UiBadge>
-        </div>
+        <span v-if="wizard.newActivityCount.value > 0" class="resumen-bar__count">
+          {{ t('suggest.activities_count', { n: wizard.newActivityCount.value }) }}
+        </span>
       </div>
 
       <div class="resumen-bar__side">
-        <button v-if="currentStep > 1" class="resumen-bar__edit" @click.stop="onEdit">
-          <UiIcon name="i-lucide-pencil" size="xs" />
-          {{ t('common.edit') }}
-        </button>
         <button
           v-if="hasExtra"
           class="resumen-bar__expand"
@@ -148,7 +104,6 @@ const firstOpeningHour = computed(() => {
   background: var(--color-background-tertiary);
 }
 
-/* Collapsed top row — capped so the bar doesn't exceed ~1/5 of modal height */
 .resumen-bar__core {
   display: flex;
   align-items: flex-start;
@@ -215,40 +170,18 @@ const firstOpeningHour = computed(() => {
   text-overflow: ellipsis;
 }
 
-.resumen-bar__badges {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-1);
+.resumen-bar__count {
+  font-size: var(--font-size-xs);
+  color: var(--color-secondary-600);
   margin-block-start: var(--space-1);
 }
 
-/* Side column: edit button + expand toggle stacked */
 .resumen-bar__side {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
   gap: var(--space-1);
   flex-shrink: 0;
-}
-
-.resumen-bar__edit {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-medium);
-  color: var(--color-secondary-600);
-  background: var(--color-secondary-50);
-  border: 0.5px solid var(--color-secondary-200);
-  border-radius: 99px;
-  padding: 3px 10px;
-  cursor: pointer;
-  white-space: nowrap;
-  transition: all 0.15s;
-}
-
-.resumen-bar__edit:hover {
-  background: var(--color-secondary-100);
 }
 
 .resumen-bar__expand {
@@ -269,7 +202,6 @@ const firstOpeningHour = computed(() => {
   color: var(--color-text-secondary);
 }
 
-/* Expanded extra section */
 .resumen-bar__extra {
   padding: var(--space-2) var(--space-4) var(--space-3);
   border-top: 0.5px solid var(--color-border-tertiary);

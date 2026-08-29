@@ -815,6 +815,7 @@
     "linkedPlaceMissing": "El lugar asociado ya no existe",
     "possibleDuplicateTitle": "Posible duplicado",
     "mergeIntoThis": "Fusionar con este",
+    "alreadyExistsResolve": "Ya existe — resolver",
     "translationsLabel": "Traducciones",
     "translationsComplete": "Todos los idiomas al día",
     "translationsMissing": "Falta: {locales}",

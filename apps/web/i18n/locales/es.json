@@ -192,7 +192,6 @@
     "step_progress": "Paso {n} de {total}",
     "step_lugar": "Lugar",
     "step_actividad": "Actividad",
-    "step_detalles": "Detalles",
     "step_resumen": "Resumen",
     "free": "Es gratuito",
     "toggle_stroller": "Apto para cochecitos",
@@ -218,7 +217,16 @@
     "not_this_place": "¿No es este lugar? Buscar de nuevo",
     "cant_find_place": "¿No lo encontrás?",
     "add_new_place": "Agregar un lugar nuevo",
-    "back_to_local_search": "Volver a la búsqueda"
+    "back_to_local_search": "Volver a la búsqueda",
+    "existing_activity": "Ya existe",
+    "new_activity": "Nueva",
+    "new_place": "Lugar nuevo",
+    "add_another_activity": "Agregar otra actividad",
+    "save_activity": "Agregar actividad",
+    "activity_untitled": "Actividad sin título",
+    "activities_count": "{n} actividades agregadas",
+    "activity_search_label": "¿Ya se ofrece acá?",
+    "activity_search_placeholder": "Buscar actividades en este lugar"
   },
   "contact": {
     "title": "Contáctanos",
@@ -327,6 +335,7 @@
     "back": "Volver",
     "done": "Listo",
     "edit": "Editar",
+    "save": "Guardar",
     "continue": "Continuar",
     "day_sunday": "Domingo",
     "day_monday": "Lunes",

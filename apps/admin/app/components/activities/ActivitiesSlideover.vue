@@ -21,6 +21,8 @@ const overlay = useOverlay()
 const { loading, run } = useEntitySave()
 const { uploadFromUrl } = useImageUpload()
 
+const activityI18nStatus = computed(() => props.activity?.i18n_status)
+
 const AGE_LABELS = computed<Record<string, string>>(() => ({
   'age.all': t('entityForm.ageLabels.all'),
   'age.babies': t('entityForm.ageLabels.babies'),
@@ -371,6 +373,8 @@ const save = async () => {
           v-model:activity-website="form.website"
           v-model:images="form.images"
           type="activity"
+          :title-i18n-status="activityI18nStatus?.title"
+          :description-i18n-status="activityI18nStatus?.description"
           :subcategory-options="reference?.subcategories ?? []"
           :age-range-options="reference?.ageRanges ?? []"
           :season-options="reference?.seasons ?? []"

@@ -17,6 +17,7 @@
 // Sin i18n propio — todas las etiquetas llegan por prop (bag `labels`), igual
 // que el resto de los componentes Ui* de este directorio.
 import type { WizardSchedule } from '../../../domain/types/schedule'
+import type { FieldI18nStatus } from '../../../domain/types/i18n-status'
 
 interface AgeOption {
   id: number
@@ -71,6 +72,9 @@ const props = defineProps<{
   nameI18n?: Record<string, string>
   titleI18n?: Record<string, string>
   descriptionI18n: Record<string, string>
+  nameI18nStatus?: FieldI18nStatus
+  titleI18nStatus?: FieldI18nStatus
+  descriptionI18nStatus?: FieldI18nStatus
   city?: string
   address?: string | null
   cityId?: number | null
@@ -194,12 +198,14 @@ const showPlaceIdentity = computed(() => props.showPlaceIdentity !== false)
     v-if="type === 'place' || (type === 'suggestion' && showPlaceIdentity)"
     v-model="nameI18nProxy"
     :label="labels.placeName"
+    :status="nameI18nStatus"
     required
   />
 
   <UiI18nTabs
     v-model="descriptionI18nProxy"
     :label="labels.description"
+    :status="descriptionI18nStatus"
     type="textarea"
     :rows="3"
   />
@@ -208,6 +214,7 @@ const showPlaceIdentity = computed(() => props.showPlaceIdentity !== false)
     v-if="type === 'activity' || type === 'suggestion'"
     v-model="titleI18nProxy"
     :label="labels.activityTitle"
+    :status="titleI18nStatus"
     :required="type === 'activity'"
   />
 

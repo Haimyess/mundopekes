@@ -2,9 +2,12 @@
 // row, used by both suggestions/[id]/approve.post.ts (experience_for_existing_place
 // branch) and suggestions/[id]/merge.post.ts — both end up doing the exact same
 // "attach this suggestion's experience data to an existing place_id" operation.
+import type { SupabaseClient } from '@supabase/supabase-js'
 import { translateI18nField } from './translate'
 import type { FieldI18nStatus } from './translate'
-import type { Json } from '~/types/database.types'
+import type { Json, Database } from '~/types/database.types'
+
+type PlaceRow = Database['public']['Tables']['places']['Row']
 
 type SuggestionMeta = {
   title_i18n?: Record<string, string> | null
@@ -71,6 +74,164 @@ export interface BuildActivityInsertOptions {
   // by the caller so a suggestion's Google photos get promoted to permanent
   // Storage URLs exactly once per approve/merge, not once per entity.
   imagesOverride?: string[]
+}
+
+type PlaceSuggestionMeta = {
+  google_place_id?: string | null
+  place_photo_url?: string | null
+  google_types?: string[] | null
+  google_url?: string | null
+  phone?: string | null
+  website?: string | null
+  wheelchair?: boolean | null
+  opening_hours_text?: string[] | null
+  photos?: string[] | null
+  has_shadow?: boolean | null
+  has_bathrooms?: boolean | null
+  hours_unknown?: boolean | null
+  schedule_structured?: unknown
+}
+
+export interface PlaceSuggestionRow {
+  id: string
+  name_i18n: unknown
+  description_i18n: unknown
+  location: unknown
+  metadata: unknown
+  stroller_friendly: boolean | null
+  open_weekends: boolean | null
+  flagged_possible_duplicate: boolean | null
+}
+
+// Turns a `new_place_with_experience` suggestion (or, for a grouped
+// submission, its `is_primary` sibling) into a real `places` row — shared by
+// the single-suggestion approval path and the grouped "1 place + N
+// activities" path in approve.post.ts, which both need to create the place
+// exactly once from the same source data.
+export async function createPlaceFromSuggestion(
+  supabase: SupabaseClient,
+  suggestion: PlaceSuggestionRow,
+  deeplApiKey: string | undefined,
+  resolvedImages: string[]
+): Promise<{ place: PlaceRow | null; error: string | null; freshDuplicatePlaceId: string | null }> {
+  const meta = (suggestion.metadata as PlaceSuggestionMeta | null) ?? {}
+
+  const rawName = (suggestion.name_i18n as Record<string, string>) ?? {}
+  let name_i18n = rawName
+  let nameStatus: FieldI18nStatus | undefined
+  if (deeplApiKey) {
+    const translated = await translateI18nField({ existing: rawName, apiKey: deeplApiKey })
+    name_i18n = translated.value
+    nameStatus = translated.status
+  }
+
+  const rawDesc = (suggestion.description_i18n as Record<string, string>) ?? {}
+  let description_i18n = rawDesc
+  let descriptionStatus: FieldI18nStatus | undefined
+  if (deeplApiKey && Object.keys(rawDesc).length > 0) {
+    const translated = await translateI18nField({ existing: rawDesc, apiKey: deeplApiKey })
+    description_i18n = translated.value
+    descriptionStatus = translated.status
+  }
+
+  const location = suggestion.location as {
+    city?: string
+    address?: string
+    lat?: number
+    lng?: number
+  } | null
+
+  let city_id: number | null = null
+  if (location?.city) {
+    const { data: existingCity } = await supabase
+      .from('cities')
+      .select('id')
+      .ilike('name', location.city)
+      .single()
+
+    if (existingCity) {
+      city_id = existingCity.id
+    } else {
+      const { data: newCity } = await supabase
+        .from('cities')
+        .insert({ name: location.city })
+        .select('id')
+        .single()
+      city_id = newCity?.id ?? null
+    }
+  }
+
+  let lat: number | null = location?.lat ?? null
+  let lng: number | null = location?.lng ?? null
+
+  if (lat === null) {
+    const geoQuery = [location?.address, location?.city].filter(Boolean).join(', ')
+    if (geoQuery) {
+      const coords = await geocodeAddress(geoQuery)
+      if (coords) {
+        lat = coords.lat
+        lng = coords.lng
+      }
+    }
+  }
+
+  const nameText = Object.values(name_i18n)[0] ?? ''
+
+  // Re-check for duplicates right before inserting — the flag computed at
+  // submission time may be stale. Non-blocking: still creates the place,
+  // just returns the match so the caller can persist an updated flag.
+  let freshDuplicatePlaceId: string | null = null
+  if (!suggestion.flagged_possible_duplicate && nameText) {
+    const freshDuplicates = await findPlaceDuplicates(supabase, {
+      name: nameText,
+      lat,
+      lng,
+      googlePlaceId: meta.google_place_id ?? null,
+      cityId: city_id,
+    })
+    freshDuplicatePlaceId = freshDuplicates[0]?.id ?? null
+  }
+
+  const placePayload = {
+    name_i18n,
+    description_i18n,
+    city_id,
+    lat,
+    lng,
+    images: resolvedImages,
+    status: 'active',
+    google_place_id: meta.google_place_id ?? null,
+    name_normalized: normalizeName(nameText),
+    i18n_status: {
+      ...(nameStatus ? { name: nameStatus } : {}),
+      ...(descriptionStatus ? { description: descriptionStatus } : {}),
+    } as Json,
+    metadata: {
+      google_place_id: meta.google_place_id ?? null,
+      phone: meta.phone ?? null,
+      website: sanitizeHttpUrl(meta.website),
+      google_url: meta.google_url ?? null,
+      wheelchair: meta.wheelchair ?? null,
+      opening_hours_text: meta.opening_hours_text?.length ? meta.opening_hours_text : null,
+      place_photo_url: meta.place_photo_url ?? null,
+      photos: meta.photos?.length ? meta.photos : null,
+      stroller_friendly: suggestion.stroller_friendly ?? false,
+      open_weekends: suggestion.open_weekends ?? false,
+      has_shadow: meta.has_shadow ?? false,
+      has_bathrooms: meta.has_bathrooms ?? false,
+      hours_unknown: meta.hours_unknown === true,
+      schedule_structured: meta.hours_unknown === true ? null : (meta.schedule_structured ?? null),
+      from_suggestion: suggestion.id,
+    },
+  }
+
+  const { data: place, error } = await supabase
+    .from('places')
+    .insert(placePayload)
+    .select()
+    .single()
+
+  return { place: place as PlaceRow | null, error: error?.message ?? null, freshDuplicatePlaceId }
 }
 
 export async function buildActivityInsertFromSuggestion(

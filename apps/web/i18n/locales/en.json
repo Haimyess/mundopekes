@@ -189,7 +189,6 @@
     "step_progress": "Step {n} of {total}",
     "step_lugar": "Place",
     "step_actividad": "Activity",
-    "step_detalles": "Details",
     "step_resumen": "Summary",
     "free": "It's free",
     "toggle_stroller": "Stroller-friendly",
@@ -215,7 +214,16 @@
     "not_this_place": "Not this place? Search again",
     "cant_find_place": "Can't find it?",
     "add_new_place": "Add a new place",
-    "back_to_local_search": "Back to search"
+    "back_to_local_search": "Back to search",
+    "existing_activity": "Already there",
+    "new_activity": "New",
+    "new_place": "New place",
+    "add_another_activity": "Add another activity",
+    "save_activity": "Add activity",
+    "activity_untitled": "Untitled activity",
+    "activities_count": "{n} activities added",
+    "activity_search_label": "Is it already offered here?",
+    "activity_search_placeholder": "Search activities at this place"
   },
   "contact": {
     "title": "Contact Us",
@@ -324,6 +332,7 @@
     "back": "Back",
     "done": "Done",
     "edit": "Edit",
+    "save": "Save",
     "continue": "Continue",
     "day_sunday": "Sunday",
     "day_monday": "Monday",

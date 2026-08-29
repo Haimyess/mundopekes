@@ -80,6 +80,20 @@ function makeEvent() {
   return {} as Parameters<typeof handler>[0]
 }
 
+// Chainable + thenable `.update(...)` result — supports both the old direct
+// `await ...update(...).eq('id', id)` pattern (resolves via `.then`) and the
+// new claim-guard pattern `...update(...).eq(...).eq(...).is(...).select('id')`.
+function makeChainableUpdate(resolvedRows: unknown[] = [{ id: 'sug-001' }]) {
+  const node = {
+    eq: vi.fn(() => node),
+    is: vi.fn(() => node),
+    select: vi.fn().mockResolvedValue({ data: resolvedRows, error: null }),
+    then: (resolve: (v: { data: null; error: null }) => void) =>
+      resolve({ data: null, error: null }),
+  }
+  return node
+}
+
 function setupSupabase({
   suggestion,
   place = { id: 'place-existing', name_i18n: { es: 'Lugar Existente' } },
@@ -103,7 +117,7 @@ function setupSupabase({
         })),
         update: vi.fn((data) => {
           suggestionsUpdateSpy?.(data)
-          return { eq: vi.fn().mockResolvedValue({ error: null }) }
+          return makeChainableUpdate()
         }),
       }
     }
@@ -198,7 +212,7 @@ describe('POST /api/suggestions/:id/merge', () => {
               single: vi.fn().mockResolvedValue({ data: makeSuggestion(), error: null }),
             })),
           })),
-          update: vi.fn(() => ({ eq: vi.fn().mockResolvedValue({ error: null }) })),
+          update: vi.fn(() => makeChainableUpdate()),
         }
       }
       if (table === 'places') {
@@ -256,7 +270,7 @@ describe('POST /api/suggestions/:id/merge', () => {
               }),
             })),
           })),
-          update: vi.fn(() => ({ eq: vi.fn().mockResolvedValue({ error: null }) })),
+          update: vi.fn(() => makeChainableUpdate()),
         }
       }
       if (table === 'places') {
@@ -361,7 +375,7 @@ describe('POST /api/suggestions/:id/merge', () => {
               single: vi.fn().mockResolvedValue({ data: makeSuggestion(), error: null }),
             })),
           })),
-          update: vi.fn(() => ({ eq: vi.fn().mockResolvedValue({ error: null }) })),
+          update: vi.fn(() => makeChainableUpdate()),
         }
       }
       if (table === 'places') {
@@ -410,5 +424,111 @@ describe('POST /api/suggestions/:id/merge', () => {
     expect(suggestionsUpdateSpy).toHaveBeenCalledWith(
       expect.objectContaining({ place_id: 'place-correct' })
     )
+  })
+})
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  target_activity_id — resolve against an existing activity, create nothing
+// ═══════════════════════════════════════════════════════════════════════════
+describe('POST /api/suggestions/:id/merge — target_activity_id', () => {
+  const existingActivity = { id: 'act-existing', title_i18n: { es: 'Toboganes' } }
+
+  function setupActivityResolve({
+    suggestion,
+    activity = existingActivity,
+    suggestionsUpdateSpy,
+    activitiesInsertSpy,
+  }: {
+    suggestion: unknown
+    activity?: unknown | null
+    suggestionsUpdateSpy?: ReturnType<typeof vi.fn>
+    activitiesInsertSpy?: ReturnType<typeof vi.fn>
+  }) {
+    mockSupabase.from.mockImplementation((table: string) => {
+      if (table === 'suggestions') {
+        return {
+          select: vi.fn(() => ({
+            eq: vi.fn(() => ({
+              single: vi.fn().mockResolvedValue({ data: suggestion, error: null }),
+            })),
+          })),
+          update: vi.fn((data) => {
+            suggestionsUpdateSpy?.(data)
+            return makeChainableUpdate()
+          }),
+        }
+      }
+      if (table === 'activities') {
+        return {
+          select: vi.fn(() => ({
+            eq: vi.fn(() => ({
+              single: vi
+                .fn()
+                .mockResolvedValue({
+                  data: activity,
+                  error: activity ? null : { message: 'not found' },
+                }),
+            })),
+          })),
+          insert: vi.fn((data) => {
+            activitiesInsertSpy?.(data)
+            throw new Error('activities.insert should never be called when resolving by activity')
+          }),
+        }
+      }
+      throw new Error(`unexpected table ${table}`)
+    })
+  }
+
+  it('400 when neither target_place_id nor target_activity_id is given', async () => {
+    _body = {}
+    setupActivityResolve({ suggestion: makeSuggestion() })
+    await expect(handler(makeEvent())).rejects.toMatchObject({ statusCode: 400 })
+  })
+
+  it('404 when the target activity does not exist', async () => {
+    _body = { target_activity_id: 'act-missing' }
+    setupActivityResolve({ suggestion: makeSuggestion(), activity: null })
+    await expect(handler(makeEvent())).rejects.toMatchObject({ statusCode: 404 })
+  })
+
+  it('never inserts an activity — marks the suggestion approved pointing at the existing one', async () => {
+    _body = { target_activity_id: 'act-existing' }
+    const suggestionsUpdateSpy = vi.fn()
+    setupActivityResolve({
+      suggestion: makeSuggestion({
+        suggestion_type: 'experience_for_existing_place',
+        place_id: 'place-001',
+      }),
+      suggestionsUpdateSpy,
+    })
+
+    const result = await handler(makeEvent())
+
+    expect((result as { activity: { id: string } }).activity.id).toBe('act-existing')
+    expect(suggestionsUpdateSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        status: 'approved',
+        possible_duplicate_activity_id: 'act-existing',
+      })
+    )
+  })
+
+  it('throws 409 when the suggestion was already claimed', async () => {
+    _body = { target_activity_id: 'act-existing' }
+    mockSupabase.from.mockImplementation((table: string) => {
+      if (table === 'suggestions') {
+        return {
+          select: vi.fn(() => ({
+            eq: vi.fn(() => ({
+              single: vi.fn().mockResolvedValue({ data: makeSuggestion(), error: null }),
+            })),
+          })),
+          update: vi.fn(() => makeChainableUpdate([])),
+        }
+      }
+      throw new Error(`unexpected table ${table}`)
+    })
+    await expect(handler(makeEvent())).rejects.toMatchObject({ statusCode: 409 })
   })
 })

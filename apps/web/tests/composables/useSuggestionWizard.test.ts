@@ -1,8 +1,13 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { __resetStore } from '../__mocks__/nuxt-state'
 
-import { useSuggestionWizard, WIZARD_STEPS } from '~/app/composables/useSuggestionWizard'
-import type { WizardState } from '~/app/composables/useSuggestionWizard'
+import {
+  useSuggestionWizard,
+  defaultActivityDraft,
+  parsePrice,
+  WIZARD_STEPS,
+} from '~/app/composables/useSuggestionWizard'
+import type { ActivityDraftNew } from '~/app/composables/useSuggestionWizard'
 
 // ── vue-i18n mock (used by useI18nContent AND resolved by Nuxt's auto-import
 //    as the source for useI18n in useSuggestionWizard under @nuxtjs/i18n) ──
@@ -44,437 +49,6 @@ const makeGooglePlace = () => ({
   suggested_categories: [],
 })
 
-beforeEach(() => {
-  __resetStore()
-})
-
-// ═══════════════════════════════════════════════════════════════════════════
-//  buildPayload
-// ═══════════════════════════════════════════════════════════════════════════
-describe('buildPayload — Google place', () => {
-  it('uses name_i18n from placeResult', () => {
-    const { state, buildPayload } = useSuggestionWizard()
-    const place = makeGooglePlace()
-    state.value.placeResult = place
-    state.value.name_i18n = { ...place.name_i18n }
-    state.value.isManual = false
-    state.value.selectedCategories = [makeCat('cat-1', 'Parques')]
-
-    const payload = buildPayload()
-    expect(payload.name_i18n).toEqual({ he: 'גן הנגב', es: 'Gan HaNegev' })
-  })
-
-  it('takes lat/lng from placeResult', () => {
-    const { state, buildPayload } = useSuggestionWizard()
-    state.value.placeResult = makeGooglePlace()
-    state.value.isManual = false
-    state.value.selectedCategories = [makeCat('cat-1', 'Parques')]
-
-    const payload = buildPayload()
-    expect(payload.location.lat).toBe(32.1)
-    expect(payload.location.lng).toBe(34.8)
-  })
-
-  it('puts google_place_id in metadata', () => {
-    const { state, buildPayload } = useSuggestionWizard()
-    state.value.placeResult = makeGooglePlace()
-    state.value.isManual = false
-    state.value.selectedCategories = [makeCat('cat-1', 'Parques')]
-
-    const payload = buildPayload()
-    expect(payload.metadata.google_place_id).toBe('gp-001')
-  })
-
-  it('puts photos in metadata when placeDetails has photos', () => {
-    const { state, buildPayload } = useSuggestionWizard()
-    state.value.placeResult = makeGooglePlace()
-    state.value.isManual = false
-    state.value.selectedCategories = [makeCat('cat-1', 'Parques')]
-    state.value.placeDetails = {
-      name_i18n: { es: 'Gan HaNegev' },
-      description_i18n: {},
-      phone: null,
-      website: null,
-      google_url: null,
-      wheelchair_accessible: null,
-      opening_hours: null,
-      photos: ['/api/places/photo?ref=p1', '/api/places/photo?ref=p2'],
-    } as WizardState['placeDetails']
-
-    const payload = buildPayload()
-    expect(payload.metadata.photos).toEqual([
-      '/api/places/photo?ref=p1',
-      '/api/places/photo?ref=p2',
-    ])
-  })
-})
-
-describe('buildPayload — manual entry', () => {
-  it('uses manualLat/manualLng when geocoding provided them', () => {
-    const { state, buildPayload } = useSuggestionWizard()
-    state.value.isManual = true
-    state.value.manualName = 'Mi Casa'
-    state.value.manualCity = 'Tel Aviv'
-    state.value.manualAddress = 'Herzl 5'
-    state.value.manualLat = 31.5
-    state.value.manualLng = 34.7
-    state.value.selectedCategories = [makeCat('cat-1', 'Parques')]
-
-    const payload = buildPayload()
-    expect(payload.location.lat).toBe(31.5)
-    expect(payload.location.lng).toBe(34.7)
-  })
-
-  it('coords are absent (undefined) when geocoding failed — does not throw', () => {
-    const { state, buildPayload } = useSuggestionWizard()
-    state.value.isManual = true
-    state.value.manualName = 'Mi Casa'
-    state.value.manualCity = 'Tel Aviv'
-    state.value.manualAddress = 'Herzl 5'
-    state.value.manualLat = null
-    state.value.manualLng = null
-    state.value.selectedCategories = [makeCat('cat-1', 'Parques')]
-
-    expect(() => buildPayload()).not.toThrow()
-    const payload = buildPayload()
-    // null → undefined in buildPayload (null ?? undefined === undefined)
-    expect(payload.location.lat).toBeUndefined()
-    expect(payload.location.lng).toBeUndefined()
-  })
-
-  it('name_i18n uses active locale as key for manual name', () => {
-    const { state, buildPayload } = useSuggestionWizard()
-    state.value.isManual = true
-    state.value.manualName = 'Parque Local'
-    state.value.manualCity = 'Tel Aviv'
-    state.value.selectedCategories = [makeCat('cat-1', 'Parques')]
-
-    const payload = buildPayload()
-    // locale from nuxt-imports.ts mock is 'es'
-    expect(payload.name_i18n).toEqual({ es: 'Parque Local' })
-  })
-})
-
-describe('buildPayload — title_i18n', () => {
-  it('key in title_i18n is the active locale', () => {
-    const { state, buildPayload } = useSuggestionWizard()
-    state.value.isManual = true
-    state.value.manualName = 'Parque'
-    state.value.manualCity = 'Tel Aviv'
-    state.value.selectedCategories = [makeCat('cat-1', 'Juegos')]
-
-    const payload = buildPayload()
-    // locale = 'es' from mock
-    expect(Object.keys(payload.title_i18n!)).toContain('es')
-  })
-
-  it('titleTouched=true — title_i18n uses titleManual, not generated', () => {
-    const { state, buildPayload } = useSuggestionWizard()
-    state.value.isManual = true
-    state.value.manualName = 'Parque'
-    state.value.manualCity = 'Tel Aviv'
-    state.value.selectedCategories = [makeCat('cat-1', 'Juegos')]
-    state.value.titleTouched = true
-    state.value.titleManual = 'Título personalizado'
-
-    const payload = buildPayload()
-    expect(payload.title_i18n!['es']).toBe('Título personalizado')
-  })
-
-  it('titleTouched=false — title_i18n uses generated title (not titleManual)', () => {
-    const { state, buildPayload } = useSuggestionWizard()
-    state.value.isManual = true
-    state.value.manualName = 'Parque'
-    state.value.manualCity = 'Tel Aviv'
-    state.value.selectedCategories = [makeCat('cat-1', 'Juegos')]
-    state.value.titleTouched = false
-    state.value.titleManual = 'Ignorado'
-
-    const payload = buildPayload()
-    expect(payload.title_i18n!['es']).not.toBe('Ignorado')
-  })
-
-  // FINDING: La lógica actual usa el nombre de la categoría cuando existe,
-  // ignorando customActivity. El requisito dice "custom activity gana sobre categoría".
-  // Marcado como .fails para reportar el comportamiento actual.
-  it.fails(
-    'FINDING: customActivity wins over category name in title (current code: category wins)',
-    () => {
-      const { state, generatedTitle } = useSuggestionWizard()
-      state.value.isManual = true
-      state.value.manualName = 'Parque'
-      state.value.manualCity = 'Tel Aviv'
-      state.value.selectedCategories = [makeCat('cat-1', 'Parques')]
-      state.value.customActivity = 'Videojuegos'
-
-      // If customActivity wins, generatedTitle should use 'Videojuegos'
-      // But the code uses tc(cat.name_i18n) = 'Parques' when category exists
-      expect(generatedTitle.value).toContain('Videojuegos')
-    }
-  )
-})
-
-describe('buildPayload — hoursUnknown', () => {
-  it('hoursUnknown=true → schedule_structured is undefined', () => {
-    const { state, buildPayload } = useSuggestionWizard()
-    state.value.isManual = true
-    state.value.manualName = 'Parque'
-    state.value.manualCity = 'Tel Aviv'
-    state.value.selectedCategories = [makeCat('cat-1', 'Parques')]
-    state.value.hoursUnknown = true
-
-    const payload = buildPayload()
-    expect(payload.schedule_structured).toBeUndefined()
-  })
-
-  it('hoursUnknown=true → metadata.hours_unknown is true', () => {
-    const { state, buildPayload } = useSuggestionWizard()
-    state.value.isManual = true
-    state.value.manualName = 'Parque'
-    state.value.manualCity = 'Tel Aviv'
-    state.value.selectedCategories = [makeCat('cat-1', 'Parques')]
-    state.value.hoursUnknown = true
-
-    const payload = buildPayload()
-    expect(payload.metadata.hours_unknown).toBe(true)
-  })
-
-  it('hoursUnknown=false → schedule_structured is the schedule object', () => {
-    const { state, buildPayload } = useSuggestionWizard()
-    state.value.isManual = true
-    state.value.manualName = 'Parque'
-    state.value.manualCity = 'Tel Aviv'
-    state.value.selectedCategories = [makeCat('cat-1', 'Parques')]
-    state.value.hoursUnknown = false
-
-    const payload = buildPayload()
-    expect(payload.schedule_structured).toBeTruthy()
-    expect(typeof payload.schedule_structured).toBe('object')
-  })
-})
-
-describe('buildPayload — is_free / price', () => {
-  it('is_free=true → price is undefined', () => {
-    const { state, buildPayload } = useSuggestionWizard()
-    state.value.isManual = true
-    state.value.manualName = 'Parque'
-    state.value.manualCity = 'Tel Aviv'
-    state.value.selectedCategories = [makeCat('cat-1', 'Parques')]
-    state.value.isFree = true
-    state.value.price = '50'
-
-    const payload = buildPayload()
-    expect(payload.price).toBeUndefined()
-  })
-
-  it('is_free=false → price is a number', () => {
-    const { state, buildPayload } = useSuggestionWizard()
-    state.value.isManual = true
-    state.value.manualName = 'Parque'
-    state.value.manualCity = 'Tel Aviv'
-    state.value.selectedCategories = [makeCat('cat-1', 'Parques')]
-    state.value.isFree = false
-    state.value.price = '42.5'
-
-    const payload = buildPayload()
-    expect(payload.price).toBe(42.5)
-  })
-
-  it('is_free=true is passed through to payload', () => {
-    const { state, buildPayload } = useSuggestionWizard()
-    state.value.isManual = true
-    state.value.manualName = 'Parque'
-    state.value.manualCity = 'Tel Aviv'
-    state.value.selectedCategories = [makeCat('cat-1', 'Parques')]
-    state.value.isFree = true
-
-    expect(buildPayload().is_free).toBe(true)
-  })
-})
-
-describe('buildPayload — description locale', () => {
-  it('description stored under active locale, not hardcoded es', () => {
-    const { state, buildPayload } = useSuggestionWizard()
-    // Simulate locale = 'es' (from nuxt-imports.ts mock)
-    state.value.isManual = true
-    state.value.manualName = 'Parque'
-    state.value.manualCity = 'Tel Aviv'
-    state.value.selectedCategories = [makeCat('cat-1', 'Parques')]
-    state.value.description = 'Un parque hermoso'
-    state.value.description_i18n = {}
-
-    const payload = buildPayload()
-    // locale is 'es' from mock → key should be 'es'
-    expect(payload.description_i18n).toMatchObject({ es: 'Un parque hermoso' })
-  })
-
-  it('empty description → description_i18n does not inject empty string', () => {
-    const { state, buildPayload } = useSuggestionWizard()
-    state.value.isManual = true
-    state.value.manualName = 'Parque'
-    state.value.manualCity = 'Tel Aviv'
-    state.value.selectedCategories = [makeCat('cat-1', 'Parques')]
-    state.value.description = '   '
-    state.value.description_i18n = {}
-
-    const payload = buildPayload()
-    // Trimmed description is empty → should not add locale key
-    expect(Object.values(payload.description_i18n)).not.toContain('')
-    expect(Object.keys(payload.description_i18n)).toHaveLength(0)
-  })
-
-  it('preserves existing description_i18n locales', () => {
-    const { state, buildPayload } = useSuggestionWizard()
-    state.value.isManual = true
-    state.value.manualName = 'Parque'
-    state.value.manualCity = 'Tel Aviv'
-    state.value.selectedCategories = [makeCat('cat-1', 'Parques')]
-    state.value.description = 'Nueva desc'
-    state.value.description_i18n = { he: 'גן יפה' }
-
-    const payload = buildPayload()
-    expect(payload.description_i18n).toMatchObject({ he: 'גן יפה', es: 'Nueva desc' })
-  })
-})
-
-describe('buildPayload — best_season', () => {
-  it('stores season VALUES (not Spanish labels)', () => {
-    const { state, buildPayload } = useSuggestionWizard()
-    state.value.isManual = true
-    state.value.manualName = 'Parque'
-    state.value.manualCity = 'Tel Aviv'
-    state.value.selectedCategories = [makeCat('cat-1', 'Parques')]
-    state.value.selectedSeasons = ['spring', 'summer']
-
-    const payload = buildPayload()
-    expect(payload.best_season).toEqual(['spring', 'summer'])
-  })
-})
-
-// ═══════════════════════════════════════════════════════════════════════════
-//  toggleSeason (main state)
-// ═══════════════════════════════════════════════════════════════════════════
-describe('toggleSeason', () => {
-  it("toggleSeason('all') sets selectedSeasons to ['all']", () => {
-    const { state, toggleSeason } = useSuggestionWizard()
-    state.value.selectedSeasons = ['spring', 'summer']
-    toggleSeason('all')
-    expect(state.value.selectedSeasons).toEqual(['all'])
-  })
-
-  it("toggleSeason('all') clears any specific seasons", () => {
-    const { state, toggleSeason } = useSuggestionWizard()
-    state.value.selectedSeasons = ['spring']
-    toggleSeason('all')
-    expect(state.value.selectedSeasons).not.toContain('spring')
-  })
-
-  it("toggleSeason(specific) with 'all' active removes 'all'", () => {
-    const { state, toggleSeason } = useSuggestionWizard()
-    state.value.selectedSeasons = ['all']
-    toggleSeason('spring')
-    expect(state.value.selectedSeasons).not.toContain('all')
-    expect(state.value.selectedSeasons).toContain('spring')
-  })
-
-  it('toggleSeason(specific) toggles: adds when absent', () => {
-    const { state, toggleSeason } = useSuggestionWizard()
-    state.value.selectedSeasons = []
-    toggleSeason('winter')
-    expect(state.value.selectedSeasons).toContain('winter')
-  })
-
-  it('toggleSeason(specific) toggles: removes when present', () => {
-    const { state, toggleSeason } = useSuggestionWizard()
-    state.value.selectedSeasons = ['winter']
-    toggleSeason('winter')
-    expect(state.value.selectedSeasons).not.toContain('winter')
-  })
-})
-
-// ═══════════════════════════════════════════════════════════════════════════
-//  toggleAge (main state)
-// ═══════════════════════════════════════════════════════════════════════════
-describe('toggleAge', () => {
-  it('isAll=true replaces all selected ages with the "all" entry', () => {
-    const { state, toggleAge } = useSuggestionWizard()
-    state.value.selectedAgeIds = [2, 3]
-    state.value.selectedAgeLabels = ['Bebés', 'Pequeños']
-    toggleAge(1, 'Todas', true)
-    expect(state.value.selectedAgeIds).toEqual([1])
-    expect(state.value.selectedAgeLabels).toEqual(['Todas'])
-  })
-
-  it('adding a specific age with allId removes the "all ages" entry', () => {
-    const { state, toggleAge } = useSuggestionWizard()
-    state.value.selectedAgeIds = [1]
-    state.value.selectedAgeLabels = ['Todas']
-    toggleAge(2, 'Bebés', false, 1)
-    expect(state.value.selectedAgeIds).not.toContain(1)
-    expect(state.value.selectedAgeIds).toContain(2)
-  })
-
-  it('toggleAge adds when absent', () => {
-    const { state, toggleAge } = useSuggestionWizard()
-    state.value.selectedAgeIds = []
-    state.value.selectedAgeLabels = []
-    toggleAge(3, 'Escolar')
-    expect(state.value.selectedAgeIds).toContain(3)
-  })
-
-  it('toggleAge removes when present', () => {
-    const { state, toggleAge } = useSuggestionWizard()
-    state.value.selectedAgeIds = [3]
-    state.value.selectedAgeLabels = ['Escolar']
-    toggleAge(3, 'Escolar')
-    expect(state.value.selectedAgeIds).not.toContain(3)
-  })
-})
-
-// ═══════════════════════════════════════════════════════════════════════════
-//  draftToggleSeason
-// ═══════════════════════════════════════════════════════════════════════════
-describe('draftToggleSeason', () => {
-  it("draftToggleSeason('all') sets draft to ['all']", () => {
-    const { editDraft, openEdit, draftToggleSeason } = useSuggestionWizard()
-    openEdit()
-    editDraft.value!.selectedSeasons = ['spring']
-    draftToggleSeason('all')
-    expect(editDraft.value!.selectedSeasons).toEqual(['all'])
-  })
-
-  it("draftToggleSeason(specific) with 'all' active removes 'all'", () => {
-    const { editDraft, openEdit, draftToggleSeason } = useSuggestionWizard()
-    openEdit()
-    editDraft.value!.selectedSeasons = ['all']
-    draftToggleSeason('autumn')
-    expect(editDraft.value!.selectedSeasons).not.toContain('all')
-    expect(editDraft.value!.selectedSeasons).toContain('autumn')
-  })
-
-  it('no-ops when editDraft is null', () => {
-    const { editDraft, draftToggleSeason } = useSuggestionWizard()
-    editDraft.value = null
-    expect(() => draftToggleSeason('spring')).not.toThrow()
-  })
-})
-
-// ═══════════════════════════════════════════════════════════════════════════
-//  draftToggleAge
-// ═══════════════════════════════════════════════════════════════════════════
-// ═══════════════════════════════════════════════════════════════════════════
-//  Step order — activity first, then place (see useSuggestionWizard.ts)
-// ═══════════════════════════════════════════════════════════════════════════
-describe('WIZARD_STEPS order', () => {
-  it('step 1 is actividad, step 2 is lugar', () => {
-    expect(WIZARD_STEPS[0]?.labelKey).toBe('suggest.step_actividad')
-    expect(WIZARD_STEPS[1]?.labelKey).toBe('suggest.step_lugar')
-  })
-})
-
-// ═══════════════════════════════════════════════════════════════════════════
-//  matchedPlace (own-DB search result) — experience_for_existing_place path
-// ═══════════════════════════════════════════════════════════════════════════
 const makeLocalMatch = () => ({
   id: '11111111-1111-4111-8111-111111111111',
   name_i18n: { es: 'Parque HaYarkon', he: 'פארק הירקון' },
@@ -485,6 +59,137 @@ const makeLocalMatch = () => ({
   city: { id: 1, name: 'Tel Aviv' },
 })
 
+const makeNewDraft = (overrides: Partial<ActivityDraftNew> = {}): ActivityDraftNew => ({
+  ...defaultActivityDraft(),
+  ...overrides,
+})
+
+beforeEach(() => {
+  __resetStore()
+})
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  parsePrice — fixes the price=0 falsy-coercion bug
+// ═══════════════════════════════════════════════════════════════════════════
+describe('parsePrice', () => {
+  it('parses a normal number', () => {
+    expect(parsePrice('42.5')).toBe(42.5)
+  })
+
+  it('keeps an explicit 0 instead of dropping it', () => {
+    expect(parsePrice('0')).toBe(0)
+  })
+
+  it('returns undefined for empty/invalid input', () => {
+    expect(parsePrice('')).toBeUndefined()
+    expect(parsePrice('abc')).toBeUndefined()
+  })
+})
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  Activity drafts: add / update / remove / existing
+// ═══════════════════════════════════════════════════════════════════════════
+describe('activity drafts', () => {
+  it('addActivityDraft pushes a new draft with a fresh localId', () => {
+    const { state, addActivityDraft } = useSuggestionWizard()
+    addActivityDraft(makeNewDraft({ category: makeCat('cat-1', 'Parques') }))
+    expect(state.value.activities).toHaveLength(1)
+    expect(state.value.activities[0]!.mode).toBe('new')
+    expect(state.value.activities[0]!.localId).toBeTruthy()
+  })
+
+  it('addExistingActivity pushes an existing-mode entry with the resolved title', () => {
+    const { state, addExistingActivity } = useSuggestionWizard()
+    addExistingActivity({ id: 'act-1', title_i18n: { es: 'Toboganes' }, category_id: 'cat-1' })
+    expect(state.value.activities).toHaveLength(1)
+    const a = state.value.activities[0]!
+    expect(a.mode).toBe('existing')
+    if (a.mode === 'existing') {
+      expect(a.id).toBe('act-1')
+      expect(a.title).toBe('Toboganes')
+    }
+  })
+
+  it('updateActivityDraft merges a patch by localId', () => {
+    const { state, addActivityDraft, updateActivityDraft } = useSuggestionWizard()
+    addActivityDraft(makeNewDraft({ customActivity: 'Yoga' }))
+    const localId = state.value.activities[0]!.localId
+    updateActivityDraft(localId, { customActivity: 'Pilates' })
+    const a = state.value.activities[0]!
+    expect(a.mode).toBe('new')
+    if (a.mode === 'new') expect(a.customActivity).toBe('Pilates')
+  })
+
+  it('removeActivityDraft removes only the matching entry', () => {
+    const { state, addActivityDraft, removeActivityDraft } = useSuggestionWizard()
+    addActivityDraft(makeNewDraft({ customActivity: 'A' }))
+    addActivityDraft(makeNewDraft({ customActivity: 'B' }))
+    const idToRemove = state.value.activities[0]!.localId
+    removeActivityDraft(idToRemove)
+    expect(state.value.activities).toHaveLength(1)
+    expect(state.value.activities[0]!.localId).not.toBe(idToRemove)
+  })
+
+  it('hasActivity is false with only existing-activity entries', () => {
+    const { addExistingActivity, hasActivity } = useSuggestionWizard()
+    addExistingActivity({ id: 'act-1', title_i18n: { es: 'Toboganes' }, category_id: null })
+    expect(hasActivity.value).toBe(false)
+  })
+
+  it('hasActivity is true once at least one new draft is added', () => {
+    const { addActivityDraft, hasActivity } = useSuggestionWizard()
+    addActivityDraft(makeNewDraft({ category: makeCat('cat-1', 'Parques') }))
+    expect(hasActivity.value).toBe(true)
+  })
+
+  it('newActivityCount only counts new drafts, not existing references', () => {
+    const { addActivityDraft, addExistingActivity, newActivityCount } = useSuggestionWizard()
+    addExistingActivity({ id: 'act-1', title_i18n: { es: 'A' }, category_id: null })
+    addActivityDraft(makeNewDraft({ customActivity: 'B' }))
+    addActivityDraft(makeNewDraft({ customActivity: 'C' }))
+    expect(newActivityCount.value).toBe(2)
+  })
+})
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  activityDraftTitle — fixes the "category wins over custom text" bug
+// ═══════════════════════════════════════════════════════════════════════════
+describe('activityDraftTitle', () => {
+  it('custom activity text wins over the selected category', () => {
+    const { state, activityDraftTitle } = useSuggestionWizard()
+    state.value.isManual = true
+    state.value.manualName = 'Parque'
+    const draft = makeNewDraft({
+      category: makeCat('cat-1', 'Parques'),
+      customActivity: 'Videojuegos',
+    })
+    expect(activityDraftTitle(draft)).toContain('Videojuegos')
+    expect(activityDraftTitle(draft)).not.toContain('Parques')
+  })
+
+  it('falls back to the category name when there is no custom text', () => {
+    const { state, activityDraftTitle } = useSuggestionWizard()
+    state.value.isManual = true
+    state.value.manualName = 'Parque'
+    const draft = makeNewDraft({ category: makeCat('cat-1', 'Parques') })
+    expect(activityDraftTitle(draft)).toContain('Parques')
+  })
+})
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  WIZARD_STEPS order — place first, then activity/activities, then summary
+// ═══════════════════════════════════════════════════════════════════════════
+describe('WIZARD_STEPS order', () => {
+  it('step 1 is lugar, step 2 is actividad, step 3 is resumen', () => {
+    expect(WIZARD_STEPS[0]?.labelKey).toBe('suggest.step_lugar')
+    expect(WIZARD_STEPS[1]?.labelKey).toBe('suggest.step_actividad')
+    expect(WIZARD_STEPS[2]?.labelKey).toBe('suggest.step_resumen')
+  })
+})
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  matchedPlace (own-DB search result) — experience_for_existing_place path
+// ═══════════════════════════════════════════════════════════════════════════
 describe('setMatchedPlace / clearMatchedPlace / toggleNewPlaceForm', () => {
   it('setMatchedPlace makes hasPlace true without any Google/manual data', () => {
     const { state, setMatchedPlace, hasPlace } = useSuggestionWizard()
@@ -521,12 +226,6 @@ describe('setMatchedPlace / clearMatchedPlace / toggleNewPlaceForm', () => {
     expect(state.value.showNewPlaceForm).toBe(true)
   })
 
-  it('hasPlace is false when showNewPlaceForm is on but nothing selected yet', () => {
-    const { toggleNewPlaceForm, hasPlace } = useSuggestionWizard()
-    toggleNewPlaceForm()
-    expect(hasPlace.value).toBe(false)
-  })
-
   it('placeName/placeAddress/placePhoto read from matchedPlace when set', () => {
     const { setMatchedPlace, placeName, placeAddress, placePhoto } = useSuggestionWizard()
     setMatchedPlace(makeLocalMatch())
@@ -536,55 +235,116 @@ describe('setMatchedPlace / clearMatchedPlace / toggleNewPlaceForm', () => {
   })
 })
 
-describe('buildPayload — experience_for_existing_place', () => {
-  it('payload has suggestion_type + place_id, no name_i18n/location', () => {
-    const { setMatchedPlace, state, buildPayload } = useSuggestionWizard()
-    setMatchedPlace(makeLocalMatch())
-    state.value.selectedCategories = [makeCat('cat-1', 'Toboganes')]
+// ═══════════════════════════════════════════════════════════════════════════
+//  buildPayload — new place
+// ═══════════════════════════════════════════════════════════════════════════
+describe('buildPayload — new place, single activity', () => {
+  it('place.mode is "new" and carries name/location/metadata from the Google result', () => {
+    const { state, addActivityDraft, buildPayload } = useSuggestionWizard()
+    const place = makeGooglePlace()
+    state.value.placeResult = place
+    state.value.name_i18n = { ...place.name_i18n }
+    addActivityDraft(makeNewDraft({ category: makeCat('cat-1', 'Parques') }))
 
     const payload = buildPayload()
-    expect(payload.suggestion_type).toBe('experience_for_existing_place')
-    expect(payload).toMatchObject({ place_id: '11111111-1111-4111-8111-111111111111' })
-    expect('name_i18n' in payload).toBe(false)
-    expect('location' in payload).toBe(false)
+    expect(payload.place.mode).toBe('new')
+    if (payload.place.mode === 'new') {
+      expect(payload.place.name_i18n).toEqual({ he: 'גן הנגב', es: 'Gan HaNegev' })
+      expect(payload.place.location.lat).toBe(32.1)
+      expect(payload.place.metadata?.google_place_id).toBe('gp-001')
+    }
   })
 
-  it('still carries experience-level fields (title, category, age, season, price)', () => {
-    const { setMatchedPlace, state, buildPayload } = useSuggestionWizard()
-    setMatchedPlace(makeLocalMatch())
-    state.value.selectedCategories = [makeCat('cat-1', 'Toboganes')]
-    state.value.selectedSeasons = ['summer']
-    state.value.isFree = false
-    state.value.price = '25'
+  it('activities array has exactly one "new" entry with the built fields', () => {
+    const { state, addActivityDraft, buildPayload } = useSuggestionWizard()
+    state.value.isManual = true
+    state.value.manualName = 'Parque'
+    addActivityDraft(
+      makeNewDraft({
+        category: makeCat('cat-1', 'Parques'),
+        selectedSeasons: ['spring'],
+        isFree: false,
+        price: '25',
+      })
+    )
 
     const payload = buildPayload()
-    expect(payload.category_id).toBe('cat-1')
-    expect(payload.best_season).toEqual(['summer'])
-    expect(payload.price).toBe(25)
-    expect(Object.keys(payload.title_i18n!)).toContain('es')
+    expect(payload.activities).toHaveLength(1)
+    const a = payload.activities[0]!
+    expect(a.mode).toBe('new')
+    if (a.mode === 'new') {
+      expect(a.category_id).toBe('cat-1')
+      expect(a.best_season).toEqual(['spring'])
+      expect(a.price).toBe(25)
+    }
+  })
+
+  it('sends the active locale alongside the payload', () => {
+    const { state, addActivityDraft, buildPayload } = useSuggestionWizard()
+    state.value.isManual = true
+    state.value.manualName = 'Parque'
+    addActivityDraft(makeNewDraft({ category: makeCat('cat-1', 'Parques') }))
+    expect(buildPayload().locale).toBe('es')
+  })
+
+  it('is_free=false and price=0 → price is 0, not undefined', () => {
+    const { state, addActivityDraft, buildPayload } = useSuggestionWizard()
+    state.value.isManual = true
+    state.value.manualName = 'Parque'
+    addActivityDraft(
+      makeNewDraft({ category: makeCat('cat-1', 'Parques'), isFree: false, price: '0' })
+    )
+    const a = buildPayload().activities[0]!
+    if (a.mode === 'new') expect(a.price).toBe(0)
   })
 })
 
-// ═══════════════════════════════════════════════════════════════════════════
-//  draftToggleAge
-// ═══════════════════════════════════════════════════════════════════════════
-describe('draftToggleAge', () => {
-  it('isAll=true replaces draft ages', () => {
-    const { editDraft, openEdit, draftToggleAge } = useSuggestionWizard()
-    openEdit()
-    editDraft.value!.selectedAgeIds = [2, 3]
-    editDraft.value!.selectedAgeLabels = ['Bebés', 'Pequeños']
-    draftToggleAge(1, 'Todas', true)
-    expect(editDraft.value!.selectedAgeIds).toEqual([1])
+describe('buildPayload — new place, multiple activities', () => {
+  it('activities array has one entry per draft', () => {
+    const { state, addActivityDraft, addExistingActivity, buildPayload } = useSuggestionWizard()
+    state.value.isManual = true
+    state.value.manualName = 'Parque'
+    addActivityDraft(makeNewDraft({ customActivity: 'Toboganes' }))
+    addActivityDraft(makeNewDraft({ customActivity: 'Hamacas' }))
+    addExistingActivity({ id: 'act-1', title_i18n: { es: 'Arenero' }, category_id: null })
+
+    const payload = buildPayload()
+    expect(payload.activities).toHaveLength(3)
+    expect(payload.activities.filter((a) => a.mode === 'new')).toHaveLength(2)
+    expect(payload.activities.filter((a) => a.mode === 'existing')).toHaveLength(1)
+  })
+})
+
+describe('buildPayload — experience_for_existing_place', () => {
+  it('place.mode is "existing" with the matched place_id, no name/location sent', () => {
+    const { setMatchedPlace, addActivityDraft, buildPayload } = useSuggestionWizard()
+    setMatchedPlace(makeLocalMatch())
+    addActivityDraft(makeNewDraft({ category: makeCat('cat-1', 'Toboganes') }))
+
+    const payload = buildPayload()
+    expect(payload.place).toEqual({
+      mode: 'existing',
+      place_id: '11111111-1111-4111-8111-111111111111',
+    })
   })
 
-  it('adding specific with allId removes all-ages from draft', () => {
-    const { editDraft, openEdit, draftToggleAge } = useSuggestionWizard()
-    openEdit()
-    editDraft.value!.selectedAgeIds = [1]
-    editDraft.value!.selectedAgeLabels = ['Todas']
-    draftToggleAge(2, 'Bebés', false, 1)
-    expect(editDraft.value!.selectedAgeIds).not.toContain(1)
-    expect(editDraft.value!.selectedAgeIds).toContain(2)
+  it('still carries experience-level fields (category, season, price)', () => {
+    const { setMatchedPlace, addActivityDraft, buildPayload } = useSuggestionWizard()
+    setMatchedPlace(makeLocalMatch())
+    addActivityDraft(
+      makeNewDraft({
+        category: makeCat('cat-1', 'Toboganes'),
+        selectedSeasons: ['summer'],
+        isFree: false,
+        price: '25',
+      })
+    )
+
+    const a = buildPayload().activities[0]!
+    if (a.mode === 'new') {
+      expect(a.category_id).toBe('cat-1')
+      expect(a.best_season).toEqual(['summer'])
+      expect(a.price).toBe(25)
+    }
   })
 })
