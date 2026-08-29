@@ -1,11 +1,12 @@
-import type {
-  ActivityFilters,
-  Activity,
-  SeasonValue,
-  ActivityAgeRangeRow,
-  ActivitySeasonRow,
-} from '~/types'
-import { ACTIVITY_SELECT, normalizeActivity } from '~/composables/useActivities'
+import type { ActivityFilters, Activity, SeasonValue } from '~/types'
+import {
+  ACTIVITY_LIST_SELECT_BASE,
+  AGE_RANGES_EMBED,
+  AGE_RANGES_EMBED_INNER,
+  SEASONS_EMBED,
+  SEASONS_EMBED_INNER,
+  normalizeActivity,
+} from '~/composables/useActivities'
 import { sanitizeSearchQuery } from '~/utils/sanitize'
 
 export const useActivityFilters = () => {
@@ -213,60 +214,110 @@ export const useActivityFilters = () => {
     return chips
   }
 
-  // ── Fetch principal ───────────────────────────────────────────────
-  // ── Fetch principal ───────────────────────────────────────────────
-  const fetchFilteredActivities = async (filters: ActivityFilters): Promise<Activity[]> => {
-    // Paso 1: resolver place_ids a partir de city names
-    let placeIds: string[] | undefined
+  // Resuelve place_ids a partir de city names (2 queries secuenciales:
+  // la segunda depende del resultado de la primera).
+  const resolveCityPlaceIds = async (
+    cityFilter: string | undefined
+  ): Promise<{ placeIds?: string[]; notFound: boolean }> => {
+    if (!cityFilter) return { notFound: false }
 
-    if (filters.city) {
-      const cityNames = filters.city.split(',').filter(Boolean)
+    const cityNames = cityFilter.split(',').filter(Boolean)
 
-      const { data: cityData, error: cityError } = await client
-        .from('cities')
-        .select('id')
-        .in('name', cityNames)
-        .returns<{ id: number }[]>()
+    const { data: cityData, error: cityError } = await client
+      .from('cities')
+      .select('id')
+      .in('name', cityNames)
+      .returns<{ id: number }[]>()
 
-      if (cityError || !cityData?.length) return []
+    if (cityError || !cityData?.length) return { notFound: true }
 
-      const cityIds = cityData.map((c) => c.id)
+    const cityIds = cityData.map((c) => c.id)
 
-      const { data: placesData, error: placesError } = await client
-        .from('places')
-        .select('id')
-        .in('city_id', cityIds)
-        .returns<{ id: string }[]>()
+    const { data: placesData, error: placesError } = await client
+      .from('places')
+      .select('id')
+      .in('city_id', cityIds)
+      .returns<{ id: string }[]>()
 
-      if (placesError || !placesData?.length) return []
+    if (placesError || !placesData?.length) return { notFound: true }
 
-      placeIds = placesData.map((p) => p.id)
-    }
+    return { placeIds: placesData.map((p) => p.id), notFound: false }
+  }
 
-    // Paso 1.5: resolver category_ids (padre + hijos)
-    let categoryIds: string[] | undefined
+  // Resuelve category_id + hijos (2 queries secuenciales: la segunda
+  // depende del id del padre).
+  const resolveCategoryIds = async (
+    categorySlug: string | undefined
+  ): Promise<string[] | undefined> => {
+    if (!categorySlug) return undefined
 
-    if (filters.category) {
-      const { data: parent } = await client
-        .from('categories')
-        .select('id')
-        .eq('slug', filters.category)
-        .single()
+    const { data: parent } = await client
+      .from('categories')
+      .select('id')
+      .eq('slug', categorySlug)
+      .single()
 
-      if (parent) {
-        const { data: children } = await client
-          .from('categories')
-          .select('id')
-          .eq('parent_id', (parent as { id: string }).id)
+    if (!parent) return undefined
 
-        categoryIds = [parent.id, ...(children ?? []).map((c: { id: string }) => c.id)]
-      }
-    }
+    const { data: children } = await client
+      .from('categories')
+      .select('id')
+      .eq('parent_id', (parent as { id: string }).id)
 
-    // Paso 2: query principal con joins
+    return [parent.id, ...(children ?? []).map((c: { id: string }) => c.id)]
+  }
+
+  // Resuelve place_ids cuyo nombre matchea el texto buscado — permite que
+  // buscar por el nombre de un lugar también muestre sus actividades (antes
+  // solo matcheaba título de actividad, dejando "sin resultados" aunque el
+  // lugar sí existiera y tuviera actividades).
+  const resolveSearchPlaceIds = async (search: string | undefined): Promise<string[]> => {
+    if (!search) return []
+
+    const q = sanitizeSearchQuery(search)
+
+    const { data: matchingPlaces } = await client
+      .from('places')
+      .select('id')
+      .eq('status', 'active')
+      .or(
+        `name_i18n->>es.ilike.%${q}%,name_i18n->>he.ilike.%${q}%,name_i18n->>en.ilike.%${q}%,name_i18n->>ru.ilike.%${q}%`
+      )
+      .returns<{ id: string }[]>()
+
+    return (matchingPlaces ?? []).map((p) => p.id)
+  }
+
+  // Arma la query filtrada (city/category/search/booleans/edad/season) sin
+  // ejecutarla — la comparten la versión paginada (grilla, vista Lista) y
+  // la no paginada (vista Mapa, que necesita el set completo para los
+  // pines) para no duplicar esta lógica entre ambas.
+  const buildFilteredQuery = async (filters: ActivityFilters, { withCount = false } = {}) => {
+    // City, category y search-por-lugar son independientes entre sí —
+    // se resuelven en paralelo en vez de uno tras otro.
+    const [cityResolution, categoryIds, matchingPlaceIds] = await Promise.all([
+      resolveCityPlaceIds(filters.city),
+      resolveCategoryIds(filters.category),
+      resolveSearchPlaceIds(filters.search),
+    ])
+
+    if (cityResolution.notFound) return null
+    const placeIds = cityResolution.placeIds
+
+    // age_ranges/seasons se piden con !inner SOLO cuando el filtro
+    // correspondiente está activo — así el filtro de edad/season lo
+    // resuelve la DB (WHERE), en vez de traer todo y descartar en JS.
+    const hasAgeFilter = filters.age_min !== undefined && filters.age_max !== undefined
+    const hasSeasonFilter = !!filters.season
+
+    const select = `${ACTIVITY_LIST_SELECT_BASE},
+      ${hasAgeFilter ? AGE_RANGES_EMBED_INNER : AGE_RANGES_EMBED},
+      ${hasSeasonFilter ? SEASONS_EMBED_INNER : SEASONS_EMBED}
+    `
+
     let query = client
       .from('activities')
-      .select(ACTIVITY_SELECT)
+      .select(select, withCount ? { count: 'exact' } : undefined)
       .eq('status', 'approved')
       .eq('place.status', 'active')
 
@@ -280,9 +331,10 @@ export const useActivityFilters = () => {
 
     if (filters.search) {
       const q = sanitizeSearchQuery(filters.search)
-      query = query.or(
-        `title_i18n->>es.ilike.%${q}%,title_i18n->>he.ilike.%${q}%,title_i18n->>en.ilike.%${q}%,title_i18n->>ru.ilike.%${q}%`
-      )
+      const titleOr = `title_i18n->>es.ilike.%${q}%,title_i18n->>he.ilike.%${q}%,title_i18n->>en.ilike.%${q}%,title_i18n->>ru.ilike.%${q}%`
+      const placeOr = matchingPlaceIds.length ? `,place_id.in.(${matchingPlaceIds.join(',')})` : ''
+
+      query = query.or(`${titleOr}${placeOr}`)
     }
 
     if (filters.is_free !== undefined) {
@@ -297,35 +349,57 @@ export const useActivityFilters = () => {
       query = query.eq('open_weekends', true)
     }
 
-    const { data, error } = await query.order('created_at', { ascending: false })
+    if (hasAgeFilter) {
+      // Overlap de rangos: el age_range del pivot debe solaparse con
+      // [age_min, age_max] — misma condición que antes se aplicaba en JS.
+      query = query
+        .lte('age_ranges.age_range.min_months', filters.age_max as number)
+        .gte('age_ranges.age_range.max_months', filters.age_min as number)
+    }
+
+    if (hasSeasonFilter) {
+      query = query.eq('seasons.season.value', filters.season as string)
+    }
+
+    return query.order('created_at', { ascending: false })
+  }
+
+  // ── Fetch principal (sin paginar) — usado por la vista Mapa, que
+  // necesita el set completo de resultados para posicionar los pines ──
+  const fetchFilteredActivities = async (filters: ActivityFilters): Promise<Activity[]> => {
+    const query = await buildFilteredQuery(filters)
+    if (!query) return []
+
+    const { data, error } = await query
 
     if (error) {
       console.error('Error fetching filtered activities:', error)
       return []
     }
 
-    // Paso 3: filtros de pivot en cliente
-    let results = (data ?? []).map(normalizeActivity)
+    return (data ?? []).map(normalizeActivity)
+  }
 
-    if (filters.age_min !== undefined && filters.age_max !== undefined) {
-      const ageMin = filters.age_min
-      const ageMax = filters.age_max
-      results = results.filter((activity) =>
-        activity.activity_age_ranges.some(
-          (row: ActivityAgeRangeRow) =>
-            row.age_range.min_months <= ageMax && row.age_range.max_months >= ageMin
-        )
-      )
+  // ── Fetch paginado — usado por la grilla en vista Lista ──
+  const fetchFilteredActivitiesPaginated = async (
+    filters: ActivityFilters,
+    page = 1,
+    pageSize = 20
+  ): Promise<{ data: Activity[]; total: number }> => {
+    const query = await buildFilteredQuery(filters, { withCount: true })
+    if (!query) return { data: [], total: 0 }
+
+    const from = (page - 1) * pageSize
+    const to = from + pageSize - 1
+
+    const { data, error, count } = await query.range(from, to)
+
+    if (error) {
+      console.error('Error fetching paginated activities:', error)
+      return { data: [], total: 0 }
     }
 
-    if (filters.season) {
-      const seasonValue = filters.season
-      results = results.filter((activity) =>
-        activity.activity_seasons.some((row: ActivitySeasonRow) => row.season.value === seasonValue)
-      )
-    }
-
-    return results
+    return { data: (data ?? []).map(normalizeActivity), total: count ?? 0 }
   }
 
   return {
@@ -338,5 +412,6 @@ export const useActivityFilters = () => {
     getFilterChips,
     countActiveFilters,
     fetchFilteredActivities,
+    fetchFilteredActivitiesPaginated,
   }
 }

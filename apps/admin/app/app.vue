@@ -1,24 +1,23 @@
 <script setup lang="ts">
 const colorMode = useColorMode()
+const { t, locale } = useI18n()
 
-const color = computed(() => colorMode.value === 'dark' ? '#1b1718' : 'white')
+const color = computed(() => (colorMode.value === 'dark' ? '#1b1718' : 'white'))
 
 useHead({
   meta: [
     { charset: 'utf-8' },
     { name: 'viewport', content: 'width=device-width, initial-scale=1' },
-    { key: 'theme-color', name: 'theme-color', content: color }
+    { key: 'theme-color', name: 'theme-color', content: color },
   ],
-  link: [
-    { rel: 'icon', href: '/favicon.ico' }
-  ],
+  link: [{ rel: 'icon', href: '/favicon.ico' }],
   htmlAttrs: {
-    lang: 'en'
-  }
+    lang: locale,
+  },
 })
 
-const title = 'Nuxt Dashboard Template'
-const description = 'A professional dashboard template built with Nuxt UI, featuring multiple pages, data visualization, and comprehensive management capabilities for creating powerful admin interfaces.'
+const title = computed(() => t('seo.title'))
+const description = computed(() => t('seo.description'))
 
 useSeoMeta({
   title,
@@ -27,7 +26,7 @@ useSeoMeta({
   ogDescription: description,
   ogImage: 'https://ui.nuxt.com/assets/templates/nuxt/dashboard-light.png',
   twitterImage: 'https://ui.nuxt.com/assets/templates/nuxt/dashboard-light.png',
-  twitterCard: 'summary_large_image'
+  twitterCard: 'summary_large_image',
 })
 </script>
 

@@ -1,5 +1,6 @@
 import { serverSupabaseClient } from '#supabase/server'
-import { enrichI18nField } from '../../utils/translate'
+import { translateI18nField } from '../../utils/translate'
+import type { FieldI18nStatus } from '../../utils/translate'
 
 export default defineEventHandler(async (event) => {
   const id = getRouterParam(event, 'id')
@@ -12,24 +13,34 @@ export default defineEventHandler(async (event) => {
   if (config.deeplApiKey && (body.name_i18n || body.description_i18n)) {
     const { data: existing } = await client
       .from('places')
-      .select('name_i18n, description_i18n')
+      .select('name_i18n, description_i18n, i18n_status')
       .eq('id', id)
       .single()
 
+    const priorStatus = (existing?.i18n_status as Record<string, FieldI18nStatus>) ?? {}
+    const i18nStatus: Record<string, FieldI18nStatus> = { ...priorStatus }
+
     if (body.name_i18n && typeof body.name_i18n === 'object') {
-      body.name_i18n = await enrichI18nField(
-        body.name_i18n,
-        config.deeplApiKey,
-        (existing?.name_i18n as Record<string, string>) ?? undefined
-      )
+      const { value, status } = await translateI18nField({
+        existing: body.name_i18n,
+        apiKey: config.deeplApiKey,
+        previous: (existing?.name_i18n as Record<string, string>) ?? undefined,
+        priorStatus: priorStatus.name,
+      })
+      body.name_i18n = value
+      if (status) i18nStatus.name = status
     }
     if (body.description_i18n && typeof body.description_i18n === 'object') {
-      body.description_i18n = await enrichI18nField(
-        body.description_i18n,
-        config.deeplApiKey,
-        (existing?.description_i18n as Record<string, string>) ?? undefined
-      )
+      const { value, status } = await translateI18nField({
+        existing: body.description_i18n,
+        apiKey: config.deeplApiKey,
+        previous: (existing?.description_i18n as Record<string, string>) ?? undefined,
+        priorStatus: priorStatus.description,
+      })
+      body.description_i18n = value
+      if (status) i18nStatus.description = status
     }
+    body.i18n_status = i18nStatus
   }
 
   const { data, error } = await client.from('places').update(body).eq('id', id).select().single()

@@ -10,8 +10,12 @@ import { ACTIVITY_SELECT, normalizeActivity } from '~/composables/useActivities'
 export const useActivityLocation = () => {
   const client = useSupabaseClient()
 
-  // VueUse geolocation
-  const { coords, error: geoError, resume, pause } = useGeolocation()
+  // VueUse geolocation — immediate: false: si arranca solo al montar (antes
+  // de que el usuario pida su ubicación), el watchPosition puede quedar en
+  // error/resuelto desde el inicio y un click posterior en "Cerca de mí"
+  // nunca dispara un cambio nuevo en coords/error (se queda "buscando..."
+  // para siempre). Debe arrancar recién cuando se llama a requestLocation().
+  const { coords, error: geoError, resume, pause } = useGeolocation({ immediate: false })
 
   const loading = ref(false)
   const error = computed(() => geoError.value?.message || null)

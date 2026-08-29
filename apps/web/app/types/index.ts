@@ -18,16 +18,6 @@ export type {
   ActivitySeasonRow,
 } from './activity'
 
-// ── Suggestion ────────────────────────────────────────────────────
-export type {
-  Suggestion,
-  SuggestionStatus,
-  SuggestionLocation,
-  SuggestionAgeRange,
-  CreateSuggestionInput,
-  SuggestionResponse,
-} from './suggestion'
-
 // ── UI ────────────────────────────────────────────────────────────
 export type {
   ButtonVariant,

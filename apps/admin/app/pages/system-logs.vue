@@ -80,7 +80,7 @@ const columns = computed<TableColumn<AppLog>[]>(() => [
           variant: 'subtle',
           size: 'xs',
         },
-        () => row.original.level.toUpperCase()
+        () => t(`systemLogs.levels.${row.original.level}`).toUpperCase()
       ),
   },
   {

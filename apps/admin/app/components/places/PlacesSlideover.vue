@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import type { Place } from '~/types'
 // PlaceSearchResult y PlaceDetails se auto-importan desde layers/domain/composables/usePlacesSearch
+// defaultSchedule se auto-importa desde layers/domain/types/schedule (solo se
+// usa como placeholder estático — Place ya no edita su propio horario, ver
+// UiActivityFields en el lugar donde antes vivía UiPlaceAttributesFields)
 
 const props = defineProps<{
   place?: Place | null
@@ -13,12 +16,42 @@ const emit = defineEmits<{
 
 const { t } = useI18n()
 const toast = useToast()
-const loading = ref(false)
+// useEntitySave/hasI18nContent se auto-importan desde app/composables/useEntitySave
+const { loading, run } = useEntitySave()
 const { geocode, isLoading: geocoding } = useGeocode()
 const { uploadFromUrl } = useImageUpload()
 
+const labels = computed(() => ({
+  placeName: t('entityForm.placeName'),
+  activityTitle: t('entityForm.activityTitle'),
+  description: t('entityForm.description'),
+  city: t('entityForm.city'),
+  cityPlaceholder: t('entityForm.cityPlaceholder'),
+  address: t('entityForm.address'),
+  addressPlaceholder: t('entityForm.addressPlaceholder'),
+  category: t('entityForm.category'),
+  phone: t('entityForm.phone'),
+  website: t('entityForm.website'),
+  ages: t('entityForm.ages'),
+  seasons: t('entityForm.seasons'),
+  price: t('entityForm.price'),
+  free: t('entityForm.free'),
+  options: t('entityForm.options'),
+  strollerFriendly: t('entityForm.strollerFriendly'),
+  openWeekends: t('entityForm.openWeekends'),
+  hasShadow: t('entityForm.hasShadow'),
+  hasBathrooms: t('entityForm.hasBathrooms'),
+  placeAttributes: t('entityForm.placeAttributes'),
+  hasSafeRoom: t('entityForm.hasSafeRoom'),
+  activityWebsite: t('entityForm.activityWebsite'),
+  schedule: t('entityForm.schedule'),
+  images: t('entityForm.images'),
+  loading: t('entityForm.loading'),
+}))
+
 interface PlaceMeta {
   google_place_id?: string | null
+  address?: string | null
   phone?: string | null
   website?: string | null
   google_url?: string | null
@@ -26,8 +59,27 @@ interface PlaceMeta {
   opening_hours_text?: string[] | null
   photos?: string[] | null
   place_photo_url?: string | null
+  // Siempre poblados por el watcher de abajo (defaults a false/null) — no
+  // opcionales acá para que calcen con los props requeridos de
+  // UiEntityFormFields, aunque el registro en la base sí pueda no tenerlos.
+  // Nota: stroller_friendly/open_weekends/has_shadow/schedule_structured/
+  // hours_unknown siguen existiendo en filas viejas pero ya no se editan acá
+  // (confirmado 2026-08-28: son atributos de Activity, no de Place) — se
+  // preservan tal cual estén al guardar (spread de `meta` más abajo), sólo
+  // dejan de tener un control de formulario propio.
+  is_free: boolean
+  price: number | null
+  has_bathrooms: boolean
+  has_safe_room: boolean
   [key: string]: unknown
 }
+
+const emptyMetadata = (): PlaceMeta => ({
+  is_free: true,
+  price: null,
+  has_bathrooms: false,
+  has_safe_room: false,
+})
 
 const form = reactive({
   name_i18n: {} as Record<string, string>,
@@ -36,7 +88,7 @@ const form = reactive({
   lat: null as number | null,
   lng: null as number | null,
   images: [] as string[],
-  metadata: {} as PlaceMeta,
+  metadata: emptyMetadata(),
   status: 'active' as 'active' | 'inactive',
 })
 
@@ -61,7 +113,14 @@ watch(
       form.lat = val.lat
       form.lng = val.lng
       form.images = [...(val.images ?? [])]
-      form.metadata = { ...((val.metadata as PlaceMeta) ?? {}) }
+      const meta = (val.metadata as PlaceMeta) ?? {}
+      form.metadata = {
+        ...meta,
+        is_free: meta.is_free ?? true,
+        price: meta.price ?? null,
+        has_bathrooms: meta.has_bathrooms ?? false,
+        has_safe_room: meta.has_safe_room ?? false,
+      }
       form.status = val.status ?? 'active'
     } else {
       form.name_i18n = {}
@@ -70,7 +129,7 @@ watch(
       form.lat = null
       form.lng = null
       form.images = []
-      form.metadata = {}
+      form.metadata = emptyMetadata()
       form.status = 'active'
     }
   },
@@ -98,11 +157,12 @@ const onPlaceSelected = ({
   form.metadata = {
     ...form.metadata,
     google_place_id: place.google_place_id,
+    address: place.address ?? form.metadata.address ?? null,
     phone: details?.phone ?? null,
     website: details?.website ?? null,
     google_url: details?.google_url ?? null,
     wheelchair: details?.wheelchair_accessible ?? null,
-    has_bathrooms: details?.has_bathrooms ?? null,
+    has_bathrooms: details?.has_bathrooms ?? form.metadata.has_bathrooms,
     opening_hours_text: details?.opening_hours?.weekday_text ?? null,
     photos: details?.photos ?? [],
     place_photo_url: place.photo_url ?? null,
@@ -124,38 +184,45 @@ const geocodeCity = async () => {
   }
 }
 
+type PlaceDuplicateMatch = { id: string; name: string; confidence: string; reason: string }
+
 const save = async () => {
-  if (!Object.values(form.name_i18n).some((v) => v?.trim())) {
+  if (!hasI18nContent(form.name_i18n)) {
     toast.add({ title: t('placesSlideover.toast.nameRequired'), color: 'error' })
     return
   }
-  loading.value = true
-  try {
-    let saved: Place
-    if (props.place?.id) {
-      saved = await $fetch<Place>(`/api/places/${props.place.id}`, {
-        method: 'PUT',
-        body: form,
-      })
-      toast.add({ title: t('placesSlideover.toast.updated'), color: 'success' })
-    } else {
-      saved = await $fetch<Place>('/api/places', {
-        method: 'POST',
-        body: form,
-      })
-      toast.add({ title: t('placesSlideover.toast.created'), color: 'success' })
-    }
-    emit('saved', saved)
-    emit('close', saved)
-  } catch (e) {
+
+  const editing = !!props.place?.id
+  const saved = await run(
+    () =>
+      editing
+        ? $fetch<Place>(`/api/places/${props.place!.id}`, { method: 'PUT', body: form })
+        : $fetch<Place & { duplicates?: PlaceDuplicateMatch[] }>('/api/places', {
+            method: 'POST',
+            body: form,
+          }),
+    t('placesSlideover.toast.errorTitle')
+  )
+  if (!saved) return
+
+  toast.add({
+    title: t(editing ? 'placesSlideover.toast.updated' : 'placesSlideover.toast.created'),
+    color: 'success',
+  })
+
+  // Solo el POST devuelve `duplicates` (chequeo no-bloqueante, ver
+  // apps/admin/server/api/places/index.post.ts) — sólo avisa, nunca bloquea.
+  const firstDuplicate = (saved as { duplicates?: PlaceDuplicateMatch[] }).duplicates?.[0]
+  if (firstDuplicate) {
     toast.add({
-      title: t('placesSlideover.toast.errorTitle'),
-      description: e instanceof Error ? e.message : String(e),
-      color: 'error',
+      title: t('placesSlideover.toast.possibleDuplicate', { name: firstDuplicate.name }),
+      color: 'warning',
+      icon: 'i-lucide-alert-triangle',
     })
-  } finally {
-    loading.value = false
   }
+
+  emit('saved', saved)
+  emit('close', saved)
 }
 </script>
 
@@ -177,23 +244,34 @@ const save = async () => {
         <!-- Búsqueda en Google (autollena los campos) -->
         <UiPlaceSearch lang="en" @selected="onPlaceSelected" />
 
-        <UiI18nTabs v-model="form.name_i18n" :label="t('placesSlideover.form.name')" required />
-
-        <UiI18nTabs
-          v-model="form.description_i18n"
-          :label="t('placesSlideover.form.description')"
-          type="textarea"
-          :rows="3"
+        <UiEntityFormFields
+          v-model:name-i18n="form.name_i18n"
+          v-model:description-i18n="form.description_i18n"
+          v-model:city-id="form.city_id"
+          v-model:address="form.metadata.address"
+          v-model:phone="form.metadata.phone"
+          v-model:website="form.metadata.website"
+          v-model:is-free="form.metadata.is_free"
+          v-model:price="form.metadata.price"
+          v-model:has-bathrooms="form.metadata.has_bathrooms"
+          v-model:has-safe-room="form.metadata.has_safe_room"
+          v-model:images="form.images"
+          type="place"
+          :age-range-ids="[]"
+          :best-season="[]"
+          :stroller-friendly="false"
+          :open-weekends="false"
+          :has-shadow="false"
+          :schedule-structured="defaultSchedule()"
+          :hours-unknown="false"
+          :city-options="cities ?? []"
+          :google-hours-text="(form.metadata.opening_hours_text ?? []).join('\n')"
+          :google-photos="googlePhotos"
+          :upload-fn="uploadFromUrl"
+          :age-range-options="[]"
+          :season-options="[]"
+          :labels="labels"
         />
-
-        <UFormField :label="t('placesSlideover.form.city')">
-          <USelect
-            v-model="form.city_id"
-            :items="(cities ?? []).map((c) => ({ label: c.name, value: c.id }))"
-            :placeholder="t('placesSlideover.form.cityPlaceholder')"
-            class="w-full"
-          />
-        </UFormField>
 
         <div class="grid grid-cols-2 gap-3">
           <UFormField :label="t('placesSlideover.form.latitude')">
@@ -214,12 +292,6 @@ const save = async () => {
         >
           {{ t('placesSlideover.getCoordinatesButton') }}
         </UButton>
-
-        <UiImageUploader
-          v-model="form.images"
-          :google-photos="googlePhotos"
-          :upload-fn="uploadFromUrl"
-        />
       </div>
     </template>
 

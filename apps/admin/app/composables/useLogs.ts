@@ -4,6 +4,7 @@ import type { Tables } from '~/types/database.types'
 export type AppLog = Tables<'app_logs'>
 
 export const useLogs = () => {
+  const { t } = useI18n()
   const toast = useToast()
 
   const logs = ref<AppLog[]>([])
@@ -35,8 +36,8 @@ export const useLogs = () => {
       logs.value = result.data
       total.value = result.count
     } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : 'Error desconocido'
-      toast.add({ title: 'Error cargando logs', description: msg, color: 'error' })
+      const msg = e instanceof Error ? e.message : t('systemLogs.toast.unknownError')
+      toast.add({ title: t('systemLogs.toast.loadError'), description: msg, color: 'error' })
     } finally {
       isLoading.value = false
     }

@@ -1,4 +1,5 @@
 export const useAuth = () => {
+  const { t } = useI18n()
   const supabase = useSupabaseClient()
   const user = useSupabaseUser()
   const loading = ref(false)
@@ -20,7 +21,7 @@ export const useAuth = () => {
       const isAdminUser = data.user?.app_metadata?.role === 'admin'
       if (!isAdminUser) {
         await supabase.auth.signOut()
-        throw new Error('Acceso denegado: no tenés permisos de administrador')
+        throw new Error('ADMIN_ACCESS_DENIED')
       }
 
       // Verificar si necesita segundo factor
@@ -34,8 +35,8 @@ export const useAuth = () => {
 
       // Sin MFA configurado — entra directo (con aviso)
       toast.add({
-        title: '¡Bienvenido!',
-        description: 'Recomendamos activar MFA en Configuración → Seguridad',
+        title: t('auth.toast.welcomeTitle'),
+        description: t('auth.toast.welcomeMfaHint'),
         color: 'success',
         icon: 'i-lucide-check-circle',
       })
@@ -43,8 +44,11 @@ export const useAuth = () => {
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error)
       toast.add({
-        title: 'Error al iniciar sesión',
-        description: traducirError(message),
+        title: t('auth.toast.loginErrorTitle'),
+        description:
+          message === 'ADMIN_ACCESS_DENIED'
+            ? t('auth.toast.accessDeniedError')
+            : traducirError(message),
         color: 'error',
         icon: 'i-lucide-alert-circle',
       })
@@ -82,15 +86,15 @@ export const useAuth = () => {
 
       mfaRequired.value = false
       toast.add({
-        title: '¡Bienvenido!',
+        title: t('auth.toast.welcomeTitle'),
         color: 'success',
         icon: 'i-lucide-check-circle',
       })
       await router.push('/')
     } catch {
       toast.add({
-        title: 'Código incorrecto',
-        description: 'Verificá el código en tu app autenticadora',
+        title: t('auth.toast.wrongCodeTitle'),
+        description: t('auth.toast.wrongCodeDescription'),
         color: 'error',
         icon: 'i-lucide-alert-circle',
       })
@@ -113,7 +117,7 @@ export const useAuth = () => {
       await router.push('/login')
     } catch (error) {
       toast.add({
-        title: 'Error al cerrar sesión',
+        title: t('auth.toast.logoutErrorTitle'),
         description: error instanceof Error ? error.message : String(error),
         color: 'error',
       })
@@ -122,16 +126,17 @@ export const useAuth = () => {
     }
   }
 
+  // Supabase siempre devuelve estos mensajes en inglés — se mapean a la
+  // key de i18n correspondiente; si no hay match, se muestra tal cual.
   const traducirError = (message: string): string => {
-    const errores: Record<string, string> = {
-      'Invalid login credentials': 'Email o contraseña incorrectos',
-      'Email not confirmed': 'Confirmá tu email antes de continuar',
-      'Too many requests': 'Demasiados intentos, esperá unos minutos',
-      'User not found': 'No existe un usuario con ese email',
-      'Acceso denegado: no tenés permisos de administrador':
-        'Acceso denegado: no tenés permisos de administrador',
+    const keys: Record<string, string> = {
+      'Invalid login credentials': 'auth.errors.invalidCredentials',
+      'Email not confirmed': 'auth.errors.emailNotConfirmed',
+      'Too many requests': 'auth.errors.tooManyRequests',
+      'User not found': 'auth.errors.userNotFound',
     }
-    return errores[message] ?? message
+    const key = keys[message]
+    return key ? t(key) : message
   }
 
   return { user, isAdmin, loading, mfaRequired, login, verifyMfa, logout }

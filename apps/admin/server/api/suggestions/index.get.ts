@@ -12,9 +12,16 @@ export default defineEventHandler(async (event) => {
   const from = (page - 1) * pageSize
   const to = from + pageSize - 1
 
+  // Join the linked place when suggestion_type === 'experience_for_existing_place'
+  // — that branch always stores name_i18n: {} and location: null on the
+  // suggestion itself (the place already has its own name/location; see
+  // apps/web/server/api/suggestions/index.post.ts), so the table/edit-drawer
+  // need this fallback to show anything for those rows.
   let q = supabase
     .from('suggestions')
-    .select('*', { count: hasPagination ? 'exact' : undefined })
+    .select('*, place:places(id, name_i18n, city:cities(name))', {
+      count: hasPagination ? 'exact' : undefined,
+    })
     .order('created_at', { ascending: false })
 
   // Filtro por status opcional: /api/suggestions?status=pending
@@ -29,6 +36,12 @@ export default defineEventHandler(async (event) => {
   }
   if (query.is_free !== undefined && query.is_free !== '') {
     q = q.eq('is_free', query.is_free === 'true')
+  }
+  if (query.suggestion_type) {
+    q = q.eq('suggestion_type', query.suggestion_type as string)
+  }
+  if (query.flagged_possible_duplicate !== undefined && query.flagged_possible_duplicate !== '') {
+    q = q.eq('flagged_possible_duplicate', query.flagged_possible_duplicate === 'true')
   }
 
   if (hasPagination) {

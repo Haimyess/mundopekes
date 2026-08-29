@@ -11,6 +11,7 @@ export interface PlacesFilters {
 }
 
 export const usePlaces = () => {
+  const { t } = useI18n()
   const toast = useToast()
 
   // $fetch a rutas internas durante el SSR es una request nueva del proceso
@@ -59,7 +60,7 @@ export const usePlaces = () => {
       total.value = res.count
     } catch (e: unknown) {
       toast.add({
-        title: 'Error cargando lugares',
+        title: t('places.toast.loadError'),
         description: e instanceof Error ? e.message : String(e),
         color: 'error',
       })
@@ -72,11 +73,11 @@ export const usePlaces = () => {
   const remove = async (id: string) => {
     try {
       await $fetch(`/api/places/${id}`, { method: 'DELETE' })
-      toast.add({ title: 'Lugar eliminado', color: 'success' })
+      toast.add({ title: t('places.toast.deleted'), color: 'success' })
       await fetch()
     } catch (e: unknown) {
       toast.add({
-        title: 'Error al eliminar',
+        title: t('places.toast.errorTitle'),
         description: e instanceof Error ? e.message : String(e),
         color: 'error',
       })

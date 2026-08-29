@@ -30,17 +30,23 @@
   --color-primary-800: #9a3412;
   --color-primary-900: #7c2d12;
 
-  /* Secondary - Juguetón (Verde menta) */
-  --color-secondary-50: #f0fdf4;
-  --color-secondary-100: #dcfce7;
-  --color-secondary-200: #bbf7d0;
-  --color-secondary-300: #86efac;
-  --color-secondary-400: #4ade80;
-  --color-secondary-500: #22c55e;
-  --color-secondary-600: #16a34a;
-  --color-secondary-700: #15803d;
-  --color-secondary-800: #166534;
-  --color-secondary-900: #14532d;
+  /*
+   * Secondary — alias del nuevo color de acento (Teal).
+   * Todo el sitio usaba este verde menta como color interactivo principal
+   * (botones, badges, hovers). En vez de tocar cada archivo que referencia
+   * --color-secondary-*, se redefine la paleta acá para que el cambio de
+   * marca se propague solo. --color-accent-* sigue siendo la fuente única.
+   */
+  --color-secondary-50: var(--color-accent-50);
+  --color-secondary-100: var(--color-accent-100);
+  --color-secondary-200: var(--color-accent-200);
+  --color-secondary-300: var(--color-accent-300);
+  --color-secondary-400: var(--color-accent-400);
+  --color-secondary-500: var(--color-accent-500);
+  --color-secondary-600: var(--color-accent-600);
+  --color-secondary-700: var(--color-accent-700);
+  --color-secondary-800: var(--color-accent-800);
+  --color-secondary-900: var(--color-accent-900);
 
   /* Neutral - Grises */
   --color-neutral-50: #fafafa;

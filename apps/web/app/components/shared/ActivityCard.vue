@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import type { Activity } from '~/types'
+import type { ActivityBadgeKey } from '../../../../../layers/domain/config/badges'
+// useActivityBadges se auto-importa desde layers/domain/composables
 
 interface Props {
   activity: Activity
@@ -18,20 +20,38 @@ const imageUrl = computed(
   () => props.activity?.images?.[0] ?? props.activity?.place?.images?.[0] ?? null
 )
 
+const BADGE_LABEL_KEYS: Record<ActivityBadgeKey, string> = {
+  is_free: 'activity.free',
+  stroller_friendly: 'activity.stroller_friendly',
+  open_weekends: 'activity.open_weekends',
+  has_shadow: 'activity.has_shadow',
+  has_bathrooms: 'activity.has_bathrooms',
+}
+
 const showBadges = computed(() => {
   if (!props.activity) return []
-
-  const badges = []
-
-  if (props.activity.is_free) badges.push(t('activity.free'))
-
-  if (props.activity.stroller_friendly) badges.push(t('activity.stroller_friendly'))
-
-  return badges.slice(0, props.variant === 'compact' ? 2 : 4)
+  return useActivityBadges(props.activity)
+    .map((key) => t(BADGE_LABEL_KEYS[key]))
+    .slice(0, props.variant === 'compact' ? 2 : 4)
 })
 
-// Descripción: visible por defecto en variant detailed, ocultable por el usuario
+// Descripción: visible por defecto en variant detailed, ocultable por el
+// usuario — pero solo se muestra la flecha si el texto realmente no
+// entra en 2 líneas (scrollHeight > clientHeight con -webkit-line-clamp
+// sigue reportando la altura completa del contenido aunque esté clampeado).
 const showDescription = ref(true)
+const descriptionEl = ref<HTMLElement | null>(null)
+const isDescriptionTruncated = ref(false)
+
+function checkDescriptionTruncation() {
+  const el = descriptionEl.value
+  if (!el) return
+  isDescriptionTruncated.value = el.scrollHeight > el.clientHeight + 1
+}
+
+onMounted(() => {
+  nextTick(checkDescriptionTruncation)
+})
 
 // location: viene de place → city (join en Supabase)
 const cityName = computed(() => props.activity?.place?.city?.name ?? null)
@@ -80,18 +100,31 @@ const hasMeta = computed(() => !!(cityName.value || categoryName.value))
           </template>
         </div>
 
-        <template v-if="variant === 'detailed' && tc(activity.description_i18n ?? {})">
-          <p v-if="showDescription" class="activity-card__description">
+        <div
+          v-if="variant === 'detailed' && tc(activity.description_i18n ?? {})"
+          class="activity-card__desc-row"
+        >
+          <p v-if="showDescription" ref="descriptionEl" class="activity-card__description">
             {{ tc(activity.description_i18n ?? {}) }}
           </p>
           <button
+            v-if="isDescriptionTruncated"
             type="button"
             class="activity-card__desc-toggle"
+            :aria-label="
+              showDescription ? t('activity.hide_description') : t('activity.show_description')
+            "
+            :title="
+              showDescription ? t('activity.hide_description') : t('activity.show_description')
+            "
             @click.stop.prevent="showDescription = !showDescription"
           >
-            {{ showDescription ? t('activity.hide_description') : t('activity.show_description') }}
+            <UiIcon
+              :name="showDescription ? 'i-heroicons-chevron-up' : 'i-heroicons-chevron-down'"
+              size="sm"
+            />
           </button>
-        </template>
+        </div>
 
         <div v-if="showBadges.length" class="activity-card__badges">
           <span v-for="badge in showBadges" :key="badge" class="activity-card__badge">
@@ -183,7 +216,15 @@ const hasMeta = computed(() => !!(cityName.value || categoryName.value))
 }
 
 /* ── Descripción ─────────────────────────────────────────────── */
+.activity-card__desc-row {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+}
+
 .activity-card__description {
+  flex: 1;
+  min-width: 0;
   font-size: var(--font-size-sm);
   color: var(--color-text-secondary);
   line-height: var(--line-height-relaxed);
@@ -194,19 +235,20 @@ const hasMeta = computed(() => !!(cityName.value || categoryName.value))
 }
 
 .activity-card__desc-toggle {
-  align-self: flex-start;
-  background: none;
-  border: none;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   padding: 0;
-  margin-top: calc(-1 * var(--space-1));
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-medium);
+  border: none;
+  background: none;
   color: var(--color-accent-600);
   cursor: pointer;
+  transition: color var(--transition-fast);
 }
 
 .activity-card__desc-toggle:hover {
-  text-decoration: underline;
+  color: var(--color-accent-800);
 }
 
 /* ── Badges — chips minimalistas con el color de acento ───────── */

@@ -5,6 +5,11 @@
 // approve/reject — stay hand-written (useActivities, useProviders,
 // useSuggestions): forcing those into this shape would leak their extra
 // concerns back out through the factory's options, not simplify them.
+//
+// `labels` holds i18n *keys*, not resolved strings — they're translated at
+// toast time (not when the caller builds the object) so a locale switch mid
+// session is reflected immediately instead of freezing whatever `t()`
+// returned when the composable was first set up.
 export interface AdminCrudLabels {
   loadError: string
   created: string
@@ -19,6 +24,7 @@ export const useAdminCrud = <T, TCreate = Partial<T>, TUpdate = Partial<T>>(
   endpoint: string,
   labels: AdminCrudLabels
 ) => {
+  const { t } = useI18n()
   const toast = useToast()
   const items = ref<T[]>([]) as Ref<T[]>
   // Arranca en true — ver el comentario equivalente en useSuggestions.ts.
@@ -32,7 +38,7 @@ export const useAdminCrud = <T, TCreate = Partial<T>, TUpdate = Partial<T>>(
     try {
       items.value = await $fetch<T[]>(endpoint, { params })
     } catch (e) {
-      toast.add({ title: labels.loadError, description: errorMessage(e), color: 'error' })
+      toast.add({ title: t(labels.loadError), description: errorMessage(e), color: 'error' })
     } finally {
       loading.value = false
     }
@@ -42,10 +48,10 @@ export const useAdminCrud = <T, TCreate = Partial<T>, TUpdate = Partial<T>>(
     saving.value = true
     try {
       await $fetch(endpoint, { method: 'POST', body: data as Record<string, unknown> })
-      toast.add({ title: labels.created, color: 'success' })
+      toast.add({ title: t(labels.created), color: 'success' })
       await fetch()
     } catch (e) {
-      toast.add({ title: labels.createError, description: errorMessage(e), color: 'error' })
+      toast.add({ title: t(labels.createError), description: errorMessage(e), color: 'error' })
     } finally {
       saving.value = false
     }
@@ -55,10 +61,10 @@ export const useAdminCrud = <T, TCreate = Partial<T>, TUpdate = Partial<T>>(
     saving.value = true
     try {
       await $fetch(`${endpoint}/${id}`, { method: 'PUT', body: data as Record<string, unknown> })
-      toast.add({ title: labels.updated, color: 'success' })
+      toast.add({ title: t(labels.updated), color: 'success' })
       await fetch()
     } catch (e) {
-      toast.add({ title: labels.updateError, description: errorMessage(e), color: 'error' })
+      toast.add({ title: t(labels.updateError), description: errorMessage(e), color: 'error' })
     } finally {
       saving.value = false
     }
@@ -68,10 +74,10 @@ export const useAdminCrud = <T, TCreate = Partial<T>, TUpdate = Partial<T>>(
     saving.value = true
     try {
       await $fetch(`${endpoint}/${id}`, { method: 'DELETE' })
-      toast.add({ title: labels.deleted, color: 'neutral' })
+      toast.add({ title: t(labels.deleted), color: 'neutral' })
       await fetch()
     } catch (e) {
-      toast.add({ title: labels.deleteError, description: errorMessage(e), color: 'error' })
+      toast.add({ title: t(labels.deleteError), description: errorMessage(e), color: 'error' })
     } finally {
       saving.value = false
     }

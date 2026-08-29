@@ -3,7 +3,8 @@ import { h, resolveComponent } from 'vue'
 import type { TableColumn } from '@nuxt/ui'
 import type { Period, Range, Sale } from '~/types'
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
+const intlLocale = computed(() => (locale.value === 'en' ? 'en-US' : 'es-AR'))
 
 const props = defineProps<{
   period: Period
@@ -57,7 +58,7 @@ const columns = computed<TableColumn<Sale>[]>(() => [
     accessorKey: 'date',
     header: t('home.sales.date'),
     cell: ({ row }) => {
-      return new Date(row.getValue('date')).toLocaleString('en-US', {
+      return new Date(row.getValue('date')).toLocaleString(intlLocale.value, {
         day: 'numeric',
         month: 'short',
         hour: '2-digit',
@@ -91,7 +92,7 @@ const columns = computed<TableColumn<Sale>[]>(() => [
     cell: ({ row }) => {
       const amount = Number.parseFloat(row.getValue('amount'))
 
-      const formatted = new Intl.NumberFormat('en-US', {
+      const formatted = new Intl.NumberFormat(intlLocale.value, {
         style: 'currency',
         currency: 'EUR',
       }).format(amount)

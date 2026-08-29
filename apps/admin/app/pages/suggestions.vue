@@ -1,7 +1,7 @@
 <!-- app/pages/suggestions.vue -->
 <script setup lang="ts">
 import type { TableColumn } from '@nuxt/ui'
-import type { Suggestion } from '~/composables/useSuggestions'
+import type { Suggestion, SuggestionType } from '~/composables/useSuggestions'
 import { syncUrlPage, syncUrlParam } from '~/composables/useUrlPage'
 import { useFacets } from '~/composables/useFacets'
 
@@ -10,6 +10,8 @@ interface SuggestionFacetRow {
   category_id: string | null
   city: string | null
   is_free: boolean
+  suggestion_type: string
+  flagged_possible_duplicate: boolean
 }
 
 const UBadge = resolveComponent('UBadge')
@@ -18,6 +20,19 @@ const UIcon = resolveComponent('UIcon')
 
 const { t, locale } = useI18n()
 const { tc } = useI18nContent()
+const { locales: contentLocales } = useContentLocales()
+
+// Qué campos de i18n_status importan para el resumen de traducción de una
+// sugerencia: las que sólo proponen una actividad para un lugar existente
+// tienen name_i18n/description_i18n siempre vacíos por diseño (el contenido
+// real vive en el lugar), así que sólo el título de la actividad cuenta.
+const translationFieldsFor = (s: Suggestion) =>
+  s.suggestion_type === 'experience_for_existing_place'
+    ? ['title']
+    : ['name', 'description', 'title']
+
+const translationSummary = (s: Suggestion) =>
+  summarizeI18nStatus(s.i18n_status, translationFieldsFor(s), contentLocales)
 
 const {
   suggestions,
@@ -32,11 +47,31 @@ const {
   fetch: loadSuggestions,
 } = useSuggestions()
 
+// Place/Experience discriminator + duplicate-flag filters — client-side only
+// (not part of useSuggestions' own filter state) since they're new and this
+// keeps the change scoped to this page.
+const suggestionTypeFilter = ref<'all' | SuggestionType>('all')
+const duplicateFilter = ref<'all' | 'true'>('all')
+
 syncUrlPage(page)
 syncUrlParam(statusFilter as unknown as Ref<string>, 'status')
 syncUrlParam(categoryFilter, 'category')
 syncUrlParam(cityFilter, 'city')
 syncUrlParam(isFreeFilter as unknown as Ref<string>, 'free')
+syncUrlParam(suggestionTypeFilter as unknown as Ref<string>, 'type')
+syncUrlParam(duplicateFilter as unknown as Ref<string>, 'duplicate')
+
+// Client-side filter on top of the server-paginated list — same pattern as
+// `is_free`/`category` would use if this page filtered fully server-side;
+// kept local since these two are new and low-cardinality.
+const visibleSuggestions = computed(() =>
+  suggestions.value.filter((s) => {
+    if (suggestionTypeFilter.value !== 'all' && s.suggestion_type !== suggestionTypeFilter.value)
+      return false
+    if (duplicateFilter.value === 'true' && !s.flagged_possible_duplicate) return false
+    return true
+  })
+)
 
 const pageCount = computed(() => Math.max(1, Math.ceil(total.value / pageSize.value)))
 
@@ -53,9 +88,43 @@ const facets = useFacets<SuggestionFacetRow>('/api/suggestions/facets', {
   category_id: categoryFilter,
   city: cityFilter,
   is_free: isFreeFilter as unknown as Ref<string>,
+  suggestion_type: suggestionTypeFilter as unknown as Ref<string>,
+  flagged_possible_duplicate: duplicateFilter as unknown as Ref<string>,
 })
 
 const withCount = (label: string, count: number) => `${label} (${count})`
+
+const suggestionTypeOptions = computed(() => [
+  {
+    label: withCount(t('suggestions.filters.allTypes'), facets.countFor('suggestion_type', 'all')),
+    value: 'all',
+  },
+  {
+    label: withCount(
+      t('suggestions.filters.typeNewPlace'),
+      facets.countFor('suggestion_type', 'new_place_with_experience')
+    ),
+    value: 'new_place_with_experience',
+  },
+  {
+    label: withCount(
+      t('suggestions.filters.typeExistingPlace'),
+      facets.countFor('suggestion_type', 'experience_for_existing_place')
+    ),
+    value: 'experience_for_existing_place',
+  },
+])
+
+const duplicateOptions = computed(() => [
+  { label: t('suggestions.filters.allDuplicates'), value: 'all' },
+  {
+    label: withCount(
+      t('suggestions.filters.onlyDuplicates'),
+      facets.countFor('flagged_possible_duplicate', 'true')
+    ),
+    value: 'true',
+  },
+])
 
 const categoryOptions = computed(() => [
   {
@@ -167,28 +236,31 @@ const columns = computed<TableColumn<Suggestion>[]>(() => [
   {
     accessorKey: 'name_i18n',
     header: t('suggestions.columns.name'),
-    cell: ({ row }) => tc(row.original.name_i18n) || '—',
+    // experience_for_existing_place suggestions store name_i18n: {} on the
+    // suggestion itself — the name lives on the joined place instead.
+    cell: ({ row }) =>
+      tc(row.original.name_i18n) ||
+      (row.original.place ? tc(row.original.place.name_i18n) : '') ||
+      '—',
   },
   {
     accessorKey: 'location',
     header: t('suggestions.columns.city'),
-    cell: ({ row }) => row.original.location?.city ?? '—',
+    cell: ({ row }) => row.original.location?.city ?? row.original.place?.city?.name ?? '—',
   },
   {
-    accessorKey: 'type',
-    header: t('suggestions.columns.type'),
+    accessorKey: 'category_id',
+    header: t('suggestions.columns.category'),
+    // Antes mostraba suggestion.type (snapshot de texto libre, congelado al
+    // momento del envío — podía quedar desactualizado si la categoría se
+    // renombraba). Confirmado 2026-08-28: se reemplaza por category_id (la
+    // misma fuente que ahora usa el drawer unificado vía subcategoryOptions),
+    // siempre al día.
     cell: ({ row }) => {
-      const types = row.original.type ?? []
-      return h('div', { class: 'flex gap-1 flex-wrap' }, [
-        ...types
-          .slice(0, 2)
-          .map((t: string) =>
-            h(UBadge, { key: t, color: 'neutral', variant: 'subtle', size: 'md' }, () => t)
-          ),
-        types.length > 2
-          ? h('span', { class: 'text-xs text-(--ui-text-muted)' }, `+${types.length - 2}`)
-          : null,
-      ])
+      const cat = (categories.value ?? []).find((c) => c.id === row.original.category_id)
+      return cat
+        ? h(UBadge, { color: 'neutral', variant: 'subtle', size: 'md' }, () => tc(cat.name_i18n))
+        : '—'
     },
   },
   {
@@ -221,15 +293,58 @@ const columns = computed<TableColumn<Suggestion>[]>(() => [
     accessorKey: 'status',
     header: t('suggestions.columns.status'),
     cell: ({ row }) =>
-      h(
+      h('div', { class: 'flex items-center gap-1.5' }, [
+        h(
+          UBadge,
+          {
+            color: statusColor(row.original.status),
+            variant: 'subtle',
+            size: 'sm',
+          },
+          () => statusLabel(row.original.status)
+        ),
+        row.original.suggestion_type === 'experience_for_existing_place'
+          ? h(UBadge, { color: 'info', variant: 'subtle', size: 'sm' }, () =>
+              t('suggestions.filters.typeExistingPlace')
+            )
+          : null,
+        row.original.flagged_possible_duplicate
+          ? h(
+              UBadge,
+              { color: 'warning', variant: 'subtle', size: 'sm', icon: 'i-lucide-alert-triangle' },
+              () => t('suggestionsSlideover.possibleDuplicateTitle')
+            )
+          : null,
+      ]),
+  },
+  {
+    id: 'translations',
+    header: t('suggestions.columns.translations'),
+    cell: ({ row }) => {
+      const summary = translationSummary(row.original)
+      if (summary.state === 'unknown') {
+        return h(
+          'span',
+          { class: 'text-xs text-(--ui-text-muted)' },
+          t('suggestions.translations.unknown')
+        )
+      }
+      if (summary.state === 'complete') {
+        return h(
+          UBadge,
+          { color: 'success', variant: 'subtle', size: 'sm', icon: 'i-lucide-check' },
+          () => t('suggestions.translations.complete')
+        )
+      }
+      return h(
         UBadge,
-        {
-          color: statusColor(row.original.status),
-          variant: 'subtle',
-          size: 'sm',
-        },
-        () => statusLabel(row.original.status)
-      ),
+        { color: 'warning', variant: 'subtle', size: 'sm', icon: 'i-lucide-alert-triangle' },
+        () =>
+          t('suggestions.translations.missing', {
+            locales: summary.missingLocales.map((l) => l.toUpperCase()).join(', '),
+          })
+      )
+    },
   },
   {
     id: 'actions',
@@ -290,7 +405,7 @@ onMounted(async () => {
     </template>
 
     <template #body>
-      <TableSkeleton v-if="loading && !suggestions.length" :tabs="4" :filters="3" :columns="7" />
+      <TableSkeleton v-if="loading && !suggestions.length" :tabs="4" :filters="3" :columns="8" />
 
       <template v-else>
         <!-- Zona fija: tabs a la izquierda, filtros a la derecha, nunca scrollea -->
@@ -315,13 +430,19 @@ onMounted(async () => {
             <USelect v-model="categoryFilter" :items="categoryOptions" class="min-w-44" />
             <USelect v-model="cityFilter" :items="cityOptions" class="min-w-40" />
             <USelect v-model="isFreeFilter" :items="freeOptions" class="min-w-36" />
+            <USelect
+              v-model="suggestionTypeFilter"
+              :items="suggestionTypeOptions"
+              class="min-w-48"
+            />
+            <USelect v-model="duplicateFilter" :items="duplicateOptions" class="min-w-40" />
           </div>
         </div>
 
         <!-- Zona scrolleable: solo la tabla -->
         <div class="flex-1 min-h-0 overflow-y-auto p-4">
           <UTable
-            :data="suggestions"
+            :data="visibleSuggestions"
             :columns="columns"
             :loading="loading"
             class="w-full"

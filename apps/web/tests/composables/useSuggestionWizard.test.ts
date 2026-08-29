@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { __resetStore } from '../__mocks__/nuxt-state'
 
-import { useSuggestionWizard } from '~/app/composables/useSuggestionWizard'
+import { useSuggestionWizard, WIZARD_STEPS } from '~/app/composables/useSuggestionWizard'
 import type { WizardState } from '~/app/composables/useSuggestionWizard'
 
 // ── vue-i18n mock (used by useI18nContent AND resolved by Nuxt's auto-import
@@ -456,6 +456,112 @@ describe('draftToggleSeason', () => {
     const { editDraft, draftToggleSeason } = useSuggestionWizard()
     editDraft.value = null
     expect(() => draftToggleSeason('spring')).not.toThrow()
+  })
+})
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  draftToggleAge
+// ═══════════════════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════════════════
+//  Step order — activity first, then place (see useSuggestionWizard.ts)
+// ═══════════════════════════════════════════════════════════════════════════
+describe('WIZARD_STEPS order', () => {
+  it('step 1 is actividad, step 2 is lugar', () => {
+    expect(WIZARD_STEPS[0]?.labelKey).toBe('suggest.step_actividad')
+    expect(WIZARD_STEPS[1]?.labelKey).toBe('suggest.step_lugar')
+  })
+})
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  matchedPlace (own-DB search result) — experience_for_existing_place path
+// ═══════════════════════════════════════════════════════════════════════════
+const makeLocalMatch = () => ({
+  id: '11111111-1111-4111-8111-111111111111',
+  name_i18n: { es: 'Parque HaYarkon', he: 'פארק הירקון' },
+  lat: 32.1,
+  lng: 34.8,
+  thumbnail: '/img/park.jpg',
+  google_place_id: 'gp-existing',
+  city: { id: 1, name: 'Tel Aviv' },
+})
+
+describe('setMatchedPlace / clearMatchedPlace / toggleNewPlaceForm', () => {
+  it('setMatchedPlace makes hasPlace true without any Google/manual data', () => {
+    const { state, setMatchedPlace, hasPlace } = useSuggestionWizard()
+    setMatchedPlace(makeLocalMatch())
+    expect(hasPlace.value).toBe(true)
+    expect(state.value.placeResult).toBeNull()
+    expect(state.value.isManual).toBe(false)
+  })
+
+  it('setMatchedPlace sets suggestionType to experience_for_existing_place', () => {
+    const { setMatchedPlace, suggestionType } = useSuggestionWizard()
+    setMatchedPlace(makeLocalMatch())
+    expect(suggestionType.value).toBe('experience_for_existing_place')
+  })
+
+  it('without a match, suggestionType defaults to new_place_with_experience', () => {
+    const { suggestionType } = useSuggestionWizard()
+    expect(suggestionType.value).toBe('new_place_with_experience')
+  })
+
+  it('clearMatchedPlace resets suggestionType and hasPlace (with no new-place form open)', () => {
+    const { setMatchedPlace, clearMatchedPlace, suggestionType, hasPlace } = useSuggestionWizard()
+    setMatchedPlace(makeLocalMatch())
+    clearMatchedPlace()
+    expect(suggestionType.value).toBe('new_place_with_experience')
+    expect(hasPlace.value).toBe(false)
+  })
+
+  it('toggleNewPlaceForm(on) clears any existing match', () => {
+    const { state, setMatchedPlace, toggleNewPlaceForm } = useSuggestionWizard()
+    setMatchedPlace(makeLocalMatch())
+    toggleNewPlaceForm()
+    expect(state.value.matchedPlace).toBeNull()
+    expect(state.value.showNewPlaceForm).toBe(true)
+  })
+
+  it('hasPlace is false when showNewPlaceForm is on but nothing selected yet', () => {
+    const { toggleNewPlaceForm, hasPlace } = useSuggestionWizard()
+    toggleNewPlaceForm()
+    expect(hasPlace.value).toBe(false)
+  })
+
+  it('placeName/placeAddress/placePhoto read from matchedPlace when set', () => {
+    const { setMatchedPlace, placeName, placeAddress, placePhoto } = useSuggestionWizard()
+    setMatchedPlace(makeLocalMatch())
+    expect(placeName.value).toBe('Parque HaYarkon')
+    expect(placeAddress.value).toBe('Tel Aviv')
+    expect(placePhoto.value).toBe('/img/park.jpg')
+  })
+})
+
+describe('buildPayload — experience_for_existing_place', () => {
+  it('payload has suggestion_type + place_id, no name_i18n/location', () => {
+    const { setMatchedPlace, state, buildPayload } = useSuggestionWizard()
+    setMatchedPlace(makeLocalMatch())
+    state.value.selectedCategories = [makeCat('cat-1', 'Toboganes')]
+
+    const payload = buildPayload()
+    expect(payload.suggestion_type).toBe('experience_for_existing_place')
+    expect(payload).toMatchObject({ place_id: '11111111-1111-4111-8111-111111111111' })
+    expect('name_i18n' in payload).toBe(false)
+    expect('location' in payload).toBe(false)
+  })
+
+  it('still carries experience-level fields (title, category, age, season, price)', () => {
+    const { setMatchedPlace, state, buildPayload } = useSuggestionWizard()
+    setMatchedPlace(makeLocalMatch())
+    state.value.selectedCategories = [makeCat('cat-1', 'Toboganes')]
+    state.value.selectedSeasons = ['summer']
+    state.value.isFree = false
+    state.value.price = '25'
+
+    const payload = buildPayload()
+    expect(payload.category_id).toBe('cat-1')
+    expect(payload.best_season).toEqual(['summer'])
+    expect(payload.price).toBe(25)
+    expect(Object.keys(payload.title_i18n!)).toContain('es')
   })
 })
 

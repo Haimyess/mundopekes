@@ -1,4 +1,5 @@
 import type { PlaceSearchResult, PlaceDetails } from '~/composables/usePlacesSearch'
+import type { LocalPlaceMatch } from '~/composables/useLocalPlaceSearch'
 
 export type { PlaceDetails }
 
@@ -34,6 +35,13 @@ export interface WizardPlaceInfo {
 }
 
 export interface WizardState {
+  // Set when the user picked an existing place from our own DB (local search).
+  // When non-null, the suggestion is `experience_for_existing_place` and no
+  // place-detail fields (name/address/description/etc.) are collected at all.
+  matchedPlace: LocalPlaceMatch | null
+  // Toggled on when the user can't find their place in local search and opts
+  // to propose a new one (reveals the Google-search-or-manual UI below).
+  showNewPlaceForm: boolean
   placeResult: PlaceSearchResult | null
   placeDetails: PlaceDetails | null
   name_i18n: Record<string, string>
@@ -65,9 +73,12 @@ export interface WizardState {
   manualLng: number | null
 }
 
+// Order: activity first ("what can you do here?"), then place ("where?") —
+// so the place step can immediately offer "attach to an existing place"
+// without having collected anything place-specific yet.
 export const WIZARD_STEPS = [
-  { labelKey: 'suggest.step_lugar' },
   { labelKey: 'suggest.step_actividad' },
+  { labelKey: 'suggest.step_lugar' },
   { labelKey: 'suggest.step_detalles' },
   { labelKey: 'suggest.step_resumen' },
 ]
@@ -83,6 +94,8 @@ const defaultSchedule = (): WizardSchedule => ({
 })
 
 const defaultState = (): WizardState => ({
+  matchedPlace: null,
+  showNewPlaceForm: false,
   placeResult: null,
   placeDetails: null,
   name_i18n: {},
@@ -214,20 +227,31 @@ export function useSuggestionWizard() {
   }
 
   // ─── Computed ─────────────────────────────────────────────────
-  const placeName = computed(() =>
-    state.value.isManual ? state.value.manualName : (state.value.placeResult?.name ?? '')
-  )
+  const placeName = computed(() => {
+    if (state.value.matchedPlace) return tc(state.value.matchedPlace.name_i18n)
+    return state.value.isManual ? state.value.manualName : (state.value.placeResult?.name ?? '')
+  })
 
-  const placeAddress = computed(() =>
-    state.value.isManual
+  const placeAddress = computed(() => {
+    if (state.value.matchedPlace) return state.value.matchedPlace.city?.name ?? ''
+    return state.value.isManual
       ? [state.value.manualCity, state.value.manualAddress].filter(Boolean).join(', ')
       : (state.value.placeResult?.address ?? '')
+  })
+
+  const placePhoto = computed(
+    () => state.value.matchedPlace?.thumbnail ?? state.value.placeResult?.photo_url ?? null
   )
 
-  const placePhoto = computed(() => state.value.placeResult?.photo_url ?? null)
+  const hasPlace = computed(() => {
+    if (state.value.matchedPlace) return true
+    if (!state.value.showNewPlaceForm) return false
+    return state.value.isManual ? !!state.value.manualName.trim() : !!state.value.placeResult
+  })
 
-  const hasPlace = computed(() =>
-    state.value.isManual ? !!state.value.manualName.trim() : !!state.value.placeResult
+  // Discriminator sent to the server — mirrors suggestions.suggestion_type.
+  const suggestionType = computed<'new_place_with_experience' | 'experience_for_existing_place'>(
+    () => (state.value.matchedPlace ? 'experience_for_existing_place' : 'new_place_with_experience')
   )
 
   const hasActivity = computed(
@@ -302,6 +326,30 @@ export function useSuggestionWizard() {
     }
   }
 
+  // ─── Local place match (own DB) ────────────────────────────────
+  const setMatchedPlace = (place: LocalPlaceMatch) => {
+    state.value.matchedPlace = place
+    state.value.showNewPlaceForm = false
+    // Clear anything the "propose new place" sub-flow may have collected —
+    // a matched place means none of it gets sent.
+    clearPlace()
+    state.value.isManual = false
+    state.value.manualName = ''
+    state.value.manualCity = ''
+    state.value.manualAddress = ''
+    state.value.manualLat = null
+    state.value.manualLng = null
+  }
+
+  const clearMatchedPlace = () => {
+    state.value.matchedPlace = null
+  }
+
+  const toggleNewPlaceForm = () => {
+    state.value.showNewPlaceForm = !state.value.showNewPlaceForm
+    if (state.value.showNewPlaceForm) state.value.matchedPlace = null
+  }
+
   const toggleCategory = (cat: WizardCategory) => {
     const idx = state.value.selectedCategories.findIndex((c) => c.id === cat.id)
     if (idx === -1) state.value.selectedCategories.push(cat)
@@ -356,8 +404,43 @@ export function useSuggestionWizard() {
   }
 
   // ─── Payload ──────────────────────────────────────────────────
+  // Fields common to both suggestion types (experience-level only).
+  const buildExperienceFields = () => {
+    const s = state.value
+    return {
+      title_i18n: { [locale.value]: effectiveTitle.value },
+      category_id: s.selectedCategories[0]?.id ?? '',
+      age_range_ids: s.selectedAgeIds,
+      best_season: s.selectedSeasons,
+      type: s.selectedCategories.map((c) => tc(c.name_i18n)),
+      is_free: s.isFree,
+      price: s.isFree ? undefined : Number.parseFloat(s.price) || undefined,
+      stroller_friendly: s.stroller,
+      has_shadow: s.shadow,
+      has_bathrooms: s.bathrooms,
+      open_weekends: s.weekends,
+      schedule_structured: s.hoursUnknown ? undefined : s.schedule,
+    }
+  }
+
   const buildPayload = () => {
     const s = state.value
+
+    // ── Matched an existing place: only the experience is new ──────────
+    if (s.matchedPlace) {
+      return {
+        suggestion_type: 'experience_for_existing_place' as const,
+        place_id: s.matchedPlace.id,
+        ...buildExperienceFields(),
+        metadata: {
+          generated_title: generatedTitle.value,
+          custom_activity: s.customActivity || undefined,
+          hours_unknown: s.hoursUnknown || undefined,
+        },
+      }
+    }
+
+    // ── No match: propose place + experience together ──────────────────
     const pi = s.placeInfo
 
     const name_i18n = s.isManual ? { [locale.value]: s.manualName } : { ...s.name_i18n }
@@ -372,27 +455,16 @@ export function useSuggestionWizard() {
       : undefined
 
     return {
+      suggestion_type: 'new_place_with_experience' as const,
       name_i18n,
       description_i18n,
-      // Activity title (distinct from the place name)
-      title_i18n: { [locale.value]: effectiveTitle.value },
       location: {
         address: s.isManual ? s.manualAddress : (s.placeResult?.address ?? ''),
         city: s.isManual ? s.manualCity : (s.placeResult?.address ?? ''),
         lat: s.isManual ? (s.manualLat ?? undefined) : (s.placeResult?.lat ?? undefined),
         lng: s.isManual ? (s.manualLng ?? undefined) : (s.placeResult?.lng ?? undefined),
       },
-      category_id: s.selectedCategories[0]?.id ?? '',
-      age_range_ids: s.selectedAgeIds,
-      best_season: s.selectedSeasons,
-      type: s.selectedCategories.map((c) => tc(c.name_i18n)),
-      is_free: s.isFree,
-      price: s.isFree ? undefined : Number.parseFloat(s.price) || undefined,
-      stroller_friendly: s.stroller,
-      has_shadow: s.shadow,
-      has_bathrooms: s.bathrooms,
-      open_weekends: s.weekends,
-      schedule_structured: s.hoursUnknown ? undefined : s.schedule,
+      ...buildExperienceFields(),
       metadata: {
         google_place_id: s.placeResult?.google_place_id ?? undefined,
         place_photo_url: s.placeResult?.photo_url ?? undefined,
@@ -424,6 +496,7 @@ export function useSuggestionWizard() {
     hasActivity,
     generatedTitle,
     effectiveTitle,
+    suggestionType,
     // edit
     openEdit,
     closeEdit,
@@ -438,6 +511,9 @@ export function useSuggestionWizard() {
     // actions
     setPlace,
     clearPlace,
+    setMatchedPlace,
+    clearMatchedPlace,
+    toggleNewPlaceForm,
     toggleCategory,
     toggleSeason,
     toggleAge,

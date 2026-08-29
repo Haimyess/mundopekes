@@ -25,7 +25,20 @@ const mockInsertData = vi.fn()
 const mockSingle = vi.fn()
 const mockSelect = vi.fn()
 const mockInsert = vi.fn(() => ({ select: mockSelect }))
-const mockFrom = vi.fn(() => ({ insert: mockInsert }))
+
+// `places` lookup chain used by the experience_for_existing_place branch:
+// client.from('places').select('id').eq('id', ...).eq('status', 'active').single()
+const mockPlacesSingle = vi.fn()
+const mockPlacesChain = {
+  select: vi.fn(() => mockPlacesChain),
+  eq: vi.fn(() => mockPlacesChain),
+  single: mockPlacesSingle,
+}
+
+const mockFrom = vi.fn((table: string) => {
+  if (table === 'places') return mockPlacesChain
+  return { insert: mockInsert }
+})
 
 vi.mock('#supabase/server', () => ({
   serverSupabaseClient: vi.fn(async () => ({ from: mockFrom })),
@@ -52,12 +65,17 @@ vi.stubGlobal('sanitizeHttpUrl', (value: string | null | undefined) => {
   }
 })
 vi.stubGlobal('checkRateLimit', vi.fn().mockResolvedValue(undefined))
+const mockFindPlaceDuplicates = vi.fn().mockResolvedValue([])
+const mockFindExperienceDuplicates = vi.fn().mockResolvedValue([])
+vi.stubGlobal('findPlaceDuplicates', mockFindPlaceDuplicates)
+vi.stubGlobal('findExperienceDuplicates', mockFindExperienceDuplicates)
 
 // ── Load handler ───────────────────────────────────────────────────────────
 const { default: handler } = await import('../../server/api/suggestions/index.post')
 
 // ── Base valid body ────────────────────────────────────────────────────────
 const baseBody = () => ({
+  suggestion_type: 'new_place_with_experience' as const,
   name_i18n: { es: 'Parque HaYarkon' },
   location: { city: 'Tel Aviv', address: 'Sderot Rokach', lat: 32.1, lng: 34.8 },
   category_id: 'cat-001',
@@ -94,7 +112,15 @@ beforeEach(() => {
   mockInsert.mockReturnValue({ select: mockSelect })
   mockSelect.mockReturnValue({ single: mockSingle })
   mockSingle.mockResolvedValue({ data: { id: 'sug-001' }, error: null })
-  mockFrom.mockReturnValue({ insert: mockInsert })
+  mockFrom.mockImplementation((table: string) =>
+    table === 'places' ? mockPlacesChain : { insert: mockInsert }
+  )
+  mockPlacesSingle.mockResolvedValue({
+    data: { id: '11111111-1111-4111-8111-111111111111' },
+    error: null,
+  })
+  mockFindPlaceDuplicates.mockResolvedValue([])
+  mockFindExperienceDuplicates.mockResolvedValue([])
 })
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -247,5 +273,75 @@ describe('POST /api/suggestions — schedule text', () => {
     await handler(makeEvent(body))
     const insertedRow = mockInsert.mock.calls[0][0]
     expect(insertedRow.schedule).toBe('')
+  })
+})
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  experience_for_existing_place branch
+// ═══════════════════════════════════════════════════════════════════════════
+describe('POST /api/suggestions — experience_for_existing_place', () => {
+  const existingPlaceBody = () => ({
+    suggestion_type: 'experience_for_existing_place' as const,
+    place_id: '11111111-1111-4111-8111-111111111111',
+    title_i18n: { es: 'Toboganes' },
+    category_id: 'cat-001',
+    age_range_ids: [1, 2],
+    best_season: ['spring'],
+    type: ['Parques'],
+    is_free: true,
+    stroller_friendly: false,
+    has_shadow: false,
+    has_bathrooms: false,
+    open_weekends: true,
+    schedule_structured: undefined,
+    metadata: {},
+  })
+
+  it('inserts only an activity-shaped suggestion with no place_id lookup fields', async () => {
+    mockInsertSuccess()
+    await handler(makeEvent(existingPlaceBody()))
+    const insertedRow = mockInsert.mock.calls[0][0]
+    expect(insertedRow.suggestion_type).toBe('experience_for_existing_place')
+    expect(insertedRow.place_id).toBe('11111111-1111-4111-8111-111111111111')
+    expect(insertedRow.location).toBeNull()
+    expect(insertedRow.name_i18n).toEqual({})
+  })
+
+  it('checks the place exists and is active before inserting', async () => {
+    mockInsertSuccess()
+    await handler(makeEvent(existingPlaceBody()))
+    expect(mockFrom).toHaveBeenCalledWith('places')
+    expect(mockPlacesChain.eq).toHaveBeenCalledWith('id', '11111111-1111-4111-8111-111111111111')
+    expect(mockPlacesChain.eq).toHaveBeenCalledWith('status', 'active')
+  })
+
+  it('throws 400 when the place_id does not exist or is inactive', async () => {
+    mockPlacesSingle.mockResolvedValueOnce({ data: null, error: { message: 'not found' } })
+    await expect(handler(makeEvent(existingPlaceBody()))).rejects.toMatchObject({
+      statusCode: 400,
+    })
+    expect(mockInsert).not.toHaveBeenCalled()
+  })
+
+  it('throws 400 when place_id is not a valid uuid', async () => {
+    await expect(
+      handler(makeEvent({ ...existingPlaceBody(), place_id: 'not-a-uuid' }))
+    ).rejects.toMatchObject({ statusCode: 400 })
+  })
+
+  it('throws 400 when title_i18n is missing', async () => {
+    const { title_i18n: _t, ...noTitle } = existingPlaceBody()
+    await expect(handler(makeEvent(noTitle))).rejects.toMatchObject({ statusCode: 400 })
+  })
+
+  it('flags flagged_possible_duplicate when a matching activity is found', async () => {
+    mockInsertSuccess()
+    mockFindExperienceDuplicates.mockResolvedValueOnce([
+      { id: 'act-existing', title: 'Toboganes', confidence: 'high', reason: 'exact_title' },
+    ])
+    await handler(makeEvent(existingPlaceBody()))
+    const insertedRow = mockInsert.mock.calls[0][0]
+    expect(insertedRow.flagged_possible_duplicate).toBe(true)
+    expect(insertedRow.possible_duplicate_activity_id).toBe('act-existing')
   })
 })

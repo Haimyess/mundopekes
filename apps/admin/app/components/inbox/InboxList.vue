@@ -1,10 +1,19 @@
 <script setup lang="ts">
 import { format, isToday } from 'date-fns'
+import { es, enUS } from 'date-fns/locale'
 import type { Mail } from '~/types'
 
 const props = defineProps<{
   mails: Mail[]
 }>()
+
+const { locale } = useI18n()
+const dateFnsLocale = computed(() => (locale.value === 'en' ? enUS : es))
+
+const formatMailDate = (date: string) => {
+  const d = new Date(date)
+  return isToday(d) ? format(d, 'HH:mm') : format(d, 'dd MMM', { locale: dateFnsLocale.value })
+}
 
 const mailsRefs = ref<Record<number, Element | null>>({})
 
@@ -38,7 +47,7 @@ defineShortcuts({
     } else if (index > 0) {
       selectedMail.value = props.mails[index - 1]
     }
-  }
+  },
 })
 </script>
 
@@ -47,7 +56,11 @@ defineShortcuts({
     <div
       v-for="(mail, index) in mails"
       :key="index"
-      :ref="(el) => { mailsRefs[mail.id] = el as Element | null }"
+      :ref="
+        (el) => {
+          mailsRefs[mail.id] = el as Element | null
+        }
+      "
     >
       <div
         class="p-4 sm:px-6 text-sm cursor-pointer border-l-2 transition-colors"
@@ -55,7 +68,7 @@ defineShortcuts({
           mail.unread ? 'text-highlighted' : 'text-toned',
           selectedMail && selectedMail.id === mail.id
             ? 'border-primary bg-primary/10'
-            : 'border-bg hover:border-primary hover:bg-primary/5'
+            : 'border-bg hover:border-primary hover:bg-primary/5',
         ]"
         @click="selectedMail = mail"
       >
@@ -66,7 +79,7 @@ defineShortcuts({
             <UChip v-if="mail.unread" />
           </div>
 
-          <span>{{ isToday(new Date(mail.date)) ? format(new Date(mail.date), 'HH:mm') : format(new Date(mail.date), 'dd MMM') }}</span>
+          <span>{{ formatMailDate(mail.date) }}</span>
         </div>
         <p class="truncate" :class="[mail.unread && 'font-semibold']">
           {{ mail.subject }}

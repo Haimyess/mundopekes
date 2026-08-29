@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { Activity, Category, Place } from '~/types'
+import type { Activity, Place } from '~/types'
 // WizardSchedule y defaultSchedule se auto-importan desde layers/domain/types/schedule
 import PlacesSlideover from '~/components/places/PlacesSlideover.vue'
 
@@ -17,37 +17,69 @@ const emit = defineEmits<{
 const { t } = useI18n()
 const toast = useToast()
 const overlay = useOverlay()
-const loading = ref(false)
+// useEntitySave/hasI18nContent se auto-importan desde app/composables/useEntitySave
+const { loading, run } = useEntitySave()
 const { uploadFromUrl } = useImageUpload()
 
 const AGE_LABELS = computed<Record<string, string>>(() => ({
-  'age.all': t('activitiesSlideover.ageLabels.all'),
-  'age.babies': t('activitiesSlideover.ageLabels.babies'),
-  'age.toddlers': t('activitiesSlideover.ageLabels.toddlers'),
-  'age.preschool': t('activitiesSlideover.ageLabels.preschool'),
-  'age.school': t('activitiesSlideover.ageLabels.school'),
-  'age.teens': t('activitiesSlideover.ageLabels.teens'),
+  'age.all': t('entityForm.ageLabels.all'),
+  'age.babies': t('entityForm.ageLabels.babies'),
+  'age.toddlers': t('entityForm.ageLabels.toddlers'),
+  'age.preschool': t('entityForm.ageLabels.preschool'),
+  'age.school': t('entityForm.ageLabels.school'),
+  'age.teens': t('entityForm.ageLabels.teens'),
 }))
 const SEASON_LABELS = computed<Record<string, string>>(() => ({
-  all: t('activitiesSlideover.seasonLabels.all'),
-  spring: t('activitiesSlideover.seasonLabels.spring'),
-  summer: t('activitiesSlideover.seasonLabels.summer'),
-  autumn: t('activitiesSlideover.seasonLabels.autumn'),
-  winter: t('activitiesSlideover.seasonLabels.winter'),
+  all: t('entityForm.seasonLabels.all'),
+  spring: t('entityForm.seasonLabels.spring'),
+  summer: t('entityForm.seasonLabels.summer'),
+  autumn: t('entityForm.seasonLabels.autumn'),
+  winter: t('entityForm.seasonLabels.winter'),
 }))
+const FORM_LABELS = computed(() => ({
+  placeName: t('entityForm.placeName'),
+  activityTitle: t('activitiesSlideover.form.title'),
+  description: t('activitiesSlideover.form.description'),
+  city: t('entityForm.city'),
+  cityPlaceholder: t('entityForm.cityPlaceholder'),
+  address: t('entityForm.address'),
+  addressPlaceholder: t('entityForm.addressPlaceholder'),
+  category: t('activitiesSlideover.form.category'),
+  categoryPlaceholder: t('activitiesSlideover.form.categoryPlaceholder'),
+  phone: t('entityForm.phone'),
+  website: t('entityForm.website'),
+  ages: t('activitiesSlideover.form.ageRanges'),
+  seasons: t('activitiesSlideover.form.seasons'),
+  price: t('activitiesSlideover.form.price'),
+  free: t('activitiesSlideover.form.free'),
+  options: t('activitiesSlideover.form.options'),
+  strollerFriendly: t('activitiesSlideover.form.strollerFriendly'),
+  openWeekends: t('activitiesSlideover.form.openWeekends'),
+  hasShadow: t('activitiesSlideover.form.hasShade'),
+  hasBathrooms: t('activitiesSlideover.form.hasBathrooms'),
+  placeAttributes: t('entityForm.placeAttributes'),
+  hasSafeRoom: t('entityForm.hasSafeRoom'),
+  activityWebsite: t('entityForm.activityWebsite'),
+  schedule: t('entityForm.schedule'),
+  images: t('entityForm.images'),
+  loading: t('entityForm.loading'),
+}))
+
+type ActivityDuplicateMatch = { id: string; title: string; confidence: string; reason: string }
 
 interface ActivityMeta {
   schedule_structured?: WizardSchedule | null
   hours_unknown?: boolean | null
   has_shadow?: boolean | null
   has_bathrooms?: boolean | null
+  website?: string | null
   photos?: string[] | null
   [key: string]: unknown
 }
 
 const form = reactive({
   place_id: props.placeId ?? '',
-  category_id: undefined as string | undefined,
+  category_id: null as string | null,
   title_i18n: {} as Record<string, string>,
   description_i18n: {} as Record<string, string>,
   price: null as number | null,
@@ -64,9 +96,11 @@ const form = reactive({
   hours_unknown: false,
   has_shadow: false,
   has_bathrooms: false,
+  // website vive en metadata.website (no es columna real de activities) —
+  // mismo patrón que has_shadow/has_bathrooms de más arriba.
+  website: '',
 })
 
-const { data: categories } = await useFetch<Category[]>('/api/categories')
 const { data: reference } = await useFetch<{
   subcategories: { id: string; name_i18n: Record<string, string>; slug: string }[]
   seasons: { value: string; label_key: string }[]
@@ -85,13 +119,6 @@ const placeOptions = computed(() =>
     const name = p.name_i18n['en'] || p.name_i18n['he'] || p.name_i18n['es'] || ''
     return { label: p.city?.name ? `${name} — ${p.city.name}` : name, value: p.id }
   })
-)
-
-const categoryOptions = computed(() =>
-  (categories.value ?? []).map((c) => ({
-    label: c.name_i18n['en'] || c.name_i18n['he'] || c.name_i18n['es'] || '',
-    value: c.id,
-  }))
 )
 
 const selectedPlace = computed(
@@ -120,7 +147,10 @@ const googlePhotos = computed(() => {
   return meta?.photos ?? []
 })
 
-// Auto-fill al seleccionar un lugar (solo en modo creación)
+// Auto-fill al seleccionar un lugar (solo en modo creación) — son defaults
+// editables, no un lock: el admin puede pisarlos si la actividad es distinta
+// del lugar (ej. el parque tiene sombra pero el jardín botánico adentro no
+// es apto para carritos).
 watch(
   () => form.place_id,
   (id) => {
@@ -129,7 +159,15 @@ watch(
     if (!place) return
     const meta = place.metadata as Record<string, unknown> | null
     if (meta?.wheelchair_accessible === true) form.stroller_friendly = true
+    if (meta?.stroller_friendly === true) form.stroller_friendly = true
     if (meta?.has_bathrooms === true) form.has_bathrooms = true
+    if (meta?.has_shadow === true) form.has_shadow = true
+    if (meta?.open_weekends === true) form.open_weekends = true
+    if (meta?.hours_unknown === true) {
+      form.hours_unknown = true
+    } else if (meta?.schedule_structured) {
+      form.schedule_structured = mergeSchedule(meta.schedule_structured as Partial<WizardSchedule>)
+    }
     const desc = meta?.description_i18n as Record<string, string> | undefined
     if (desc && !Object.values(form.description_i18n).some((v) => v?.trim()))
       form.description_i18n = { ...desc }
@@ -147,7 +185,7 @@ watch(
       }
       const meta = v.metadata ?? {}
       form.place_id = val.place_id
-      form.category_id = val.category_id ?? undefined
+      form.category_id = val.category_id ?? null
       form.title_i18n = (val.title_i18n as Record<string, string>) ?? {}
       form.description_i18n = (val.description_i18n as Record<string, string>) ?? {}
       form.price = val.price
@@ -163,9 +201,10 @@ watch(
       form.hours_unknown = meta.hours_unknown === true
       form.has_shadow = meta.has_shadow === true
       form.has_bathrooms = meta.has_bathrooms === true
+      form.website = meta.website ?? ''
     } else {
       form.place_id = props.placeId ?? ''
-      form.category_id = undefined
+      form.category_id = null
       form.title_i18n = {}
       form.description_i18n = {}
       form.price = null
@@ -181,6 +220,7 @@ watch(
       form.hours_unknown = false
       form.has_shadow = false
       form.has_bathrooms = false
+      form.website = ''
     }
   },
   { immediate: true }
@@ -197,7 +237,7 @@ const openCreatePlace = async () => {
 }
 
 const save = async () => {
-  if (!Object.values(form.title_i18n).some((v) => v?.trim())) {
+  if (!hasI18nContent(form.title_i18n)) {
     toast.add({ title: t('activitiesSlideover.toast.titleRequired'), color: 'error' })
     return
   }
@@ -205,7 +245,6 @@ const save = async () => {
     toast.add({ title: t('activitiesSlideover.toast.placeRequired'), color: 'error' })
     return
   }
-  loading.value = true
 
   const body = {
     place_id: form.place_id,
@@ -227,29 +266,42 @@ const save = async () => {
       hours_unknown: form.hours_unknown,
       has_shadow: form.has_shadow,
       has_bathrooms: form.has_bathrooms,
+      website: form.website || null,
       age_range_ids: form.age_range_ids,
     },
   }
 
-  try {
-    if (props.activity?.id) {
-      await $fetch(`/api/activities/${props.activity.id}`, { method: 'PUT', body })
-      toast.add({ title: t('activitiesSlideover.toast.updated'), color: 'success' })
-    } else {
-      await $fetch('/api/activities', { method: 'POST', body })
-      toast.add({ title: t('activitiesSlideover.toast.created'), color: 'success' })
-    }
-    emit('saved')
-    emit('close')
-  } catch (e) {
+  const isEdit = !!props.activity?.id
+  const result = await run(
+    () =>
+      isEdit
+        ? $fetch(`/api/activities/${props.activity!.id}`, { method: 'PUT', body })
+        : $fetch<{ duplicates?: ActivityDuplicateMatch[] }>('/api/activities', {
+            method: 'POST',
+            body,
+          }),
+    t('activitiesSlideover.toast.errorTitle')
+  )
+  if (result === undefined) return
+
+  toast.add({
+    title: t(isEdit ? 'activitiesSlideover.toast.updated' : 'activitiesSlideover.toast.created'),
+    color: 'success',
+  })
+
+  // Solo el POST devuelve `duplicates` (chequeo no-bloqueante, ver
+  // apps/admin/server/api/activities/index.post.ts) — sólo avisa, nunca bloquea.
+  const firstDuplicate = (result as { duplicates?: ActivityDuplicateMatch[] }).duplicates?.[0]
+  if (firstDuplicate) {
     toast.add({
-      title: t('activitiesSlideover.toast.errorTitle'),
-      description: e instanceof Error ? e.message : String(e),
-      color: 'error',
+      title: t('activitiesSlideover.toast.possibleDuplicate', { title: firstDuplicate.title }),
+      color: 'warning',
+      icon: 'i-lucide-alert-triangle',
     })
-  } finally {
-    loading.value = false
   }
+
+  emit('saved')
+  emit('close')
 }
 </script>
 
@@ -282,28 +334,6 @@ const save = async () => {
           </div>
         </UFormField>
 
-        <UiI18nTabs
-          v-model="form.title_i18n"
-          :label="t('activitiesSlideover.form.title')"
-          required
-        />
-
-        <UiI18nTabs
-          v-model="form.description_i18n"
-          :label="t('activitiesSlideover.form.description')"
-          type="textarea"
-          :rows="3"
-        />
-
-        <UFormField :label="t('activitiesSlideover.form.category')">
-          <USelect
-            v-model="form.category_id"
-            :items="categoryOptions"
-            :placeholder="t('activitiesSlideover.form.categoryPlaceholder')"
-            class="w-full"
-          />
-        </UFormField>
-
         <UFormField
           :label="t('activitiesSlideover.form.active')"
           :description="t('activitiesSlideover.form.activeDescription')"
@@ -324,7 +354,10 @@ const save = async () => {
           />
         </UFormField>
 
-        <UiActivityFields
+        <UiEntityFormFields
+          v-model:title-i18n="form.title_i18n"
+          v-model:description-i18n="form.description_i18n"
+          v-model:category-id="form.category_id"
           v-model:age-range-ids="form.age_range_ids"
           v-model:best-season="form.best_season"
           v-model:schedule-structured="form.schedule_structured"
@@ -335,7 +368,10 @@ const save = async () => {
           v-model:open-weekends="form.open_weekends"
           v-model:has-shadow="form.has_shadow"
           v-model:has-bathrooms="form.has_bathrooms"
+          v-model:activity-website="form.website"
           v-model:images="form.images"
+          type="activity"
+          :subcategory-options="reference?.subcategories ?? []"
           :age-range-options="reference?.ageRanges ?? []"
           :season-options="reference?.seasons ?? []"
           :age-labels="AGE_LABELS"
@@ -344,15 +380,7 @@ const save = async () => {
           :google-hours-text="googleHoursText"
           :google-photos="googlePhotos"
           :upload-fn="uploadFromUrl"
-          :ages-label="t('activitiesSlideover.form.ageRanges')"
-          :seasons-label="t('activitiesSlideover.form.seasons')"
-          :price-label="t('activitiesSlideover.form.price')"
-          :free-label="t('activitiesSlideover.form.free')"
-          :options-label="t('activitiesSlideover.form.options')"
-          :stroller-friendly-label="t('activitiesSlideover.form.strollerFriendly')"
-          :open-weekends-label="t('activitiesSlideover.form.openWeekends')"
-          :has-shadow-label="t('activitiesSlideover.form.hasShade')"
-          :has-bathrooms-label="t('activitiesSlideover.form.hasBathrooms')"
+          :labels="FORM_LABELS"
         />
       </div>
     </template>

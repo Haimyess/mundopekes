@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.4"
+    PostgrestVersion: "14.5"
   }
   public: {
     Tables: {
@@ -19,6 +19,7 @@ export type Database = {
           category_id: string | null
           created_at: string | null
           description_i18n: Json
+          i18n_status: Json
           id: string
           images: string[] | null
           is_free: boolean | null
@@ -36,6 +37,7 @@ export type Database = {
           category_id?: string | null
           created_at?: string | null
           description_i18n?: Json
+          i18n_status?: Json
           id?: string
           images?: string[] | null
           is_free?: boolean | null
@@ -53,6 +55,7 @@ export type Database = {
           category_id?: string | null
           created_at?: string | null
           description_i18n?: Json
+          i18n_status?: Json
           id?: string
           images?: string[] | null
           is_free?: boolean | null
@@ -430,12 +433,15 @@ export type Database = {
           city_id: number | null
           created_at: string | null
           description_i18n: Json
+          google_place_id: string | null
+          i18n_status: Json
           id: string
           images: string[] | null
           lat: number | null
           lng: number | null
           metadata: Json | null
           name_i18n: Json
+          name_normalized: string | null
           provider_id: string | null
           status: string
           updated_at: string | null
@@ -444,12 +450,15 @@ export type Database = {
           city_id?: number | null
           created_at?: string | null
           description_i18n?: Json
+          google_place_id?: string | null
+          i18n_status?: Json
           id?: string
           images?: string[] | null
           lat?: number | null
           lng?: number | null
           metadata?: Json | null
           name_i18n?: Json
+          name_normalized?: string | null
           provider_id?: string | null
           status?: string
           updated_at?: string | null
@@ -458,12 +467,15 @@ export type Database = {
           city_id?: number | null
           created_at?: string | null
           description_i18n?: Json
+          google_place_id?: string | null
+          i18n_status?: Json
           id?: string
           images?: string[] | null
           lat?: number | null
           lng?: number | null
           metadata?: Json | null
           name_i18n?: Json
+          name_normalized?: string | null
           provider_id?: string | null
           status?: string
           updated_at?: string | null
@@ -578,18 +590,24 @@ export type Database = {
           category_id: string | null
           created_at: string | null
           description_i18n: Json
+          flagged_possible_duplicate: boolean
+          i18n_status: Json
           id: string
           images: string[] | null
           is_free: boolean | null
-          location: Json
+          location: Json | null
           metadata: Json | null
           name_i18n: Json
           open_weekends: boolean | null
+          place_id: string | null
+          possible_duplicate_activity_id: string | null
+          possible_duplicate_of: string | null
           rejection_reason: string | null
           reviewed_at: string | null
           schedule: string | null
           status: string | null
           stroller_friendly: boolean | null
+          suggestion_type: string
           type: string[]
         }
         Insert: {
@@ -598,18 +616,24 @@ export type Database = {
           category_id?: string | null
           created_at?: string | null
           description_i18n?: Json
+          flagged_possible_duplicate?: boolean
+          i18n_status?: Json
           id?: string
           images?: string[] | null
           is_free?: boolean | null
-          location: Json
+          location?: Json | null
           metadata?: Json | null
           name_i18n?: Json
           open_weekends?: boolean | null
+          place_id?: string | null
+          possible_duplicate_activity_id?: string | null
+          possible_duplicate_of?: string | null
           rejection_reason?: string | null
           reviewed_at?: string | null
           schedule?: string | null
           status?: string | null
           stroller_friendly?: boolean | null
+          suggestion_type?: string
           type: string[]
         }
         Update: {
@@ -618,18 +642,24 @@ export type Database = {
           category_id?: string | null
           created_at?: string | null
           description_i18n?: Json
+          flagged_possible_duplicate?: boolean
+          i18n_status?: Json
           id?: string
           images?: string[] | null
           is_free?: boolean | null
-          location?: Json
+          location?: Json | null
           metadata?: Json | null
           name_i18n?: Json
           open_weekends?: boolean | null
+          place_id?: string | null
+          possible_duplicate_activity_id?: string | null
+          possible_duplicate_of?: string | null
           rejection_reason?: string | null
           reviewed_at?: string | null
           schedule?: string | null
           status?: string | null
           stroller_friendly?: boolean | null
+          suggestion_type?: string
           type?: string[]
         }
         Relationships: [
@@ -638,6 +668,27 @@ export type Database = {
             columns: ["category_id"]
             isOneToOne: false
             referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "suggestions_place_id_fkey"
+            columns: ["place_id"]
+            isOneToOne: false
+            referencedRelation: "places"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "suggestions_possible_duplicate_activity_id_fkey"
+            columns: ["possible_duplicate_activity_id"]
+            isOneToOne: false
+            referencedRelation: "activities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "suggestions_possible_duplicate_of_fkey"
+            columns: ["possible_duplicate_of"]
+            isOneToOne: false
+            referencedRelation: "places"
             referencedColumns: ["id"]
           },
         ]
@@ -650,6 +701,9 @@ export type Database = {
       categories_next_order: { Args: { parent?: string }; Returns: number }
       get_i18n_text: { Args: { data: Json; locale: string }; Returns: string }
       is_admin: { Args: never; Returns: boolean }
+      show_limit: { Args: never; Returns: number }
+      show_trgm: { Args: { "": string }; Returns: string[] }
+      unaccent: { Args: { "": string }; Returns: string }
     }
     Enums: {
       provider_status: "pending" | "active" | "suspended" | "rejected"

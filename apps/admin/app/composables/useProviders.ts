@@ -3,6 +3,7 @@ import type { Tables } from '~/types/database.types'
 export type Provider = Tables<'providers'>
 
 export const useProviders = () => {
+  const { t } = useI18n()
   const toast = useToast()
 
   const providers = ref<Provider[]>([])
@@ -35,8 +36,8 @@ export const useProviders = () => {
       providers.value = result.data
       total.value = result.count
     } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : 'Error desconocido'
-      toast.add({ title: 'Error cargando proveedores', description: msg, color: 'error' })
+      const msg = e instanceof Error ? e.message : t('providers.toast.unknownError')
+      toast.add({ title: t('providers.toast.loadListError'), description: msg, color: 'error' })
     } finally {
       isLoading.value = false
       hasLoadedOnce.value = true
@@ -47,8 +48,8 @@ export const useProviders = () => {
     try {
       selectedProvider.value = await $fetch<Provider>(`/api/providers/${id}`)
     } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : 'Error desconocido'
-      toast.add({ title: 'Error cargando proveedor', description: msg, color: 'error' })
+      const msg = e instanceof Error ? e.message : t('providers.toast.unknownError')
+      toast.add({ title: t('providers.toast.loadDetailError'), description: msg, color: 'error' })
     }
   }
 
@@ -62,11 +63,11 @@ export const useProviders = () => {
         method: 'PATCH',
         body: { status: newStatus, notes },
       })
-      toast.add({ title: 'Estado actualizado', color: 'success' })
+      toast.add({ title: t('providers.toast.statusUpdated'), color: 'success' })
       await fetch()
     } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : 'Error desconocido'
-      toast.add({ title: 'Error al actualizar', description: msg, color: 'error' })
+      const msg = e instanceof Error ? e.message : t('providers.toast.unknownError')
+      toast.add({ title: t('providers.toast.updateError'), description: msg, color: 'error' })
     }
   }
 

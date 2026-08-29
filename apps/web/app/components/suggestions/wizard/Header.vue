@@ -32,7 +32,11 @@ const { t } = useI18n()
               width: i + 1 === currentStep ? '28px' : '20px',
               borderRadius: '9999px',
               backgroundColor:
-                i + 1 < currentStep ? '#86efac' : i + 1 === currentStep ? '#22c55e' : '#d4d4d4',
+                i + 1 < currentStep
+                  ? 'var(--color-accent-300)'
+                  : i + 1 === currentStep
+                    ? 'var(--color-accent-500)'
+                    : 'var(--color-neutral-300, #d4d4d4)',
               transition: 'all 0.3s',
               flexShrink: '0',
             }"

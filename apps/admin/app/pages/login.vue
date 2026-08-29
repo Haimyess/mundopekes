@@ -3,9 +3,9 @@ definePageMeta({
   layout: false,
 })
 
-useHead({ title: 'Admin Login' })
-
 const { t } = useI18n()
+
+useHead({ title: computed(() => t('login.title')) })
 const { login, verifyMfa, loading, mfaRequired } = useAuth()
 
 const form = reactive({

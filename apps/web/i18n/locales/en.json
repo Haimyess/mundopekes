@@ -10,13 +10,14 @@
     "title": "Discover amazing activities for kids",
     "subtitle": "Thousands of family experiences in Israel",
     "search_placeholder": "What are you looking for? (e.g. museum, park)",
+    "search_placeholder_prefix": "Find",
     "search_placeholder_examples": [
-      "Find amazing museums",
-      "Find parks nearby",
-      "Find art workshops",
-      "Find free activities",
-      "Find music classes",
-      "Find kids birthday parties"
+      "amazing museums",
+      "parks nearby",
+      "art workshops",
+      "free activities",
+      "music classes",
+      "kids birthday parties"
     ],
     "badge": "Israel · Families · Kids",
     "title_start": "Discover",
@@ -57,13 +58,25 @@
     "no_results": "No results found",
     "no_results_for": "No results found for {query}",
     "no_results_hint": "Try adjusting or removing the active filters",
-    "clear_and_show_all": "Clear and show all"
+    "clear_and_show_all": "Clear and show all",
+    "view_list": "List",
+    "view_map": "Map",
+    "map_missing_location": "Some activities don't have an exact location and aren't shown on the map.",
+    "map_no_locations": "None of these results have a location to show on the map.",
+    "near_me": "Near me",
+    "near_me_locating": "Finding your location…",
+    "near_me_error": "We couldn't access your location. Check your browser permissions.",
+    "place_badge": "Place",
+    "places_found": "Were you looking for this place?"
   },
   "activity": {
     "free": "Free",
     "stroller_friendly": "Stroller friendly",
     "open_weekends": "Open weekends",
+    "has_shadow": "Shade",
+    "has_bathrooms": "Restrooms",
     "location": "Location",
+    "more_activities_at": "More activities at: {place}",
     "no_location": "No exact location available",
     "schedule": "Schedule",
     "description": "Description",
@@ -88,7 +101,17 @@
     "how_to_get": "How to get there",
     "more_info": "More information",
     "show_description": "Show description",
-    "hide_description": "Hide description"
+    "hide_description": "Hide description",
+    "no_image": "No image",
+    "other_activities_here": "Other activities at this place",
+    "see_place_page": "See place page"
+  },
+  "place": {
+    "what_to_do": "What can you do here?",
+    "no_activities": "No activities have been added at this place yet",
+    "about": "About this place",
+    "practical_info": "Practical info",
+    "not_found": "We couldn't find this place"
   },
   "age": {
     "months": "{count} months",
@@ -185,7 +208,14 @@
     "hours_unknown": "I don't know the hours",
     "edit_hours_manually": "Edit manually",
     "hours_pending_review": "Pending review",
-    "activity_title": "Activity title"
+    "activity_title": "Activity title",
+    "local_search_label": "Where can you do it?",
+    "local_search_placeholder": "Search if the place is already on MundoPekes",
+    "existing_place": "Existing place",
+    "not_this_place": "Not this place? Search again",
+    "cant_find_place": "Can't find it?",
+    "add_new_place": "Add a new place",
+    "back_to_local_search": "Back to search"
   },
   "contact": {
     "title": "Contact Us",

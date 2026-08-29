@@ -1,5 +1,6 @@
 import { serverSupabaseClient } from '#supabase/server'
-import { enrichI18nField } from '../../utils/translate'
+import { translateI18nField } from '../../utils/translate'
+import type { FieldI18nStatus } from '../../utils/translate'
 import { syncActivityPivots } from '../../utils/activity-pivots'
 
 export default defineEventHandler(async (event) => {
@@ -7,23 +8,54 @@ export default defineEventHandler(async (event) => {
   const supabase = await serverSupabaseClient(event)
   const config = useRuntimeConfig(event)
 
+  const i18nStatus: Record<string, FieldI18nStatus> = {}
+
   if (config.deeplApiKey) {
     if (body.title_i18n && typeof body.title_i18n === 'object') {
-      body.title_i18n = await enrichI18nField(body.title_i18n, config.deeplApiKey)
+      const { value, status } = await translateI18nField({
+        existing: body.title_i18n,
+        apiKey: config.deeplApiKey,
+      })
+      body.title_i18n = value
+      if (status) i18nStatus.title = status
     }
     if (body.description_i18n && typeof body.description_i18n === 'object') {
-      body.description_i18n = await enrichI18nField(body.description_i18n, config.deeplApiKey)
+      const { value, status } = await translateI18nField({
+        existing: body.description_i18n,
+        apiKey: config.deeplApiKey,
+      })
+      body.description_i18n = value
+      if (status) i18nStatus.description = status
     }
   }
+
+  // Duplicate check — non-blocking, same pattern as places/index.post.ts and
+  // the public suggestion flow (findExperienceDuplicates: cross-layer
+  // auto-import). Run before insert so it can't match against itself.
+  const titleText = Object.values((body.title_i18n as Record<string, string>) ?? {}).find((v) =>
+    v?.trim()
+  )
+  const duplicates =
+    titleText && body.place_id
+      ? await findExperienceDuplicates(supabase, {
+          placeId: body.place_id,
+          title: titleText,
+          categoryId: body.category_id ?? null,
+        })
+      : []
 
   // Pivots no son columnas de `activities` — se escriben aparte en las tablas pivote
   const { age_range_ids, best_season, ...activityRow } = body
 
-  const { data, error } = await supabase.from('activities').insert(activityRow).select().single()
+  const { data, error } = await supabase
+    .from('activities')
+    .insert({ ...activityRow, i18n_status: i18nStatus })
+    .select()
+    .single()
 
   if (error) throw createError({ statusCode: 500, message: error.message })
 
   await syncActivityPivots(supabase, data.id, age_range_ids, best_season)
 
-  return data
+  return { ...data, duplicates }
 })

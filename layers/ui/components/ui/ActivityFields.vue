@@ -25,6 +25,7 @@ const props = defineProps<{
   openWeekends: boolean
   hasShadow: boolean
   hasBathrooms: boolean
+  website?: string | null
   images: string[]
 
   ageRangeOptions: AgeOption[]
@@ -45,6 +46,7 @@ const props = defineProps<{
   openWeekendsLabel: string
   hasShadowLabel: string
   hasBathroomsLabel: string
+  websiteLabel?: string
 }>()
 
 const emit = defineEmits<{
@@ -58,6 +60,7 @@ const emit = defineEmits<{
   'update:openWeekends': [value: boolean]
   'update:hasShadow': [value: boolean]
   'update:hasBathrooms': [value: boolean]
+  'update:website': [value: string]
   'update:images': [value: string[]]
 }>()
 
@@ -113,6 +116,10 @@ const imagesProxy = computed({
   get: () => props.images,
   set: (v: string[]) => emit('update:images', v),
 })
+const websiteProxy = computed({
+  get: () => props.website ?? '',
+  set: (v: string) => emit('update:website', v),
+})
 </script>
 
 <template>
@@ -151,6 +158,10 @@ const imagesProxy = computed({
     v-model:hours-unknown="hoursUnknownProxy"
     :google-hours-text="googleHoursText ?? ''"
   />
+
+  <UFormField v-if="websiteLabel" :label="websiteLabel">
+    <UInput v-model="websiteProxy" placeholder="https://..." class="w-full" />
+  </UFormField>
 
   <UFormField :label="optionsLabel">
     <div class="flex flex-col gap-2">

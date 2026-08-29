@@ -5,7 +5,12 @@
 -- (apps/admin/server/utils/auth.ts). Este archivo es el segundo cinturón de
 -- seguridad a nivel DB: si alguien bypasea el server, Supabase lo bloquea aquí.
 --
--- NO ejecutar con `supabase db push` hasta revisión manual.
+-- SUPERSEDIDO: este contenido fue re-incluido (con guards idempotentes,
+-- DROP POLICY IF EXISTS / CREATE TABLE IF NOT EXISTS) dentro de
+-- 20260821120000_place_experience_suggestions.sql, que lo aplica en la misma
+-- ventana que el nuevo esquema de Place/Experience. Se conserva este archivo
+-- por historial; es seguro aplicar ambos en orden (el segundo es un no-op
+-- sobre lo que el primero ya haya creado) o aplicar solo el más nuevo.
 -- =============================================================================
 
 

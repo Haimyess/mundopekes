@@ -11,7 +11,7 @@ export default defineEventHandler(async (event) => {
 
   const { data, error } = await supabase
     .from('suggestions')
-    .select('status, category_id, location, is_free')
+    .select('status, category_id, location, is_free, suggestion_type, flagged_possible_duplicate')
 
   if (error) throw createError({ statusCode: 500, message: error.message })
 
@@ -20,5 +20,7 @@ export default defineEventHandler(async (event) => {
     category_id: row.category_id as string | null,
     city: (row.location as { city?: string } | null)?.city ?? null,
     is_free: row.is_free as boolean,
+    suggestion_type: row.suggestion_type as string,
+    flagged_possible_duplicate: row.flagged_possible_duplicate as boolean,
   }))
 })

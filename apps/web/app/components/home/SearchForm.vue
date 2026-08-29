@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { SeasonValue } from '~/types'
 
-const { t, tm } = useI18n()
+const { t } = useI18n()
 const { tc } = useI18nContent()
 const router = useRouter()
 
@@ -136,19 +136,18 @@ const seasonIcons: Record<string, string> = {
 }
 
 // ── Placeholder dinámico (estilo Fever) ───────────────────────────
-// Rota frases de ejemplo cuando el input está vacío; el placeholder
-// nativo del <input> queda vacío y esta capa lo reemplaza visualmente.
-const rotatingExamples = computed<string[]>(() => {
-  const list = tm('hero.search_placeholder_examples') as unknown as string[]
-  return Array.isArray(list) && list.length ? list : [t('hero.search_placeholder')]
-})
+// El prefijo ("Encuentra") queda fijo; solo la actividad rota cada
+// pocos segundos. Se usa t() con la ruta indexada — tm() devuelve el
+// nodo de mensaje compilado (no un string) y se veía como JSON crudo.
+const PLACEHOLDER_EXAMPLES_COUNT = 6
 const rotatingIndex = ref(0)
+const rotatingExample = computed(() => t(`hero.search_placeholder_examples.${rotatingIndex.value}`))
 const showRotatingPlaceholder = computed(() => !searchText.value)
 let rotatingTimer: ReturnType<typeof setInterval> | undefined
 
 onMounted(() => {
   rotatingTimer = setInterval(() => {
-    rotatingIndex.value = (rotatingIndex.value + 1) % rotatingExamples.value.length
+    rotatingIndex.value = (rotatingIndex.value + 1) % PLACEHOLDER_EXAMPLES_COUNT
   }, 2800)
 })
 onBeforeUnmount(() => {
@@ -199,15 +198,16 @@ onBeforeUnmount(() => {
               :aria-label="t('hero.search_placeholder')"
               type="text"
             />
-            <Transition name="sf-rotate" mode="out-in">
-              <span
-                v-if="showRotatingPlaceholder"
-                :key="rotatingIndex"
-                class="sf-rotating-placeholder"
-              >
-                {{ rotatingExamples[rotatingIndex] }}
+            <div v-if="showRotatingPlaceholder" class="sf-rotating-placeholder">
+              <span class="sf-rotating-placeholder__prefix">
+                {{ t('hero.search_placeholder_prefix') }}
               </span>
-            </Transition>
+              <Transition name="sf-rotate" mode="out-in">
+                <span :key="rotatingIndex" class="sf-rotating-placeholder__word">
+                  {{ rotatingExample }}
+                </span>
+              </Transition>
+            </div>
           </div>
         </div>
 
@@ -286,9 +286,11 @@ onBeforeUnmount(() => {
         </div>
 
         <!-- Botón buscar mobile — full width -->
-        <button type="submit" class="sf-btn-search sf-btn-search--mobile">
-          <UIcon name="i-heroicons-magnifying-glass" class="sf-btn-icon" />
-          {{ t('search.search_button') }}
+        <button type="submit" class="sf-btn-search sf-btn-search--mobile sf-btn-search--shine">
+          <span class="sf-btn-search__content">
+            <UIcon name="i-heroicons-magnifying-glass" class="sf-btn-icon" />
+            {{ t('search.search_button') }}
+          </span>
         </button>
       </div>
 
@@ -304,15 +306,16 @@ onBeforeUnmount(() => {
               :aria-label="t('hero.search_placeholder')"
               type="text"
             />
-            <Transition name="sf-rotate" mode="out-in">
-              <span
-                v-if="showRotatingPlaceholder"
-                :key="rotatingIndex"
-                class="sf-rotating-placeholder"
-              >
-                {{ rotatingExamples[rotatingIndex] }}
+            <div v-if="showRotatingPlaceholder" class="sf-rotating-placeholder">
+              <span class="sf-rotating-placeholder__prefix">
+                {{ t('hero.search_placeholder_prefix') }}
               </span>
-            </Transition>
+              <Transition name="sf-rotate" mode="out-in">
+                <span :key="rotatingIndex" class="sf-rotating-placeholder__word">
+                  {{ rotatingExample }}
+                </span>
+              </Transition>
+            </div>
           </div>
         </div>
 
@@ -350,9 +353,11 @@ onBeforeUnmount(() => {
         </div>
 
         <!-- Botón buscar desktop — 50% centrado -->
-        <button type="submit" class="sf-btn-search sf-btn-search--desktop">
-          <UIcon name="i-heroicons-magnifying-glass" class="sf-btn-icon" />
-          {{ t('search.search_button') }}
+        <button type="submit" class="sf-btn-search sf-btn-search--desktop sf-btn-search--shine">
+          <span class="sf-btn-search__content">
+            <UIcon name="i-heroicons-magnifying-glass" class="sf-btn-icon" />
+            {{ t('search.search_button') }}
+          </span>
         </button>
       </div>
     </form>
@@ -485,6 +490,7 @@ onBeforeUnmount(() => {
     </template>
   </UDrawer>
 </template>
+
 <style scoped>
 /* ── Card — sin shadow/border en mobile, con card en desktop ─────── */
 .sf-card {
@@ -541,13 +547,25 @@ onBeforeUnmount(() => {
   inset-inline-start: 0;
   top: 50%;
   transform: translateY(-50%);
+  display: flex;
+  align-items: baseline;
+  gap: 0.3em;
   color: var(--color-text-tertiary);
   font-size: var(--font-size-base);
   white-space: nowrap;
   overflow: hidden;
-  text-overflow: ellipsis;
   max-width: 100%;
   pointer-events: none;
+}
+
+.sf-rotating-placeholder__prefix {
+  flex-shrink: 0;
+}
+
+.sf-rotating-placeholder__word {
+  display: inline-block;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .sf-rotate-enter-active,
@@ -559,12 +577,12 @@ onBeforeUnmount(() => {
 
 .sf-rotate-enter-from {
   opacity: 0;
-  transform: translateY(-50%) translateY(6px);
+  transform: translateY(6px);
 }
 
 .sf-rotate-leave-to {
   opacity: 0;
-  transform: translateY(-50%) translateY(-6px);
+  transform: translateY(-6px);
 }
 
 .sf-search-row--bordered {
@@ -774,17 +792,49 @@ onBeforeUnmount(() => {
 
 /* ── Botones buscar ──────────────────────────────────────────────── */
 .sf-btn-search {
+  position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: var(--space-2);
   border-radius: var(--border-radius-lg);
   background-color: var(--color-accent-500);
   color: white;
   font-weight: var(--font-weight-semibold);
   border: none;
   cursor: pointer;
+  overflow: hidden;
   transition: background-color var(--transition-fast);
+}
+
+.sf-btn-search__content {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+/* Shine sweep: un brillo diagonal recorre el botón en loop para llamar la atención */
+.sf-btn-search--shine::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  left: -60%;
+  width: 40%;
+  background: linear-gradient(115deg, transparent, rgba(255, 255, 255, 0.55), transparent);
+  animation: sf-btn-shine 2.8s ease-in-out infinite;
+}
+
+@keyframes sf-btn-shine {
+  0% {
+    left: -60%;
+  }
+  55% {
+    left: 130%;
+  }
+  100% {
+    left: 130%;
+  }
 }
 
 .sf-btn-search:hover {

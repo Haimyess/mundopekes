@@ -1,12 +1,18 @@
 // app/composables/useSuggestions.ts
+// FieldI18nStatus se auto-importa desde layers/domain/types/i18n-status
 
 export type SuggestionStatus = 'pending' | 'approved' | 'rejected'
+export type SuggestionType = 'new_place_with_experience' | 'experience_for_existing_place'
 
 export interface Suggestion {
   id: string
   name_i18n: Record<string, string>
   description_i18n?: Record<string, string>
-  location: { city?: string; region?: string; address?: string }
+  // Translation status per field (name/description/title) — see
+  // layers/domain/server/services/translation-service.ts + §F/§H de la
+  // propuesta. Ausente/`{}` en filas pre-migración = "status desconocido".
+  i18n_status?: Record<string, FieldI18nStatus>
+  location: { city?: string; region?: string; address?: string } | null
   age_range: { min?: number; max?: number; ids?: number[] } | null
   type: string[]
   best_season: string[]
@@ -21,9 +27,20 @@ export interface Suggestion {
   reviewed_at?: string
   created_at: string
   metadata?: Record<string, unknown> | null
+  // Place/Experience discriminator — see supabase/migrations/20260821120000_*
+  suggestion_type: SuggestionType
+  place_id: string | null
+  flagged_possible_duplicate: boolean
+  possible_duplicate_of: string | null
+  possible_duplicate_activity_id: string | null
+  // Joined from `place_id` (server/api/suggestions/index.get.ts) — the only
+  // source of name/city for experience_for_existing_place suggestions, whose
+  // own name_i18n/location are always blank by design.
+  place?: { id: string; name_i18n: Record<string, string>; city: { name: string } | null } | null
 }
 
 export const useSuggestions = () => {
+  const { t } = useI18n()
   const toast = useToast()
 
   // $fetch a rutas internas durante el SSR es una request nueva del proceso
@@ -76,7 +93,7 @@ export const useSuggestions = () => {
       total.value = result.count
     } catch (e) {
       toast.add({
-        title: 'Error cargando sugerencias',
+        title: t('suggestions.toast.loadError'),
         description: e instanceof Error ? e.message : String(e),
         color: 'error',
       })
@@ -100,17 +117,49 @@ export const useSuggestions = () => {
         result.place?.name_i18n?.['es'] ||
         result.place?.name_i18n?.['he'] ||
         Object.values(result.place?.name_i18n ?? {})[0] ||
-        'nuevo lugar'
+        t('suggestions.toast.defaultNewPlaceName')
       toast.add({
-        title: 'Sugerencia aprobada',
-        description: `Se creó el lugar "${placeName}"`,
+        title: t('suggestions.toast.approved'),
+        description: t('suggestions.toast.approvedDescription', { name: placeName }),
         color: 'success',
         icon: 'i-lucide-check-circle',
       })
       await fetch()
     } catch (e) {
       toast.add({
-        title: 'Error al aprobar',
+        title: t('suggestions.toast.approveError'),
+        description: e instanceof Error ? e.message : String(e),
+        color: 'error',
+      })
+    } finally {
+      actionLoading.value = false
+    }
+  }
+
+  // Merge / associate — attaches the suggestion's experience to an existing
+  // place instead of creating a new one (discards any proposed place data).
+  const merge = async (id: string, targetPlaceId: string) => {
+    actionLoading.value = true
+    try {
+      const result = await $fetch<{ place?: { name_i18n?: Record<string, string> } }>(
+        `/api/suggestions/${id}/merge`,
+        { method: 'POST', body: { target_place_id: targetPlaceId } }
+      )
+      const placeName =
+        result.place?.name_i18n?.['es'] ||
+        result.place?.name_i18n?.['he'] ||
+        Object.values(result.place?.name_i18n ?? {})[0] ||
+        t('suggestions.toast.defaultExistingPlaceName')
+      toast.add({
+        title: t('suggestions.toast.merged'),
+        description: t('suggestions.toast.mergedDescription', { name: placeName }),
+        color: 'success',
+        icon: 'i-lucide-merge',
+      })
+      await fetch()
+    } catch (e) {
+      toast.add({
+        title: t('suggestions.toast.mergeError'),
         description: e instanceof Error ? e.message : String(e),
         color: 'error',
       })
@@ -128,14 +177,14 @@ export const useSuggestions = () => {
         body: { status: 'rejected', rejection_reason: reason },
       })
       toast.add({
-        title: 'Sugerencia rechazada',
+        title: t('suggestions.toast.rejected'),
         color: 'neutral',
         icon: 'i-lucide-x-circle',
       })
       await fetch()
     } catch (e) {
       toast.add({
-        title: 'Error al rechazar',
+        title: t('suggestions.toast.rejectError'),
         description: e instanceof Error ? e.message : String(e),
         color: 'error',
       })
@@ -149,11 +198,11 @@ export const useSuggestions = () => {
     actionLoading.value = true
     try {
       await $fetch(`/api/suggestions/${id}`, { method: 'DELETE' })
-      toast.add({ title: 'Sugerencia eliminada', color: 'neutral' })
+      toast.add({ title: t('suggestions.toast.deleted'), color: 'neutral' })
       await fetch()
     } catch (e) {
       toast.add({
-        title: 'Error al eliminar',
+        title: t('suggestions.toast.deleteError'),
         description: e instanceof Error ? e.message : String(e),
         color: 'error',
       })
@@ -196,6 +245,7 @@ export const useSuggestions = () => {
     counts,
     fetch,
     approve,
+    merge,
     reject,
     remove,
   }

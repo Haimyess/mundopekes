@@ -20,6 +20,7 @@ export interface Place {
   status: 'active' | 'inactive'
   city: City | null
   metadata: Record<string, unknown> | null
+  google_place_id?: string | null
 }
 
 export interface Category {

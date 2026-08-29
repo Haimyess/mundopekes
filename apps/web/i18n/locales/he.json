@@ -10,13 +10,14 @@
     "title": "גלה פעילויות מדהימות לילדים",
     "subtitle": "אלפי חוויות משפחתיות בישראל",
     "search_placeholder": "מה אתה מחפש? (לדוגמה מוזיאון, פארק)",
+    "search_placeholder_prefix": "מצא",
     "search_placeholder_examples": [
-      "מצא מוזיאונים מדהימים",
-      "מצא פארקים בקרבתך",
-      "מצא סדנאות אמנות",
-      "מצא פעילויות בחינם",
-      "מצא שיעורי מוזיקה",
-      "מצא ימי הולדת לילדים"
+      "מוזיאונים מדהימים",
+      "פארקים בקרבתך",
+      "סדנאות אמנות",
+      "פעילויות בחינם",
+      "שיעורי מוזיקה",
+      "ימי הולדת לילדים"
     ],
     "badge": "ישראל · משפחות · ילדים",
     "title_start": "גלו פעילויות",
@@ -57,13 +58,25 @@
     "no_results_for": "לא נמצאו תוצאות עבור {query}",
     "no_results_hint": "נסה לשנות או להסיר את המסננים הפעילים",
     "clear_and_show_all": "נקה והצג הכל",
-    "category": "קטגוריה"
+    "category": "קטגוריה",
+    "view_list": "רשימה",
+    "view_map": "מפה",
+    "map_missing_location": "לחלק מהפעילויות אין מיקום מדויק ולכן הן לא מוצגות על המפה.",
+    "map_no_locations": "לאף אחת מהתוצאות האלה אין מיקום להצגה על המפה.",
+    "near_me": "קרוב אליי",
+    "near_me_locating": "מאתר את המיקום שלך…",
+    "near_me_error": "לא הצלחנו לגשת למיקום שלך. בדוק את הרשאות הדפדפן.",
+    "place_badge": "מקום",
+    "places_found": "התכוונת למקום הזה?"
   },
   "activity": {
     "free": "חינם",
     "stroller_friendly": "מתאים לעגלות",
     "open_weekends": "פתוח בסופי שבוע",
+    "has_shadow": "צל",
+    "has_bathrooms": "שירותים",
     "location": "מיקום",
+    "more_activities_at": "עוד פעילויות ב: {place}",
     "no_location": "אין מיקום מדויק זמין",
     "schedule": "שעות פתיחה",
     "description": "תיאור",
@@ -88,7 +101,17 @@
     "how_to_get": "איך מגיעים",
     "more_info": "מידע נוסף",
     "show_description": "הצג תיאור",
-    "hide_description": "הסתר תיאור"
+    "hide_description": "הסתר תיאור",
+    "no_image": "אין תמונה",
+    "other_activities_here": "פעילויות נוספות במקום הזה",
+    "see_place_page": "לדף המקום"
+  },
+  "place": {
+    "what_to_do": "מה אפשר לעשות כאן?",
+    "no_activities": "עדיין לא נוספו פעילויות במקום הזה",
+    "about": "על המקום הזה",
+    "practical_info": "מידע שימושי",
+    "not_found": "לא מצאנו את המקום הזה"
   },
   "age": {
     "months": "{count} חודשים",
@@ -185,7 +208,14 @@
     "hours_unknown": "שעות לא ידועות",
     "edit_hours_manually": "ערוך ידנית",
     "hours_pending_review": "ממתין לבדיקה",
-    "activity_title": "כותרת הפעילות"
+    "activity_title": "כותרת הפעילות",
+    "local_search_label": "איפה אפשר לעשות את זה?",
+    "local_search_placeholder": "בדוק אם המקום כבר קיים במונדופקס",
+    "existing_place": "מקום קיים",
+    "not_this_place": "לא זה המקום? חפש שוב",
+    "cant_find_place": "לא מוצא אותו?",
+    "add_new_place": "הוסף מקום חדש",
+    "back_to_local_search": "חזרה לחיפוש"
   },
   "contact": {
     "title": "צור קשר",

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useIntersectionObserver } from '@vueuse/core'
+import { calculateDistance } from '~/utils/helpers'
 import type { Activity, ActivityFilters } from '~/types'
 
 definePageMeta({ layout: 'fullwidth' })
@@ -19,22 +20,149 @@ const {
   removeFilterFromQuery,
   countActiveFilters,
   fetchFilteredActivities,
+  fetchFilteredActivitiesPaginated,
 } = useActivityFilters()
 
 const { categoryOptions } = useCategories()
 const { trackSearch } = useTracking()
 
-// ── Cargar opciones al montar ─────────────────────────────────────
-await store.loadFilterOptions()
+// ── Place matches for the same free-text query — additive, doesn't touch
+// the activity search/filter pipeline above. Lets one search box answer both
+// "find an activity" (the existing grid) and "find a place" (this strip)
+// intents without a mode toggle. Reuses the wizard's own-DB place search.
+const localPlaceSearch = useLocalPlaceSearch()
 
-// Cargar allActivities al montar para tener conteos desktop disponibles
-// (en mobile se cargaba lazy al abrir el drawer, aquí las necesitamos siempre)
-onMounted(() => store.loadAllActivities())
+// ── Vista: lista o mapa ─────────────────────────────────────────────
+const viewMode = ref<'list' | 'map'>('list')
+const filterBarEl = ref<HTMLElement | null>(null)
+const mapWrapEl = ref<HTMLElement | null>(null)
+
+// Alto del bloque mapa+lista en vista mapa. Se mide en JS (viewport -
+// posición real del bloque) en vez de intentar lograrlo con una cadena
+// de flex:1/min-height:0 — esta página vive dentro del layout compartido
+// (navbar + <main class="flex-1"> + footer), que solo garantiza una
+// ALTURA MÍNIMA (min-h-screen), no una altura fija. Sin un techo real en
+// algún punto de la cadena, cada flex:1 termina persiguiendo el tamaño
+// de su propio contenido en vez de limitarlo — por eso el mapa se
+// escapaba del viewport. Midiendo con getBoundingClientRect() no hace
+// falta adivinar la altura del navbar ni de los filtros.
+const mapWrapHeight = ref<number | null>(null)
+
+function updateMapWrapHeight() {
+  if (!mapWrapEl.value) return
+  // Mobile apila lista/mapa con alturas fijas (vh) propias y ya funciona
+  // bien — esta medida es solo para el layout de escritorio (lado a lado).
+  if (window.innerWidth < 768) {
+    mapWrapHeight.value = null
+    return
+  }
+  const top = mapWrapEl.value.getBoundingClientRect().top
+  const available = window.innerHeight - top
+  mapWrapHeight.value = Math.max(available, 400)
+}
+
+// Al pasar a mapa, bajar la página para que el mapa quede visible desde
+// la barra de filtros en vez de quedar cortado más abajo, y después
+// medir el espacio real que queda hasta el fondo de la ventana. Al
+// volver a lista, subir de nuevo al top de la página.
+// También re-fetchea: Lista pagina (una página de resultados), Mapa
+// necesita el set completo para los pines — son dos formas de traer
+// datos distintas, así que cambiar de modo dispara su propio fetch.
+watch(viewMode, (mode) => {
+  void fetchResults()
+
+  if (mode === 'map') {
+    nextTick(() => {
+      filterBarEl.value?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      // Esperar a que termine el scroll suave antes de medir la posición final
+      setTimeout(updateMapWrapHeight, 400)
+    })
+  } else {
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+})
+
+onMounted(() => {
+  window.addEventListener('resize', updateMapWrapHeight)
+})
+onBeforeUnmount(() => {
+  window.removeEventListener('resize', updateMapWrapHeight)
+})
+
+// ── Cerca de mí — reordena los resultados actuales por distancia ────
+// Pedido puntual (one-shot) con la API nativa en vez de useGeolocation:
+// un watcher continuo (watchPosition) queda "vivo" entre clicks y, al
+// desactivar/reactivar, resume() sobre un watcher ya activo no siempre
+// dispara un cambio nuevo en coords/error — se quedaba en "buscando..."
+// para siempre. getCurrentPosition da un resultado (u error) por click,
+// sin estado compartido que se pueda quedar rancio.
+const nearMeActive = ref(false)
+const nearMeLocating = ref(false)
+const nearMeError = ref(false)
+const userCoords = ref<{ lat: number; lng: number } | null>(null)
+
+function toggleNearMe() {
+  if (nearMeActive.value) {
+    nearMeActive.value = false
+    return
+  }
+  if (!import.meta.client || !navigator.geolocation) {
+    nearMeError.value = true
+    return
+  }
+  nearMeError.value = false
+  nearMeLocating.value = true
+  navigator.geolocation.getCurrentPosition(
+    (pos) => {
+      userCoords.value = { lat: pos.coords.latitude, lng: pos.coords.longitude }
+      nearMeLocating.value = false
+      nearMeActive.value = true
+    },
+    () => {
+      nearMeLocating.value = false
+      nearMeError.value = true
+    },
+    { enableHighAccuracy: false, timeout: 10000, maximumAge: 60000 }
+  )
+}
+
+function sortByDistance(list: Activity[]): Activity[] {
+  const origin = userCoords.value
+  if (!origin) return list
+  return [...list].sort((a, b) => {
+    const da =
+      a.place?.lat != null && a.place?.lng != null
+        ? calculateDistance(origin.lat, origin.lng, a.place.lat, a.place.lng)
+        : Infinity
+    const db =
+      b.place?.lat != null && b.place?.lng != null
+        ? calculateDistance(origin.lat, origin.lng, b.place.lat, b.place.lng)
+        : Infinity
+    return da - db
+  })
+}
+
+// ── Cargar opciones al montar ─────────────────────────────────────
+// Non-blocking on purpose: un `await` de nivel superior acá detendría el
+// montaje de toda la página (Suspense) hasta que resuelva, retrasando la
+// primera pintura de filtros/grilla sin necesidad — los selects de filtro
+// ya son reactivos a `store.filterOptions` y se completan solos apenas
+// llega la data. Se dispara junto con loadAllActivities para que ambas
+// corran en paralelo apenas monta el componente.
+onMounted(() => {
+  void store.loadFilterOptions()
+  void store.loadAllActivities()
+})
 
 // ── Estado principal ──────────────────────────────────────────────
 const activities = ref<Activity[]>([])
 const loading = ref(false)
 const drawerOpen = ref(false)
+
+// ── Paginación (solo vista Lista — Mapa siempre trae el set completo) ──
+const PAGE_SIZE = 20
+const currentPage = ref(1)
+const totalResults = ref(0)
 
 watch(drawerOpen, async (isOpen) => {
   if (isOpen) await store.loadAllActivities()
@@ -210,11 +338,50 @@ const onDrawerApply = (newFilters: ActivityFilters) => {
 const fetchResults = async () => {
   loading.value = true
   try {
-    activities.value = await fetchFilteredActivities(filtersFromUrl.value)
+    const f = filtersFromUrl.value
+    // Sin filtros activos: evitar traer el mismo dataset dos veces.
+    // store.allActivities (usado para los conteos) ya es exactamente
+    // el mismo query que fetchFilteredActivities({}) traería — mismo
+    // select, mismo predicado approved/active, sin filtros de por medio —
+    // así que se reutiliza en vez de duplicar el round-trip.
+    // loadAllActivities() cachea internamente, así que si ya está
+    // cargada (caso normal, se dispara en onMounted) esto no vuelve a
+    // pegarle a la DB.
+    const noFiltersActive = !f.search && activeFiltersCount.value === 0
+
+    if (viewMode.value === 'map') {
+      // Mapa: siempre el set completo — los pines necesitan verse todos
+      // juntos, no tiene sentido paginar el mapa.
+      if (noFiltersActive) {
+        await store.loadAllActivities()
+        activities.value = store.allActivities
+      } else {
+        activities.value = await fetchFilteredActivities(f)
+      }
+      totalResults.value = activities.value.length
+    } else if (noFiltersActive) {
+      // Lista sin filtros: paginar cortando store.allActivities en el
+      // cliente — ya está cargada para los conteos, cero costo de red
+      // extra por paginar este caso.
+      await store.loadAllActivities()
+      totalResults.value = store.allActivities.length
+      const from = (currentPage.value - 1) * PAGE_SIZE
+      activities.value = store.allActivities.slice(from, from + PAGE_SIZE)
+    } else {
+      // Lista con filtros: paginación real vía .range() en la DB.
+      const { data, total } = await fetchFilteredActivitiesPaginated(
+        f,
+        currentPage.value,
+        PAGE_SIZE
+      )
+      activities.value = data
+      totalResults.value = total
+    }
+
     trackSearch({
-      query: filtersFromUrl.value.search,
-      category: filtersFromUrl.value.category,
-      city: filtersFromUrl.value.city,
+      query: f.search,
+      category: f.category,
+      city: f.city,
       resultsCount: activities.value.length,
     })
   } finally {
@@ -222,7 +389,75 @@ const fetchResults = async () => {
   }
 }
 
-watch(() => route.query, fetchResults, { immediate: true, deep: true })
+watch(
+  () => route.query,
+  () => {
+    currentPage.value = 1
+    void fetchResults()
+  },
+  { immediate: true, deep: true }
+)
+
+function onPageChange(page: number) {
+  currentPage.value = page
+  void fetchResults()
+  window.scrollTo({ top: 0, behavior: 'smooth' })
+}
+
+// Fires the parallel place lookup whenever the free-text query changes —
+// same debounce/rate-limit as the wizard, via the shared composable.
+watch(
+  () => filtersFromUrl.value.search,
+  (q) => {
+    if (q && q.trim().length >= 2) localPlaceSearch.search(q)
+    else localPlaceSearch.clear()
+  },
+  { immediate: true }
+)
+
+// Resultados a mostrar — reordenados por distancia si "Cerca de mí" está activo
+const displayActivities = computed(() =>
+  nearMeActive.value ? sortByDistance(activities.value) : activities.value
+)
+
+// ── Consistencia de filtros: Places vs Activities ──────────────────
+// `places` no tiene columnas propias de category/age/season/is_free/
+// stroller_friendly/open_weekends — esos son atributos de la actividad,
+// no del lugar. Por eso NO se inventan esas columnas ni se duplica la
+// lógica de fetchFilteredActivities() en el server route de places: en
+// vez de eso, un lugar "pasa" esos filtros si tiene al menos una
+// actividad que ya pasó por fetchFilteredActivities() (misma fuente de
+// verdad que la grilla de arriba). City sí es un atributo real del
+// lugar (place.city), así que ese se aplica directo sobre el resultado
+// del name-search, sin pasar por actividades.
+const hasActivityOnlyFilters = computed(() => {
+  const f = filtersFromUrl.value
+  return !!(
+    f.category ||
+    f.age_id !== undefined ||
+    f.season ||
+    f.is_free ||
+    f.stroller_friendly ||
+    f.open_weekends
+  )
+})
+
+const displayedPlaces = computed(() => {
+  let results = localPlaceSearch.results.value
+
+  const cityFilter = filtersFromUrl.value.city
+  if (cityFilter) {
+    const cities = cityFilter.split(',')
+    results = results.filter((p) => p.city && cities.includes(p.city.name))
+  }
+
+  if (hasActivityOnlyFilters.value) {
+    const qualifyingPlaceIds = new Set(activities.value.map((a) => a.place_id))
+    results = results.filter((p) => qualifyingPlaceIds.has(p.id))
+  }
+
+  return results
+})
 
 // ── SEO ───────────────────────────────────────────────────────────
 useSeoMeta({
@@ -235,12 +470,39 @@ useSeoMeta({
   <div class="search-page">
     <div class="search-page__container">
       <div class="search-page__header">
-        <h1 class="search-page__title">{{ t('search.title') }}</h1>
+        <div class="search-page__header-row">
+          <h1 class="search-page__title">{{ t('search.title') }}</h1>
+
+          <div class="search-page__view-toggle" role="group">
+            <button
+              type="button"
+              class="search-page__view-btn"
+              :class="{ 'search-page__view-btn--active': viewMode === 'list' }"
+              @click="viewMode = 'list'"
+            >
+              <UIcon name="i-heroicons-list-bullet" class="search-page__view-icon" />
+              <span class="search-page__view-label">{{ t('search.view_list') }}</span>
+            </button>
+            <button
+              type="button"
+              class="search-page__view-btn"
+              :class="{ 'search-page__view-btn--active': viewMode === 'map' }"
+              @click="viewMode = 'map'"
+            >
+              <UIcon name="i-heroicons-map" class="search-page__view-icon" />
+              <span class="search-page__view-label">{{ t('search.view_map') }}</span>
+            </button>
+          </div>
+        </div>
         <p class="search-page__subtitle">{{ t('search.subtitle') }}</p>
       </div>
 
       <!-- Barra de filtros — oculta cuando no hay resultados y no carga -->
-      <div v-if="loading || activities.length > 0" class="search-page__filter-bar">
+      <div
+        v-if="loading || activities.length > 0"
+        ref="filterBarEl"
+        class="search-page__filter-bar"
+      >
         <!-- ── DESKTOP ──────────────────────────────────────────── -->
         <div class="search-page__desktop-filters">
           <UiSelect
@@ -291,6 +553,21 @@ useSeoMeta({
           />
 
           <div class="search-page__desktop-actions">
+            <button
+              type="button"
+              class="search-page__btn-near-me"
+              :class="{ 'search-page__btn-near-me--active': nearMeActive }"
+              :disabled="nearMeLocating"
+              @click="toggleNearMe"
+            >
+              <UIcon
+                :name="nearMeLocating ? 'i-heroicons-arrow-path' : 'i-heroicons-map-pin'"
+                class="search-page__btn-icon"
+                :class="{ 'animate-spin': nearMeLocating }"
+              />
+              {{ nearMeLocating ? t('search.near_me_locating') : t('search.near_me') }}
+            </button>
+
             <button v-if="showClearBtn" class="search-page__btn-clear" @click="clearFilters">
               <UIcon name="i-heroicons-x-mark" class="search-page__btn-icon" />
               {{ t('search.clear_filters') }}
@@ -302,6 +579,10 @@ useSeoMeta({
             </button>
           </div>
         </div>
+
+        <p v-if="nearMeError" class="search-page__near-me-error">
+          {{ t('search.near_me_error') }}
+        </p>
 
         <!-- DESKTOP chips -->
         <div class="search-page__desktop-chips">
@@ -322,6 +603,22 @@ useSeoMeta({
             </span>
           </button>
 
+          <button
+            type="button"
+            class="search-page__filter-btn"
+            :class="{ 'search-page__filter-btn--active': nearMeActive }"
+            :disabled="nearMeLocating"
+            :aria-label="t('search.near_me')"
+            :title="t('search.near_me')"
+            @click="toggleNearMe"
+          >
+            <UIcon
+              :name="nearMeLocating ? 'i-heroicons-arrow-path' : 'i-heroicons-map-pin'"
+              class="search-page__filter-icon"
+              :class="{ 'animate-spin': nearMeLocating }"
+            />
+          </button>
+
           <div class="search-page__divider" />
 
           <div class="search-page__chips-scroll">
@@ -334,13 +631,40 @@ useSeoMeta({
         </div>
       </div>
 
-      <SearchActivityGrid
-        :activities="activities"
-        :loading="loading"
-        :total="activities.length"
-        :filters="filtersFromUrl"
-        @clear="clearAll"
-      />
+      <!-- Places strip — parallel to the activity results, only when the
+           free-text query also matches a place in our own DB. -->
+      <div v-if="displayedPlaces.length" class="search-page__places-strip">
+        <span class="search-page__places-strip-label">{{ t('search.places_found') }}</span>
+        <div class="search-page__places-strip-row">
+          <PlaceCard v-for="place in displayedPlaces" :key="place.id" :place="place" />
+        </div>
+      </div>
+
+      <template v-if="viewMode === 'list'">
+        <SearchActivityGrid
+          :activities="displayActivities"
+          :loading="loading"
+          :total="totalResults"
+          :filters="filtersFromUrl"
+          @clear="clearAll"
+        />
+        <div v-if="totalResults > PAGE_SIZE" class="search-page__pagination">
+          <UPagination
+            :default-page="currentPage"
+            :items-per-page="PAGE_SIZE"
+            :total="totalResults"
+            @update:page="onPageChange"
+          />
+        </div>
+      </template>
+      <div
+        v-else
+        ref="mapWrapEl"
+        class="search-page__map-wrap"
+        :style="mapWrapHeight ? { height: `${mapWrapHeight}px` } : undefined"
+      >
+        <SearchMapView :activities="displayActivities" @switch-to-list="viewMode = 'list'" />
+      </div>
     </div>
   </div>
 
@@ -378,10 +702,64 @@ useSeoMeta({
   gap: var(--space-1);
 }
 
+.search-page__header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
 .search-page__title {
   font-size: var(--font-size-2xl);
   font-weight: var(--font-weight-bold);
   color: var(--color-text-primary);
+}
+
+/* ── Toggle Lista / Mapa ───────────────────────────────────────── */
+.search-page__view-toggle {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px;
+  border-radius: var(--border-radius-full);
+  background: var(--color-neutral-100);
+  flex-shrink: 0;
+}
+
+.search-page__view-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1-5, 0.375rem);
+  padding: var(--space-1-5, 0.375rem) var(--space-3);
+  border-radius: var(--border-radius-full);
+  border: none;
+  background: transparent;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.search-page__view-btn--active {
+  background: var(--color-bg-primary);
+  color: var(--color-accent-700);
+  box-shadow: var(--shadow-xs);
+}
+
+.search-page__view-icon {
+  width: 1rem;
+  height: 1rem;
+  flex-shrink: 0;
+}
+
+.search-page__view-label {
+  display: none;
+}
+
+@media (min-width: 480px) {
+  .search-page__view-label {
+    display: inline;
+  }
 }
 
 .search-page__subtitle {
@@ -389,11 +767,57 @@ useSeoMeta({
   color: var(--color-text-tertiary);
 }
 
+/* Vista mapa: crece para ocupar el espacio libre hasta el footer en vez
+   de quedar en una altura fija (ver flex:1 en .search-page__container). */
+/* La altura real la pone el :style inline (mapWrapHeight, medido en JS) —
+   display:flex acá es solo para que MapView.vue pueda hacer height:100%. */
+.search-page__map-wrap {
+  display: flex;
+  min-height: 400px;
+}
+
+.search-page__pagination {
+  display: flex;
+  justify-content: center;
+  padding-block: var(--space-4);
+}
+
+/* ── Places strip ──────────────────────────────────────────────── */
+.search-page__places-strip {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.search-page__places-strip-label {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-secondary);
+}
+
+.search-page__places-strip-row {
+  display: flex;
+  gap: var(--space-3);
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  padding-bottom: var(--space-1);
+}
+
+.search-page__places-strip-row::-webkit-scrollbar {
+  display: none;
+}
+
 /* ── Filter bar ────────────────────────────────────────────────── */
 .search-page__filter-bar {
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
+  /* Al pasar a mapa, scrollIntoView({block:'start'}) respeta esto — deja
+     un respiro arriba en vez de dejar los filtros pegados al borde. Tiene
+     que ser menor al gap real con el header (--space-4 en desktop) para
+     que ese respiro sea espacio en blanco y no un pedazo del subtítulo. */
+  scroll-margin-top: var(--space-3);
 }
 
 /* ── Desktop filtros ───────────────────────────────────────────── */
@@ -408,6 +832,45 @@ useSeoMeta({
   display: flex;
   align-items: center;
   gap: var(--space-2);
+  margin-inline-start: auto;
+}
+
+/* Botón "Cerca de mí" — ghost, se marca activo con el acento */
+.search-page__btn-near-me {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1-5, 0.375rem);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--border-radius-full);
+  border: 1.5px solid var(--color-neutral-200);
+  background: transparent;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  white-space: nowrap;
+}
+
+.search-page__btn-near-me:hover:not(:disabled) {
+  border-color: var(--color-accent-300);
+  color: var(--color-accent-700);
+}
+
+.search-page__btn-near-me--active {
+  border-color: var(--color-accent-500);
+  background-color: var(--color-accent-50);
+  color: var(--color-accent-700);
+}
+
+.search-page__btn-near-me:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.search-page__near-me-error {
+  font-size: var(--font-size-xs);
+  color: var(--color-error, #ef4444);
   margin-inline-start: auto;
 }
 
@@ -491,6 +954,15 @@ useSeoMeta({
   color: var(--color-secondary-800);
 }
 
+.search-page__filter-btn--active {
+  color: var(--color-accent-700);
+}
+
+.search-page__filter-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
 .search-page__filter-icon {
   width: 1.125rem;
   height: 1.125rem;
@@ -543,6 +1015,11 @@ useSeoMeta({
 @media (min-width: 768px) {
   .search-page__container {
     padding-inline: var(--space-6);
+    /* Menos aire arriba/abajo en desktop para que filtros + contenido +
+       footer entren mejor dentro del viewport en vista mapa. */
+    margin-top: var(--space-3);
+    padding-block: var(--space-4);
+    gap: var(--space-4);
   }
 
   .search-page__desktop-filters {

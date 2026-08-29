@@ -10,13 +10,14 @@
     "title": "Descubre actividades increíbles para niños",
     "subtitle": "Miles de experiencias familiares en Israel",
     "search_placeholder": "¿Qué buscas? (ej: museo, parque)",
+    "search_placeholder_prefix": "Encuentra",
     "search_placeholder_examples": [
-      "Encuentra museos increíbles",
-      "Encuentra parques cercanos",
-      "Encuentra talleres de arte",
-      "Encuentra actividades gratis",
-      "Encuentra clases de música",
-      "Encuentra cumpleaños infantiles"
+      "museos increíbles",
+      "parques cercanos",
+      "talleres de arte",
+      "actividades gratis",
+      "clases de música",
+      "cumpleaños infantiles"
     ],
     "badge": "Israel · Familias · Niños",
     "title_start": "Descubre actividades",
@@ -59,13 +60,25 @@
     "no_results_for": "No encontramos resultados para {query}",
     "no_results_hint": "Intenta ajustar o eliminar los filtros activos",
     "clear_and_show_all": "Limpiar y ver todo",
-    "category": "Categoría"
+    "category": "Categoría",
+    "view_list": "Lista",
+    "view_map": "Mapa",
+    "map_missing_location": "Algunas actividades no tienen ubicación exacta y no se muestran en el mapa.",
+    "map_no_locations": "Ninguno de estos resultados tiene ubicación para mostrar en el mapa.",
+    "near_me": "Cerca de mí",
+    "near_me_locating": "Buscando tu ubicación…",
+    "near_me_error": "No pudimos acceder a tu ubicación. Revisá los permisos del navegador.",
+    "place_badge": "Lugar",
+    "places_found": "¿Buscabas este lugar?"
   },
   "activity": {
     "free": "Gratis",
     "stroller_friendly": "Apto para coches",
     "open_weekends": "Abierto fines de semana",
+    "has_shadow": "Sombra",
+    "has_bathrooms": "Baños",
     "location": "Ubicación",
+    "more_activities_at": "Más actividades en: {place}",
     "no_location": "Sin ubicación exacta disponible",
     "schedule": "Horario",
     "description": "Descripción",
@@ -90,7 +103,17 @@
     "how_to_get": "Cómo llegar",
     "more_info": "Más información",
     "show_description": "Ver descripción",
-    "hide_description": "Ocultar descripción"
+    "hide_description": "Ocultar descripción",
+    "no_image": "Sin imagen",
+    "other_activities_here": "Otras actividades en este lugar",
+    "see_place_page": "Ver página del lugar"
+  },
+  "place": {
+    "what_to_do": "¿Qué se puede hacer acá?",
+    "no_activities": "Todavía no hay actividades cargadas en este lugar",
+    "about": "Sobre este lugar",
+    "practical_info": "Información práctica",
+    "not_found": "No encontramos este lugar"
   },
   "age": {
     "months": "{count} meses",
@@ -188,7 +211,14 @@
     "hours_unknown": "No sé los horarios",
     "edit_hours_manually": "Editar manualmente",
     "hours_pending_review": "Pendiente de revisión",
-    "activity_title": "Título de la actividad"
+    "activity_title": "Título de la actividad",
+    "local_search_label": "¿Dónde se puede hacer?",
+    "local_search_placeholder": "Buscá si el lugar ya está en MundoPekes",
+    "existing_place": "Lugar existente",
+    "not_this_place": "¿No es este lugar? Buscar de nuevo",
+    "cant_find_place": "¿No lo encontrás?",
+    "add_new_place": "Agregar un lugar nuevo",
+    "back_to_local_search": "Volver a la búsqueda"
   },
   "contact": {
     "title": "Contáctanos",

@@ -17,13 +17,13 @@ export const useCategories = () => {
     update,
     remove,
   } = useAdminCrud<Category>('/api/categories', {
-    loadError: 'Error cargando categorías',
-    created: 'Categoría creada',
-    createError: 'Error al crear',
-    updated: 'Categoría actualizada',
-    updateError: 'Error al actualizar',
-    deleted: 'Categoría eliminada',
-    deleteError: 'Error al eliminar',
+    loadError: 'categories.toast.loadError',
+    created: 'categories.toast.created',
+    createError: 'categories.toast.createError',
+    updated: 'categories.toast.updated',
+    updateError: 'categories.toast.updateError',
+    deleted: 'categories.toast.deleted',
+    deleteError: 'categories.toast.deleteError',
   })
 
   // Estructura árbol: padres con sus hijos

@@ -26,9 +26,10 @@ const TOTAL_STEPS = wizard.STEPS.length
 //   return true
 // })
 
+// Step order: 1=Actividad, 2=Lugar, 3=Detalles, 4=Resumen (ver WIZARD_STEPS)
 const canContinue = computed(() => {
-  if (currentStep.value === 1) return wizard.hasPlace.value
-  if (currentStep.value === 2) return wizard.hasActivity.value
+  if (currentStep.value === 1) return wizard.hasActivity.value
+  if (currentStep.value === 2) return wizard.hasPlace.value
   return true
 })
 

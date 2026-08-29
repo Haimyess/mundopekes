@@ -23,6 +23,38 @@
   "language": {
     "label": "Idioma"
   },
+  "seo": {
+    "title": "MundoPekes Admin",
+    "description": "Panel de administración de MundoPekes — gestioná lugares, actividades, sugerencias y más.",
+    "notFoundTitle": "Página no encontrada",
+    "notFoundDescription": "Lo sentimos, no pudimos encontrar esta página."
+  },
+  "days": {
+    "sunday": "Domingo",
+    "monday": "Lunes",
+    "tuesday": "Martes",
+    "wednesday": "Miércoles",
+    "thursday": "Jueves",
+    "friday": "Viernes",
+    "saturday": "Sábado"
+  },
+  "auth": {
+    "toast": {
+      "accessDeniedError": "Acceso denegado: no tenés permisos de administrador",
+      "welcomeTitle": "¡Bienvenido!",
+      "welcomeMfaHint": "Recomendamos activar MFA en Configuración → Seguridad",
+      "loginErrorTitle": "Error al iniciar sesión",
+      "wrongCodeTitle": "Código incorrecto",
+      "wrongCodeDescription": "Verificá el código en tu app autenticadora",
+      "logoutErrorTitle": "Error al cerrar sesión"
+    },
+    "errors": {
+      "invalidCredentials": "Email o contraseña incorrectos",
+      "emailNotConfirmed": "Confirmá tu email antes de continuar",
+      "tooManyRequests": "Demasiados intentos, esperá unos minutos",
+      "userNotFound": "No existe un usuario con ese email"
+    }
+  },
   "login": {
     "title": "MundoPekes Admin",
     "subtitleMfa": "Ingresá el código de tu app autenticadora",
@@ -155,6 +187,12 @@
     },
     "slideover": {
       "defaultTitle": "Consulta"
+    },
+    "toast": {
+      "unknownError": "Error desconocido",
+      "loadError": "Error cargando consultas",
+      "statusUpdated": "Estado actualizado",
+      "updateError": "Error al actualizar"
     }
   },
   "inbox": {
@@ -218,7 +256,11 @@
       "metadata": "Metadata"
     },
     "view": "Ver",
-    "metadataModalTitle": "Metadata del log"
+    "metadataModalTitle": "Metadata del log",
+    "toast": {
+      "unknownError": "Error desconocido",
+      "loadError": "Error cargando logs"
+    }
   },
   "userEvents": {
     "title": "Actividad de usuarios",
@@ -308,6 +350,7 @@
       "delete": "Eliminar"
     },
     "toast": {
+      "loadError": "Error cargando lugares",
       "deleted": "Lugar eliminado",
       "errorTitle": "Error"
     }
@@ -345,6 +388,48 @@
       "plural": "actividades"
     }
   },
+  "entityForm": {
+    "placeName": "Nombre del lugar",
+    "activityTitle": "Título de la actividad",
+    "description": "Descripción",
+    "city": "Ciudad",
+    "cityPlaceholder": "Seleccioná una ciudad",
+    "address": "Dirección",
+    "addressPlaceholder": "Calle 123",
+    "category": "Categoría",
+    "phone": "Teléfono",
+    "website": "Website",
+    "ages": "Edades",
+    "seasons": "Temporadas",
+    "price": "Precio",
+    "free": "Gratuito",
+    "options": "Características",
+    "strollerFriendly": "Apto cochecito",
+    "openWeekends": "Fines de semana",
+    "hasShadow": "Sombra",
+    "hasBathrooms": "Baños",
+    "placeAttributes": "Atributos del lugar",
+    "hasSafeRoom": "Refugio / búnker",
+    "activityWebsite": "Website",
+    "schedule": "Horario",
+    "images": "Imágenes",
+    "loading": "Cargando…",
+    "ageLabels": {
+      "all": "Todas las edades",
+      "babies": "Bebés (0-11m)",
+      "toddlers": "Pequeños (1-3 años)",
+      "preschool": "Preescolar (3-6 años)",
+      "school": "Escolar (6-12 años)",
+      "teens": "Adolescentes (12+)"
+    },
+    "seasonLabels": {
+      "all": "Todas",
+      "spring": "Primavera",
+      "summer": "Verano",
+      "autumn": "Otoño",
+      "winter": "Invierno"
+    }
+  },
   "placesSlideover": {
     "editTitle": "Editar lugar",
     "createTitle": "Nuevo lugar",
@@ -368,7 +453,8 @@
       "nameRequired": "El nombre es requerido en al menos un idioma",
       "updated": "Lugar actualizado",
       "created": "Lugar creado",
-      "errorTitle": "Error"
+      "errorTitle": "Error",
+      "possibleDuplicate": "Esto podría ya existir: \"{name}\""
     }
   },
   "activities": {
@@ -406,6 +492,17 @@
     },
     "pagination": {
       "selected": "{selected} de {total} actividades seleccionadas"
+    },
+    "toast": {
+      "loadError": "Error cargando actividades",
+      "created": "Actividad creada",
+      "createError": "Error al crear",
+      "updated": "Actividad actualizada",
+      "updateError": "Error al actualizar",
+      "deleted": "Actividad eliminada",
+      "deleteError": "Error al eliminar",
+      "deletedManySingular": "{count} actividad eliminada",
+      "deletedManyPlural": "{count} actividades eliminadas"
     }
   },
   "activitiesSlideover": {
@@ -446,7 +543,8 @@
       "placeRequired": "Seleccioná un lugar",
       "updated": "Actividad actualizada",
       "created": "Actividad creada",
-      "errorTitle": "Error"
+      "errorTitle": "Error",
+      "possibleDuplicate": "Esto podría ya existir: \"{title}\""
     },
     "ageLabels": {
       "all": "Todas las edades",
@@ -616,7 +714,14 @@
         "createButton": "Crear FAQ"
       },
       "toast": {
-        "validationError": "Pregunta y respuesta son requeridas"
+        "validationError": "Pregunta y respuesta son requeridas",
+        "loadError": "Error cargando FAQs",
+        "created": "FAQ creada",
+        "createError": "Error al crear",
+        "updated": "FAQ actualizada",
+        "updateError": "Error al actualizar",
+        "deleted": "FAQ eliminada",
+        "deleteError": "Error al eliminar"
       }
     }
   },
@@ -638,21 +743,48 @@
       "name": "Nombre",
       "city": "Ciudad",
       "type": "Tipo",
+      "category": "Categoría",
       "free": "Gratuito",
       "source": "Fuente",
       "date": "Fecha",
-      "status": "Estado"
+      "status": "Estado",
+      "translations": "Traducciones"
+    },
+    "translations": {
+      "complete": "Completo",
+      "missing": "Falta: {locales}",
+      "unknown": "Sin traducir"
     },
     "filters": {
       "allCategories": "Todas las categorías",
       "allCities": "Todas las ciudades",
       "allPrices": "Gratis y de pago",
       "free": "Gratis",
-      "paid": "De pago"
+      "paid": "De pago",
+      "allTypes": "Todos los tipos",
+      "typeNewPlace": "Lugar nuevo",
+      "typeExistingPlace": "Lugar existente",
+      "allDuplicates": "Todas",
+      "onlyDuplicates": "Posibles duplicados"
     },
     "source": {
       "agent": "Agente",
       "manual": "Manual"
+    },
+    "toast": {
+      "loadError": "Error cargando sugerencias",
+      "approved": "Sugerencia aprobada",
+      "approvedDescription": "Se creó el lugar \"{name}\"",
+      "approveError": "Error al aprobar",
+      "merged": "Sugerencia fusionada",
+      "mergedDescription": "Actividad asociada a \"{name}\"",
+      "mergeError": "Error al fusionar",
+      "rejected": "Sugerencia rechazada",
+      "rejectError": "Error al rechazar",
+      "deleted": "Sugerencia eliminada",
+      "deleteError": "Error al eliminar",
+      "defaultNewPlaceName": "nuevo lugar",
+      "defaultExistingPlaceName": "el lugar existente"
     }
   },
   "suggestionsSlideover": {
@@ -667,6 +799,7 @@
     "loading": "Cargando…",
     "activityTitleLabel": "Título de la actividad",
     "descriptionLabel": "Descripción",
+    "imagesLabel": "Imágenes",
     "locationLabel": "Ubicación",
     "contactLabel": "Contacto",
     "typeLabel": "Tipo",
@@ -676,6 +809,17 @@
     "rejectionReasonLabel": "Motivo de rechazo",
     "hoursUnknownTitle": "Horarios pendientes de revisión",
     "hoursUnknownDescription": "El usuario no conocía los horarios al enviar la sugerencia.",
+    "typeNewPlace": "Lugar nuevo",
+    "typeExistingPlace": "Actividad en lugar existente",
+    "linkedPlaceLabel": "Lugar asociado",
+    "linkedPlaceMissing": "El lugar asociado ya no existe",
+    "possibleDuplicateTitle": "Posible duplicado",
+    "mergeIntoThis": "Fusionar con este",
+    "translationsLabel": "Traducciones",
+    "translationsComplete": "Todos los idiomas al día",
+    "translationsMissing": "Falta: {locales}",
+    "translationsUnknown": "Sin traducir todavía",
+    "retryTranslation": "Reintentar traducción",
     "status": {
       "pending": "Pendiente",
       "approved": "Aprobada",
@@ -706,8 +850,12 @@
     "toast": {
       "rejectReasonRequired": "Ingresá un motivo de rechazo",
       "nameRequired": "El nombre es requerido en al menos un idioma",
+      "titleRequired": "El título de la actividad es requerido en al menos un idioma",
       "updated": "Sugerencia actualizada",
-      "saveError": "Error al guardar"
+      "saveError": "Error al guardar",
+      "retrySuccess": "Traducción reintentada",
+      "retryNothing": "Nada para reintentar — no hay traducciones fallidas",
+      "retryError": "Error al reintentar la traducción"
     },
     "rejectForm": {
       "label": "Motivo del rechazo",
@@ -735,7 +883,16 @@
     "subcategoryNamePlaceholder": "Nombre subcategoría",
     "addSubcategory": "Agregar subcategoría",
     "subCount": "sub",
-    "empty": "No hay categorías todavía. Creá la primera."
+    "empty": "No hay categorías todavía. Creá la primera.",
+    "toast": {
+      "loadError": "Error cargando categorías",
+      "created": "Categoría creada",
+      "createError": "Error al crear",
+      "updated": "Categoría actualizada",
+      "updateError": "Error al actualizar",
+      "deleted": "Categoría eliminada",
+      "deleteError": "Error al eliminar"
+    }
   },
   "providers": {
     "title": "Proveedores",
@@ -789,6 +946,13 @@
     },
     "buttons": {
       "approveProvider": "Aprobar proveedor"
+    },
+    "toast": {
+      "unknownError": "Error desconocido",
+      "loadListError": "Error cargando proveedores",
+      "loadDetailError": "Error cargando proveedor",
+      "statusUpdated": "Estado actualizado",
+      "updateError": "Error al actualizar"
     }
   }
 }

@@ -8,10 +8,13 @@ interface Props {
   price: number | null
   strollerFriendly: boolean
   openWeekends: boolean
+  hasShadow?: boolean
+  hasBathrooms?: boolean
 }
 
 defineProps<Props>()
 const { t } = useI18n()
+const { formatAge } = useAgeRange()
 
 const SEASON_ICONS: Record<string, string> = {
   spring: 'i-heroicons-sparkles',
@@ -34,17 +37,15 @@ function sortedSeasons(seasons: Season[]) {
 }
 
 /**
- * Convierte el label_key de la DB al path de traducción correcto.
- * El DB guarda: "age.babies" → locale espera: "search.age_babies"
- * Mismo patrón usado en useActivityFilters.ts
+ * Label del rango de edad a partir de min/max_months (no del label_key).
+ * label_key es una convención frágil que depende de cómo se sembró cada
+ * fila en la DB (ver useActivityFilters.ts) — algunas actividades tienen
+ * valores que no matchean ninguna clave i18n y se veían literalmente
+ * como "search.age_range_0_12" en pantalla. min/max_months siempre está
+ * disponible y ya tiene su propio formateador i18n-correcto.
  */
-function ageLabel(labelKey: string): string {
-  // Intenta la clave directa primero (por si ya es un path completo)
-  const direct = t(labelKey)
-  if (direct !== labelKey) return direct
-  // Si falló (devolvió la misma key), aplica conversión: age.babies → search.age_babies
-  const converted = `search.${labelKey.replace('.', '_')}`
-  return t(converted)
+function ageRangeLabel(ar: AgeRange): string {
+  return `${formatAge(ar.min_months)} – ${formatAge(ar.max_months)}`
 }
 </script>
 
@@ -58,7 +59,7 @@ function ageLabel(labelKey: string): string {
     <!-- Edades -->
     <span v-for="ar in sortedAgeRanges(ageRanges)" :key="ar.id" class="act-chip">
       <UIcon name="i-heroicons-user-group" class="act-chip__icon" />
-      {{ ageLabel(ar.label_key) }}
+      {{ ageRangeLabel(ar) }}
     </span>
 
     <!-- Temporadas -->
@@ -87,6 +88,19 @@ function ageLabel(labelKey: string): string {
     <span v-if="openWeekends" class="act-chip">
       <UIcon name="i-heroicons-calendar-days" class="act-chip__icon" />
       {{ t('activity.open_weekends') }}
+    </span>
+
+    <!-- Sombra — antes modelado en la DB y editable en el admin pero nunca
+         mostrado en el sitio público (confirmado 2026-08-29, agregado acá) -->
+    <span v-if="hasShadow" class="act-chip">
+      <UIcon name="i-heroicons-cloud" class="act-chip__icon" />
+      {{ t('activity.has_shadow') }}
+    </span>
+
+    <!-- Baños — mismo caso que sombra -->
+    <span v-if="hasBathrooms" class="act-chip">
+      <UIcon name="i-heroicons-building-office-2" class="act-chip__icon" />
+      {{ t('activity.has_bathrooms') }}
     </span>
   </div>
 </template>

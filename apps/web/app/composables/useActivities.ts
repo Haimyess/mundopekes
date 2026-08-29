@@ -7,8 +7,11 @@
 
 import type { Activity } from '~/types'
 
-// Select reutilizable con todos los joins
-export const ACTIVITY_SELECT = `
+// Campos base compartidos por ACTIVITY_SELECT — separados del embed de
+// age_ranges/seasons porque useActivityFilters.ts necesita poder pedirlos
+// con !inner (para filtrar por edad/season en SQL en vez de en JS) sin
+// duplicar el resto del select.
+export const ACTIVITY_SELECT_BASE = `
   id,
   title_i18n,
   description_i18n,
@@ -33,13 +36,97 @@ export const ACTIVITY_SELECT = `
     metadata,
     city:cities ( id, name, region )
   ),
-  category:categories ( id, name_i18n, slug, icon, parent_id ),
+  category:categories ( id, name_i18n, slug, icon, parent_id )
+`
+
+// Campos base para la grilla/mapa de búsqueda (SearchActivityGrid + MapView)
+// y para el fetch de conteos de filtros — necesitan description_i18n
+// (variant="detailed") y place.lat/lng (pines del mapa), a diferencia de
+// ACTIVITY_CARD_SELECT (carruseles, sin mapa). No necesitan schedule,
+// metadata, updated_at, ni los campos del place/category que no se
+// renderizan en ninguna de esas dos vistas.
+export const ACTIVITY_LIST_SELECT_BASE = `
+  id,
+  title_i18n,
+  description_i18n,
+  price,
+  is_free,
+  stroller_friendly,
+  open_weekends,
+  images,
+  status,
+  created_at,
+  place:places!inner (
+    id,
+    name_i18n,
+    lat,
+    lng,
+    images,
+    status,
+    city:cities ( id, name, region )
+  ),
+  category:categories ( id, name_i18n )
+`
+
+// Embed normal (left join): trae age_ranges/seasons si existen, sin excluir
+// actividades que no tengan ninguno asignado. Es el default para todo lo
+// que no filtra por edad/season.
+export const AGE_RANGES_EMBED = `
   age_ranges:activity_age_ranges (
     age_range:age_ranges ( id, label_key, min_months, max_months, sort_order )
-  ),
+  )
+`
+export const SEASONS_EMBED = `
   seasons:activity_seasons (
     season:seasons ( id, value, label_key, sort_order )
   )
+`
+
+// Embed !inner: solo para cuando el filtro correspondiente está activo —
+// PostgREST necesita !inner en ambos niveles del join para poder filtrar
+// por una columna del join anidado (age_range.min_months, season.value) sin
+// perder el filtro de existencia (activities sin ningún age_range/season
+// asignado deben desaparecer solo cuando el filtro está activo, no siempre).
+export const AGE_RANGES_EMBED_INNER = `
+  age_ranges:activity_age_ranges!inner (
+    age_range:age_ranges!inner ( id, label_key, min_months, max_months, sort_order )
+  )
+`
+export const SEASONS_EMBED_INNER = `
+  seasons:activity_seasons!inner (
+    season:seasons!inner ( id, value, label_key, sort_order )
+  )
+`
+
+// Select reutilizable con todos los joins
+export const ACTIVITY_SELECT = `${ACTIVITY_SELECT_BASE},
+  ${AGE_RANGES_EMBED},
+  ${SEASONS_EMBED}
+` as const
+
+// Select liviano para los carruseles del Home (SharedActivityCard nada más,
+// sin filtro de edad/season) — evita traer schedule/metadata/updated_at,
+// los mismos campos pesados del place anidado, y los dos joins pivot
+// completos (age_ranges/seasons) que esas vistas no usan para nada.
+export const ACTIVITY_CARD_SELECT = `
+  id,
+  title_i18n,
+  description_i18n,
+  price,
+  is_free,
+  stroller_friendly,
+  open_weekends,
+  images,
+  status,
+  created_at,
+  place:places!inner (
+    id,
+    name_i18n,
+    images,
+    status,
+    city:cities ( id, name, region )
+  ),
+  category:categories ( id, name_i18n )
 ` as const
 
 /**
@@ -109,7 +196,7 @@ export const useActivities = () => {
   const getRecentActivities = async (limit = 10): Promise<Activity[]> => {
     const { data, error } = await client
       .from('activities')
-      .select(ACTIVITY_SELECT)
+      .select(ACTIVITY_CARD_SELECT)
       .eq('status', 'approved')
       .eq('place.status', 'active')
       .order('created_at', { ascending: false })
@@ -130,7 +217,7 @@ export const useActivities = () => {
   const getPopularActivities = async (limit = 10): Promise<Activity[]> => {
     const { data, error } = await client
       .from('activities')
-      .select(ACTIVITY_SELECT)
+      .select(ACTIVITY_CARD_SELECT)
       .eq('status', 'approved')
       .eq('place.status', 'active')
       .limit(limit * 3)
@@ -174,6 +261,36 @@ export const useActivities = () => {
   }
 
   /**
+   * Actividades de un lugar puntual — usado por la Place Page ("What can you
+   * do here?") y por la Experience Page ("other activities at this place").
+   * excludeId opcional para no repetir la actividad que ya se está mostrando.
+   */
+  const getActivitiesByPlaceId = async (
+    placeId: string,
+    { excludeId, limit = 20 }: { excludeId?: string; limit?: number } = {}
+  ): Promise<Activity[]> => {
+    let query = client
+      .from('activities')
+      .select(ACTIVITY_SELECT)
+      .eq('place_id', placeId)
+      .eq('status', 'approved')
+      .eq('place.status', 'active')
+      .order('created_at', { ascending: false })
+      .limit(limit)
+
+    if (excludeId) query = query.neq('id', excludeId)
+
+    const { data, error } = await query
+
+    if (error) {
+      console.error('Error fetching activities for place:', error)
+      return []
+    }
+
+    return (data ?? []).map(normalizeActivity)
+  }
+
+  /**
    * Todas las actividades aprobadas — para búsqueda/filtros en memoria
    */
   const getAllActivities = async (): Promise<Activity[]> => {
@@ -197,6 +314,7 @@ export const useActivities = () => {
     getRecentActivities,
     getPopularActivities,
     getRecommendedActivities,
+    getActivitiesByPlaceId,
     getAllActivities,
   }
 }

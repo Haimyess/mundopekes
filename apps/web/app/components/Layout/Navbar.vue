@@ -95,8 +95,6 @@ onMounted(async () => {
       </div>
     </UContainer>
 
-    <!-- <SuggestionModal v-model:open="showModal" @close="showModal = false" /> -->
-
     <SuggestionsSuggestionWizard v-model:open="wizardOpen" />
 
     <LayoutMobileMenu

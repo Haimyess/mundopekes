@@ -22,6 +22,7 @@ export interface UseActivitiesOptions {
 }
 
 export const useActivities = (options: UseActivitiesOptions = {}) => {
+  const { t } = useI18n()
   const toast = useToast()
 
   // $fetch a rutas internas durante el SSR es una request nueva del proceso
@@ -75,7 +76,7 @@ export const useActivities = (options: UseActivitiesOptions = {}) => {
       total.value = res.count
     } catch (e: any) {
       toast.add({
-        title: 'Error cargando actividades',
+        title: t('activities.toast.loadError'),
         description: e.message,
         color: 'error',
       })
@@ -89,10 +90,14 @@ export const useActivities = (options: UseActivitiesOptions = {}) => {
     saving.value = true
     try {
       await $fetch('/api/activities', { method: 'POST', body: data })
-      toast.add({ title: 'Actividad creada', color: 'success' })
+      toast.add({ title: t('activities.toast.created'), color: 'success' })
       await fetch()
     } catch (e: any) {
-      toast.add({ title: 'Error al crear', description: e.message, color: 'error' })
+      toast.add({
+        title: t('activities.toast.createError'),
+        description: e.message,
+        color: 'error',
+      })
       throw e
     } finally {
       saving.value = false
@@ -103,10 +108,14 @@ export const useActivities = (options: UseActivitiesOptions = {}) => {
     saving.value = true
     try {
       await $fetch(`/api/activities/${id}`, { method: 'PUT', body: data })
-      toast.add({ title: 'Actividad actualizada', color: 'success' })
+      toast.add({ title: t('activities.toast.updated'), color: 'success' })
       await fetch()
     } catch (e: any) {
-      toast.add({ title: 'Error al actualizar', description: e.message, color: 'error' })
+      toast.add({
+        title: t('activities.toast.updateError'),
+        description: e.message,
+        color: 'error',
+      })
       throw e
     } finally {
       saving.value = false
@@ -117,10 +126,14 @@ export const useActivities = (options: UseActivitiesOptions = {}) => {
     saving.value = true
     try {
       await $fetch(`/api/activities/${id}`, { method: 'DELETE' })
-      toast.add({ title: 'Actividad eliminada', color: 'neutral' })
+      toast.add({ title: t('activities.toast.deleted'), color: 'neutral' })
       await fetch()
     } catch (e: any) {
-      toast.add({ title: 'Error al eliminar', description: e.message, color: 'error' })
+      toast.add({
+        title: t('activities.toast.deleteError'),
+        description: e.message,
+        color: 'error',
+      })
       throw e
     } finally {
       saving.value = false
@@ -132,12 +145,21 @@ export const useActivities = (options: UseActivitiesOptions = {}) => {
     try {
       await Promise.all(ids.map((id) => $fetch(`/api/activities/${id}`, { method: 'DELETE' })))
       toast.add({
-        title: `${ids.length} actividad${ids.length > 1 ? 'es' : ''} eliminada${ids.length > 1 ? 's' : ''}`,
+        title: t(
+          ids.length > 1
+            ? 'activities.toast.deletedManyPlural'
+            : 'activities.toast.deletedManySingular',
+          { count: ids.length }
+        ),
         color: 'neutral',
       })
       await fetch()
     } catch (e: any) {
-      toast.add({ title: 'Error al eliminar', description: e.message, color: 'error' })
+      toast.add({
+        title: t('activities.toast.deleteError'),
+        description: e.message,
+        color: 'error',
+      })
       throw e
     } finally {
       saving.value = false

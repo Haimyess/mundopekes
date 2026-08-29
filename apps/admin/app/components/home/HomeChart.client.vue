@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import { eachDayOfInterval, eachWeekOfInterval, eachMonthOfInterval, format } from 'date-fns'
+import { es, enUS } from 'date-fns/locale'
 import { VisXYContainer, VisLine, VisAxis, VisArea, VisCrosshair, VisTooltip } from '@unovis/vue'
 import type { Period, Range } from '~/types'
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
+const dateFnsLocale = computed(() => (locale.value === 'en' ? enUS : es))
 
 const cardRef = useTemplateRef<HTMLElement | null>('cardRef')
 
@@ -48,17 +50,18 @@ const y = (d: DataRecord) => d.amount
 
 const total = computed(() => data.value.reduce((acc: number, { amount }) => acc + amount, 0))
 
-const formatNumber = new Intl.NumberFormat('en', {
-  style: 'currency',
-  currency: 'USD',
-  maximumFractionDigits: 0,
-}).format
+const formatNumber = (amount: number) =>
+  new Intl.NumberFormat(locale.value === 'en' ? 'en-US' : 'es-AR', {
+    style: 'currency',
+    currency: 'USD',
+    maximumFractionDigits: 0,
+  }).format(amount)
 
 const formatDate = (date: Date): string => {
   return {
-    daily: format(date, 'd MMM'),
-    weekly: format(date, 'd MMM'),
-    monthly: format(date, 'MMM yyy'),
+    daily: format(date, 'd MMM', { locale: dateFnsLocale.value }),
+    weekly: format(date, 'd MMM', { locale: dateFnsLocale.value }),
+    monthly: format(date, 'MMM yyy', { locale: dateFnsLocale.value }),
   }[props.period]
 }
 

@@ -5,7 +5,20 @@
 
 import { defineStore } from 'pinia'
 import type { Activity, FilterOptions } from '~/types'
-import { ACTIVITY_SELECT, normalizeActivity } from '~/composables/useActivities'
+import {
+  ACTIVITY_LIST_SELECT_BASE,
+  AGE_RANGES_EMBED,
+  SEASONS_EMBED,
+  normalizeActivity,
+} from '~/composables/useActivities'
+
+// allActivities alimenta tanto los conteos de filtros como (cuando no hay
+// filtros activos, ver search.vue) la grilla de búsqueda — necesita
+// age_ranges/seasons (para contar) además de los campos de ACTIVITY_LIST_SELECT_BASE.
+const ALL_ACTIVITIES_SELECT = `${ACTIVITY_LIST_SELECT_BASE},
+  ${AGE_RANGES_EMBED},
+  ${SEASONS_EMBED}
+`
 
 export const useActivitiesStore = defineStore('activities', () => {
   // ========== STATE ==========
@@ -381,9 +394,10 @@ export const useActivitiesStore = defineStore('activities', () => {
       const client = useSupabaseClient()
       const { data, error: err } = await client
         .from('activities')
-        .select(ACTIVITY_SELECT)
+        .select(ALL_ACTIVITIES_SELECT)
         .eq('status', 'approved')
         .eq('place.status', 'active')
+        .order('created_at', { ascending: false })
 
       if (err) throw err
 

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { format } from 'date-fns'
+import { es, enUS } from 'date-fns/locale'
 import type { Mail } from '~/types'
 
 defineProps<{
@@ -8,7 +9,10 @@ defineProps<{
 
 const emits = defineEmits(['close'])
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
+const dateFnsLocale = computed(() => (locale.value === 'en' ? enUS : es))
+const formatMailDate = (date: string) =>
+  format(new Date(date), 'dd MMM HH:mm', { locale: dateFnsLocale.value })
 
 const dropdownItems = computed(() => [
   [
@@ -101,7 +105,7 @@ function onSubmit() {
       </div>
 
       <p class="max-sm:pl-16 text-muted text-sm sm:mt-2">
-        {{ format(new Date(mail.date), 'dd MMM HH:mm') }}
+        {{ formatMailDate(mail.date) }}
       </p>
     </div>
 

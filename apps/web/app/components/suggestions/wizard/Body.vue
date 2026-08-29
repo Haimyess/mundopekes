@@ -94,8 +94,8 @@ const editIsEmpty = computed(
 
     <div class="wizard-body__content">
       <Transition name="step-fade" mode="out-in">
-        <SuggestionsWizardStepLugar v-if="currentStep === 1" key="1" />
-        <SuggestionsWizardStepActividad v-else-if="currentStep === 2" key="2" />
+        <SuggestionsWizardStepActividad v-if="currentStep === 1" key="1" />
+        <SuggestionsWizardStepLugar v-else-if="currentStep === 2" key="2" />
         <SuggestionsWizardStepDetalles v-else-if="currentStep === 3" key="3" />
         <SuggestionsWizardStepResumen v-else-if="currentStep === 4" key="4" />
       </Transition>

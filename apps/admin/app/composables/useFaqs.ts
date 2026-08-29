@@ -16,13 +16,13 @@ export const useFaqs = () => {
     update,
     remove,
   } = useAdminCrud<Faq>('/api/faqs', {
-    loadError: 'Error cargando FAQs',
-    created: 'FAQ creada',
-    createError: 'Error al crear',
-    updated: 'FAQ actualizada',
-    updateError: 'Error al actualizar',
-    deleted: 'FAQ eliminada',
-    deleteError: 'Error al eliminar',
+    loadError: 'support.faqs.toast.loadError',
+    created: 'support.faqs.toast.created',
+    createError: 'support.faqs.toast.createError',
+    updated: 'support.faqs.toast.updated',
+    updateError: 'support.faqs.toast.updateError',
+    deleted: 'support.faqs.toast.deleted',
+    deleteError: 'support.faqs.toast.deleteError',
   })
 
   const faqCategories = ref<FaqCategory[]>([])

@@ -1,5 +1,6 @@
 import { serverSupabaseClient } from '#supabase/server'
-import { enrichI18nField } from '../../utils/translate'
+import { translateI18nField } from '../../utils/translate'
+import type { FieldI18nStatus } from '../../utils/translate'
 import { syncActivityPivots } from '../../utils/activity-pivots'
 
 export default defineEventHandler(async (event) => {
@@ -13,24 +14,34 @@ export default defineEventHandler(async (event) => {
   if (config.deeplApiKey && (body.title_i18n || body.description_i18n)) {
     const { data: existing } = await client
       .from('activities')
-      .select('title_i18n, description_i18n')
+      .select('title_i18n, description_i18n, i18n_status')
       .eq('id', id)
       .single()
 
+    const priorStatus = (existing?.i18n_status as Record<string, FieldI18nStatus>) ?? {}
+    const i18nStatus: Record<string, FieldI18nStatus> = { ...priorStatus }
+
     if (body.title_i18n && typeof body.title_i18n === 'object') {
-      body.title_i18n = await enrichI18nField(
-        body.title_i18n,
-        config.deeplApiKey,
-        (existing?.title_i18n as Record<string, string>) ?? undefined
-      )
+      const { value, status } = await translateI18nField({
+        existing: body.title_i18n,
+        apiKey: config.deeplApiKey,
+        previous: (existing?.title_i18n as Record<string, string>) ?? undefined,
+        priorStatus: priorStatus.title,
+      })
+      body.title_i18n = value
+      if (status) i18nStatus.title = status
     }
     if (body.description_i18n && typeof body.description_i18n === 'object') {
-      body.description_i18n = await enrichI18nField(
-        body.description_i18n,
-        config.deeplApiKey,
-        (existing?.description_i18n as Record<string, string>) ?? undefined
-      )
+      const { value, status } = await translateI18nField({
+        existing: body.description_i18n,
+        apiKey: config.deeplApiKey,
+        previous: (existing?.description_i18n as Record<string, string>) ?? undefined,
+        priorStatus: priorStatus.description,
+      })
+      body.description_i18n = value
+      if (status) i18nStatus.description = status
     }
+    body.i18n_status = i18nStatus
   }
 
   // Pivots no son columnas de `activities` — se escriben aparte en las tablas pivote

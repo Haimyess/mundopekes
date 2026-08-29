@@ -11,23 +11,44 @@ vi.mock('#supabase/server', () => ({
   serverSupabaseServiceRole: vi.fn(() => mockSupabase),
 }))
 
-// ── admin-runtime-config mock (approve.post uses getDeeplApiKey) ──────────
+// ── admin-runtime-config mock (approve.post uses getDeeplApiKey / getGooglePlacesApiKey) ─
 vi.mock('../../server/utils/admin-runtime-config', () => ({
   getDeeplApiKey: vi.fn(() => _deeplApiKey),
+  getGooglePlacesApiKey: vi.fn(() => 'fake-google-key'),
 }))
 
 // ── translate mock (explicitly imported in approve.post) ──────────────────
 // Path relative to this test file → apps/admin/server/utils/translate.ts
 vi.mock('../../server/utils/translate', () => ({
   enrichI18nField: vi.fn(async (existing: Record<string, string>) => existing),
+  translateI18nField: vi.fn(async ({ existing }: { existing: Record<string, string> }) => ({
+    value: existing,
+    status: undefined,
+  })),
+}))
+
+// ── resolve-suggestion-images mock (explicitly imported in approve.post) ──
+// Default passthrough matches old behavior (suggestion.images as-is, no
+// photo promotion) — the test exercising promotion overrides with mockResolvedValueOnce.
+vi.mock('../../server/utils/resolve-suggestion-images', () => ({
+  resolveSuggestionImages: vi.fn(
+    async (_supabase: unknown, suggestion: { images: string[] | null }) => suggestion.images ?? []
+  ),
 }))
 
 // ── Auto-imported server utils → vi.stubGlobal ────────────────────────────
 const mockGeocode = vi.fn()
 vi.stubGlobal('geocodeAddress', (...args: unknown[]) => mockGeocode(...args))
 vi.stubGlobal('logInfo', vi.fn().mockResolvedValue(undefined))
-vi.stubGlobal('logWarn', vi.fn().mockResolvedValue(undefined))
+const mockLogWarn = vi.fn().mockResolvedValue(undefined)
+vi.stubGlobal('logWarn', mockLogWarn)
 vi.stubGlobal('logError', vi.fn().mockResolvedValue(undefined))
+// Re-check duplicados al aprobar (Phase 6) — default sin duplicados; los
+// tests que ejercitan el re-check pisan estos mocks con mockResolvedValueOnce.
+const mockFindPlaceDuplicates = vi.fn().mockResolvedValue([])
+const mockFindExperienceDuplicates = vi.fn().mockResolvedValue([])
+vi.stubGlobal('findPlaceDuplicates', mockFindPlaceDuplicates)
+vi.stubGlobal('findExperienceDuplicates', mockFindExperienceDuplicates)
 // requireAdminUser is no longer called from approve.post.ts itself — the
 // admin auth check moved to server/middleware/require-admin.ts (global for
 // every /api/** request), covered by tests/server/require-admin-middleware.test.ts
@@ -40,6 +61,16 @@ vi.stubGlobal('sanitizeHttpUrl', (value: string | null | undefined) => {
     return null
   }
 })
+// normalizeName (layers/domain/server/utils/duplicate-detection.ts) — real
+// implementation, cheap and pure, no need to fake it.
+vi.stubGlobal('normalizeName', (raw: string | null | undefined) =>
+  (raw ?? '')
+    .normalize('NFD')
+    .replace(/\p{Mn}/gu, '')
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, ' ')
+)
 
 // ── Nuxt / h3 globals (also set in tests/setup.ts, repeated for safety) ──
 vi.stubGlobal('defineEventHandler', (fn: (e: unknown) => unknown) => fn)
@@ -53,6 +84,8 @@ vi.stubGlobal('createError', (input: Record<string, unknown>) => {
 })
 // ── Load handler (after stubs) ────────────────────────────────────────────
 const { default: handler } = await import('../../server/api/suggestions/[id]/approve.post')
+const { resolveSuggestionImages: mockResolveSuggestionImages } =
+  await import('../../server/utils/resolve-suggestion-images')
 
 // ── Suggestion factory ────────────────────────────────────────────────────
 const makeSuggestion = (overrides: Record<string, unknown> = {}) => ({
@@ -213,8 +246,8 @@ describe('approve.post — title resolution', () => {
     expect(title?.es).toBe('Parque HaYarkon')
   })
 
-  it('without deeplApiKey enrichI18nField is not called', async () => {
-    const { enrichI18nField } = await import('../../server/utils/translate')
+  it('without deeplApiKey translateI18nField is not called', async () => {
+    const { translateI18nField } = await import('../../server/utils/translate')
     const suggestion = makeSuggestion()
     setupSupabase({
       suggestions: { selectSingle: suggestion },
@@ -225,7 +258,7 @@ describe('approve.post — title resolution', () => {
     )
 
     await handler(makeEvent())
-    expect(enrichI18nField).not.toHaveBeenCalled()
+    expect(translateI18nField).not.toHaveBeenCalled()
   })
 })
 
@@ -304,6 +337,95 @@ describe('approve.post — geocoding', () => {
     await handler(makeEvent())
     expect(capturedPlace?.lat).toBeNull()
     expect(capturedPlace?.lng).toBeNull()
+  })
+})
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  Image promotion (Phase 7 / §K)
+// ═══════════════════════════════════════════════════════════════════════════
+describe('approve.post — image promotion', () => {
+  it('uses resolveSuggestionImages for both the place and the activity', async () => {
+    mockResolveSuggestionImages.mockResolvedValueOnce([
+      'https://storage.example/place-images/promoted-1.jpg',
+    ])
+    const suggestion = makeSuggestion()
+
+    let capturedPlace: Record<string, unknown> | null = null
+    let capturedActivity: Record<string, unknown> | null = null
+    mockSupabase.from.mockImplementation((table: string) => {
+      if (table === 'places') {
+        return {
+          insert: vi.fn((data) => {
+            capturedPlace = data as Record<string, unknown>
+            return {
+              select: vi.fn(() => ({
+                single: vi.fn().mockResolvedValue({ data: { id: 'place-001' }, error: null }),
+              })),
+            }
+          }),
+          delete: vi.fn(() => ({ eq: vi.fn().mockResolvedValue({ error: null }) })),
+        }
+      }
+      if (table === 'activities') {
+        return {
+          insert: vi.fn((data) => {
+            capturedActivity = data as Record<string, unknown>
+            return {
+              select: vi.fn(() => ({
+                single: vi.fn().mockResolvedValue({ data: { id: 'act-001' }, error: null }),
+              })),
+            }
+          }),
+        }
+      }
+      return buildTableMock(table, { suggestions: suggestion })
+    })
+
+    await handler(makeEvent())
+
+    expect(mockResolveSuggestionImages).toHaveBeenCalledTimes(1) // once, reused for both
+    expect(capturedPlace?.images).toEqual(['https://storage.example/place-images/promoted-1.jpg'])
+    expect(capturedActivity?.images).toEqual([
+      'https://storage.example/place-images/promoted-1.jpg',
+    ])
+  })
+
+  it('resolves images for the experience_for_existing_place branch too', async () => {
+    mockResolveSuggestionImages.mockResolvedValueOnce(['https://storage.example/promoted-2.jpg'])
+    const suggestion = makeSuggestion({
+      suggestion_type: 'experience_for_existing_place',
+      place_id: 'place-001',
+    })
+
+    let capturedActivity: Record<string, unknown> | null = null
+    mockSupabase.from.mockImplementation((table: string) => {
+      if (table === 'places') {
+        return {
+          select: vi.fn(() => ({
+            eq: vi.fn(() => ({
+              single: vi.fn().mockResolvedValue({ data: { id: 'place-001' }, error: null }),
+            })),
+          })),
+        }
+      }
+      if (table === 'activities') {
+        return {
+          insert: vi.fn((data) => {
+            capturedActivity = data as Record<string, unknown>
+            return {
+              select: vi.fn(() => ({
+                single: vi.fn().mockResolvedValue({ data: { id: 'act-001' }, error: null }),
+              })),
+            }
+          }),
+        }
+      }
+      return buildTableMock(table, { suggestions: suggestion })
+    })
+
+    await handler(makeEvent())
+
+    expect(capturedActivity?.images).toEqual(['https://storage.example/promoted-2.jpg'])
   })
 })
 
@@ -427,7 +549,10 @@ describe('approve.post — season pivot', () => {
         }
       }
       if (table === 'activity_seasons') {
-        return { insert: seasonInsertSpy }
+        return {
+          delete: vi.fn(() => ({ eq: vi.fn().mockResolvedValue({ error: null }) })),
+          insert: seasonInsertSpy,
+        }
       }
       return buildTableMock(table, { suggestions: suggestion })
     })
@@ -455,7 +580,10 @@ describe('approve.post — season pivot', () => {
         }
       }
       if (table === 'activity_seasons') {
-        return { insert: seasonInsertSpy }
+        return {
+          delete: vi.fn(() => ({ eq: vi.fn().mockResolvedValue({ error: null }) })),
+          insert: seasonInsertSpy,
+        }
       }
       return buildTableMock(table, { suggestions: suggestion })
     })
@@ -467,6 +595,103 @@ describe('approve.post — season pivot', () => {
         expect.objectContaining({ season_id: 11 }),
       ])
     )
+  })
+})
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  Duplicate re-check at approval time (Phase 6)
+// ═══════════════════════════════════════════════════════════════════════════
+describe('approve.post — duplicate re-check', () => {
+  it('flags a fresh duplicate place and persists it (new_place_with_experience)', async () => {
+    const suggestion = makeSuggestion()
+    mockFindPlaceDuplicates.mockResolvedValueOnce([
+      {
+        id: 'place-dup-1',
+        name: 'Similar Park',
+        city_id: 1,
+        confidence: 'medium',
+        reason: 'nearby_similar_name',
+      },
+    ])
+
+    let capturedSuggestionUpdate: Record<string, unknown> | null = null
+    mockSupabase.from.mockImplementation((table: string) => {
+      if (table === 'suggestions') {
+        return {
+          select: vi.fn(() => ({
+            eq: vi.fn(() => ({
+              single: vi.fn().mockResolvedValue({ data: suggestion, error: null }),
+            })),
+          })),
+          update: vi.fn((data) => {
+            capturedSuggestionUpdate = data as Record<string, unknown>
+            return { eq: vi.fn().mockResolvedValue({ error: null }) }
+          }),
+        }
+      }
+      return buildTableMock(table, { suggestions: suggestion })
+    })
+
+    await handler(makeEvent())
+
+    expect(mockFindPlaceDuplicates).toHaveBeenCalled()
+    expect(capturedSuggestionUpdate?.flagged_possible_duplicate).toBe(true)
+    expect(capturedSuggestionUpdate?.possible_duplicate_of).toBe('place-dup-1')
+    expect(mockLogWarn).toHaveBeenCalled()
+  })
+
+  it('skips the re-check entirely when the suggestion is already flagged', async () => {
+    const suggestion = makeSuggestion({ flagged_possible_duplicate: true })
+    mockSupabase.from.mockImplementation((table) =>
+      buildTableMock(table, { suggestions: suggestion })
+    )
+
+    await handler(makeEvent())
+
+    expect(mockFindPlaceDuplicates).not.toHaveBeenCalled()
+  })
+
+  it('flags a fresh duplicate activity (experience_for_existing_place)', async () => {
+    const suggestion = makeSuggestion({
+      suggestion_type: 'experience_for_existing_place',
+      place_id: 'place-001',
+    })
+    mockFindExperienceDuplicates.mockResolvedValueOnce([
+      { id: 'act-dup-1', title: 'Juegos en HaYarkon', confidence: 'high', reason: 'exact_title' },
+    ])
+
+    let capturedSuggestionUpdate: Record<string, unknown> | null = null
+    mockSupabase.from.mockImplementation((table: string) => {
+      if (table === 'places') {
+        return {
+          select: vi.fn(() => ({
+            eq: vi.fn(() => ({
+              single: vi.fn().mockResolvedValue({ data: { id: 'place-001' }, error: null }),
+            })),
+          })),
+        }
+      }
+      if (table === 'suggestions') {
+        return {
+          select: vi.fn(() => ({
+            eq: vi.fn(() => ({
+              single: vi.fn().mockResolvedValue({ data: suggestion, error: null }),
+            })),
+          })),
+          update: vi.fn((data) => {
+            capturedSuggestionUpdate = data as Record<string, unknown>
+            return { eq: vi.fn().mockResolvedValue({ error: null }) }
+          }),
+        }
+      }
+      return buildTableMock(table, { suggestions: suggestion })
+    })
+
+    await handler(makeEvent())
+
+    expect(mockFindExperienceDuplicates).toHaveBeenCalled()
+    expect(capturedSuggestionUpdate?.flagged_possible_duplicate).toBe(true)
+    expect(capturedSuggestionUpdate?.possible_duplicate_activity_id).toBe('act-dup-1')
   })
 })
 
@@ -556,7 +781,10 @@ function buildTableMock(table: string, metas: { suggestions?: unknown } = {}) {
     }
   }
   if (table === 'activity_age_ranges') {
-    return { insert: vi.fn(() => Promise.resolve({ error: null })) }
+    return {
+      delete: vi.fn(() => ({ eq: vi.fn().mockResolvedValue({ error: null }) })),
+      insert: vi.fn(() => Promise.resolve({ error: null })),
+    }
   }
   if (table === 'seasons') {
     return {
@@ -566,7 +794,10 @@ function buildTableMock(table: string, metas: { suggestions?: unknown } = {}) {
     }
   }
   if (table === 'activity_seasons') {
-    return { insert: vi.fn(() => Promise.resolve({ error: null })) }
+    return {
+      delete: vi.fn(() => ({ eq: vi.fn().mockResolvedValue({ error: null }) })),
+      insert: vi.fn(() => Promise.resolve({ error: null })),
+    }
   }
   return {
     select: vi.fn(() => ({ eq: vi.fn() })),

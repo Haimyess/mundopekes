@@ -58,28 +58,41 @@ const firstOpeningHour = computed(() => {
     <section class="step-resumen__section">
       <span class="step-resumen__label">{{ t('suggest.step_lugar') }}</span>
 
-      <div class="step-resumen__place-header">
+      <!-- Matched an existing place: compact, non-editable — the place data
+           already lives in our DB, this suggestion only adds an experience -->
+      <div v-if="wizard.state.value.matchedPlace" class="step-resumen__place-header">
         <span class="step-resumen__place-name">{{ wizard.placeName.value }}</span>
         <span class="step-resumen__place-addr">{{ wizard.placeAddress.value }}</span>
+        <span class="step-resumen__place-existing">
+          <UiIcon name="i-lucide-check-circle" size="xs" />
+          {{ t('suggest.existing_place') }}
+        </span>
       </div>
 
-      <UFormField :label="t('suggest.description')">
-        <UTextarea
-          v-model="wizard.state.value.description"
-          :placeholder="t('suggest.description_placeholder')"
-          :rows="2"
-          class="w-full"
-        />
-      </UFormField>
+      <template v-else>
+        <div class="step-resumen__place-header">
+          <span class="step-resumen__place-name">{{ wizard.placeName.value }}</span>
+          <span class="step-resumen__place-addr">{{ wizard.placeAddress.value }}</span>
+        </div>
 
-      <div class="step-resumen__place-meta">
-        <UFormField :label="t('suggest.phone')">
-          <UiInput v-model="wizard.state.value.placeInfo.phone" icon="i-lucide-phone" />
+        <UFormField :label="t('suggest.description')">
+          <UTextarea
+            v-model="wizard.state.value.description"
+            :placeholder="t('suggest.description_placeholder')"
+            :rows="2"
+            class="w-full"
+          />
         </UFormField>
-        <UFormField :label="t('suggest.website')">
-          <UiInput v-model="wizard.state.value.placeInfo.website" icon="i-lucide-globe" />
-        </UFormField>
-      </div>
+
+        <div class="step-resumen__place-meta">
+          <UFormField :label="t('suggest.phone')">
+            <UiInput v-model="wizard.state.value.placeInfo.phone" icon="i-lucide-phone" />
+          </UFormField>
+          <UFormField :label="t('suggest.website')">
+            <UiInput v-model="wizard.state.value.placeInfo.website" icon="i-lucide-globe" />
+          </UFormField>
+        </div>
+      </template>
     </section>
 
     <!-- ── ACTIVIDAD ──────────────────────────────────────────── -->
@@ -258,6 +271,15 @@ const firstOpeningHour = computed(() => {
 .step-resumen__place-addr {
   font-size: var(--font-size-xs);
   color: var(--color-text-secondary);
+}
+
+.step-resumen__place-existing {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--font-size-xs);
+  color: var(--color-success-700, #15803d);
+  margin-top: 2px;
 }
 
 .step-resumen__place-meta {

@@ -7,41 +7,38 @@
  */
 
 const route = useRoute()
-const { t, locale } = useI18n()
+const { t } = useI18n()
 const { tc } = useI18nContent()
-const { getActivityById } = useActivities()
+const { getActivityById, getActivitiesByPlaceId } = useActivities()
 
 const id = computed(() => route.params.id as string)
 
 // ─── Fetch ────────────────────────────────────────────────────
-const { data: activity, status } = await useAsyncData(`activity-${id.value}`, () =>
+// Non-blocking on purpose: apps/web runs ssr:false, so an `await` here would
+// stall Vue Router and stop the skeleton below from ever painting on a
+// client-side navigation. Not-found is handled reactively once resolved.
+const { data: activity, status } = useAsyncData(`activity-${id.value}`, () =>
   getActivityById(id.value)
 )
 
-if (!activity.value) {
-  throw createError({ statusCode: 404, statusMessage: 'Activity not found', fatal: true })
-}
+watch(status, (s) => {
+  if (s === 'success' && !activity.value) {
+    showError(createError({ statusCode: 404, statusMessage: 'Activity not found', fatal: true }))
+  }
+})
 
-// ─── Place details (solo datos, no imágenes) ──────────────────
-const placeId = computed(
-  () => (activity.value?.place?.metadata?.google_place_id as string | undefined) ?? null
-)
-
-const { data: placeDetails } = await useAsyncData(
-  () => `place-details-${placeId.value}`,
+// ─── Other activities at the same place ────────────────────────
+// Practical info (phone/website/hours/wheelchair via live Google Details) now
+// lives exclusively on the Place Page — this page only links to it.
+const { data: siblingActivitiesData } = useAsyncData(
+  () => `activity-siblings-${activity.value?.place_id}`,
   () =>
-    placeId.value
-      ? $fetch<{
-          phone: string | null
-          website: string | null
-          google_url: string | null
-          opening_hours: { weekday_text: string[]; open_now: boolean | null } | null
-          wheelchair_accessible: boolean | null
-          photos: string[]
-        }>(`/api/places/details?place_id=${placeId.value}&lang=${locale.value}`)
-      : null,
-  { server: false, watch: [placeId] }
+    activity.value?.place_id
+      ? getActivitiesByPlaceId(activity.value.place_id, { excludeId: id.value, limit: 4 })
+      : Promise.resolve([]),
+  { watch: [() => activity.value?.place_id] }
 )
+const siblingActivities = computed(() => siblingActivitiesData.value ?? [])
 
 // ─── Imágenes: SOLO activity.images ──────────────────────────
 const dbImages = computed(() => (activity.value?.images ?? []).filter(Boolean))
@@ -61,15 +58,16 @@ const placeName = computed(() =>
   activity.value?.place ? tc(activity.value.place.name_i18n) : null
 )
 const locationText = computed(() => [placeName.value, cityName.value].filter(Boolean).join(' · '))
+const moreActivitiesText = computed(() =>
+  placeName.value ? t('activity.more_activities_at', { place: placeName.value }) : null
+)
 
 // ─── Navegación ───────────────────────────────────────────────
 const lat = computed(() => activity.value?.place?.lat)
 const lng = computed(() => activity.value?.place?.lng)
 
 const mapsUrl = computed(() =>
-  lat.value && lng.value
-    ? `https://maps.google.com/?q=${lat.value},${lng.value}`
-    : (placeDetails.value?.google_url ?? null)
+  lat.value && lng.value ? `https://maps.google.com/?q=${lat.value},${lng.value}` : null
 )
 const wazeUrl = computed(() =>
   lat.value && lng.value
@@ -78,10 +76,11 @@ const wazeUrl = computed(() =>
 )
 
 // ─── Horarios ─────────────────────────────────────────────────
-// Fuente de verdad: Google Places weekday_text (datos reales verificados).
-// Fallback: schedule_structured de la DB (solo si no hay datos de Google).
-// Los nombres de los días SIEMPRE vienen de nuestras traducciones i18n,
-// no del texto de Google (que puede estar en hebreo independientemente del idioma).
+// Activity-level schedule only (schedule_structured on the activity itself —
+// different experiences at the same place can run on different hours, e.g.
+// a class vs. free playground access). The place's general opening hours
+// (Google Places weekday_text) now live on the Place Page instead.
+// Day names always come from our own i18n, not any external source.
 const todayIdx = computed(() => new Date().getDay()) // 0=Dom … 6=Sab
 
 const _SCHED_KEYS = [
@@ -97,43 +96,23 @@ type _SchedKey = (typeof _SCHED_KEYS)[number]
 type _SchedDay = { open: boolean; start: string; end: string }
 type _SchedMap = Record<_SchedKey, _SchedDay>
 
-// ── 1. Google Places (fuente primaria) ───────────────────────
-// El orden de días en weekday_text depende del idioma de la petición:
-//   - Hebreo (he) → domingo-primero (israelí): lineIdx = JS getDay()
-//   - Resto       → lunes-primero (europeo):  JS day = (lineIdx + 1) % 7
-const parsedGoogleHours = computed(() => {
-  const lines = placeDetails.value?.opening_hours?.weekday_text
-  if (!lines?.length) return null
-  const isHebrew = locale.value === 'he'
-  return lines.map((line, lineIdx) => {
-    // Mapear índice de línea → JS getDay() (0=Dom … 6=Sab)
-    const jsDay = isHebrew ? lineIdx : (lineIdx + 1) % 7
-    const key = _SCHED_KEYS[jsDay] as _SchedKey
-    // Extraer las horas: todo lo que va después del primer ':' (el nombre del día en Google)
-    const colonIdx = line.indexOf(':')
-    const hours = colonIdx > -1 ? line.slice(colonIdx + 1).trim() : line
-    return {
-      key,
-      label: t(`common.day_${key}`), // nombre i18n, NO el de Google
-      hours,
-      open: undefined as boolean | undefined, // desconocido por línea individual
-      isToday: jsDay === todayIdx.value,
-    }
-  })
-})
+const activityMeta = computed(
+  () =>
+    activity.value?.metadata as {
+      schedule_structured?: _SchedMap | null
+      hours_unknown?: boolean
+      has_shadow?: boolean
+      has_bathrooms?: boolean
+    } | null
+)
 
-// ── 2. DB schedule_structured (fallback si no hay Google) ────
 const structuredSchedule = computed(() => {
-  const meta = activity.value?.metadata as {
-    schedule_structured?: _SchedMap | null
-    hours_unknown?: boolean
-  } | null
+  const meta = activityMeta.value
   if (!meta || meta.hours_unknown) return null
   return meta.schedule_structured ?? null
 })
 
 const parsedStructuredHours = computed(() => {
-  if (parsedGoogleHours.value) return null // Google ya disponible, no usamos structured
   if (!structuredSchedule.value) return null
   return _SCHED_KEYS.map((key, idx) => {
     const day = structuredSchedule.value![key]
@@ -147,20 +126,13 @@ const parsedStructuredHours = computed(() => {
   })
 })
 
-// Filas unificadas para la tabla: primero Google, luego structured
-const hoursRows = computed(() => parsedGoogleHours.value ?? parsedStructuredHours.value)
+const hoursRows = computed(() => parsedStructuredHours.value)
 
 const todayRow = computed(() => hoursRows.value?.find((e) => e.isToday) ?? null)
 
-// ¿Está abierto ahora mismo?
-// - Si Google devuelve open_now (tiempo real) → lo usamos
-// - Si tenemos schedule_structured → calculamos según hora actual
-// - Si no hay ninguno → null (no mostrar badge)
+// ¿Está abierto ahora mismo? — calculado desde schedule_structured; sin ese
+// dato no mostramos el badge (null, no false).
 const isOpenNow = computed<boolean | null>(() => {
-  const gOpenNow = placeDetails.value?.opening_hours?.open_now
-  if (gOpenNow !== null && gOpenNow !== undefined) return gOpenNow
-
-  // Fallback: calcular desde structured
   const sc = structuredSchedule.value
   if (!sc) return null
   const key = _SCHED_KEYS[todayIdx.value]
@@ -187,7 +159,6 @@ const open = reactive({
   hours: false,
   description: true,
   features: true,
-  extra: false,
   map: true,
 })
 function toggle(key: keyof typeof open) {
@@ -197,14 +168,6 @@ function toggle(key: keyof typeof open) {
 // ─── Share ────────────────────────────────────────────────────
 const shareUrl = computed(() => (import.meta.client ? window.location.href : ''))
 const shareTitle = computed(() => (activity.value ? tc(activity.value.title_i18n) : ''))
-
-function stripDomain(url: string) {
-  try {
-    return new URL(url).hostname.replace(/^www\./, '')
-  } catch {
-    return url
-  }
-}
 
 // ─── SEO ──────────────────────────────────────────────────────
 useSeoMeta({
@@ -233,7 +196,13 @@ const hasFeatures = computed(
       <div class="act-skeleton__body">
         <div class="act-skeleton__line act-skeleton__line--title" />
         <div class="act-skeleton__line act-skeleton__line--sub" />
-        <div class="act-skeleton__line act-skeleton__line--sub" />
+        <div class="act-skeleton__card" />
+        <div class="act-skeleton__block">
+          <div class="act-skeleton__line act-skeleton__line--heading" />
+          <div class="act-skeleton__line act-skeleton__line--row" />
+          <div class="act-skeleton__line act-skeleton__line--row" />
+          <div class="act-skeleton__line act-skeleton__line--row" />
+        </div>
       </div>
     </div>
 
@@ -283,9 +252,21 @@ const hasFeatures = computed(
             </div>
           </div>
 
+          <!-- ── SECCIÓN: Location → link a la Place Page ── -->
+          <div v-if="activity.place" class="act-section act-section--location-link">
+            <NuxtLink :to="`/place/${activity.place.id}`" class="act-place-link">
+              <UIcon name="i-heroicons-building-storefront" class="act-place-link__icon" />
+              <span class="act-place-link__text">{{ moreActivitiesText }}</span>
+              <UIcon
+                name="i-heroicons-chevron-right"
+                class="act-place-link__chevron icon--directional"
+              />
+            </NuxtLink>
+          </div>
+
           <!-- ── SECCIÓN: Herramientas ───────────────────── -->
           <div
-            v-if="mapsUrl || wazeUrl || placeDetails?.phone"
+            v-if="mapsUrl || wazeUrl"
             class="act-section"
             :class="{ 'act-section--open': open.tools }"
           >
@@ -322,21 +303,13 @@ const hasFeatures = computed(
                   Waze
                 </a>
               </div>
-
-              <!-- Teléfono: mismo estilo que nav, full width -->
-              <a
-                v-if="placeDetails?.phone"
-                :href="`tel:${placeDetails.phone}`"
-                class="act-tools__btn act-tools__btn--phone"
-              >
-                <UIcon name="i-heroicons-phone" class="act-tools__btn-icon" />
-                {{ placeDetails.phone }}
-              </a>
             </div>
           </div>
 
           <!-- ── SECCIÓN: Horarios ─────────────────────── -->
-          <!-- Google Places (fuente real) → schedule_structured DB → schedule texto -->
+          <!-- Horario específico de esta actividad (schedule_structured) →
+               texto libre (schedule). El horario general del lugar vive en
+               la Place Page. -->
           <div
             v-if="hoursRows || activity.schedule"
             class="act-section"
@@ -365,27 +338,7 @@ const hasFeatures = computed(
             </button>
             <div v-show="open.hours" class="act-section__body">
               <!-- Tabla unificada: usa hoursRows (Google o structured, mismo formato) -->
-              <table v-if="hoursRows" class="act-hours__table">
-                <tbody>
-                  <tr
-                    v-for="entry in hoursRows"
-                    :key="entry.key"
-                    class="act-hours__row"
-                    :class="{ 'act-hours__row--today': entry.isToday }"
-                  >
-                    <td class="act-hours__day">{{ entry.label }}</td>
-                    <td
-                      class="act-hours__time"
-                      :class="{
-                        'act-hours__time--closed': entry.open === false,
-                        'act-hours__time--open-now': entry.isToday && isOpenNow === true,
-                      }"
-                    >
-                      {{ entry.hours }}
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
+              <SharedScheduleTable v-if="hoursRows" :rows="hoursRows" :open-now="isOpenNow" />
               <!-- Último fallback: texto libre (schedule string) -->
               <ActivityInfoSchedule v-else-if="activity.schedule" :schedule="activity.schedule" />
             </div>
@@ -432,39 +385,9 @@ const hasFeatures = computed(
                 :price="activity.price"
                 :stroller-friendly="activity.stroller_friendly"
                 :open-weekends="activity.open_weekends"
+                :has-shadow="activityMeta?.has_shadow ?? false"
+                :has-bathrooms="activityMeta?.has_bathrooms ?? false"
               />
-            </div>
-          </div>
-
-          <!-- ── SECCIÓN: Más info (web, wheelchair) ────── -->
-          <div
-            v-if="placeDetails?.website || placeDetails?.wheelchair_accessible"
-            class="act-section"
-            :class="{ 'act-section--open': open.extra }"
-          >
-            <button class="act-section__trigger" @click="toggle('extra')">
-              <span class="act-section__heading">{{ t('activity.more_info') }}</span>
-              <UIcon
-                name="i-heroicons-chevron-down"
-                class="act-section__chevron"
-                :class="{ 'act-section__chevron--open': open.extra }"
-              />
-            </button>
-            <div v-show="open.extra" class="act-section__body act-info-rows">
-              <a
-                v-if="placeDetails?.website"
-                :href="placeDetails.website"
-                target="_blank"
-                rel="noopener"
-                class="act-info-row"
-              >
-                <UIcon name="i-heroicons-globe-alt" class="act-info-row__icon" />
-                <span>{{ stripDomain(placeDetails.website) }}</span>
-              </a>
-              <div v-if="placeDetails?.wheelchair_accessible" class="act-info-row">
-                <UIcon name="i-heroicons-user" class="act-info-row__icon" />
-                <span>{{ t('activity.wheelchair') }}</span>
-              </div>
             </div>
           </div>
 
@@ -481,6 +404,27 @@ const hasFeatures = computed(
             <div v-show="open.map" class="act-section__body">
               <ActivityInfoLocation :place="activity.place" hide-actions />
             </div>
+          </div>
+
+          <!-- ── SECCIÓN: Otras actividades en este lugar ── -->
+          <div v-if="siblingActivities.length" class="act-section">
+            <span class="act-section__heading">{{ t('activity.other_activities_here') }}</span>
+            <div class="act-section__body act-siblings-grid">
+              <SharedActivityCard
+                v-for="sibling in siblingActivities"
+                :key="sibling.id"
+                :activity="sibling"
+                variant="compact"
+              />
+            </div>
+            <NuxtLink
+              v-if="activity.place"
+              :to="`/place/${activity.place.id}`"
+              class="act-siblings-see-all"
+            >
+              {{ t('activity.see_place_page') }}
+              <UIcon name="i-heroicons-arrow-right" class="icon--directional" />
+            </NuxtLink>
           </div>
 
           <!-- ── Reporte ────────────────────────────────── -->
@@ -715,6 +659,85 @@ const hasFeatures = computed(
   color: var(--green);
 }
 
+/* ── Location → Place Page link ─────────────────────────────────── */
+.act-section--location-link {
+  padding-block: var(--space-3);
+}
+
+/* Card no es colapsable: no debe mostrar la línea verde del acordeón */
+.act-section--location-link::before {
+  display: none;
+}
+
+.act-place-link {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border-radius: var(--border-radius-lg, 0.75rem);
+  background: var(--color-secondary-50, #f0fdf4);
+  border: 0.5px solid var(--color-secondary-200, #bbf7d0);
+  text-decoration: none;
+  transition: background 0.15s;
+}
+
+.act-place-link:hover {
+  background: var(--color-secondary-100, #dcfce7);
+}
+
+.act-place-link__icon {
+  width: 1.25rem;
+  height: 1.25rem;
+  color: var(--green);
+  flex-shrink: 0;
+}
+
+.act-place-link__text {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.act-place-link__chevron {
+  width: 1rem;
+  height: 1rem;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+/* ── Otras actividades en este lugar ────────────────────────────── */
+.act-siblings-grid {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.act-siblings-see-all {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  margin-top: var(--space-3);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--green);
+  text-decoration: none;
+}
+
+.act-siblings-see-all:hover {
+  text-decoration: underline;
+}
+
+.act-siblings-see-all svg,
+.act-siblings-see-all :deep(svg) {
+  width: 1rem;
+  height: 1rem;
+}
+
 /* ── Tools ────────────────────────────────────────────────────── */
 .act-tools__nav-row {
   display: grid;
@@ -768,54 +791,7 @@ const hasFeatures = computed(
   flex-shrink: 0;
 }
 
-/* ── Horarios ─────────────────────────────────────────────────── */
-.act-hours__table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.act-hours__row {
-  border-bottom: 1px solid var(--divider);
-}
-
-.act-hours__row:last-child {
-  border-bottom: none;
-}
-
-/* Día actual: fondo verde suave + texto verde */
-.act-hours__row--today .act-hours__day,
-.act-hours__row--today .act-hours__time {
-  color: var(--green);
-}
-
-.act-hours__row--today {
-  background: var(--color-secondary-50, #f0fdf4);
-}
-
-.act-hours__day {
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-bold);
-  color: var(--text);
-  padding: var(--space-2) var(--space-3) var(--space-2) 0;
-  white-space: nowrap;
-  width: 40%;
-}
-
-.act-hours__time {
-  font-size: var(--font-size-sm);
-  color: var(--text-muted);
-  padding: var(--space-2) 0;
-}
-
-.act-hours__time--closed {
-  color: var(--color-neutral-400, #a3a3a3);
-  font-style: italic;
-}
-
-.act-hours__time--open-now {
-  color: var(--green);
-  font-weight: var(--font-weight-bold);
-}
+/* ── Horarios: tabla en SharedScheduleTable (apps/web/app/components/shared/ScheduleTable.vue) ── */
 
 /* ── Trigger top row: heading + badge ───────────────────────── */
 .act-hours__trigger-top {
@@ -922,6 +898,32 @@ const hasFeatures = computed(
   width: 50%;
 }
 
+/* Bloque con la forma del card de ubicación (act-place-link) */
+.act-skeleton__card {
+  height: 3.5rem;
+  border-radius: var(--border-radius-lg, 0.75rem);
+  background: var(--color-neutral-200);
+  animation: act-pulse 1.5s ease-in-out infinite;
+}
+
+/* Bloque con la forma de la sección de horarios */
+.act-skeleton__block {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding-top: var(--space-2);
+}
+
+.act-skeleton__line--heading {
+  height: 1.25rem;
+  width: 35%;
+}
+
+.act-skeleton__line--row {
+  height: 1rem;
+  width: 90%;
+}
+
 @keyframes act-pulse {
   0%,
   100% {
@@ -1014,6 +1016,27 @@ const hasFeatures = computed(
   /* Título más grande en desktop */
   .act-header__title {
     font-size: 2.25rem;
+  }
+
+  /* Skeleton: misma grilla galería izq + info der que .act-layout */
+  .act-skeleton {
+    max-width: none;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-6);
+    align-items: start;
+    padding: var(--space-6) var(--space-5) 0;
+  }
+
+  .act-skeleton__gallery {
+    position: sticky;
+    top: var(--space-5);
+    border-radius: var(--border-radius-xl, 1rem);
+  }
+
+  .act-skeleton__body {
+    padding: var(--space-4) 0 0 var(--space-2);
+    border-inline-start: 1px solid var(--divider);
   }
 }
 </style>

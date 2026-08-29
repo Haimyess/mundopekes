@@ -8,6 +8,8 @@ interface LocaleItem {
   label: string
 }
 
+const { localeMeta } = useContentLocales()
+
 const props = withDefaults(
   defineProps<{
     modelValue: Record<string, string>
@@ -22,12 +24,7 @@ const props = withDefaults(
     type: 'input',
     rows: 3,
     required: false,
-    locales: () => [
-      { key: 'es', label: 'Español' },
-      { key: 'he', label: 'עברית' },
-      { key: 'en', label: 'English' },
-      { key: 'ru', label: 'Русский' },
-    ],
+    locales: () => localeMeta.map((l) => ({ key: l.code, label: l.name })),
   }
 )
 

@@ -1,3 +1,5 @@
+import { CONTENT_LOCALE_META } from '../../layers/domain/config/locales'
+
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
   ssr: false,
@@ -84,6 +86,13 @@ export default defineNuxtConfig({
       contentSecurityPolicy: {
         'img-src': ["'self'", 'data:', 'https:'],
       },
+      // nuxt-security bloquea geolocation por defecto (Permissions-Policy:
+      // geolocation=()), lo que impide que el navegador muestre el prompt
+      // de "compartir ubicación" para el carrusel "Cerca de ti". Se habilita
+      // solo para same-origin.
+      permissionsPolicy: {
+        geolocation: ['self'],
+      },
     },
     // Rate limiting propio (DB-backed, ver checkRateLimit) ya cubre los
     // endpoints públicos — el limiter en memoria del módulo sería redundante
@@ -111,28 +120,10 @@ export default defineNuxtConfig({
   },
 
   i18n: {
-    locales: [
-      {
-        code: 'es',
-        name: 'Español',
-        file: 'es.json',
-      },
-      {
-        code: 'en',
-        name: 'English',
-        file: 'en.json',
-      },
-      {
-        code: 'ru',
-        name: 'Русский',
-        file: 'ru.json',
-      },
-      {
-        code: 'he',
-        name: 'עברית',
-        file: 'he.json',
-      },
-    ],
+    // Locales de contenido (name_i18n/description_i18n/etc.) y de interfaz de
+    // esta app coinciden 1:1 — CONTENT_LOCALE_META es la fuente única, ver
+    // layers/domain/config/locales.ts.
+    locales: [...CONTENT_LOCALE_META],
     langDir: 'locales', // ← Ahora apunta a la raíz
     defaultLocale: 'he',
     strategy: 'no_prefix',

@@ -81,7 +81,7 @@ const hasAnything = computed(() => !!props.filters?.search || hasActiveFilters.v
           v-for="activity in activities"
           :key="activity.id"
           :activity="activity"
-          variant="compact"
+          variant="detailed"
         />
       </div>
     </template>

@@ -23,6 +23,38 @@
   "language": {
     "label": "Language"
   },
+  "seo": {
+    "title": "MundoPekes Admin",
+    "description": "Administration panel for MundoPekes — manage places, activities, suggestions and more.",
+    "notFoundTitle": "Page not found",
+    "notFoundDescription": "We are sorry but this page could not be found."
+  },
+  "days": {
+    "sunday": "Sunday",
+    "monday": "Monday",
+    "tuesday": "Tuesday",
+    "wednesday": "Wednesday",
+    "thursday": "Thursday",
+    "friday": "Friday",
+    "saturday": "Saturday"
+  },
+  "auth": {
+    "toast": {
+      "accessDeniedError": "Access denied: you don't have administrator permissions",
+      "welcomeTitle": "Welcome!",
+      "welcomeMfaHint": "We recommend enabling MFA in Settings → Security",
+      "loginErrorTitle": "Error signing in",
+      "wrongCodeTitle": "Incorrect code",
+      "wrongCodeDescription": "Check the code in your authenticator app",
+      "logoutErrorTitle": "Error signing out"
+    },
+    "errors": {
+      "invalidCredentials": "Incorrect email or password",
+      "emailNotConfirmed": "Confirm your email before continuing",
+      "tooManyRequests": "Too many attempts, wait a few minutes",
+      "userNotFound": "No user exists with that email"
+    }
+  },
   "login": {
     "title": "MundoPekes Admin",
     "subtitleMfa": "Enter the code from your authenticator app",
@@ -155,6 +187,12 @@
     },
     "slideover": {
       "defaultTitle": "Inquiry"
+    },
+    "toast": {
+      "unknownError": "Unknown error",
+      "loadError": "Error loading inquiries",
+      "statusUpdated": "Status updated",
+      "updateError": "Error updating"
     }
   },
   "inbox": {
@@ -218,7 +256,11 @@
       "metadata": "Metadata"
     },
     "view": "View",
-    "metadataModalTitle": "Log metadata"
+    "metadataModalTitle": "Log metadata",
+    "toast": {
+      "unknownError": "Unknown error",
+      "loadError": "Error loading logs"
+    }
   },
   "userEvents": {
     "title": "User Activity",
@@ -308,6 +350,7 @@
       "delete": "Delete"
     },
     "toast": {
+      "loadError": "Error loading places",
       "deleted": "Place deleted",
       "errorTitle": "Error"
     }
@@ -345,6 +388,48 @@
       "plural": "activities"
     }
   },
+  "entityForm": {
+    "placeName": "Place name",
+    "activityTitle": "Activity title",
+    "description": "Description",
+    "city": "City",
+    "cityPlaceholder": "Select a city",
+    "address": "Address",
+    "addressPlaceholder": "123 Main St",
+    "category": "Category",
+    "phone": "Phone",
+    "website": "Website",
+    "ages": "Ages",
+    "seasons": "Seasons",
+    "price": "Price",
+    "free": "Free",
+    "options": "Features",
+    "strollerFriendly": "Stroller friendly",
+    "openWeekends": "Open on weekends",
+    "hasShadow": "Shade",
+    "hasBathrooms": "Restrooms",
+    "placeAttributes": "Place attributes",
+    "hasSafeRoom": "Safe room / bunker",
+    "activityWebsite": "Website",
+    "schedule": "Schedule",
+    "images": "Images",
+    "loading": "Loading…",
+    "ageLabels": {
+      "all": "All ages",
+      "babies": "Babies (0-11m)",
+      "toddlers": "Toddlers (1-3 years)",
+      "preschool": "Preschool (3-6 years)",
+      "school": "School age (6-12 years)",
+      "teens": "Teens (12+)"
+    },
+    "seasonLabels": {
+      "all": "All",
+      "spring": "Spring",
+      "summer": "Summer",
+      "autumn": "Autumn",
+      "winter": "Winter"
+    }
+  },
   "placesSlideover": {
     "editTitle": "Edit place",
     "createTitle": "New place",
@@ -368,7 +453,8 @@
       "nameRequired": "Name is required in at least one language",
       "updated": "Place updated",
       "created": "Place created",
-      "errorTitle": "Error"
+      "errorTitle": "Error",
+      "possibleDuplicate": "This might already exist: \"{name}\""
     }
   },
   "activities": {
@@ -406,6 +492,17 @@
     },
     "pagination": {
       "selected": "{selected} of {total} activities selected"
+    },
+    "toast": {
+      "loadError": "Error loading activities",
+      "created": "Activity created",
+      "createError": "Error creating activity",
+      "updated": "Activity updated",
+      "updateError": "Error updating activity",
+      "deleted": "Activity deleted",
+      "deleteError": "Error deleting activity",
+      "deletedManySingular": "{count} activity deleted",
+      "deletedManyPlural": "{count} activities deleted"
     }
   },
   "activitiesSlideover": {
@@ -446,7 +543,8 @@
       "placeRequired": "Select a place",
       "updated": "Activity updated",
       "created": "Activity created",
-      "errorTitle": "Error"
+      "errorTitle": "Error",
+      "possibleDuplicate": "This might already exist: \"{title}\""
     },
     "ageLabels": {
       "all": "All ages",
@@ -616,7 +714,14 @@
         "createButton": "Create FAQ"
       },
       "toast": {
-        "validationError": "Question and answer are required"
+        "validationError": "Question and answer are required",
+        "loadError": "Error loading FAQs",
+        "created": "FAQ created",
+        "createError": "Error creating FAQ",
+        "updated": "FAQ updated",
+        "updateError": "Error updating FAQ",
+        "deleted": "FAQ deleted",
+        "deleteError": "Error deleting FAQ"
       }
     }
   },
@@ -638,21 +743,48 @@
       "name": "Name",
       "city": "City",
       "type": "Type",
+      "category": "Category",
       "free": "Free",
       "source": "Source",
       "date": "Date",
-      "status": "Status"
+      "status": "Status",
+      "translations": "Translations"
+    },
+    "translations": {
+      "complete": "Complete",
+      "missing": "Missing: {locales}",
+      "unknown": "Not translated yet"
     },
     "filters": {
       "allCategories": "All categories",
       "allCities": "All cities",
       "allPrices": "Free and paid",
       "free": "Free",
-      "paid": "Paid"
+      "paid": "Paid",
+      "allTypes": "All types",
+      "typeNewPlace": "New place",
+      "typeExistingPlace": "Existing place",
+      "allDuplicates": "All",
+      "onlyDuplicates": "Possible duplicates"
     },
     "source": {
       "agent": "Agent",
       "manual": "Manual"
+    },
+    "toast": {
+      "loadError": "Error loading suggestions",
+      "approved": "Suggestion approved",
+      "approvedDescription": "Place \"{name}\" was created",
+      "approveError": "Error approving",
+      "merged": "Suggestion merged",
+      "mergedDescription": "Activity linked to \"{name}\"",
+      "mergeError": "Error merging",
+      "rejected": "Suggestion rejected",
+      "rejectError": "Error rejecting",
+      "deleted": "Suggestion deleted",
+      "deleteError": "Error deleting",
+      "defaultNewPlaceName": "new place",
+      "defaultExistingPlaceName": "the existing place"
     }
   },
   "suggestionsSlideover": {
@@ -667,6 +799,7 @@
     "loading": "Loading…",
     "activityTitleLabel": "Activity title",
     "descriptionLabel": "Description",
+    "imagesLabel": "Images",
     "locationLabel": "Location",
     "contactLabel": "Contact",
     "typeLabel": "Type",
@@ -676,6 +809,17 @@
     "rejectionReasonLabel": "Rejection reason",
     "hoursUnknownTitle": "Hours pending review",
     "hoursUnknownDescription": "The user didn't know the opening hours when submitting the suggestion.",
+    "typeNewPlace": "New place",
+    "typeExistingPlace": "Experience at existing place",
+    "linkedPlaceLabel": "Linked place",
+    "linkedPlaceMissing": "The linked place no longer exists",
+    "possibleDuplicateTitle": "Possible duplicate",
+    "mergeIntoThis": "Merge into this",
+    "translationsLabel": "Translations",
+    "translationsComplete": "All languages up to date",
+    "translationsMissing": "Missing: {locales}",
+    "translationsUnknown": "Not translated yet",
+    "retryTranslation": "Retry translation",
     "status": {
       "pending": "Pending",
       "approved": "Approved",
@@ -706,8 +850,12 @@
     "toast": {
       "rejectReasonRequired": "Enter a rejection reason",
       "nameRequired": "The name is required in at least one language",
+      "titleRequired": "The activity title is required in at least one language",
       "updated": "Suggestion updated",
-      "saveError": "Error saving"
+      "saveError": "Error saving",
+      "retrySuccess": "Translation retried",
+      "retryNothing": "Nothing to retry — no failed translations",
+      "retryError": "Error retrying translation"
     },
     "rejectForm": {
       "label": "Rejection reason",
@@ -735,7 +883,16 @@
     "subcategoryNamePlaceholder": "Subcategory name",
     "addSubcategory": "Add subcategory",
     "subCount": "sub",
-    "empty": "No categories yet. Create the first one."
+    "empty": "No categories yet. Create the first one.",
+    "toast": {
+      "loadError": "Error loading categories",
+      "created": "Category created",
+      "createError": "Error creating category",
+      "updated": "Category updated",
+      "updateError": "Error updating category",
+      "deleted": "Category deleted",
+      "deleteError": "Error deleting category"
+    }
   },
   "providers": {
     "title": "Providers",
@@ -789,6 +946,13 @@
     },
     "buttons": {
       "approveProvider": "Approve provider"
+    },
+    "toast": {
+      "unknownError": "Unknown error",
+      "loadListError": "Error loading providers",
+      "loadDetailError": "Error loading provider",
+      "statusUpdated": "Status updated",
+      "updateError": "Error updating"
     }
   }
 }

@@ -147,6 +147,20 @@ const selectedCategory = computed({
 // Cuenta todos los filtros activos incluyendo search
 const activeCount = computed(() => Object.keys(localFilters.value).length)
 
+// ── Acordeones ────────────────────────────────────────────────────
+// Cada tipo de filtro es su propio acordeón; solo los dos primeros
+// (categoría, edad) empiezan abiertos. "Extras" (checkboxes) no es
+// un acordeón — siempre visible.
+const open = reactive({
+  category: true,
+  age: true,
+  city: false,
+  season: false,
+})
+function toggleSection(key: keyof typeof open) {
+  open[key] = !open[key]
+}
+
 // ── Acciones ──────────────────────────────────────────────────────
 const applyFilters = () => {
   emit('apply', { ...localFilters.value })
@@ -202,8 +216,19 @@ const clearAll = () => {
         <template v-else>
           <!-- ── Categoría ────────────────────────────────────────────────── -->
           <section class="drawer-section">
-            <h3 class="drawer-section__title">{{ t('search.category') }}</h3>
-            <div class="drawer-section__grid">
+            <button
+              type="button"
+              class="drawer-section__trigger"
+              @click="toggleSection('category')"
+            >
+              <h3 class="drawer-section__title">{{ t('search.category') }}</h3>
+              <UIcon
+                name="i-heroicons-chevron-down"
+                class="drawer-section__chevron"
+                :class="{ 'drawer-section__chevron--open': open.category }"
+              />
+            </button>
+            <div v-show="open.category" class="drawer-section__grid">
               <button
                 v-for="opt in CATEGORY_OPTIONS"
                 :key="opt.value"
@@ -218,8 +243,15 @@ const clearAll = () => {
 
           <!-- ── Edad ─────────────────────────────────────────────── -->
           <section class="drawer-section">
-            <h3 class="drawer-section__title">{{ t('search.age') }}</h3>
-            <div class="drawer-section__grid">
+            <button type="button" class="drawer-section__trigger" @click="toggleSection('age')">
+              <h3 class="drawer-section__title">{{ t('search.age') }}</h3>
+              <UIcon
+                name="i-heroicons-chevron-down"
+                class="drawer-section__chevron"
+                :class="{ 'drawer-section__chevron--open': open.age }"
+              />
+            </button>
+            <div v-show="open.age" class="drawer-section__grid">
               <button
                 v-for="opt in AGE_OPTIONS"
                 :key="opt.value"
@@ -246,8 +278,15 @@ const clearAll = () => {
 
           <!-- ── Ciudad ───────────────────────────────────────────── -->
           <section class="drawer-section">
-            <h3 class="drawer-section__title">{{ t('search.city') }}</h3>
-            <div class="drawer-section__list">
+            <button type="button" class="drawer-section__trigger" @click="toggleSection('city')">
+              <h3 class="drawer-section__title">{{ t('search.city') }}</h3>
+              <UIcon
+                name="i-heroicons-chevron-down"
+                class="drawer-section__chevron"
+                :class="{ 'drawer-section__chevron--open': open.city }"
+              />
+            </button>
+            <div v-show="open.city" class="drawer-section__list">
               <button
                 v-for="opt in CITY_OPTIONS"
                 :key="opt.value"
@@ -295,8 +334,15 @@ const clearAll = () => {
 
           <!-- ── Temporada ─────────────────────────────────────────── -->
           <section class="drawer-section">
-            <h3 class="drawer-section__title">{{ t('search.season') }}</h3>
-            <div class="drawer-section__grid">
+            <button type="button" class="drawer-section__trigger" @click="toggleSection('season')">
+              <h3 class="drawer-section__title">{{ t('search.season') }}</h3>
+              <UIcon
+                name="i-heroicons-chevron-down"
+                class="drawer-section__chevron"
+                :class="{ 'drawer-section__chevron--open': open.season }"
+              />
+            </button>
+            <div v-show="open.season" class="drawer-section__grid">
               <button
                 v-for="opt in SEASON_OPTIONS"
                 :key="opt.value"
@@ -461,6 +507,31 @@ const clearAll = () => {
   letter-spacing: 0.05em;
 }
 
+/* ── Trigger acordeón (categoría / edad / ciudad / temporada) ─────── */
+.drawer-section__trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  text-align: start;
+}
+
+.drawer-section__chevron {
+  width: 1rem;
+  height: 1rem;
+  color: var(--color-text-tertiary);
+  flex-shrink: 0;
+  transition: transform var(--transition-fast);
+}
+
+.drawer-section__chevron--open {
+  transform: rotate(180deg);
+}
+
 .drawer-section__grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -500,9 +571,9 @@ const clearAll = () => {
   background: var(--color-neutral-50);
 }
 .option-btn--selected {
-  border-color: var(--color-primary-500) !important;
-  background-color: var(--color-primary-50) !important;
-  color: var(--color-primary-700) !important;
+  border-color: var(--color-accent-500) !important;
+  background-color: var(--color-accent-50) !important;
+  color: var(--color-accent-700) !important;
 }
 .option-btn--disabled {
   opacity: 0.35;
@@ -552,8 +623,8 @@ const clearAll = () => {
   background: transparent;
 }
 .city-btn__checkbox--checked {
-  border-color: var(--color-primary-500);
-  background-color: var(--color-primary-500);
+  border-color: var(--color-accent-500);
+  background-color: var(--color-accent-500);
 }
 .city-btn__check-icon {
   width: 0.875rem;

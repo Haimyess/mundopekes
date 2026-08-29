@@ -19,10 +19,69 @@ const emit = defineEmits<{
   close: []
 }>()
 
-const { approve, reject, remove, actionLoading } = useSuggestions()
+const { approve, reject, remove, merge, actionLoading } = useSuggestions()
 const toast = useToast()
 const { t, locale } = useI18n()
 const { uploadFromUrl } = useImageUpload()
+
+// ── Place/Experience: linked place + possible-duplicate info ──────────────
+type PlaceLite = { id: string; name_i18n: Record<string, string>; images: string[] | null }
+type ActivityLite = { id: string; title_i18n: Record<string, string> }
+
+const linkedPlace = ref<PlaceLite | null>(null)
+const duplicatePlace = ref<PlaceLite | null>(null)
+const duplicateActivity = ref<ActivityLite | null>(null)
+
+const pickI18nName = (obj: Record<string, string> | null | undefined): string => {
+  if (!obj) return ''
+  return obj['he'] || obj['es'] || obj['en'] || Object.values(obj)[0] || ''
+}
+
+watch(
+  () => props.suggestion,
+  async (s) => {
+    linkedPlace.value = null
+    duplicatePlace.value = null
+    duplicateActivity.value = null
+    if (!s) return
+
+    if (s.suggestion_type === 'experience_for_existing_place' && s.place_id) {
+      try {
+        linkedPlace.value = await $fetch<PlaceLite>(`/api/places/${s.place_id}`)
+      } catch {
+        // Linked place may have been deleted since the suggestion was created
+      }
+    }
+
+    if (s.flagged_possible_duplicate) {
+      try {
+        if (s.possible_duplicate_of) {
+          duplicatePlace.value = await $fetch<PlaceLite>(`/api/places/${s.possible_duplicate_of}`)
+        } else if (s.possible_duplicate_activity_id) {
+          duplicateActivity.value = await $fetch<ActivityLite>(
+            `/api/activities/${s.possible_duplicate_activity_id}`
+          )
+        }
+      } catch {
+        // Flagged match may have been deleted/rejected since detection
+      }
+    }
+  },
+  { immediate: true }
+)
+
+const handleMerge = async (targetPlaceId: string) => {
+  if (!props.suggestion) return
+  await merge(props.suggestion.id, targetPlaceId)
+  emit('approved')
+  emit('close')
+}
+
+const suggestionTypeLabel = computed(() =>
+  props.suggestion?.suggestion_type === 'experience_for_existing_place'
+    ? t('suggestionsSlideover.typeExistingPlace')
+    : t('suggestionsSlideover.typeNewPlace')
+)
 
 // ── Reference data (loaded once for the edit form) ────────────────────────
 type RefSubcat = { id: string; name_i18n: Record<string, string>; slug: string }
@@ -48,40 +107,59 @@ onMounted(async () => {
   }
 })
 
-// Human-readable labels passed down to UiActivityFields — same namespace pattern
-// as ActivitiesSlideover so both editors share look & feel.
+// Human-readable labels passed down to UiEntityFormFields — same namespace
+// pattern as ActivitiesSlideover so both editors share look & feel.
 const AGE_LABELS = computed<Record<string, string>>(() => ({
-  'age.all': t('suggestionsSlideover.ageLabels.all'),
-  'age.babies': t('suggestionsSlideover.ageLabels.babies'),
-  'age.toddlers': t('suggestionsSlideover.ageLabels.toddlers'),
-  'age.preschool': t('suggestionsSlideover.ageLabels.preschool'),
-  'age.school': t('suggestionsSlideover.ageLabels.school'),
-  'age.teens': t('suggestionsSlideover.ageLabels.teens'),
+  'age.all': t('entityForm.ageLabels.all'),
+  'age.babies': t('entityForm.ageLabels.babies'),
+  'age.toddlers': t('entityForm.ageLabels.toddlers'),
+  'age.preschool': t('entityForm.ageLabels.preschool'),
+  'age.school': t('entityForm.ageLabels.school'),
+  'age.teens': t('entityForm.ageLabels.teens'),
 }))
 const SEASON_LABELS = computed<Record<string, string>>(() => ({
-  all: t('suggestionsSlideover.seasonLabels.all'),
-  spring: t('suggestionsSlideover.seasonLabels.spring'),
-  summer: t('suggestionsSlideover.seasonLabels.summer'),
-  autumn: t('suggestionsSlideover.seasonLabels.autumn'),
-  winter: t('suggestionsSlideover.seasonLabels.winter'),
+  all: t('entityForm.seasonLabels.all'),
+  spring: t('entityForm.seasonLabels.spring'),
+  summer: t('entityForm.seasonLabels.summer'),
+  autumn: t('entityForm.seasonLabels.autumn'),
+  winter: t('entityForm.seasonLabels.winter'),
+}))
+const FORM_LABELS = computed(() => ({
+  placeName: t('suggestionsSlideover.form.placeNameLabel'),
+  activityTitle: t('suggestionsSlideover.activityTitleLabel'),
+  description: t('suggestionsSlideover.descriptionLabel'),
+  city: t('suggestionsSlideover.form.cityLabel'),
+  address: t('suggestionsSlideover.form.addressLabel'),
+  addressPlaceholder: t('suggestionsSlideover.form.addressPlaceholder'),
+  category: t('suggestionsSlideover.form.categoryLabel'),
+  phone: t('suggestionsSlideover.form.phoneLabel'),
+  website: t('suggestionsSlideover.form.websiteLabel'),
+  ages: t('suggestionsSlideover.form.agesLabel'),
+  seasons: t('suggestionsSlideover.form.seasonsLabel'),
+  price: t('suggestionsSlideover.form.priceLabel'),
+  free: t('suggestionsSlideover.features.free'),
+  options: t('suggestionsSlideover.featuresLabel'),
+  strollerFriendly: t('suggestionsSlideover.features.strollerFriendly'),
+  openWeekends: t('suggestionsSlideover.form.openWeekendsLabel'),
+  hasShadow: t('suggestionsSlideover.features.shadow'),
+  hasBathrooms: t('suggestionsSlideover.features.bathrooms'),
+  placeAttributes: t('entityForm.placeAttributes'),
+  hasSafeRoom: t('entityForm.hasSafeRoom'),
+  activityWebsite: t('entityForm.activityWebsite'),
+  schedule: t('entityForm.schedule'),
+  images: t('suggestionsSlideover.imagesLabel'),
+  loading: t('suggestionsSlideover.loading'),
 }))
 const allAgeId = computed(() => dbAgeRanges.value.find((a) => a.label_key === 'age.all')?.id)
-const catName = (c: RefSubcat) =>
-  c.name_i18n?.he || c.name_i18n?.es || Object.values(c.name_i18n ?? {})[0] || c.slug
 
-const DAY_ES: Record<keyof WizardSchedule, string> = {
-  sunday: 'Domingo',
-  monday: 'Lunes',
-  tuesday: 'Martes',
-  wednesday: 'Miércoles',
-  thursday: 'Jueves',
-  friday: 'Viernes',
-  saturday: 'Sábado',
-}
+// Texto plano guardado en `schedule` — se arma con el idioma activo en el
+// momento de guardar (t() reactivo a locale.value), pero al ser un string ya
+// formateado queda fijo en ese idioma para esa sugerencia hasta que se
+// vuelva a guardar. Ver DAY_ES anterior, que siempre guardaba en español.
 const buildScheduleText = (schedule: WizardSchedule): string =>
   SCHEDULE_DAYS.map((day) => {
     const d = schedule[day]
-    return d.open ? `${DAY_ES[day]}: ${d.start}–${d.end}` : null
+    return d.open ? `${t(`days.${day}`)}: ${d.start}–${d.end}` : null
   })
     .filter(Boolean)
     .join(', ')
@@ -168,6 +246,7 @@ const editForm = reactive({
   meta_title_i18n: {} as Record<string, string>,
   meta_phone: '',
   meta_website: '',
+  meta_activity_website: '',
   schedule_structured: defaultSchedule() as WizardSchedule,
   meta_hours_unknown: false,
   meta_has_shadow: false,
@@ -196,6 +275,7 @@ const startEditing = () => {
   editForm.meta_title_i18n = { ...(m.title_i18n ?? {}) }
   editForm.meta_phone = m.phone ?? ''
   editForm.meta_website = m.website ?? ''
+  editForm.meta_activity_website = m.activity_website ?? ''
   // Per-day, per-field merge (not a shallow object merge) — guards against
   // suggestions with a day present but missing/empty start-end, which would
   // otherwise render as blank time inputs in the manual editor.
@@ -213,55 +293,106 @@ const cancelEditing = () => {
 
 const saveEdit = async () => {
   if (!props.suggestion) return
-  const toast = useToast()
+  const suggestionId = props.suggestion.id
 
-  if (!Object.values(editForm.name_i18n).some((v) => v?.trim())) {
+  // experience_for_existing_place: no place fields shown (see showPlaceIdentity
+  // above) — the activity title is what's actually required/edited here, not
+  // the place name.
+  const isExistingPlace = props.suggestion.suggestion_type === 'experience_for_existing_place'
+  if (!isExistingPlace && !hasI18nContent(editForm.name_i18n)) {
     toast.add({ title: t('suggestionsSlideover.toast.nameRequired'), color: 'error' })
     return
   }
+  if (isExistingPlace && !hasI18nContent(editForm.meta_title_i18n)) {
+    toast.add({ title: t('suggestionsSlideover.toast.titleRequired'), color: 'error' })
+    return
+  }
 
-  actionLoading.value = true
-  try {
-    await $fetch(`/api/suggestions/${props.suggestion.id}`, {
-      method: 'PUT',
-      body: {
-        name_i18n: editForm.name_i18n,
-        description_i18n: editForm.description_i18n,
-        location: editForm.location,
-        category_id: editForm.category_id || null,
-        age_range: { ids: editForm.age_range_ids },
-        best_season: editForm.best_season,
-        stroller_friendly: editForm.stroller_friendly,
-        open_weekends: editForm.open_weekends,
-        is_free: editForm.is_free,
-        images: editForm.images,
-        schedule: editForm.meta_hours_unknown
-          ? null
-          : buildScheduleText(editForm.schedule_structured),
-        // Partial metadata — PUT will MERGE with existing, not overwrite
-        metadata: {
-          title_i18n: editForm.meta_title_i18n,
-          phone: editForm.meta_phone || null,
-          website: editForm.meta_website || null,
-          hours_unknown: editForm.meta_hours_unknown,
-          schedule_structured: editForm.meta_hours_unknown ? null : editForm.schedule_structured,
-          has_shadow: editForm.meta_has_shadow,
-          has_bathrooms: editForm.meta_has_bathrooms,
-          price: editForm.is_free ? null : editForm.meta_price,
+  // actionLoading viene de useSuggestions() y se comparte entre aprobar/
+  // rechazar/fusionar/guardar — runSaveAction recibe el ref en vez de tener
+  // el suyo propio para no perder ese comportamiento (ver useEntitySave.ts).
+  const result = await runSaveAction(
+    actionLoading,
+    () =>
+      $fetch(`/api/suggestions/${suggestionId}`, {
+        method: 'PUT',
+        body: {
+          // Place fields don't apply to experience_for_existing_place — omitted
+          // (not just blanked) so the PUT handler's `!== undefined` guards
+          // leave them untouched instead of overwriting name_i18n:{}/location:null
+          // with editForm's unused defaults.
+          ...(isExistingPlace
+            ? {}
+            : { name_i18n: editForm.name_i18n, location: editForm.location }),
+          description_i18n: editForm.description_i18n,
+          category_id: editForm.category_id || null,
+          age_range: { ids: editForm.age_range_ids },
+          best_season: editForm.best_season,
+          stroller_friendly: editForm.stroller_friendly,
+          open_weekends: editForm.open_weekends,
+          is_free: editForm.is_free,
+          images: editForm.images,
+          schedule: editForm.meta_hours_unknown
+            ? null
+            : buildScheduleText(editForm.schedule_structured),
+          // Partial metadata — PUT will MERGE with existing, not overwrite
+          metadata: {
+            title_i18n: editForm.meta_title_i18n,
+            ...(isExistingPlace
+              ? {}
+              : { phone: editForm.meta_phone || null, website: editForm.meta_website || null }),
+            hours_unknown: editForm.meta_hours_unknown,
+            schedule_structured: editForm.meta_hours_unknown ? null : editForm.schedule_structured,
+            has_shadow: editForm.meta_has_shadow,
+            has_bathrooms: editForm.meta_has_bathrooms,
+            activity_website: editForm.meta_activity_website || null,
+            price: editForm.is_free ? null : editForm.meta_price,
+          },
         },
-      },
-    })
-    toast.add({ title: t('suggestionsSlideover.toast.updated'), color: 'success' })
-    isEditing.value = false
-    emit('rejected') // reutilizamos para refrescar la lista
-  } catch (e) {
-    toast.add({
-      title: t('suggestionsSlideover.toast.saveError'),
-      description: e instanceof Error ? e.message : String(e),
-      color: 'error',
-    })
-  } finally {
-    actionLoading.value = false
+      }),
+    t('suggestionsSlideover.toast.saveError')
+  )
+  if (result === undefined) return
+
+  toast.add({ title: t('suggestionsSlideover.toast.updated'), color: 'success' })
+  isEditing.value = false
+  emit('rejected') // reutilizamos para refrescar la lista
+}
+
+// ── Translation status (§F/§H) ─────────────────────────────────────────────
+const { locales: contentLocales } = useContentLocales()
+
+const translationFields = computed(() =>
+  props.suggestion?.suggestion_type === 'experience_for_existing_place'
+    ? ['title']
+    : ['name', 'description', 'title']
+)
+
+const translationSummary = computed(() =>
+  summarizeI18nStatus(props.suggestion?.i18n_status, translationFields.value, contentLocales)
+)
+
+const retryLoading = ref(false)
+
+const retryTranslation = async () => {
+  if (!props.suggestion) return
+  const suggestionId = props.suggestion.id
+
+  const result = await runSaveAction(
+    retryLoading,
+    () =>
+      $fetch<{ retried: string[] }>(`/api/suggestions/${suggestionId}/retry-translation`, {
+        method: 'POST',
+      }),
+    t('suggestionsSlideover.toast.retryError')
+  )
+  if (result === undefined) return
+
+  if (result.retried.length === 0) {
+    toast.add({ title: t('suggestionsSlideover.toast.retryNothing'), color: 'neutral' })
+  } else {
+    toast.add({ title: t('suggestionsSlideover.toast.retrySuccess'), color: 'success' })
+    emit('rejected') // reutilizamos para refrescar la lista (mismo patrón que saveEdit)
   }
 }
 
@@ -279,7 +410,12 @@ const slideoverTitle = computed(() => {
   const fallback = t('suggestionsSlideover.fallbackTitle')
   if (!props.suggestion) return fallback
   const nameI18n = props.suggestion.name_i18n
-  const name = nameI18n['he'] || nameI18n['es'] || Object.values(nameI18n)[0] || fallback
+  // experience_for_existing_place suggestions store name_i18n: {} — fall back
+  // to the linked place's name (and the activity title, meta.title_i18n, is
+  // shown separately in the body) so the title isn't just "Suggestion".
+  const linkedName = linkedPlace.value ? pickI18nName(linkedPlace.value.name_i18n) : ''
+  const name =
+    nameI18n['he'] || nameI18n['es'] || Object.values(nameI18n)[0] || linkedName || fallback
   return isEditing.value ? `${t('suggestionsSlideover.editingPrefix')}: ${name}` : name
 })
 
@@ -289,6 +425,9 @@ type SuggestionMeta = {
   title_i18n?: Record<string, string> | null
   phone?: string | null
   website?: string | null
+  // Website propio de la actividad (distinto del website del lugar arriba) —
+  // confirmado 2026-08-28, mismo campo nuevo que Activity.
+  activity_website?: string | null
   opening_hours_text?: string[] | null
   photos?: string[] | null
   hours_unknown?: boolean | null
@@ -324,72 +463,188 @@ const pickI18n = (obj: Record<string, string> | null | undefined): string => {
           </div>
 
           <div class="flex items-center justify-between">
-            <UBadge :color="statusColor" variant="subtle" size="lg">
-              {{ statusLabel }}
-            </UBadge>
+            <div class="flex items-center gap-2">
+              <UBadge :color="statusColor" variant="subtle" size="lg">
+                {{ statusLabel }}
+              </UBadge>
+              <UBadge
+                :color="
+                  suggestion.suggestion_type === 'experience_for_existing_place'
+                    ? 'info'
+                    : 'neutral'
+                "
+                variant="subtle"
+                size="sm"
+              >
+                {{ suggestionTypeLabel }}
+              </UBadge>
+            </div>
             <span class="text-xs text-(--ui-text-muted)">
               {{ formatDate(suggestion.created_at) }}
             </span>
           </div>
 
+          <!-- Estado de traducción (§F/§H) — complete/partial + reintento -->
           <div
-            v-if="
-              (suggestion as any).description_i18n?.he || (suggestion as any).description_i18n?.es
-            "
+            v-if="translationSummary.state !== 'unknown'"
+            class="flex items-center justify-between gap-2 rounded-md border border-(--ui-border) px-3 py-2"
           >
-            <p class="text-sm font-medium text-(--ui-text-muted) mb-1">
-              {{ t('suggestionsSlideover.descriptionLabel') }}
-            </p>
-            <p class="text-sm">
-              {{
-                (suggestion as any).description_i18n?.he ||
-                (suggestion as any).description_i18n?.es ||
-                ''
-              }}
-            </p>
-          </div>
-
-          <div>
-            <p class="text-sm font-medium text-(--ui-text-muted) mb-2">
-              {{ t('suggestionsSlideover.locationLabel') }}
-            </p>
-            <div class="flex items-center gap-2">
-              <UIcon name="i-lucide-map-pin" class="text-primary size-4 shrink-0" />
-              <span class="text-sm">
-                {{ suggestion.location?.city ?? '—' }}
-                <span v-if="suggestion.location?.address" class="text-(--ui-text-muted)">
-                  · {{ suggestion.location.address }}
-                </span>
+            <div class="flex items-center gap-2 text-sm">
+              <span class="text-xs font-medium text-(--ui-text-muted) uppercase tracking-wide">
+                {{ t('suggestionsSlideover.translationsLabel') }}
               </span>
+              <UBadge
+                v-if="translationSummary.state === 'complete'"
+                color="success"
+                variant="subtle"
+                size="sm"
+                icon="i-lucide-check"
+              >
+                {{ t('suggestionsSlideover.translationsComplete') }}
+              </UBadge>
+              <UBadge
+                v-else
+                color="warning"
+                variant="subtle"
+                size="sm"
+                icon="i-lucide-alert-triangle"
+              >
+                {{
+                  t('suggestionsSlideover.translationsMissing', {
+                    locales: translationSummary.missingLocales
+                      .map((l) => l.toUpperCase())
+                      .join(', '),
+                  })
+                }}
+              </UBadge>
             </div>
+            <UButton
+              v-if="translationSummary.state === 'partial'"
+              size="xs"
+              color="neutral"
+              variant="outline"
+              icon="i-lucide-refresh-cw"
+              :loading="retryLoading"
+              @click="retryTranslation"
+            >
+              {{ t('suggestionsSlideover.retryTranslation') }}
+            </UButton>
           </div>
 
-          <!-- Contacto del lugar -->
-          <div v-if="meta.phone || meta.website">
+          <!-- Posible duplicado — flag de dedup + acción de un clic para fusionar -->
+          <UAlert
+            v-if="suggestion.flagged_possible_duplicate && (duplicatePlace || duplicateActivity)"
+            color="warning"
+            variant="subtle"
+            icon="i-lucide-alert-triangle"
+            :title="t('suggestionsSlideover.possibleDuplicateTitle')"
+          >
+            <template #description>
+              <div class="flex items-center justify-between gap-3 mt-1">
+                <span class="text-sm">
+                  {{ duplicatePlace ? pickI18nName(duplicatePlace.name_i18n) : '' }}
+                  {{ duplicateActivity ? pickI18nName(duplicateActivity.title_i18n) : '' }}
+                </span>
+                <UButton
+                  v-if="duplicatePlace"
+                  size="xs"
+                  color="warning"
+                  icon="i-lucide-merge"
+                  :loading="actionLoading"
+                  @click="handleMerge(duplicatePlace.id)"
+                >
+                  {{ t('suggestionsSlideover.mergeIntoThis') }}
+                </UButton>
+              </div>
+            </template>
+          </UAlert>
+
+          <!-- Lugar ya existente: sugerencia experience_for_existing_place ────── -->
+          <div v-if="suggestion.suggestion_type === 'experience_for_existing_place'">
             <p class="text-sm font-medium text-(--ui-text-muted) mb-2">
-              {{ t('suggestionsSlideover.contactLabel') }}
+              {{ t('suggestionsSlideover.linkedPlaceLabel') }}
             </p>
-            <div class="flex flex-col gap-1.5">
-              <a
-                v-if="meta.phone"
-                :href="`tel:${meta.phone}`"
-                class="flex items-center gap-2 text-sm text-primary-500 hover:underline"
-              >
-                <UIcon name="i-lucide-phone" class="size-4 shrink-0" />
-                {{ meta.phone }}
-              </a>
-              <a
-                v-if="meta.website"
-                :href="meta.website"
-                target="_blank"
-                rel="noopener noreferrer"
-                class="flex items-center gap-2 text-sm text-primary-500 hover:underline"
-              >
-                <UIcon name="i-lucide-globe" class="size-4 shrink-0" />
-                <span class="truncate">{{ meta.website }}</span>
-              </a>
-            </div>
+            <NuxtLink
+              v-if="linkedPlace"
+              :to="`/places/${linkedPlace.id}`"
+              class="flex items-center gap-3 p-2 rounded-md border border-(--ui-border) hover:bg-elevated/50"
+            >
+              <div class="size-12 shrink-0 overflow-hidden rounded-md bg-(--ui-bg-elevated)">
+                <img
+                  v-if="linkedPlace.images?.[0]"
+                  :src="linkedPlace.images[0]"
+                  alt=""
+                  class="size-full object-cover"
+                />
+              </div>
+              <span class="text-sm font-medium">{{ pickI18nName(linkedPlace.name_i18n) }}</span>
+            </NuxtLink>
+            <p v-else class="text-sm text-(--ui-text-muted)">
+              {{ t('suggestionsSlideover.linkedPlaceMissing') }}
+            </p>
           </div>
+
+          <!-- Lugar propuesto: sugerencia new_place_with_experience ─────────── -->
+          <template v-else>
+            <div
+              v-if="
+                (suggestion as any).description_i18n?.he || (suggestion as any).description_i18n?.es
+              "
+            >
+              <p class="text-sm font-medium text-(--ui-text-muted) mb-1">
+                {{ t('suggestionsSlideover.descriptionLabel') }}
+              </p>
+              <p class="text-sm">
+                {{
+                  (suggestion as any).description_i18n?.he ||
+                  (suggestion as any).description_i18n?.es ||
+                  ''
+                }}
+              </p>
+            </div>
+
+            <div>
+              <p class="text-sm font-medium text-(--ui-text-muted) mb-2">
+                {{ t('suggestionsSlideover.locationLabel') }}
+              </p>
+              <div class="flex items-center gap-2">
+                <UIcon name="i-lucide-map-pin" class="text-primary size-4 shrink-0" />
+                <span class="text-sm">
+                  {{ suggestion.location?.city ?? '—' }}
+                  <span v-if="suggestion.location?.address" class="text-(--ui-text-muted)">
+                    · {{ suggestion.location.address }}
+                  </span>
+                </span>
+              </div>
+            </div>
+
+            <!-- Contacto del lugar -->
+            <div v-if="meta.phone || meta.website">
+              <p class="text-sm font-medium text-(--ui-text-muted) mb-2">
+                {{ t('suggestionsSlideover.contactLabel') }}
+              </p>
+              <div class="flex flex-col gap-1.5">
+                <a
+                  v-if="meta.phone"
+                  :href="`tel:${meta.phone}`"
+                  class="flex items-center gap-2 text-sm text-primary-500 hover:underline"
+                >
+                  <UIcon name="i-lucide-phone" class="size-4 shrink-0" />
+                  {{ meta.phone }}
+                </a>
+                <a
+                  v-if="meta.website"
+                  :href="meta.website"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="flex items-center gap-2 text-sm text-primary-500 hover:underline"
+                >
+                  <UIcon name="i-lucide-globe" class="size-4 shrink-0" />
+                  <span class="truncate">{{ meta.website }}</span>
+                </a>
+              </div>
+            </div>
+          </template>
 
           <div v-if="suggestion.type?.length">
             <p class="text-sm font-medium text-(--ui-text-muted) mb-2">
@@ -408,7 +663,7 @@ const pickI18n = (obj: Record<string, string> | null | undefined): string => {
             </p>
             <div class="flex flex-wrap gap-2">
               <UBadge v-for="s in suggestion.best_season" :key="s" color="info" variant="subtle">
-                {{ s }}
+                {{ SEASON_LABELS[s] ?? s }}
               </UBadge>
             </div>
           </div>
@@ -494,6 +749,24 @@ const pickI18n = (obj: Record<string, string> | null | undefined): string => {
             </p>
           </div>
 
+          <!-- Galería de sólo lectura: imágenes ya elegidas, o fotos de Google si -->
+          <!-- todavía no se editó la sugerencia (antes se pedía entrar a "Editar" -->
+          <!-- para siquiera verlas) -->
+          <div v-if="(suggestion.images?.length ?? 0) > 0 || (meta.photos?.length ?? 0) > 0">
+            <p class="text-sm font-medium text-(--ui-text-muted) mb-2">
+              {{ t('suggestionsSlideover.imagesLabel') }}
+            </p>
+            <div class="flex flex-wrap gap-2">
+              <div
+                v-for="url in suggestion.images?.length ? suggestion.images : (meta.photos ?? [])"
+                :key="url"
+                class="size-20 overflow-hidden rounded-md border border-(--ui-border)"
+              >
+                <img :src="url" alt="" class="size-full object-cover" />
+              </div>
+            </div>
+          </div>
+
           <div v-if="suggestion.status === 'rejected' && suggestion.rejection_reason">
             <p class="text-sm font-medium text-(--ui-text-muted) mb-1">
               {{ t('suggestionsSlideover.rejectionReasonLabel') }}
@@ -534,70 +807,42 @@ const pickI18n = (obj: Record<string, string> | null | undefined): string => {
 
         <!-- ── MODO EDICIÓN ──────────────────────────────── -->
         <template v-else>
-          <UiI18nTabs
-            v-model="editForm.name_i18n"
-            :label="t('suggestionsSlideover.form.placeNameLabel')"
-            required
-          />
-
-          <UiI18nTabs
-            v-model="editForm.description_i18n"
-            :label="t('suggestionsSlideover.descriptionLabel')"
-            type="textarea"
-            :rows="3"
-          />
-
-          <UiI18nTabs
-            v-model="editForm.meta_title_i18n"
-            :label="t('suggestionsSlideover.activityTitleLabel')"
-          />
-
-          <!-- Ubicación -->
-          <div class="grid grid-cols-2 gap-3">
-            <UFormField :label="t('suggestionsSlideover.form.cityLabel')">
-              <UInput v-model="editForm.location.city" placeholder="Tel Aviv" class="w-full" />
-            </UFormField>
-            <UFormField :label="t('suggestionsSlideover.form.addressLabel')">
-              <UInput
-                v-model="editForm.location.address"
-                :placeholder="t('suggestionsSlideover.form.addressPlaceholder')"
-                class="w-full"
-              />
-            </UFormField>
+          <!-- Lugar ya existente: no se editan nombre/ciudad/dirección/contacto -->
+          <!-- acá (viven en el lugar real) — sólo un link de referencia. -->
+          <div v-if="suggestion.suggestion_type === 'experience_for_existing_place'">
+            <p class="text-sm font-medium text-(--ui-text-muted) mb-2">
+              {{ t('suggestionsSlideover.linkedPlaceLabel') }}
+            </p>
+            <NuxtLink
+              v-if="linkedPlace"
+              :to="`/places/${linkedPlace.id}`"
+              target="_blank"
+              class="flex items-center gap-3 p-2 rounded-md border border-(--ui-border) hover:bg-elevated/50"
+            >
+              <div class="size-12 shrink-0 overflow-hidden rounded-md bg-(--ui-bg-elevated)">
+                <img
+                  v-if="linkedPlace.images?.[0]"
+                  :src="linkedPlace.images[0]"
+                  alt=""
+                  class="size-full object-cover"
+                />
+              </div>
+              <span class="text-sm font-medium">{{ pickI18nName(linkedPlace.name_i18n) }}</span>
+            </NuxtLink>
+            <p v-else class="text-sm text-(--ui-text-muted)">
+              {{ t('suggestionsSlideover.linkedPlaceMissing') }}
+            </p>
           </div>
 
-          <!-- Categoría (subcategorías DB, selección única) -->
-          <UFormField :label="t('suggestionsSlideover.form.categoryLabel')">
-            <div class="flex flex-wrap gap-2 mt-1">
-              <UBadge
-                v-for="cat in subcategories"
-                :key="cat.id"
-                :color="editForm.category_id === cat.id ? 'primary' : 'neutral'"
-                :variant="editForm.category_id === cat.id ? 'solid' : 'subtle'"
-                class="cursor-pointer select-none"
-                @click="editForm.category_id = editForm.category_id === cat.id ? '' : cat.id"
-              >
-                {{ catName(cat) }}
-              </UBadge>
-              <span v-if="!subcategories.length" class="text-xs text-(--ui-text-muted)">
-                {{ t('suggestionsSlideover.loading') }}
-              </span>
-            </div>
-          </UFormField>
-
-          <!-- Contacto del lugar -->
-          <div class="grid grid-cols-2 gap-3">
-            <UFormField :label="t('suggestionsSlideover.form.phoneLabel')">
-              <UInput v-model="editForm.meta_phone" placeholder="+972 50 000 0000" class="w-full" />
-            </UFormField>
-            <UFormField :label="t('suggestionsSlideover.form.websiteLabel')">
-              <UInput v-model="editForm.meta_website" placeholder="https://..." class="w-full" />
-            </UFormField>
-          </div>
-
-          <!-- Mismo bloque de campos que ActivitiesSlideover: edades, temporadas, -->
-          <!-- gratis/precio, horario, opciones (incluye sombra/baños) e imágenes -->
-          <UiActivityFields
+          <UiEntityFormFields
+            v-model:name-i18n="editForm.name_i18n"
+            v-model:description-i18n="editForm.description_i18n"
+            v-model:title-i18n="editForm.meta_title_i18n"
+            v-model:city="editForm.location.city"
+            v-model:address="editForm.location.address"
+            v-model:category-id="editForm.category_id"
+            v-model:phone="editForm.meta_phone"
+            v-model:website="editForm.meta_website"
             v-model:age-range-ids="editForm.age_range_ids"
             v-model:best-season="editForm.best_season"
             v-model:schedule-structured="editForm.schedule_structured"
@@ -608,7 +853,11 @@ const pickI18n = (obj: Record<string, string> | null | undefined): string => {
             v-model:open-weekends="editForm.open_weekends"
             v-model:has-shadow="editForm.meta_has_shadow"
             v-model:has-bathrooms="editForm.meta_has_bathrooms"
+            v-model:activity-website="editForm.meta_activity_website"
             v-model:images="editForm.images"
+            :show-place-identity="suggestion.suggestion_type !== 'experience_for_existing_place'"
+            type="suggestion"
+            :subcategory-options="subcategories"
             :age-range-options="dbAgeRanges"
             :season-options="dbSeasons"
             :age-labels="AGE_LABELS"
@@ -617,15 +866,7 @@ const pickI18n = (obj: Record<string, string> | null | undefined): string => {
             :google-hours-text="(meta.opening_hours_text ?? []).join('\n')"
             :google-photos="meta.photos ?? []"
             :upload-fn="uploadFromUrl"
-            :ages-label="t('suggestionsSlideover.form.agesLabel')"
-            :seasons-label="t('suggestionsSlideover.form.seasonsLabel')"
-            :price-label="t('suggestionsSlideover.form.priceLabel')"
-            :free-label="t('suggestionsSlideover.features.free')"
-            :options-label="t('suggestionsSlideover.featuresLabel')"
-            :stroller-friendly-label="t('suggestionsSlideover.features.strollerFriendly')"
-            :open-weekends-label="t('suggestionsSlideover.form.openWeekendsLabel')"
-            :has-shadow-label="t('suggestionsSlideover.features.shadow')"
-            :has-bathrooms-label="t('suggestionsSlideover.features.bathrooms')"
+            :labels="FORM_LABELS"
           />
         </template>
       </div>

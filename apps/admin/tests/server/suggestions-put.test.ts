@@ -1,5 +1,23 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
+// ── Mutable config for per-test control ───────────────────────────────────
+let _deeplApiKey: string | undefined = undefined
+
+// ── admin-runtime-config mock (index.put now uses getDeeplApiKey) ─────────
+vi.mock('../../server/utils/admin-runtime-config', () => ({
+  getDeeplApiKey: vi.fn(() => _deeplApiKey),
+}))
+
+// ── translate mock (explicitly imported in index.put) ──────────────────────
+vi.mock('../../server/utils/translate', () => ({
+  enrichI18nField: vi.fn(async (existing: Record<string, string>) => existing),
+  translateI18nField: vi.fn(async ({ existing }: { existing: Record<string, string> }) => ({
+    value: existing,
+    status: undefined,
+  })),
+}))
+const { translateI18nField: mockTranslateI18nField } = await import('../../server/utils/translate')
+
 // ── Supabase mock ──────────────────────────────────────────────────────────
 let _existingRow: unknown = null
 
@@ -74,6 +92,7 @@ function makeEvent(body: unknown) {
 beforeEach(() => {
   vi.clearAllMocks()
   _existingRow = null
+  _deeplApiKey = undefined
   vi.stubGlobal('getRouterParam', vi.fn().mockReturnValue('sug-001'))
   mockGeocode.mockResolvedValue(null)
   mockUpdate.mockReturnValue({
@@ -148,6 +167,85 @@ describe('PUT /api/suggestions/[id] — metadata merge', () => {
     // When metadata IS present, it would be called twice (select + update)
     expect(mockFrom.mock.calls.filter((c) => c[0] === 'suggestions')).toHaveLength(1)
     expect(mockUpdate).toHaveBeenCalled()
+  })
+})
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  Translation propagation (retranslate other locales on edit)
+// ═══════════════════════════════════════════════════════════════════════════
+describe('PUT /api/suggestions/[id] — translation propagation', () => {
+  it('retranslates name_i18n and description_i18n against their previous value when a DeepL key is configured', async () => {
+    _deeplApiKey = 'fake-key'
+    _existingRow = {
+      metadata: null,
+      location: null,
+      name_i18n: { es: 'Viejo nombre' },
+      description_i18n: { es: 'Vieja descripción' },
+    }
+
+    let capturedUpdate: unknown
+    mockUpdate.mockImplementation((data) => {
+      capturedUpdate = data
+      return {
+        eq: vi.fn(() => ({
+          select: vi.fn(() => ({
+            single: vi.fn().mockResolvedValue({ data: { id: 'sug-001' }, error: null }),
+          })),
+        })),
+      }
+    })
+
+    await handler(
+      makeEvent({
+        name_i18n: { es: 'Nombre nuevo' },
+        description_i18n: { es: 'Descripción nueva' },
+      })
+    )
+
+    expect(mockTranslateI18nField).toHaveBeenCalledWith({
+      existing: { es: 'Nombre nuevo' },
+      apiKey: 'fake-key',
+      previous: { es: 'Viejo nombre' },
+      priorStatus: undefined,
+    })
+    expect(mockTranslateI18nField).toHaveBeenCalledWith({
+      existing: { es: 'Descripción nueva' },
+      apiKey: 'fake-key',
+      previous: { es: 'Vieja descripción' },
+      priorStatus: undefined,
+    })
+    expect((capturedUpdate as Record<string, unknown>)?.name_i18n).toEqual({ es: 'Nombre nuevo' })
+  })
+
+  it('does not call translateI18nField when no DeepL key is configured', async () => {
+    _deeplApiKey = undefined
+
+    await handler(makeEvent({ name_i18n: { es: 'Nombre nuevo' } }))
+
+    expect(mockTranslateI18nField).not.toHaveBeenCalled()
+  })
+
+  it('enriches metadata.title_i18n against its previous value', async () => {
+    _deeplApiKey = 'fake-key'
+    _existingRow = {
+      metadata: { title_i18n: { es: 'Viejo título' } },
+      location: null,
+      name_i18n: null,
+      description_i18n: null,
+    }
+
+    await handler(
+      makeEvent({
+        metadata: { title_i18n: { es: 'Título nuevo' } },
+      })
+    )
+
+    expect(mockTranslateI18nField).toHaveBeenCalledWith({
+      existing: { es: 'Título nuevo' },
+      apiKey: 'fake-key',
+      previous: { es: 'Viejo título' },
+      priorStatus: undefined,
+    })
   })
 })
 

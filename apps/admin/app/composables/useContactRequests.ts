@@ -11,6 +11,7 @@ export interface FeedbackStats {
 }
 
 export const useContactRequests = () => {
+  const { t } = useI18n()
   const toast = useToast()
 
   const requests = ref<ContactRequest[]>([])
@@ -46,8 +47,8 @@ export const useContactRequests = () => {
       requests.value = result.data
       total.value = result.count
     } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : 'Error desconocido'
-      toast.add({ title: 'Error cargando consultas', description: msg, color: 'error' })
+      const msg = e instanceof Error ? e.message : t('contactRequests.toast.unknownError')
+      toast.add({ title: t('contactRequests.toast.loadError'), description: msg, color: 'error' })
     } finally {
       isLoading.value = false
       hasLoadedOnce.value = true
@@ -68,11 +69,11 @@ export const useContactRequests = () => {
         method: 'PATCH',
         body: { status: newStatus },
       })
-      toast.add({ title: 'Estado actualizado', color: 'success' })
+      toast.add({ title: t('contactRequests.toast.statusUpdated'), color: 'success' })
       await fetch()
     } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : 'Error desconocido'
-      toast.add({ title: 'Error al actualizar', description: msg, color: 'error' })
+      const msg = e instanceof Error ? e.message : t('contactRequests.toast.unknownError')
+      toast.add({ title: t('contactRequests.toast.updateError'), description: msg, color: 'error' })
     }
   }
 
