@@ -414,6 +414,43 @@
     "schedule": "Horario",
     "images": "Imágenes",
     "loading": "Cargando…",
+    "i18nField": {
+      "hint": "Escribí en cualquier idioma — el resto se completa solo",
+      "translateError": "No se pudo traducir automáticamente",
+      "missingLanguages": "Faltan estos idiomas",
+      "showMore": "Ver más idiomas",
+      "hideEmpty": "Ocultar idiomas vacíos",
+      "autoTranslated": "Traducido automáticamente",
+      "translationFailed": "La traducción automática falló — se conservó el texto anterior"
+    },
+    "placeSearch": {
+      "label": "Buscar lugar en Google",
+      "placeholder": "Escribí el nombre del lugar…",
+      "clear": "Limpiar"
+    },
+    "scheduleEditor": {
+      "sectionLabel": "Horario",
+      "hoursUnknown": "Horarios desconocidos",
+      "editManually": "Editar manualmente",
+      "backToGoogle": "← Volver a horarios de Google",
+      "days": {
+        "sunday": "Domingo",
+        "monday": "Lunes",
+        "tuesday": "Martes",
+        "wednesday": "Miércoles",
+        "thursday": "Jueves",
+        "friday": "Viernes",
+        "saturday": "Sábado"
+      }
+    },
+    "imageUploader": {
+      "addButton": "Agregar",
+      "addPlaceholder": "Pegá una URL de imagen…",
+      "selectAria": "Seleccionar imagen",
+      "removeAria": "Quitar imagen",
+      "coverTitle": "Portada",
+      "setCoverTitle": "Usar como portada"
+    },
     "ageLabels": {
       "all": "Todas las edades",
       "babies": "Bebés (0-11m)",
@@ -511,6 +548,7 @@
     "form": {
       "place": "Lugar",
       "placePlaceholder": "Seleccioná un lugar",
+      "placeLinkedHint": "Vinculada a este lugar — no se puede cambiar acá",
       "title": "Título",
       "description": "Descripción",
       "category": "Categoría",

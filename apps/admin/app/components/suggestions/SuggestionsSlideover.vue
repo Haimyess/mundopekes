@@ -156,6 +156,38 @@ const FORM_LABELS = computed(() => ({
   schedule: t('entityForm.schedule'),
   images: t('suggestionsSlideover.imagesLabel'),
   loading: t('suggestionsSlideover.loading'),
+  i18nField: {
+    hint: t('entityForm.i18nField.hint'),
+    translateError: t('entityForm.i18nField.translateError'),
+    missingLanguages: t('entityForm.i18nField.missingLanguages'),
+    showMore: t('entityForm.i18nField.showMore'),
+    hideEmpty: t('entityForm.i18nField.hideEmpty'),
+    autoTranslated: t('entityForm.i18nField.autoTranslated'),
+    translationFailed: t('entityForm.i18nField.translationFailed'),
+  },
+  scheduleEditor: {
+    sectionLabel: t('entityForm.scheduleEditor.sectionLabel'),
+    hoursUnknown: t('entityForm.scheduleEditor.hoursUnknown'),
+    editManually: t('entityForm.scheduleEditor.editManually'),
+    backToGoogle: t('entityForm.scheduleEditor.backToGoogle'),
+    days: {
+      sunday: t('entityForm.scheduleEditor.days.sunday'),
+      monday: t('entityForm.scheduleEditor.days.monday'),
+      tuesday: t('entityForm.scheduleEditor.days.tuesday'),
+      wednesday: t('entityForm.scheduleEditor.days.wednesday'),
+      thursday: t('entityForm.scheduleEditor.days.thursday'),
+      friday: t('entityForm.scheduleEditor.days.friday'),
+      saturday: t('entityForm.scheduleEditor.days.saturday'),
+    },
+  },
+  imageUploader: {
+    addButton: t('entityForm.imageUploader.addButton'),
+    addPlaceholder: t('entityForm.imageUploader.addPlaceholder'),
+    selectAria: t('entityForm.imageUploader.selectAria'),
+    removeAria: t('entityForm.imageUploader.removeAria'),
+    coverTitle: t('entityForm.imageUploader.coverTitle'),
+    setCoverTitle: t('entityForm.imageUploader.setCoverTitle'),
+  },
 }))
 const allAgeId = computed(() => dbAgeRanges.value.find((a) => a.label_key === 'age.all')?.id)
 
@@ -887,6 +919,7 @@ const pickI18n = (obj: Record<string, string> | null | undefined): string => {
             :google-photos="meta.photos ?? []"
             :upload-fn="uploadFromUrl"
             :labels="FORM_LABELS"
+            :locale="locale"
           />
         </template>
       </div>

@@ -9,12 +9,37 @@ import {
   type ScheduleDay,
 } from '../../../domain/types/schedule'
 
+export interface ScheduleEditorLabels {
+  sectionLabel: string
+  hoursUnknown: string
+  editManually: string
+  backToGoogle: string
+  days: Record<keyof WizardSchedule, string>
+}
+
+const DEFAULT_LABELS: ScheduleEditorLabels = {
+  sectionLabel: 'Schedule',
+  hoursUnknown: 'Hours unknown',
+  editManually: 'Edit manually',
+  backToGoogle: '← Back to Google hours',
+  days: {
+    sunday: 'Sunday',
+    monday: 'Monday',
+    tuesday: 'Tuesday',
+    wednesday: 'Wednesday',
+    thursday: 'Thursday',
+    friday: 'Friday',
+    saturday: 'Saturday',
+  },
+}
+
 const props = withDefaults(
   defineProps<{
     schedule: WizardSchedule
     hoursUnknown?: boolean
     // Texto de horarios de Google (líneas separadas por \n), si está disponible
     googleHoursText?: string
+    labels?: ScheduleEditorLabels
   }>(),
   {
     hoursUnknown: false,
@@ -27,17 +52,9 @@ const emit = defineEmits<{
   'update:hoursUnknown': [value: boolean]
 }>()
 
-const DAY_LABELS: Record<keyof WizardSchedule, string> = {
-  sunday: 'Domingo',
-  monday: 'Lunes',
-  tuesday: 'Martes',
-  wednesday: 'Miércoles',
-  thursday: 'Jueves',
-  friday: 'Viernes',
-  saturday: 'Sábado',
-}
+const t = computed<ScheduleEditorLabels>(() => props.labels ?? DEFAULT_LABELS)
 
-const days = computed(() => SCHEDULE_DAYS.map((key) => ({ key, label: DAY_LABELS[key] })))
+const days = computed(() => SCHEDULE_DAYS.map((key) => ({ key, label: t.value.days[key] })))
 
 const googleHoursLines = computed(() =>
   props.googleHoursText ? props.googleHoursText.split('\n').filter(Boolean) : []
@@ -62,8 +79,8 @@ const updateDay = (key: keyof WizardSchedule, patch: Partial<ScheduleDay>) => {
 <template>
   <div class="flex flex-col gap-2">
     <div class="flex items-center justify-between">
-      <span class="text-sm font-medium text-(--ui-text-muted)">Horario</span>
-      <UCheckbox v-model="hoursUnknownProxy" label="Horarios desconocidos" />
+      <span class="text-sm font-medium text-(--ui-text-muted)">{{ t.sectionLabel }}</span>
+      <UCheckbox v-model="hoursUnknownProxy" :label="t.hoursUnknown" />
     </div>
 
     <template v-if="!hoursUnknownProxy">
@@ -81,7 +98,7 @@ const updateDay = (key: keyof WizardSchedule, patch: Partial<ScheduleDay>) => {
           class="self-start text-xs text-primary-500 underline underline-offset-2"
           @click="showManualEditor = true"
         >
-          Editar manualmente
+          {{ t.editManually }}
         </button>
       </template>
 
@@ -93,7 +110,7 @@ const updateDay = (key: keyof WizardSchedule, patch: Partial<ScheduleDay>) => {
           class="self-start text-xs text-primary-500 underline underline-offset-2 mb-1"
           @click="showManualEditor = false"
         >
-          ← Volver a horarios de Google
+          {{ t.backToGoogle }}
         </button>
 
         <div class="flex flex-col gap-2">

@@ -18,6 +18,8 @@
 // que el resto de los componentes Ui* de este directorio.
 import type { WizardSchedule } from '../../../domain/types/schedule'
 import type { FieldI18nStatus } from '../../../domain/types/i18n-status'
+import type { ScheduleEditorLabels } from './ScheduleEditor.vue'
+import type { ImageUploaderLabels } from './ImageUploader.vue'
 
 interface AgeOption {
   id: number
@@ -37,6 +39,20 @@ interface CityOption {
   name: string
 }
 
+// Copy de UiI18nTabs (botones "ver más idiomas", hints, tooltips de estado) —
+// ver EntityFormLabels['i18nField'] más abajo.
+export interface I18nFieldLabels {
+  hint: string
+  translateError: string
+  showMore: string
+  hideEmpty: string
+  autoTranslated: string
+  translationFailed: string
+}
+
+// Idioma de interfaz del admin (es/en, ver apps/admin/nuxt.config.ts) — decide
+// en qué idioma se muestran los badges de categoría (name_i18n), separado del
+// idioma de contenido que se está editando en los UiI18nTabs de arriba.
 export interface EntityFormLabels {
   placeName: string
   activityTitle: string
@@ -64,6 +80,9 @@ export interface EntityFormLabels {
   schedule: string
   images: string
   loading: string
+  i18nField: I18nFieldLabels
+  scheduleEditor: ScheduleEditorLabels
+  imageUploader: ImageUploaderLabels
 }
 
 const props = defineProps<{
@@ -113,6 +132,7 @@ const props = defineProps<{
   // en la sugerencia). Default true; sólo se usa con type === 'suggestion'.
   showPlaceIdentity?: boolean
 
+  locale?: string
   labels: EntityFormLabels
 }>()
 
@@ -182,7 +202,11 @@ const websiteProxy = computed({
 })
 
 const catName = (c: SubcategoryOption) =>
-  c.name_i18n?.he || c.name_i18n?.es || Object.values(c.name_i18n ?? {})[0] || c.slug
+  (props.locale && c.name_i18n?.[props.locale]) ||
+  c.name_i18n?.en ||
+  c.name_i18n?.es ||
+  Object.values(c.name_i18n ?? {})[0] ||
+  c.slug
 
 const cityItems = computed(() =>
   (props.cityOptions ?? []).map((c) => ({ label: c.name, value: c.id }))
@@ -199,6 +223,7 @@ const showPlaceIdentity = computed(() => props.showPlaceIdentity !== false)
     v-model="nameI18nProxy"
     :label="labels.placeName"
     :status="nameI18nStatus"
+    :labels="labels.i18nField"
     required
   />
 
@@ -206,6 +231,7 @@ const showPlaceIdentity = computed(() => props.showPlaceIdentity !== false)
     v-model="descriptionI18nProxy"
     :label="labels.description"
     :status="descriptionI18nStatus"
+    :labels="labels.i18nField"
     type="textarea"
     :rows="3"
   />
@@ -215,6 +241,7 @@ const showPlaceIdentity = computed(() => props.showPlaceIdentity !== false)
     v-model="titleI18nProxy"
     :label="labels.activityTitle"
     :status="titleI18nStatus"
+    :labels="labels.i18nField"
     :required="type === 'activity'"
   />
 
@@ -328,6 +355,10 @@ const showPlaceIdentity = computed(() => props.showPlaceIdentity !== false)
     :has-shadow-label="labels.hasShadow"
     :has-bathrooms-label="labels.hasBathrooms"
     :website-label="labels.activityWebsite"
+    :images-label="labels.images"
+    :loading-label="labels.loading"
+    :schedule-labels="labels.scheduleEditor"
+    :image-uploader-labels="labels.imageUploader"
     @update:age-range-ids="emit('update:ageRangeIds', $event)"
     @update:best-season="emit('update:bestSeason', $event)"
     @update:schedule-structured="emit('update:scheduleStructured', $event)"
@@ -348,6 +379,7 @@ const showPlaceIdentity = computed(() => props.showPlaceIdentity !== false)
     :google-photos="googlePhotos ?? []"
     :upload-fn="uploadFn"
     :label="labels.images"
+    :labels="labels.imageUploader"
     @update:model-value="emit('update:images', $event)"
   />
 </template>

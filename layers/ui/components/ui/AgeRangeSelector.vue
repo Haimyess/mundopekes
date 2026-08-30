@@ -6,12 +6,16 @@ interface AgeOption {
   label_key: string
 }
 
-const props = defineProps<{
-  modelValue: number[]
-  options: AgeOption[]
-  labels?: Record<string, string>
-  allId?: number
-}>()
+const props = withDefaults(
+  defineProps<{
+    modelValue: number[]
+    options: AgeOption[]
+    labels?: Record<string, string>
+    allId?: number
+    loadingLabel?: string
+  }>(),
+  { loadingLabel: 'Loading…' }
+)
 
 const emit = defineEmits<{
   'update:modelValue': [value: number[]]
@@ -47,6 +51,6 @@ const toggle = (id: number) => {
     >
       {{ label(opt) }}
     </UBadge>
-    <span v-if="!options.length" class="text-xs text-(--ui-text-muted)">Cargando…</span>
+    <span v-if="!options.length" class="text-xs text-(--ui-text-muted)">{{ loadingLabel }}</span>
   </div>
 </template>

@@ -4,6 +4,8 @@
 // de opciones e imágenes. Sin i18n propio — todas las etiquetas llegan por prop,
 // igual que el resto de los componentes Ui* de este directorio.
 import type { WizardSchedule } from '../../../domain/types/schedule'
+import type { ScheduleEditorLabels } from './ScheduleEditor.vue'
+import type { ImageUploaderLabels } from './ImageUploader.vue'
 
 interface AgeOption {
   id: number
@@ -47,6 +49,10 @@ const props = defineProps<{
   hasShadowLabel: string
   hasBathroomsLabel: string
   websiteLabel?: string
+  imagesLabel?: string
+  loadingLabel?: string
+  scheduleLabels?: ScheduleEditorLabels
+  imageUploaderLabels?: ImageUploaderLabels
 }>()
 
 const emit = defineEmits<{
@@ -129,11 +135,17 @@ const websiteProxy = computed({
       :options="ageRangeOptions"
       :labels="ageLabels"
       :all-id="allAgeId"
+      :loading-label="loadingLabel"
     />
   </UFormField>
 
   <UFormField :label="seasonsLabel">
-    <UiSeasonSelector v-model="bestSeasonProxy" :options="seasonOptions" :labels="seasonLabels" />
+    <UiSeasonSelector
+      v-model="bestSeasonProxy"
+      :options="seasonOptions"
+      :labels="seasonLabels"
+      :loading-label="loadingLabel"
+    />
   </UFormField>
 
   <UFormField :label="priceLabel">
@@ -157,6 +169,7 @@ const websiteProxy = computed({
     v-model:schedule="scheduleStructuredProxy"
     v-model:hours-unknown="hoursUnknownProxy"
     :google-hours-text="googleHoursText ?? ''"
+    :labels="scheduleLabels"
   />
 
   <UFormField v-if="websiteLabel" :label="websiteLabel">
@@ -176,5 +189,7 @@ const websiteProxy = computed({
     v-model="imagesProxy"
     :google-photos="googlePhotos ?? []"
     :upload-fn="uploadFn"
+    :label="imagesLabel"
+    :labels="imageUploaderLabels"
   />
 </template>

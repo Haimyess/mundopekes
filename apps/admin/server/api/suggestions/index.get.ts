@@ -19,7 +19,7 @@ export default defineEventHandler(async (event) => {
   // need this fallback to show anything for those rows.
   let q = supabase
     .from('suggestions')
-    .select('*, place:places(id, name_i18n, city:cities(name))', {
+    .select('*, place:places!suggestions_place_id_fkey(id, name_i18n, city:cities(name))', {
       count: hasPagination ? 'exact' : undefined,
     })
     .order('created_at', { ascending: false })

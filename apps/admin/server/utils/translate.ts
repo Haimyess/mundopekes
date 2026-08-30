@@ -3,6 +3,7 @@ import { translateI18nField } from '../../../../layers/domain/server/services/tr
 export {
   DeepLProvider,
   translateI18nField,
+  translateSingleFieldInput,
 } from '../../../../layers/domain/server/services/translation-service'
 export type {
   TranslationProvider,

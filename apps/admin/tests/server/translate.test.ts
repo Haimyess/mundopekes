@@ -1,5 +1,9 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { enrichI18nField, translateI18nField } from '../../server/utils/translate'
+import {
+  enrichI18nField,
+  translateI18nField,
+  translateSingleFieldInput,
+} from '../../server/utils/translate'
 
 function mockDeepl(translateFn: (targetLang: string) => string) {
   global.fetch = vi.fn(async (_url, init) => {
@@ -204,5 +208,102 @@ describe('translateI18nField (status tracking)', () => {
 
     expect(status).toEqual(priorStatus)
     expect(fetch).not.toHaveBeenCalled()
+  })
+})
+
+describe('translateSingleFieldInput (single-input mode, UiI18nTabs)', () => {
+  beforeEach(() => {
+    global.fetch = vi.fn() as unknown as typeof fetch
+  })
+  afterEach(() => vi.restoreAllMocks())
+
+  function mockDeeplWithDetection(
+    detectedSource: string,
+    translateFn: (targetLang: string) => string
+  ) {
+    global.fetch = vi.fn(async (_url, init) => {
+      const body = JSON.parse((init as RequestInit).body as string) as { target_lang: string }
+      return {
+        ok: true,
+        json: async () => ({
+          translations: [
+            { text: translateFn(body.target_lang), detected_source_language: detectedSource },
+          ],
+        }),
+      } as Response
+    }) as unknown as typeof fetch
+  }
+
+  it('detects the source locale and translates the rest (create flow)', async () => {
+    mockDeeplWithDetection('HE', (lang) => `[${lang}] translated`)
+
+    const { value, status } = await translateSingleFieldInput({
+      text: 'פארק המאה',
+      apiKey: 'api-key',
+    })
+
+    expect(status?.sourceLocale).toBe('he')
+    expect(value.he).toBe('פארק המאה')
+    expect(value.es).toBe('[ES] translated')
+    expect(value.en).toBe('[EN-US] translated')
+    expect(value.ru).toBe('[RU] translated')
+  })
+
+  it('protects a previously manual locale from being overwritten', async () => {
+    mockDeeplWithDetection('EN', (lang) => `[${lang}] translated`)
+
+    const previous = { en: 'Old name', es: 'Nombre a mano', he: 'x', ru: 'y' }
+    const priorStatus = {
+      sourceLocale: 'en',
+      es: { status: 'manual' as const, updatedAt: 't' },
+      he: { status: 'auto' as const, updatedAt: 't' },
+      ru: { status: 'auto' as const, updatedAt: 't' },
+    }
+
+    const { value } = await translateSingleFieldInput({
+      text: 'New name',
+      apiKey: 'api-key',
+      previous,
+      priorStatus,
+    })
+
+    expect(value.es).toBe('Nombre a mano')
+    expect(value.he).toBe('[HE] translated')
+    expect(value.ru).toBe('[RU] translated')
+  })
+
+  it('returns previous unchanged when text is blank', async () => {
+    const previous = { es: 'x' }
+    const result = await translateSingleFieldInput({ text: '  ', apiKey: 'api-key', previous })
+    expect(result.value).toEqual(previous)
+    expect(fetch).not.toHaveBeenCalled()
+  })
+
+  it('falls back to the first configured locale when DeepL detects an unsupported language', async () => {
+    mockDeeplWithDetection('FR', (lang) => `[${lang}] translated`)
+
+    const { status } = await translateSingleFieldInput({ text: 'Bonjour', apiKey: 'api-key' })
+    expect(status?.sourceLocale).toBe('es')
+  })
+
+  it('skips detection when locale is already known (editing a labeled, already-visible input)', async () => {
+    global.fetch = vi.fn(async (_url, init) => {
+      const body = JSON.parse((init as RequestInit).body as string) as { target_lang: string }
+      return {
+        ok: true,
+        json: async () => ({ translations: [{ text: `[${body.target_lang}] translated` }] }),
+      } as Response
+    }) as unknown as typeof fetch
+
+    const { value, status } = await translateSingleFieldInput({
+      text: 'New English text',
+      locale: 'en',
+      apiKey: 'api-key',
+    })
+
+    expect(status?.sourceLocale).toBe('en')
+    expect(value.en).toBe('New English text')
+    // Only 3 translate calls (es/ru/he) — no extra detect call.
+    expect(fetch).toHaveBeenCalledTimes(3)
   })
 })

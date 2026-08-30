@@ -11,11 +11,13 @@ const props = withDefaults(
     lang?: string
     label?: string
     placeholder?: string
+    clearLabel?: string
   }>(),
   {
     lang: 'he',
-    label: 'Buscar lugar en Google',
-    placeholder: 'Escribí el nombre del lugar…',
+    label: 'Search place on Google',
+    placeholder: 'Type the place name…',
+    clearLabel: 'Clear',
   }
 )
 
@@ -76,7 +78,7 @@ const reset = () => {
               variant="link"
               size="xs"
               icon="i-lucide-x"
-              aria-label="Limpiar"
+              :aria-label="clearLabel"
               @click="reset"
             />
           </template>

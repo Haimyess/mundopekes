@@ -414,6 +414,43 @@
     "schedule": "Schedule",
     "images": "Images",
     "loading": "Loading…",
+    "i18nField": {
+      "hint": "Type in any language — the rest fills in on its own",
+      "translateError": "Automatic translation failed",
+      "missingLanguages": "Missing languages",
+      "showMore": "Show more languages",
+      "hideEmpty": "Hide empty languages",
+      "autoTranslated": "Automatically translated",
+      "translationFailed": "Automatic translation failed — the previous text was kept"
+    },
+    "placeSearch": {
+      "label": "Search place on Google",
+      "placeholder": "Type the place name…",
+      "clear": "Clear"
+    },
+    "scheduleEditor": {
+      "sectionLabel": "Schedule",
+      "hoursUnknown": "Hours unknown",
+      "editManually": "Edit manually",
+      "backToGoogle": "← Back to Google hours",
+      "days": {
+        "sunday": "Sunday",
+        "monday": "Monday",
+        "tuesday": "Tuesday",
+        "wednesday": "Wednesday",
+        "thursday": "Thursday",
+        "friday": "Friday",
+        "saturday": "Saturday"
+      }
+    },
+    "imageUploader": {
+      "addButton": "Add",
+      "addPlaceholder": "Paste an image URL…",
+      "selectAria": "Select image",
+      "removeAria": "Remove image",
+      "coverTitle": "Cover",
+      "setCoverTitle": "Use as cover"
+    },
     "ageLabels": {
       "all": "All ages",
       "babies": "Babies (0-11m)",
@@ -511,6 +548,7 @@
     "form": {
       "place": "Place",
       "placePlaceholder": "Select a place",
+      "placeLinkedHint": "Linked to this place — can't be changed here",
       "title": "Title",
       "description": "Description",
       "category": "Category",

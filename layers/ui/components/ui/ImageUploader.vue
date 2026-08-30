@@ -12,18 +12,39 @@
 // uploadFn: cuando se provee, al seleccionar una foto de Google se llama esta
 // función antes de agregarla. Permite subir a Supabase Storage y guardar una
 // URL permanente en lugar de la URL proxy efímera de Google.
+export interface ImageUploaderLabels {
+  addButton: string
+  addPlaceholder: string
+  selectAria: string
+  removeAria: string
+  coverTitle: string
+  setCoverTitle: string
+}
+
+const DEFAULT_LABELS: ImageUploaderLabels = {
+  addButton: 'Add',
+  addPlaceholder: 'Paste an image URL…',
+  selectAria: 'Select image',
+  removeAria: 'Remove image',
+  coverTitle: 'Cover',
+  setCoverTitle: 'Use as cover',
+}
+
 const props = withDefaults(
   defineProps<{
     modelValue: string[]
     googlePhotos?: string[]
     label?: string
     uploadFn?: (url: string) => Promise<string>
+    labels?: ImageUploaderLabels
   }>(),
   {
     googlePhotos: () => [],
-    label: 'Imágenes',
+    label: 'Images',
   }
 )
+
+const t = computed<ImageUploaderLabels>(() => props.labels ?? DEFAULT_LABELS)
 
 const emit = defineEmits<{
   'update:modelValue': [value: string[]]
@@ -104,7 +125,7 @@ const addFromInput = () => {
             class="block size-full"
             :disabled="uploadingPhotos.includes(item.url)"
             :aria-pressed="item.selected"
-            :aria-label="item.selected ? 'Quitar imagen' : 'Seleccionar imagen'"
+            :aria-label="item.selected ? t.removeAria : t.selectAria"
             @click="toggle(item)"
           >
             <img :src="item.url" alt="" class="size-full object-cover" />
@@ -131,7 +152,7 @@ const addFromInput = () => {
             <div
               v-if="isCover(item.url)"
               class="pointer-events-none absolute bottom-0.5 left-0.5 flex size-5 items-center justify-center rounded-full bg-warning text-white"
-              title="Portada"
+              :title="t.coverTitle"
             >
               <UIcon name="i-lucide-star" class="size-3" />
             </div>
@@ -139,8 +160,8 @@ const addFromInput = () => {
               v-else
               type="button"
               class="absolute bottom-0.5 left-0.5 hidden size-5 items-center justify-center rounded-full bg-black/60 text-white group-hover:flex"
-              title="Usar como portada"
-              aria-label="Usar como portada"
+              :title="t.setCoverTitle"
+              :aria-label="t.setCoverTitle"
               @click.stop="setCover(item.url)"
             >
               <UIcon name="i-lucide-star" class="size-3" />
@@ -153,12 +174,12 @@ const addFromInput = () => {
       <div class="flex gap-2">
         <UInput
           v-model="newUrl"
-          placeholder="Pegá una URL de imagen…"
+          :placeholder="t.addPlaceholder"
           class="flex-1"
           @keydown.enter.prevent="addFromInput"
         />
         <UButton color="neutral" variant="outline" icon="i-lucide-plus" @click="addFromInput">
-          Agregar
+          {{ t.addButton }}
         </UButton>
       </div>
     </div>

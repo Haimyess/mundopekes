@@ -6,11 +6,15 @@ interface SeasonOption {
   label_key: string
 }
 
-const props = defineProps<{
-  modelValue: string[]
-  options: SeasonOption[]
-  labels?: Record<string, string>
-}>()
+const props = withDefaults(
+  defineProps<{
+    modelValue: string[]
+    options: SeasonOption[]
+    labels?: Record<string, string>
+    loadingLabel?: string
+  }>(),
+  { loadingLabel: 'Loading…' }
+)
 
 const emit = defineEmits<{
   'update:modelValue': [value: string[]]
@@ -44,6 +48,6 @@ const toggle = (value: string) => {
     >
       {{ label(opt) }}
     </UBadge>
-    <span v-if="!options.length" class="text-xs text-(--ui-text-muted)">Cargando…</span>
+    <span v-if="!options.length" class="text-xs text-(--ui-text-muted)">{{ loadingLabel }}</span>
   </div>
 </template>

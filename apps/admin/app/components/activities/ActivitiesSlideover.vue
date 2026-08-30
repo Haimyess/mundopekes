@@ -14,7 +14,7 @@ const emit = defineEmits<{
   close: []
 }>()
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const toast = useToast()
 const overlay = useOverlay()
 // useEntitySave/hasI18nContent se auto-importan desde app/composables/useEntitySave
@@ -65,6 +65,38 @@ const FORM_LABELS = computed(() => ({
   schedule: t('entityForm.schedule'),
   images: t('entityForm.images'),
   loading: t('entityForm.loading'),
+  i18nField: {
+    hint: t('entityForm.i18nField.hint'),
+    translateError: t('entityForm.i18nField.translateError'),
+    missingLanguages: t('entityForm.i18nField.missingLanguages'),
+    showMore: t('entityForm.i18nField.showMore'),
+    hideEmpty: t('entityForm.i18nField.hideEmpty'),
+    autoTranslated: t('entityForm.i18nField.autoTranslated'),
+    translationFailed: t('entityForm.i18nField.translationFailed'),
+  },
+  scheduleEditor: {
+    sectionLabel: t('entityForm.scheduleEditor.sectionLabel'),
+    hoursUnknown: t('entityForm.scheduleEditor.hoursUnknown'),
+    editManually: t('entityForm.scheduleEditor.editManually'),
+    backToGoogle: t('entityForm.scheduleEditor.backToGoogle'),
+    days: {
+      sunday: t('entityForm.scheduleEditor.days.sunday'),
+      monday: t('entityForm.scheduleEditor.days.monday'),
+      tuesday: t('entityForm.scheduleEditor.days.tuesday'),
+      wednesday: t('entityForm.scheduleEditor.days.wednesday'),
+      thursday: t('entityForm.scheduleEditor.days.thursday'),
+      friday: t('entityForm.scheduleEditor.days.friday'),
+      saturday: t('entityForm.scheduleEditor.days.saturday'),
+    },
+  },
+  imageUploader: {
+    addButton: t('entityForm.imageUploader.addButton'),
+    addPlaceholder: t('entityForm.imageUploader.addPlaceholder'),
+    selectAria: t('entityForm.imageUploader.selectAria'),
+    removeAria: t('entityForm.imageUploader.removeAria'),
+    coverTitle: t('entityForm.imageUploader.coverTitle'),
+    setCoverTitle: t('entityForm.imageUploader.setCoverTitle'),
+  },
 }))
 
 type ActivityDuplicateMatch = { id: string; title: string; confidence: string; reason: string }
@@ -126,6 +158,17 @@ const placeOptions = computed(() =>
 const selectedPlace = computed(
   () => props.place ?? (places.value ?? []).find((p) => p.id === form.place_id) ?? null
 )
+
+// Una actividad ya vinculada a un lugar (editando una existente, o creada
+// desde la página del lugar vía placeId) no debería poder cambiar de lugar
+// acá — se muestra como bloque informativo en vez de select editable.
+const isPlaceLocked = computed(() => !!props.placeId || !!props.activity?.place_id)
+const linkedPlaceLabel = computed(() => {
+  const p = selectedPlace.value
+  if (!p) return ''
+  const name = p.name_i18n['en'] || p.name_i18n['he'] || p.name_i18n['es'] || ''
+  return p.city?.name ? `${name} — ${p.city.name}` : name
+})
 
 // Toggle rápido activo/inactivo — atajo sobre form.status (approved <-> pending).
 // El select de abajo sigue permitiendo elegir 'rejected' explícitamente.
@@ -314,8 +357,22 @@ const save = async () => {
   >
     <template #body>
       <div class="flex flex-col gap-4 p-4">
-        <!-- Selector de lugar (solo cuando NO viene placeId fijo) -->
-        <UFormField v-if="!placeId" :label="t('activitiesSlideover.form.place')" required>
+        <!-- Lugar ya vinculado (editando, o creada desde la página del lugar): -->
+        <!-- sólo informativo, no se puede cambiar acá. -->
+        <UFormField v-if="isPlaceLocked" :label="t('activitiesSlideover.form.place')">
+          <div
+            class="flex items-center gap-2 px-3 py-2 rounded-md border border-(--ui-border) text-sm"
+          >
+            <UIcon name="i-lucide-map-pin" class="text-primary size-4 shrink-0" />
+            <span class="truncate">{{ linkedPlaceLabel }}</span>
+            <span class="text-xs text-(--ui-text-muted) ml-auto shrink-0">
+              {{ t('activitiesSlideover.form.placeLinkedHint') }}
+            </span>
+          </div>
+        </UFormField>
+
+        <!-- Selector de lugar (sólo al crear una actividad sin lugar fijo) -->
+        <UFormField v-else :label="t('activitiesSlideover.form.place')" required>
           <div class="flex gap-2">
             <USelect
               v-model="form.place_id"
@@ -385,6 +442,7 @@ const save = async () => {
           :google-photos="googlePhotos"
           :upload-fn="uploadFromUrl"
           :labels="FORM_LABELS"
+          :locale="locale"
         />
       </div>
     </template>

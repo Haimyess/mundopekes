@@ -67,6 +67,33 @@ export class DeepLProvider implements TranslationProvider {
     if (!translated) throw new Error('DeepL returned no translation')
     return translated
   }
+
+  // Sin source_lang, DeepL detecta el idioma solo y lo devuelve en
+  // detected_source_language — se pide igual una traducción (a un target
+  // fijo, se descarta el texto) porque el free tier no tiene un endpoint de
+  // detección separado. Usado por translateSingleFieldInput para saber a
+  // qué locale pertenece el texto de un input único (ver I18nTabs.vue).
+  async detectLanguage(text: string): Promise<string> {
+    const res = await fetch(DEEPL_API_URL, {
+      method: 'POST',
+      headers: {
+        Authorization: `DeepL-Auth-Key ${this.apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ text: [text], target_lang: 'EN-US' }),
+    })
+
+    if (!res.ok) {
+      throw new Error(`DeepL ${res.status}: ${await res.text()}`)
+    }
+
+    const data = (await res.json()) as {
+      translations: { detected_source_language?: string }[]
+    }
+    const detected = data.translations?.[0]?.detected_source_language
+    if (!detected) throw new Error('DeepL returned no detected language')
+    return detected.toLowerCase()
+  }
 }
 
 export interface TranslateI18nFieldParams {
@@ -190,4 +217,63 @@ export async function translateI18nField(
   )
 
   return { value: result, status }
+}
+
+export interface TranslateSingleFieldInputParams {
+  text: string
+  apiKey: string
+  // Si se pasa, se salta la detección — el caller ya sabe a qué locale
+  // pertenece el texto (ver comentario en UiI18nTabs.vue: sólo el input
+  // "primario", antes de que exista ningún locale con contenido, necesita
+  // detección; una vez que un locale tiene su propio input identificado, se
+  // pasa acá directo).
+  locale?: string
+  previous?: Record<string, string>
+  priorStatus?: FieldI18nStatus
+  targetLocalesPool?: readonly string[]
+}
+
+/**
+ * Punto de entrada para UiI18nTabs (ver comentario ahí): si no se sabe a qué
+ * locale pertenece el texto, se detecta con DeepL (DeepLProvider.detectLanguage);
+ * si ya se sabe (`locale`), se salta ese paso. De ahí en más es exactamente
+ * el mismo flujo que translateI18nField ya hacía cuando un locale cambiaba
+ * (protege los locales marcados 'manual', traduce el resto). Pensado para
+ * llamarse en vivo por campo (antes de guardar la entidad) desde el nuevo
+ * endpoint /api/i18n/translate-field — los endpoints de guardado siguen
+ * usando translateI18nField directo, sin cambios.
+ */
+export async function translateSingleFieldInput(
+  params: TranslateSingleFieldInputParams
+): Promise<TranslateI18nFieldResult> {
+  const {
+    text,
+    apiKey,
+    locale,
+    previous,
+    priorStatus,
+    targetLocalesPool = getConfiguredLocales(),
+  } = params
+
+  if (!text?.trim()) return { value: previous ?? {}, status: priorStatus }
+
+  let sourceLocale = locale
+  let provider: TranslationProvider | undefined
+  if (!sourceLocale) {
+    const deepl = new DeepLProvider(apiKey)
+    const detected = await deepl.detectLanguage(text)
+    sourceLocale = targetLocalesPool.includes(detected) ? detected : targetLocalesPool[0]
+    provider = deepl
+  }
+
+  const existing = { ...(previous ?? {}), [sourceLocale]: text }
+
+  return translateI18nField({
+    existing,
+    apiKey,
+    previous,
+    priorStatus,
+    targetLocalesPool,
+    provider,
+  })
 }
