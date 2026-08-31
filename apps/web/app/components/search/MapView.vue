@@ -131,6 +131,13 @@ const clusterableItems = computed<ClusterableItem[]>(() =>
 const CLUSTERING_MIN_ACTIVITIES = 30
 
 const clusters = computed(() => {
+  // Sin leaflet cargado todavía no hay pinIcon/buildClusterIcon reales —
+  // renderizar antes de eso deja que Leaflet caiga a su ícono por
+  // defecto (imagen que en un build con bundler casi siempre da 404 y
+  // queda invisible, sin que se note ningún error — el resto del mapa se
+  // ve normal). Mejor esperar el instante que tarda el import dinámico
+  // que arriesgar pines invisibles.
+  if (!leaflet.value) return []
   if (clusterableItems.value.length <= CLUSTERING_MIN_ACTIVITIES) {
     return clusterableItems.value.map((point) => ({ type: 'point' as const, point }))
   }
