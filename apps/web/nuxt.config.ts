@@ -18,6 +18,7 @@ export default defineNuxtConfig({
   // CSS Global
   css: [
     '~/assets/css/design-system.css',
+    '~/assets/css/pwa.css',
     '~/assets/css/main.css',
     //  'leaflet/dist/leaflet.css'
   ],
@@ -51,16 +52,29 @@ export default defineNuxtConfig({
       title: 'MundoPekes - Actividades en familia con niños',
       meta: [
         { charset: 'utf-8' },
-        { name: 'viewport', content: 'width=device-width, initial-scale=1' },
+        // viewport-fit=cover: sin esto env(safe-area-inset-*) siempre da 0,
+        // aunque el dispositivo tenga notch/home-indicator (ver pwa.css).
+        {
+          name: 'viewport',
+          content: 'width=device-width, initial-scale=1, viewport-fit=cover',
+        },
         // Señal al browser: renderizar siempre en modo claro (Android + iOS)
         { name: 'color-scheme', content: 'light' },
+        // Color de la barra de estado/URL cuando la PWA corre instalada
+        // (standalone) — mismo valor que theme_color del manifest.
+        { name: 'theme-color', content: '#00a896' },
+        { name: 'apple-mobile-web-app-capable', content: 'yes' },
+        { name: 'apple-mobile-web-app-status-bar-style', content: 'default' },
         {
           name: 'description',
           content:
             'Descubre las mejores actividades para hacer en familia con niños pequeños. Parques, museos, eventos y más.',
         },
       ],
-      link: [{ rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' }],
+      link: [
+        { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' },
+        { rel: 'apple-touch-icon', href: '/pwa-icons/apple-touch-icon.png' },
+      ],
     },
   },
 
@@ -77,7 +91,62 @@ export default defineNuxtConfig({
     '@sentry/nuxt/module',
     'nuxt-gtag',
     'nuxt-security',
+    '@vite-pwa/nuxt',
   ],
+
+  // PWA: manifest + service worker (Workbox generateSW vía @vite-pwa/nuxt).
+  // Alcance deliberadamente acotado a app-shell + caché de imágenes — sin
+  // offline completo, sin push, sin background sync (no hay necesidad hoy).
+  // Íconos en public/pwa-icons/ son un placeholder geométrico (ver el propio
+  // SVG fuente) hasta que exista un ícono de marca cuadrado definitivo.
+  pwa: {
+    registerType: 'autoUpdate',
+    manifest: {
+      name: 'MundoPekes - Actividades en familia',
+      short_name: 'MundoPekes',
+      description: 'Descubre las mejores actividades para hacer en familia con niños pequeños.',
+      start_url: '/',
+      scope: '/',
+      display: 'standalone',
+      background_color: '#ffffff',
+      theme_color: '#00a896',
+      icons: [
+        { src: '/pwa-icons/icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
+        { src: '/pwa-icons/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
+        {
+          src: '/pwa-icons/icon-maskable-512.png',
+          sizes: '512x512',
+          type: 'image/png',
+          purpose: 'maskable',
+        },
+      ],
+    },
+    workbox: {
+      // App-shell + imágenes solamente — el resto de las llamadas (Supabase,
+      // Google Places, /api/*) van directo a red, sin caché, para no servir
+      // datos desactualizados como si fueran resultados reales.
+      globPatterns: ['**/*.{js,css,html}'],
+      navigateFallback: '/',
+      runtimeCaching: [
+        {
+          urlPattern: /\.(?:png|jpg|jpeg|svg|webp|avif)$/,
+          handler: 'StaleWhileRevalidate',
+          options: {
+            cacheName: 'mp-images',
+            expiration: { maxEntries: 200, maxAgeSeconds: 60 * 60 * 24 * 30 },
+            cacheableResponse: { statuses: [0, 200] },
+          },
+        },
+      ],
+    },
+    devOptions: {
+      // Desactivado en dev por defecto: probar el modo standalone se hace
+      // vía "Emulate CSS media feature: display-mode" en Chrome DevTools
+      // (ver Verificación end-to-end del plan), sin necesitar el SW activo
+      // y sin arriesgar interferencia con la HMR de Nuxt.
+      enabled: false,
+    },
+  },
 
   security: {
     headers: {
@@ -85,6 +154,11 @@ export default defineNuxtConfig({
       // Places, tiles de Leaflet y storage de Supabase desde hosts externos.
       contentSecurityPolicy: {
         'img-src': ["'self'", 'data:', 'https:'],
+        // Sin esto el navegador bloquea silenciosamente el registro del
+        // service worker del módulo PWA (falla sin error visible en consola
+        // en algunos navegadores) — el riesgo más alto de "funciona en
+        // local, se rompe en producción" de todo el plan PWA.
+        'worker-src': ["'self'"],
       },
       // nuxt-security bloquea geolocation por defecto (Permissions-Policy:
       // geolocation=()), lo que impide que el navegador muestre el prompt

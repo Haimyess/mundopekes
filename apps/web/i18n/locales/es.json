@@ -6,6 +6,12 @@
     "suggest": "Sugerir Actividad",
     "contact": "Contacto"
   },
+  "pwa": {
+    "install_prompt": "Instalá MundoPekes para una experiencia más rápida, como una app.",
+    "install_prompt_ios": "Agregá MundoPekes a tu pantalla de inicio: tocá Compartir y luego \"Agregar a inicio\".",
+    "install_action": "Instalar",
+    "install_dismiss": "Cerrar"
+  },
   "hero": {
     "title": "Descubre actividades increíbles para niños",
     "subtitle": "Miles de experiencias familiares en Israel",

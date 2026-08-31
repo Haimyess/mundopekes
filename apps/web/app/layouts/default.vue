@@ -20,6 +20,7 @@
     <LayoutFooter />
 
     <ContactDrawer />
+    <PwaInstallPrompt />
   </div>
 </template>
 

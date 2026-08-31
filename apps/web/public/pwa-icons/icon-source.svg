@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!--
+    Placeholder PWA app icon: teal background (design token color-accent-500)
+    with a bold "M" monogram, vector-drawn (no system font dependency) so it
+    renders identically wherever this is rasterized. Glyph sits well
+    inside the ~80% maskable safe-zone so this single source works for
+    both "any" and "maskable" manifest icon purposes.
+    TODO: replace with a final brand mark/logo when one is designed;
+    see Fase 1 of the PWA plan (pwa-app-like-experience-dynamic-popcorn.md).
+  -->
+  <rect width="512" height="512" fill="#00a896" />
+  <path
+    d="M146,356 L146,156 L256,280 L366,156 L366,356"
+    fill="none"
+    stroke="#ffffff"
+    stroke-width="46"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+</svg>

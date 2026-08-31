@@ -25,6 +25,7 @@ const {
 
 const { categoryOptions } = useCategories()
 const { trackSearch } = useTracking()
+const { isStandalone } = usePwaMode()
 
 // ── Place matches for the same free-text query — additive, doesn't touch
 // the activity search/filter pipeline above. Lets one search box answer both
@@ -467,215 +468,230 @@ useSeoMeta({
 </script>
 
 <template>
-  <div class="search-page">
-    <div class="search-page__container">
-      <div class="search-page__header">
-        <div class="search-page__header-row">
-          <h1 class="search-page__title">{{ t('search.title') }}</h1>
+  <PwaExploreScreen
+    v-if="isStandalone"
+    v-model:drawer-open="drawerOpen"
+    :activities="displayActivities"
+    :filters="filtersFromUrl"
+    :active-filters-count="activeFiltersCount"
+    :all-activities="store.allActivities"
+    :loading-all-activities="store.loadingAllActivities"
+    :user-coords="userCoords"
+    @apply-filters="onDrawerApply"
+    @clear-filters="clearFilters"
+  />
 
-          <div class="search-page__view-toggle" role="group">
-            <button
-              type="button"
-              class="search-page__view-btn"
-              :class="{ 'search-page__view-btn--active': viewMode === 'list' }"
-              @click="viewMode = 'list'"
-            >
-              <UIcon name="i-heroicons-list-bullet" class="search-page__view-icon" />
-              <span class="search-page__view-label">{{ t('search.view_list') }}</span>
-            </button>
-            <button
-              type="button"
-              class="search-page__view-btn"
-              :class="{ 'search-page__view-btn--active': viewMode === 'map' }"
-              @click="viewMode = 'map'"
-            >
-              <UIcon name="i-heroicons-map" class="search-page__view-icon" />
-              <span class="search-page__view-label">{{ t('search.view_map') }}</span>
-            </button>
+  <template v-else>
+    <div class="search-page">
+      <div class="search-page__container">
+        <div class="search-page__header">
+          <div class="search-page__header-row">
+            <h1 class="search-page__title">{{ t('search.title') }}</h1>
+
+            <div class="search-page__view-toggle" role="group">
+              <button
+                type="button"
+                class="search-page__view-btn"
+                :class="{ 'search-page__view-btn--active': viewMode === 'list' }"
+                @click="viewMode = 'list'"
+              >
+                <UIcon name="i-heroicons-list-bullet" class="search-page__view-icon" />
+                <span class="search-page__view-label">{{ t('search.view_list') }}</span>
+              </button>
+              <button
+                type="button"
+                class="search-page__view-btn"
+                :class="{ 'search-page__view-btn--active': viewMode === 'map' }"
+                @click="viewMode = 'map'"
+              >
+                <UIcon name="i-heroicons-map" class="search-page__view-icon" />
+                <span class="search-page__view-label">{{ t('search.view_map') }}</span>
+              </button>
+            </div>
           </div>
-        </div>
-        <p class="search-page__subtitle">{{ t('search.subtitle') }}</p>
-      </div>
-
-      <!-- Barra de filtros — oculta cuando no hay resultados y no carga -->
-      <div
-        v-if="loading || activities.length > 0"
-        ref="filterBarEl"
-        class="search-page__filter-bar"
-      >
-        <!-- ── DESKTOP ──────────────────────────────────────────── -->
-        <div class="search-page__desktop-filters">
-          <UiSelect
-            v-model="localCategory"
-            :options="categoryOpts"
-            :placeholder="t('search.category')"
-            :ui="{ content: 'min-w-[12rem]' }"
-          />
-
-          <UiSelect
-            v-model="localAge"
-            :options="ageOptionsWithCount"
-            :placeholder="t('search.age')"
-            :ui="{ content: 'min-w-[14rem]' }"
-          />
-
-          <USelect
-            v-model="localCities"
-            :items="cityOptionsWithCount"
-            :placeholder="t('search.city')"
-            multiple
-            :ui="{ content: 'min-w-[12rem]' }"
-          />
-
-          <UiSelect
-            v-model="localSeason"
-            :options="seasonOptionsWithCount"
-            :placeholder="t('search.season')"
-            :ui="{ content: 'min-w-[12rem]' }"
-          />
-
-          <UiCheckbox
-            v-model="localFree"
-            :label="t('search.free')"
-            :disabled="isExtraDisabled('is_free', localFree)"
-          />
-
-          <UiCheckbox
-            v-model="localStroller"
-            :label="t('activity.stroller_friendly')"
-            :disabled="isExtraDisabled('stroller_friendly', localStroller)"
-          />
-
-          <UiCheckbox
-            v-model="localWeekends"
-            :label="t('activity.open_weekends')"
-            :disabled="isExtraDisabled('open_weekends', localWeekends)"
-          />
-
-          <div class="search-page__desktop-actions">
-            <button
-              type="button"
-              class="search-page__btn-near-me"
-              :class="{ 'search-page__btn-near-me--active': nearMeActive }"
-              :disabled="nearMeLocating"
-              @click="toggleNearMe"
-            >
-              <UIcon
-                :name="nearMeLocating ? 'i-heroicons-arrow-path' : 'i-heroicons-map-pin'"
-                class="search-page__btn-icon"
-                :class="{ 'animate-spin': nearMeLocating }"
-              />
-              {{ nearMeLocating ? t('search.near_me_locating') : t('search.near_me') }}
-            </button>
-
-            <button v-if="showClearBtn" class="search-page__btn-clear" @click="clearFilters">
-              <UIcon name="i-heroicons-x-mark" class="search-page__btn-icon" />
-              {{ t('search.clear_filters') }}
-            </button>
-
-            <button class="search-page__btn-search" @click="applyDesktopFilters">
-              <UIcon name="i-heroicons-magnifying-glass" class="search-page__btn-icon" />
-              {{ t('search.search_button') }}
-            </button>
-          </div>
+          <p class="search-page__subtitle">{{ t('search.subtitle') }}</p>
         </div>
 
-        <p v-if="nearMeError" class="search-page__near-me-error">
-          {{ t('search.near_me_error') }}
-        </p>
-
-        <!-- DESKTOP chips -->
-        <div class="search-page__desktop-chips">
-          <SearchActiveFilters
-            :filters="filtersFromUrl"
-            @remove="removeFilter"
-            @clear="clearFilters"
-          />
-        </div>
-
-        <!-- ── MOBILE ───────────────────────────────────────────── -->
-        <div class="search-page__mobile-bar">
-          <button class="search-page__filter-btn" @click="drawerOpen = true">
-            <UIcon name="i-heroicons-adjustments-horizontal" class="search-page__filter-icon" />
-            <span class="search-page__filter-label">{{ t('search.filters') }}</span>
-            <span v-if="activeFiltersCount > 0" class="search-page__filter-badge">
-              {{ activeFiltersCount }}
-            </span>
-          </button>
-
-          <button
-            type="button"
-            class="search-page__filter-btn"
-            :class="{ 'search-page__filter-btn--active': nearMeActive }"
-            :disabled="nearMeLocating"
-            :aria-label="t('search.near_me')"
-            :title="t('search.near_me')"
-            @click="toggleNearMe"
-          >
-            <UIcon
-              :name="nearMeLocating ? 'i-heroicons-arrow-path' : 'i-heroicons-map-pin'"
-              class="search-page__filter-icon"
-              :class="{ 'animate-spin': nearMeLocating }"
+        <!-- Barra de filtros — oculta cuando no hay resultados y no carga -->
+        <div
+          v-if="loading || activities.length > 0"
+          ref="filterBarEl"
+          class="search-page__filter-bar"
+        >
+          <!-- ── DESKTOP ──────────────────────────────────────────── -->
+          <div class="search-page__desktop-filters">
+            <UiSelect
+              v-model="localCategory"
+              :options="categoryOpts"
+              :placeholder="t('search.category')"
+              :ui="{ content: 'min-w-[12rem]' }"
             />
-          </button>
 
-          <div class="search-page__divider" />
+            <UiSelect
+              v-model="localAge"
+              :options="ageOptionsWithCount"
+              :placeholder="t('search.age')"
+              :ui="{ content: 'min-w-[14rem]' }"
+            />
 
-          <div class="search-page__chips-scroll">
+            <USelect
+              v-model="localCities"
+              :items="cityOptionsWithCount"
+              :placeholder="t('search.city')"
+              multiple
+              :ui="{ content: 'min-w-[12rem]' }"
+            />
+
+            <UiSelect
+              v-model="localSeason"
+              :options="seasonOptionsWithCount"
+              :placeholder="t('search.season')"
+              :ui="{ content: 'min-w-[12rem]' }"
+            />
+
+            <UiCheckbox
+              v-model="localFree"
+              :label="t('search.free')"
+              :disabled="isExtraDisabled('is_free', localFree)"
+            />
+
+            <UiCheckbox
+              v-model="localStroller"
+              :label="t('activity.stroller_friendly')"
+              :disabled="isExtraDisabled('stroller_friendly', localStroller)"
+            />
+
+            <UiCheckbox
+              v-model="localWeekends"
+              :label="t('activity.open_weekends')"
+              :disabled="isExtraDisabled('open_weekends', localWeekends)"
+            />
+
+            <div class="search-page__desktop-actions">
+              <button
+                type="button"
+                class="search-page__btn-near-me"
+                :class="{ 'search-page__btn-near-me--active': nearMeActive }"
+                :disabled="nearMeLocating"
+                @click="toggleNearMe"
+              >
+                <UIcon
+                  :name="nearMeLocating ? 'i-heroicons-arrow-path' : 'i-heroicons-map-pin'"
+                  class="search-page__btn-icon"
+                  :class="{ 'animate-spin': nearMeLocating }"
+                />
+                {{ nearMeLocating ? t('search.near_me_locating') : t('search.near_me') }}
+              </button>
+
+              <button v-if="showClearBtn" class="search-page__btn-clear" @click="clearFilters">
+                <UIcon name="i-heroicons-x-mark" class="search-page__btn-icon" />
+                {{ t('search.clear_filters') }}
+              </button>
+
+              <button class="search-page__btn-search" @click="applyDesktopFilters">
+                <UIcon name="i-heroicons-magnifying-glass" class="search-page__btn-icon" />
+                {{ t('search.search_button') }}
+              </button>
+            </div>
+          </div>
+
+          <p v-if="nearMeError" class="search-page__near-me-error">
+            {{ t('search.near_me_error') }}
+          </p>
+
+          <!-- DESKTOP chips -->
+          <div class="search-page__desktop-chips">
             <SearchActiveFilters
               :filters="filtersFromUrl"
               @remove="removeFilter"
               @clear="clearFilters"
             />
           </div>
-        </div>
-      </div>
 
-      <!-- Places strip — parallel to the activity results, only when the
+          <!-- ── MOBILE ───────────────────────────────────────────── -->
+          <div class="search-page__mobile-bar">
+            <button class="search-page__filter-btn" @click="drawerOpen = true">
+              <UIcon name="i-heroicons-adjustments-horizontal" class="search-page__filter-icon" />
+              <span class="search-page__filter-label">{{ t('search.filters') }}</span>
+              <span v-if="activeFiltersCount > 0" class="search-page__filter-badge">
+                {{ activeFiltersCount }}
+              </span>
+            </button>
+
+            <button
+              type="button"
+              class="search-page__filter-btn"
+              :class="{ 'search-page__filter-btn--active': nearMeActive }"
+              :disabled="nearMeLocating"
+              :aria-label="t('search.near_me')"
+              :title="t('search.near_me')"
+              @click="toggleNearMe"
+            >
+              <UIcon
+                :name="nearMeLocating ? 'i-heroicons-arrow-path' : 'i-heroicons-map-pin'"
+                class="search-page__filter-icon"
+                :class="{ 'animate-spin': nearMeLocating }"
+              />
+            </button>
+
+            <div class="search-page__divider" />
+
+            <div class="search-page__chips-scroll">
+              <SearchActiveFilters
+                :filters="filtersFromUrl"
+                @remove="removeFilter"
+                @clear="clearFilters"
+              />
+            </div>
+          </div>
+        </div>
+
+        <!-- Places strip — parallel to the activity results, only when the
            free-text query also matches a place in our own DB. -->
-      <div v-if="displayedPlaces.length" class="search-page__places-strip">
-        <span class="search-page__places-strip-label">{{ t('search.places_found') }}</span>
-        <div class="search-page__places-strip-row">
-          <PlaceCard v-for="place in displayedPlaces" :key="place.id" :place="place" />
+        <div v-if="displayedPlaces.length" class="search-page__places-strip">
+          <span class="search-page__places-strip-label">{{ t('search.places_found') }}</span>
+          <div class="search-page__places-strip-row">
+            <PlaceCard v-for="place in displayedPlaces" :key="place.id" :place="place" />
+          </div>
         </div>
-      </div>
 
-      <template v-if="viewMode === 'list'">
-        <SearchActivityGrid
-          :activities="displayActivities"
-          :loading="loading"
-          :total="totalResults"
-          :filters="filtersFromUrl"
-          @clear="clearAll"
-        />
-        <div v-if="totalResults > PAGE_SIZE" class="search-page__pagination">
-          <UPagination
-            :default-page="currentPage"
-            :items-per-page="PAGE_SIZE"
+        <template v-if="viewMode === 'list'">
+          <SearchActivityGrid
+            :activities="displayActivities"
+            :loading="loading"
             :total="totalResults"
-            @update:page="onPageChange"
+            :filters="filtersFromUrl"
+            @clear="clearAll"
           />
+          <div v-if="totalResults > PAGE_SIZE" class="search-page__pagination">
+            <UPagination
+              :default-page="currentPage"
+              :items-per-page="PAGE_SIZE"
+              :total="totalResults"
+              @update:page="onPageChange"
+            />
+          </div>
+        </template>
+        <div
+          v-else
+          ref="mapWrapEl"
+          class="search-page__map-wrap"
+          :style="mapWrapHeight ? { height: `${mapWrapHeight}px` } : undefined"
+        >
+          <SearchMapView :activities="displayActivities" @switch-to-list="viewMode = 'list'" />
         </div>
-      </template>
-      <div
-        v-else
-        ref="mapWrapEl"
-        class="search-page__map-wrap"
-        :style="mapWrapHeight ? { height: `${mapWrapHeight}px` } : undefined"
-      >
-        <SearchMapView :activities="displayActivities" @switch-to-list="viewMode = 'list'" />
       </div>
     </div>
-  </div>
 
-  <SearchFilterDrawer
-    v-model:open="drawerOpen"
-    :model-value="filtersFromUrl"
-    :base-activities="store.allActivities"
-    :loading-base="store.loadingAllActivities"
-    @apply="onDrawerApply"
-    @clear="clearFilters"
-  />
+    <SearchFilterDrawer
+      v-model:open="drawerOpen"
+      :model-value="filtersFromUrl"
+      :base-activities="store.allActivities"
+      :loading-base="store.loadingAllActivities"
+      @apply="onDrawerApply"
+      @clear="clearFilters"
+    />
+  </template>
 </template>
 
 <style scoped>

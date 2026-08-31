@@ -1,0 +1,28 @@
+/*
+ * Tokens PWA: safe-area (notch/home-indicator de iOS/Android) y altura de
+ * viewport dinámica. Ninguna regla acá se aplica todavía a nada — son
+ * variables que Fase 2+ va a consumir en layouts/pwa.vue y sus componentes.
+ * Requiere <meta name="viewport" content="...viewport-fit=cover"> (ver
+ * nuxt.config.ts) — sin eso env(safe-area-inset-*) siempre resuelve a 0.
+ */
+:root {
+  --safe-area-inset-top: env(safe-area-inset-top, 0px);
+  --safe-area-inset-right: env(safe-area-inset-right, 0px);
+  --safe-area-inset-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-area-inset-left: env(safe-area-inset-left, 0px);
+
+  /* Offset entre el borde inferior real y el pill flotante — chico a
+     propósito, pegado al borde (no "space-3" de antes). PwaBottomNav.vue
+     usa este mismo valor para su propio `bottom`. */
+  --pwa-bottom-nav-offset: calc(var(--safe-area-inset-bottom) + 4px);
+  /* Espacio total reservado para el bottom nav flotante (pill, no barra a
+     lo ancho): su propia altura (56px) + el offset de arriba + un respiro
+     chico para lo que flote justo encima (el carousel del mapa). El mapa
+     full-screen y otros shells PWA restan esta variable de 100dvh en vez
+     de medir con JS (ver search.vue hoy, que sí lo hace por necesidad del
+     layout actual con footer). */
+  --pwa-bottom-nav-height: calc(56px + var(--pwa-bottom-nav-offset) + var(--space-2));
+  /* Top bar mínima del shell PWA (logo + idioma) — reemplaza al Navbar de
+     desktop/mobile web, que layouts/pwa.vue no monta. */
+  --pwa-top-bar-height: calc(48px + var(--safe-area-inset-top));
+}

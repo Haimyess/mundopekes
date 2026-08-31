@@ -165,6 +165,10 @@
   --z-index-dropdown: 1000;
   --z-index-sticky: 1020;
   --z-index-fixed: 1030;
+  /* Bottom nav y top bar de la PWA (Fase 2): fixed sobre el contenido, pero
+     por debajo de modal/sheet — un bottom sheet abierto debe poder taparlos. */
+  --z-index-bottom-nav: 1035;
+  --z-index-top-bar: 1035;
   --z-index-modal-backdrop: 1040;
   --z-index-modal: 1050;
   --z-index-popover: 1060;

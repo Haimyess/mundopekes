@@ -6,6 +6,12 @@
     "suggest": "Suggest Activity",
     "contact": "Contact"
   },
+  "pwa": {
+    "install_prompt": "Install MundoPekes for a faster, app-like experience.",
+    "install_prompt_ios": "Add MundoPekes to your home screen: tap Share, then \"Add to Home Screen\".",
+    "install_action": "Install",
+    "install_dismiss": "Dismiss"
+  },
   "hero": {
     "title": "Discover amazing activities for kids",
     "subtitle": "Thousands of family experiences in Israel",

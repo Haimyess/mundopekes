@@ -1,6 +1,16 @@
-import { ref, computed, watch, watchEffect, nextTick, onMounted, onUnmounted, reactive } from 'vue'
+import {
+  ref,
+  computed,
+  watch,
+  watchEffect,
+  nextTick,
+  onMounted,
+  onUnmounted,
+  reactive,
+  readonly,
+} from 'vue'
 
-export { ref, computed, watch, watchEffect, nextTick, onMounted, onUnmounted, reactive }
+export { ref, computed, watch, watchEffect, nextTick, onMounted, onUnmounted, reactive, readonly }
 
 let _stateStore: Record<string, ReturnType<typeof ref>> = {}
 export const useState = (key: string, init?: () => unknown) => {

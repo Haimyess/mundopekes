@@ -6,6 +6,12 @@
     "suggest": "הצע פעילות",
     "contact": "צור קשר"
   },
+  "pwa": {
+    "install_prompt": "התקן/י את MundoPekes לחוויה מהירה יותר, כמו אפליקציה.",
+    "install_prompt_ios": "הוסף/י את MundoPekes למסך הבית: הקש/י על שיתוף ואז \"הוסף למסך הבית\".",
+    "install_action": "התקנה",
+    "install_dismiss": "סגור"
+  },
   "hero": {
     "title": "גלה פעילויות מדהימות לילדים",
     "subtitle": "אלפי חוויות משפחתיות בישראל",

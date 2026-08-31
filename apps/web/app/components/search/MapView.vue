@@ -13,17 +13,32 @@
  * pines). El patrón declarativo ya está probado en este mismo repo
  * (ActivityInfoLocation.vue) y además permite que el popup sea contenido
  * Vue real (estilos con scope, i18n) en vez de un string de HTML armado
- * a mano. Se pierde el agrupado automático (clustering) — se puede sumar
- * más adelante si hace falta con resultados muy densos.
+ * a mano.
+ *
+ * Clustering (Fase 4): sí se agrega, pero con clusterPoints()
+ * (useMarkerClustering.ts) — matemática pura de proyección Web Mercator,
+ * sin ninguna librería de clustering ni window.L, evitando el problema
+ * que descartó el intento anterior. Los clusters se recalculan
+ * reactivamente con el zoom real del mapa (evento 'zoomend').
  */
 import type { ComponentPublicInstance } from 'vue'
 import type { Activity } from '~/types'
+import { clusterPoints, type ClusterMarker } from '~/composables/useMarkerClustering'
 
 interface Props {
   activities: Activity[]
+  /** 'split' (default): lista + mapa lado a lado, comportamiento actual
+   * sin cambios. 'fullbleed': mapa a pantalla completa con un carousel
+   * horizontal flotante abajo en vez de la lista lateral — usado por
+   * PwaExploreScreen.vue (Fase 3). Aditivo: nunca cambia el default. */
+  chrome?: 'split' | 'fullbleed'
+  /** Coordenadas de "Cerca de mí" (search.vue) — si están presentes, el
+   * carousel del mapa (fullbleed) muestra la distancia en un badge sobre
+   * cada card. null/undefined = sin "cerca de mí" activo, sin badge. */
+  userCoords?: { lat: number; lng: number } | null
 }
 
-const props = defineProps<Props>()
+const props = withDefaults(defineProps<Props>(), { chrome: 'split', userCoords: null })
 
 const emit = defineEmits<{
   'switch-to-list': []
@@ -56,14 +71,17 @@ const mapCenter = computed<[number, number]>(() => {
   return [(Math.min(...lats) + Math.max(...lats)) / 2, (Math.min(...lngs) + Math.max(...lngs)) / 2]
 })
 
-// Ícono uniforme (pin circular con el color de acento). Se construye una
-// sola vez, en el cliente, importando `leaflet` directamente (no depende
-// de window.L / use-global-leaflet).
+// Ícono uniforme (pin circular con el color de acento) + el módulo de
+// leaflet cargado, reutilizado también para construir íconos de cluster
+// on-demand (buildClusterIcon). Se importa una sola vez, en el cliente,
+// directamente (no depende de window.L / use-global-leaflet).
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const leaflet = shallowRef<any>(null)
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const pinIcon = shallowRef<any>(null)
 onMounted(async () => {
-  const L = await import('leaflet')
-  pinIcon.value = L.divIcon({
+  leaflet.value = await import('leaflet')
+  pinIcon.value = leaflet.value.divIcon({
     className: 'map-pin',
     html: '<span class="map-pin__dot"></span>',
     iconSize: [18, 18],
@@ -71,6 +89,60 @@ onMounted(async () => {
     popupAnchor: [0, -10],
   })
 })
+
+// Tamaño del ícono de cluster escalonado por cantidad — más actividades
+// agrupadas, círculo un poco más grande (tope en 3 escalones, no crece
+// indefinidamente).
+function buildClusterIcon(count: number) {
+  if (!leaflet.value) return undefined
+  const size = count < 10 ? 34 : count < 50 ? 42 : 50
+  return leaflet.value.divIcon({
+    className: 'map-cluster',
+    html: `<span class="map-cluster__dot" style="width:${size}px;height:${size}px">${count}</span>`,
+    iconSize: [size, size],
+    iconAnchor: [size / 2, size / 2],
+  })
+}
+
+// Zoom reactivo del mapa — arranca en DEFAULT_ZOOM, se actualiza con cada
+// 'zoomend' real (ver onMapReady). Es el input clave de clusterPoints():
+// a menos zoom, más agresivo el agrupamiento.
+const zoom = ref(DEFAULT_ZOOM)
+
+type ClusterableItem = { id: string; lat: number; lng: number; activity: GeoActivity }
+
+const clusterableItems = computed<ClusterableItem[]>(() =>
+  geoActivities.value.map((a) => ({
+    id: a.id,
+    lat: Number(a.place.lat),
+    lng: Number(a.place.lng),
+    activity: a,
+  }))
+)
+
+// Con el volumen de actividades actual (decenas, no miles), agrupar
+// agresivamente terminaba mostrando 1-2 clusters gigantes y CERO pines
+// individuales apenas el mapa cargaba — la grilla de 60px cubre decenas
+// de km en un zoom alejado, y en un país geográficamente chico eso basta
+// para meter casi todo en la misma celda. Clustering solo entra en juego
+// a partir de este piso; por debajo, cada actividad es su propio pin
+// (ver plan: "no implementar optimizaciones innecesarias si el volumen
+// actual no las justifica, pero dejar la arquitectura preparada").
+const CLUSTERING_MIN_ACTIVITIES = 30
+
+const clusters = computed(() => {
+  if (clusterableItems.value.length <= CLUSTERING_MIN_ACTIVITIES) {
+    return clusterableItems.value.map((point) => ({ type: 'point' as const, point }))
+  }
+  return clusterPoints(clusterableItems.value, zoom.value)
+})
+
+function flyToCluster(cluster: ClusterMarker<ClusterableItem>) {
+  const map = leafletMap.value
+  if (!map) return
+  const targetZoom = Math.min(map.getZoom() + 3, 18)
+  map.flyTo([cluster.lat, cluster.lng], targetZoom, { duration: 0.5 })
+}
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const leafletMap = shallowRef<any>(null)
@@ -158,6 +230,21 @@ let canvasResizeObserver: ResizeObserver | undefined
 
 function onMapReady(map: unknown) {
   leafletMap.value = map
+  // En chrome="fullbleed" el alto real del canvas depende de una cadena de
+  // position:absolute/flex que puede no estar terminada de asentar en el
+  // layout del browser en el mismo instante en que Vue termina de aplicar
+  // el patch del DOM — nextTick() garantiza lo segundo, no lo primero. Se
+  // encadena requestAnimationFrame (espera al siguiente paint real) y
+  // además un segundo invalidateSize demorado como red de seguridad, ya
+  // que sin esto Leaflet cachea un tamaño viejo/chico y los pines quedan
+  // mal posicionados o directamente no se ven hasta un resize real.
+  if (import.meta.client) {
+    const m = map as { invalidateSize: () => void }
+    nextTick(() => {
+      requestAnimationFrame(() => m.invalidateSize())
+    })
+    setTimeout(() => m.invalidateSize(), 300)
+  }
 }
 
 // Leaflet cachea el tamaño en píxeles de su contenedor al montar y NO
@@ -166,13 +253,29 @@ function onMapReady(map: unknown) {
 // la conversión lat/lng → píxel queda mal y flyTo termina centrando en
 // el punto equivocado (o el pin ni se ve). invalidateSize() lo corrige
 // cada vez que el contenedor realmente cambia de tamaño.
+//
+// En chrome="fullbleed" además se reintenta fitToResults() acá mismo, no
+// solo con nextTick/rAF/setTimeout (que en dispositivo real seguían sin
+// alcanzar: el mapa quedaba en el centro/zoom por defecto del país
+// entero en vez de encuadrar a los resultados, aunque split sí
+// encuadraba bien). ResizeObserver es la única señal 100% confiable de
+// "el contenedor YA tiene su tamaño final real" — la cadena de
+// position:absolute anidada de PwaExploreScreen puede tardar más de un
+// frame en asentarse, y este observer sigue disparando hasta que lo haga.
 watch(leafletMap, (map) => {
   if (!map || !canvasEl.value || !import.meta.client) return
   canvasResizeObserver?.disconnect()
   canvasResizeObserver = new ResizeObserver(() => {
     map.invalidateSize()
+    if (props.chrome === 'fullbleed') void fitToResults(map)
   })
   canvasResizeObserver.observe(canvasEl.value)
+
+  // Zoom real del mapa → clusters se recalculan solos (ver `clusters`).
+  zoom.value = map.getZoom()
+  map.on('zoomend', () => {
+    zoom.value = map.getZoom()
+  })
 })
 
 // Hover en pin → resalta + abre popup + hace scroll en la lista para
@@ -200,10 +303,22 @@ watch(hoveredId, (id, prevId) => {
   }
 })
 
-// Encuadrar el mapa a los resultados cuando cambian
-watch([leafletMap, geoActivities], async ([map]) => {
-  if (!map || !geoActivities.value.length) return
-  await nextTick()
+// Encuadrar el mapa a los resultados cuando cambian.
+// fitBounds/setView calculan el zoom en base al tamaño CACHEADO del
+// contenedor (map.getSize()) — en chrome="fullbleed" este watcher puede
+// dispararse antes de que el layout async (position:absolute/flex)
+// termine de asentarse, así que fitBounds calcula un zoom/centro en base
+// a un tamaño chico o viejo. El resultado: el mapa "funciona" (se ve,
+// tiene tiles) pero encuadra a un punto/zoom donde ningún pin cae dentro
+// del viewport visible. invalidateSize() antes de fitBounds ataca esto,
+// pero un solo intento puede seguir corriendo antes de que el layout
+// termine de asentarse del todo — por eso se reintenta una vez más 300ms
+// después (mismo patrón defensivo que onMapReady, que sí resolvió el bug
+// original de "pines invisibles").
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function fitToResults(map: any) {
+  if (!geoActivities.value.length) return
+  map.invalidateSize()
   const L = await import('leaflet')
   if (geoActivities.value.length === 1) {
     map.setView(mapCenter.value, 14)
@@ -213,6 +328,17 @@ watch([leafletMap, geoActivities], async ([map]) => {
     geoActivities.value.map((a) => [Number(a.place.lat), Number(a.place.lng)] as [number, number])
   )
   map.fitBounds(bounds, { padding: [32, 32], maxZoom: 15 })
+}
+
+watch([leafletMap, geoActivities], async ([map]) => {
+  if (!map) return
+  await nextTick()
+  await fitToResults(map)
+  // Tamaño de contenedor 0 (o muy chico) al primer intento → getSize()
+  // sigue reportando eso hasta el próximo invalidateSize real; reintentar
+  // el encuadre completo (no solo invalidateSize) cubre el caso donde el
+  // primer fitBounds ya calculó mal el zoom con un tamaño viejo.
+  setTimeout(() => fitToResults(map), 350)
 })
 
 onBeforeUnmount(() => {
@@ -225,9 +351,9 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="search-map">
-    <!-- ── Lista de tarjetas ─────────────────────────────────────── -->
-    <div class="search-map__list" @scroll="onListScroll">
+  <div class="search-map" :class="{ 'search-map--fullbleed': chrome === 'fullbleed' }">
+    <!-- ── Lista de tarjetas (solo chrome="split") ─────────────────── -->
+    <div v-if="chrome === 'split'" class="search-map__list" @scroll="onListScroll">
       <div
         v-for="activity in geoActivities"
         :key="activity.id"
@@ -264,44 +390,60 @@ onBeforeUnmount(() => {
               name="OpenStreetMap"
             />
 
-            <LMarker
-              v-for="activity in geoActivities"
-              :key="activity.id"
-              :lat-lng="[Number(activity.place.lat), Number(activity.place.lng)]"
-              :icon="pinIcon ?? undefined"
-              @ready="(marker: unknown) => registerMarker(activity.id, marker)"
-              @mouseover="onPinEnter(activity.id)"
-              @mouseout="onPinLeave"
+            <template
+              v-for="item in clusters"
+              :key="item.type === 'point' ? item.point.id : item.id"
             >
-              <LPopup>
-                <NuxtLink :to="`/activity/${activity.id}`" class="map-popup">
-                  <div class="map-popup__img-wrap">
-                    <img
-                      v-if="imageFor(activity)"
-                      :src="imageFor(activity)!"
-                      alt=""
-                      class="map-popup__img"
-                    />
-                    <SharedNoImage v-else />
-                  </div>
-                  <div class="map-popup__body">
-                    <span class="map-popup__title">{{ tc(activity.title_i18n) }}</span>
-                    <span v-if="activity.place.city?.name" class="map-popup__city">
-                      {{ activity.place.city.name }}
-                    </span>
-                    <span v-if="priceLabel(activity)" class="map-popup__price">
-                      {{ priceLabel(activity) }}
-                    </span>
-                  </div>
-                </NuxtLink>
-              </LPopup>
-            </LMarker>
+              <!-- Cluster: círculo con conteo, click acerca zoom (no hay
+                   una sola actividad que resaltar/scrollear). -->
+              <LMarker
+                v-if="item.type === 'cluster'"
+                :lat-lng="[item.lat, item.lng]"
+                :icon="buildClusterIcon(item.count)"
+                @click="flyToCluster(item)"
+              />
+
+              <LMarker
+                v-else
+                :lat-lng="[item.point.lat, item.point.lng]"
+                :icon="pinIcon ?? undefined"
+                @ready="(marker: unknown) => registerMarker(item.point.id, marker)"
+                @mouseover="onPinEnter(item.point.id)"
+                @mouseout="onPinLeave"
+                @click="onPinEnter(item.point.id)"
+              >
+                <!-- En fullbleed el "preview" es el carousel de abajo, no el
+                     popup de Leaflet — evita pelear posicionamiento con la
+                     barra flotante/carousel fijos. -->
+                <LPopup v-if="chrome === 'split'">
+                  <NuxtLink :to="`/activity/${item.point.activity.id}`" class="map-popup">
+                    <div class="map-popup__img-wrap">
+                      <img
+                        v-if="imageFor(item.point.activity)"
+                        :src="imageFor(item.point.activity)!"
+                        alt=""
+                        class="map-popup__img"
+                      />
+                      <SharedNoImage v-else />
+                    </div>
+                    <div class="map-popup__body">
+                      <span class="map-popup__title">{{ tc(item.point.activity.title_i18n) }}</span>
+                      <span v-if="item.point.activity.place.city?.name" class="map-popup__city">
+                        {{ item.point.activity.place.city.name }}
+                      </span>
+                      <span v-if="priceLabel(item.point.activity)" class="map-popup__price">
+                        {{ priceLabel(item.point.activity) }}
+                      </span>
+                    </div>
+                  </NuxtLink>
+                </LPopup>
+              </LMarker>
+            </template>
           </LMap>
 
-          <!-- Toggle List/Mapa flotando sobre el mapa (no sobre toda la
-               página) — centrado en el mapa, deja más espacio libre para
-               el resto del contenido. -->
-          <div class="search-map__toggle" role="group">
+          <!-- Toggle List/Mapa flotando sobre el mapa (solo chrome="split"
+               — en fullbleed no hay vista de lista separada). -->
+          <div v-if="chrome === 'split'" class="search-map__toggle" role="group">
             <button type="button" class="search-map__toggle-btn" @click="emit('switch-to-list')">
               <UIcon name="i-heroicons-list-bullet" class="search-map__toggle-icon" />
               <span class="search-map__toggle-label">{{ t('search.view_list') }}</span>
@@ -319,9 +461,27 @@ onBeforeUnmount(() => {
       </ClientOnly>
 
       <!-- Aviso: actividades sin ubicación no aparecen en el mapa -->
-      <p v-if="hasNonGeoResults" class="search-map__notice">
+      <p v-if="hasNonGeoResults && chrome === 'split'" class="search-map__notice">
         {{ t('search.map_missing_location') }}
       </p>
+    </div>
+
+    <!-- ── Carousel flotante de resultados (solo chrome="fullbleed") ── -->
+    <div v-if="chrome === 'fullbleed'" class="search-map__carousel" @scroll="onListScroll">
+      <div
+        v-for="activity in geoActivities"
+        :key="activity.id"
+        :ref="(el) => setCardEl(activity.id, el)"
+        class="search-map__carousel-item"
+        :class="{ 'search-map__carousel-item--focused': hoveredId === activity.id }"
+      >
+        <SearchMapCard :activity="activity" :user-coords="userCoords" />
+      </div>
+
+      <div v-if="!geoActivities.length && activities.length" class="search-map__carousel-empty">
+        <UIcon name="i-heroicons-map-pin" class="search-map__empty-icon" />
+        <p>{{ t('search.map_no_locations') }}</p>
+      </div>
     </div>
   </div>
 </template>
@@ -483,6 +643,87 @@ onBeforeUnmount(() => {
   height: 2rem;
 }
 
+/* ── Fullbleed (PWA Explore, Fase 3): mapa a pantalla completa + ─── */
+/* carousel horizontal flotante abajo en vez de la lista lateral.     */
+/* position:absolute + inset:0 en vez de una cadena de height:100% —
+   más robusto contra el timing de montaje async de ClientOnly/Leaflet
+   (un height:100% en cascada podía resolver a 0 en el primer paint,
+   dejando el mapa y sus pines invisibles hasta un resize real). */
+.search-map--fullbleed {
+  position: absolute;
+  inset: 0;
+  gap: 0;
+}
+
+.search-map--fullbleed .search-map__map {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.search-map--fullbleed .search-map__canvas {
+  flex: 1;
+  min-height: 0;
+  height: auto;
+  border-radius: 0;
+  border: none;
+}
+
+.search-map--fullbleed .search-map__skeleton {
+  flex: 1;
+  min-height: 0;
+  height: auto;
+  border-radius: 0;
+}
+
+.search-map__carousel {
+  position: absolute;
+  inset-inline: 0;
+  /* El mapa fullbleed llega hasta el borde real de la pantalla (el bottom
+     nav flota ENCIMA, con z-index más alto) — el carousel sí necesita
+     restar la altura reservada del nav para no quedar tapado por él. */
+  bottom: var(--pwa-bottom-nav-height);
+  display: flex;
+  gap: var(--space-2);
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  padding-inline: var(--space-3);
+  padding-bottom: var(--space-2);
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  z-index: 5;
+}
+
+.search-map__carousel::-webkit-scrollbar {
+  display: none;
+}
+
+.search-map__carousel-item {
+  flex: 0 0 auto;
+  width: 10.5rem;
+  scroll-snap-align: center;
+  transition: transform var(--transition-fast);
+}
+
+.search-map__carousel-item--focused {
+  transform: translateY(-4px);
+}
+
+.search-map__carousel-empty {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  background: var(--color-bg-primary);
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--shadow-lg);
+  color: var(--color-text-tertiary);
+  font-size: var(--font-size-sm);
+}
+
 /* ── Desktop: lista a la izquierda + mapa a la derecha ──────────── */
 @media (min-width: 768px) {
   .search-map {
@@ -541,6 +782,31 @@ onBeforeUnmount(() => {
 :global(.map-pin--active .map-pin__dot) {
   transform: scale(1.35);
   background: var(--color-accent-700);
+}
+
+/* ── Cluster custom (divIcon, Fase 4) ────────────────────────────── */
+:global(.map-cluster) {
+  background: none;
+  border: none;
+}
+
+:global(.map-cluster__dot) {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  background: var(--color-accent-600);
+  color: white;
+  font-size: 0.75rem;
+  font-weight: var(--font-weight-bold);
+  border: 3px solid white;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+
+:global(.map-cluster__dot:hover) {
+  transform: scale(1.08);
 }
 
 /* ── Popup preview (contenido Vue real dentro del popup de Leaflet) ─ */
