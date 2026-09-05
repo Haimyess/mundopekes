@@ -89,10 +89,16 @@ const cityName = computed(() => props.activity?.place?.city?.name ?? null)
   background: var(--color-bg-primary);
 }
 
+/* Altura fija (no aspect-ratio): cuando la card focused crece en ancho
+   (ver .search-map__carousel-item--focused en MapView.vue) no queremos
+   que la imagen crezca en alto también — eso movería la card hacia
+   arriba/abajo. Con altura fija, crecer en ancho solo muestra un poco
+   más de imagen a los costados (object-fit: cover ya lo maneja), la card
+   se mueve únicamente hacia los lados. */
 .map-card__image-wrap {
   position: relative;
   width: 100%;
-  aspect-ratio: 16 / 9;
+  height: 5.9rem;
   background: var(--color-neutral-100);
 }
 

@@ -296,17 +296,19 @@ watch(hoveredId, (id, prevId) => {
   marker?.getElement()?.classList.add('map-pin--active')
   marker?.openPopup?.()
 
+  const activity = geoActivities.value.find((a) => a.id === id)
+  const map = leafletMap.value
+  if (activity && map) {
+    const targetZoom = Math.max(map.getZoom(), 15)
+    map.flyTo([Number(activity.place.lat), Number(activity.place.lng)], targetZoom, {
+      duration: 0.5,
+    })
+  }
+
   if (hoverSource.value === 'marker') {
-    cardElById.get(id)?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
-  } else if (hoverSource.value === 'card') {
-    const activity = geoActivities.value.find((a) => a.id === id)
-    const map = leafletMap.value
-    if (activity && map) {
-      const targetZoom = Math.max(map.getZoom(), 15)
-      map.flyTo([Number(activity.place.lat), Number(activity.place.lng)], targetZoom, {
-        duration: 0.5,
-      })
-    }
+    // inline: 'center' (no el 'nearest' por default) — la card enfocada
+    // debe quedar centrada en el carousel horizontal, no solo visible.
+    cardElById.get(id)?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' })
   }
 })
 
@@ -419,10 +421,16 @@ onBeforeUnmount(() => {
                 @mouseout="onPinLeave"
                 @click="onPinEnter(item.point.id)"
               >
-                <!-- En fullbleed el "preview" es el carousel de abajo, no el
-                     popup de Leaflet — evita pelear posicionamiento con la
-                     barra flotante/carousel fijos. -->
-                <LPopup v-if="chrome === 'split'">
+                <!-- Se renderiza siempre, incluso en fullbleed (donde el
+                     "preview" real es el carousel de abajo) — queda oculto
+                     por CSS (.search-map--fullbleed :global(.leaflet-popup-pane)),
+                     no sacado del todo. Prueba puntual: es la única
+                     diferencia estructural entre split (pines OK) y
+                     fullbleed (pines invisibles) que quedaba sin descartar
+                     — si esto arregla fullbleed, confirma que vue-leaflet
+                     necesita el slot de LPopup para terminar de montar el
+                     marker en el mapa. -->
+                <LPopup>
                   <NuxtLink :to="`/activity/${item.point.activity.id}`" class="map-popup">
                     <div class="map-popup__img-wrap">
                       <img
@@ -684,6 +692,13 @@ onBeforeUnmount(() => {
   border-radius: 0;
 }
 
+/* El LPopup se renderiza siempre (ver comentario en el template) pero en
+   fullbleed el preview real es el carousel de abajo — se oculta visual,
+   no se saca del DOM. */
+.search-map--fullbleed :global(.leaflet-popup-pane) {
+  display: none;
+}
+
 .search-map__carousel {
   position: absolute;
   inset-inline: 0;
@@ -710,11 +725,26 @@ onBeforeUnmount(() => {
   flex: 0 0 auto;
   width: 10.5rem;
   scroll-snap-align: center;
-  transition: transform var(--transition-fast);
+  /* width real (no transform:scale) — así crecer empuja a las vecinas de
+     verdad en vez de superponerse encima, y el gap del carousel mantiene
+     la separación sola. transition en width anima el crecimiento sin
+     saltos. */
+  transition:
+    width var(--transition-slow),
+    box-shadow var(--transition-slow);
 }
 
+/* Pin tocado → la card correspondiente crece ~20% EN ANCHO (no alto, ver
+   height fijo en SearchMapCard) y se destaca con shadow — así nunca se
+   mueve verticalmente ni se recorta contra el borde del carousel, solo
+   se desplaza hacia los lados, empujando a sus vecinas y manteniendo la
+   separación entre cards. */
 .search-map__carousel-item--focused {
-  transform: translateY(-4px);
+  position: relative;
+  z-index: 1;
+  width: 12.6rem;
+  box-shadow: var(--shadow-lg);
+  border-radius: var(--border-radius-lg);
 }
 
 .search-map__carousel-empty {

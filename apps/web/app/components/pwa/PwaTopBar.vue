@@ -10,6 +10,10 @@
  * es un lockup decorativo ancho con fondo oscuro, ilegible achicado a la
  * altura de esta barra — un wordmark de texto real con la tipografía de
  * marca se lee mejor a este tamaño.
+ *
+ * NO es fixed: vive dentro de .pwa-shell__content (layouts/pwa.vue), en
+ * el flujo normal del documento — se desplaza con la página como
+ * cualquier encabezado, no queda flotando encima del contenido.
  */
 </script>
 
@@ -22,17 +26,14 @@
 
 <style scoped>
 .pwa-top-bar {
-  position: fixed;
-  inset-inline: 0;
-  top: 0;
-  height: var(--pwa-top-bar-height);
-  padding-top: var(--safe-area-inset-top);
-  padding-inline: var(--space-4);
+  /* padding-top con el safe-area: acá arriba de todo es donde puede
+     tocar el notch/status bar, antes de que el usuario scrollee. */
+  padding-top: calc(var(--safe-area-inset-top) + var(--space-2));
+  padding-bottom: var(--space-2);
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: var(--space-3);
-  z-index: var(--z-index-top-bar);
 }
 
 .pwa-top-bar__logo {

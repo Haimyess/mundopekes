@@ -22,7 +22,4 @@
      de medir con JS (ver search.vue hoy, que sí lo hace por necesidad del
      layout actual con footer). */
   --pwa-bottom-nav-height: calc(56px + var(--pwa-bottom-nav-offset) + var(--space-2));
-  /* Top bar mínima del shell PWA (logo + idioma) — reemplaza al Navbar de
-     desktop/mobile web, que layouts/pwa.vue no monta. */
-  --pwa-top-bar-height: calc(48px + var(--safe-area-inset-top));
 }

@@ -1,35 +1,42 @@
 <script setup lang="ts">
 /**
- * Shell de la PWA instalada (standalone) — sin Navbar/Footer, con bottom
- * nav fija. Seleccionado dinámicamente por middleware/pwa-layout.global.ts,
- * nunca vía definePageMeta de una página individual. Todas las páginas
- * se renderizan sin cambios adentro del <slot/> — el shell no altera su
- * contenido, solo el chrome alrededor.
+ * Shell de la PWA instalada (standalone) — sin Navbar/Footer clásico, con
+ * bottom nav fija. Seleccionado dinámicamente por
+ * middleware/pwa-layout.global.ts, nunca vía definePageMeta de una página
+ * individual. Todas las páginas se renderizan sin cambios adentro del
+ * <slot/> — el shell no altera su contenido, solo el chrome alrededor.
+ *
+ * PwaTopBar vive DENTRO de .pwa-shell__content (el área con scroll), no
+ * como elemento fixed — Haim lo pidió así explícitamente: el logo/idioma
+ * deben desplazarse con la página como cualquier encabezado normal, no
+ * quedar flotando encima del contenido todo el tiempo.
  *
  * Excepción: /search (PwaExploreScreen, Fase 3) pide el mapa a pantalla
  * completa — ahí se saca la PwaTopBar y el padding del content para que
  * el mapa llegue hasta arriba (PwaFloatingSearchBar ocupa ese rol en su
- * lugar); la bottom nav se mantiene siempre, es la navegación principal
- * del shell, no algo específico de una pantalla.
+ * lugar). La bottom nav también se saca en activity/place — esas páginas
+ * ya tienen su propio botón de volver, la nav de abajo sobra ahí.
  */
 import { useRoute } from 'nuxt/app'
 
 const route = useRoute()
 const isFullBleedRoute = computed(() => route.path === '/search')
+const hideBottomNav = computed(
+  () => route.path.startsWith('/activity/') || route.path.startsWith('/place/')
+)
 </script>
 
 <template>
   <div class="pwa-shell">
-    <PwaTopBar v-if="!isFullBleedRoute" />
-
     <main
       class="pwa-shell__content"
       :class="{ 'pwa-shell__content--full-bleed': isFullBleedRoute }"
     >
+      <PwaTopBar v-if="!isFullBleedRoute" />
       <slot />
     </main>
 
-    <PwaBottomNav />
+    <PwaBottomNav v-if="!hideBottomNav" />
     <ContactDrawer />
   </div>
 </template>
@@ -66,10 +73,9 @@ const isFullBleedRoute = computed(() => route.path === '/search')
      lo necesita para las páginas normales, y la Fase 3 (mapa full-bleed)
      va a tener que contrarrestarlo explícitamente en su propio componente. */
   padding-inline: var(--space-4);
-  /* Deja lugar para la top bar y la bottom nav fijas — ambas ya incluyen
-     su propio safe-area-inset en --pwa-top-bar-height/--pwa-bottom-nav-height
-     (ver pwa.css). */
-  padding-top: var(--pwa-top-bar-height);
+  /* Ya no se reserva padding-top para la top bar — ahora vive en el flujo
+     normal del contenido (ver PwaTopBar más abajo), no fixed. Solo queda
+     reservar espacio para la bottom nav, que sí sigue flotando fija. */
   padding-bottom: var(--pwa-bottom-nav-height);
 }
 

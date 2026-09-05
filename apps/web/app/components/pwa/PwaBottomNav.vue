@@ -148,15 +148,18 @@ const wizardOpen = ref(false)
 </template>
 
 <style scoped>
-/* Pill flotante — no una barra a lo ancho pegada al borde inferior, con
-   sombra en vez de una línea divisoria. */
+/* Pill flotante compacta — centrada y del ancho justo para sus 5 íconos
+   (no estirada de punta a punta), para que queden juntos como en la
+   referencia, en vez de repartidos en todo el ancho de pantalla. */
 .pwa-bottom-nav {
   position: fixed;
-  inset-inline: var(--space-4);
+  left: 50%;
+  transform: translateX(-50%);
   bottom: var(--pwa-bottom-nav-offset);
-  height: 56px;
+  height: 52px;
   display: flex;
   align-items: stretch;
+  padding-inline: var(--space-1);
   background: var(--color-bg-primary);
   border-radius: var(--border-radius-full);
   box-shadow: var(--shadow-lg);
@@ -164,7 +167,8 @@ const wizardOpen = ref(false)
 }
 
 .pwa-bottom-nav__item {
-  flex: 1;
+  flex: 0 0 auto;
+  width: 2.75rem;
   display: flex;
   align-items: center;
   justify-content: center;
