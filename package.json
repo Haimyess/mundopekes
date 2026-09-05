@@ -28,8 +28,10 @@
     "sharp": "0.35.3",
     "h3": "1.15.11",
     "esbuild": "^0.28.1",
-    "fast-uri": "4.1.3",
-    "nanoid": "3.3.18"
+    "fast-uri": "4.1.4",
+    "nanoid": "3.3.18",
+    "js-yaml": "4.3.2",
+    "semver": "7.8.5"
   },
   "engines": {
     "node": "22.x"

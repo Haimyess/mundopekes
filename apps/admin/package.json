@@ -47,7 +47,7 @@
     "oxc-parser": "*",
     "oxc-walker": "*",
     "typescript": "^5.9.3",
-    "vitest": "^4.1.4",
+    "vitest": "^4.1.11",
     "vue-tsc": "^3.2.5"
   }
 }
