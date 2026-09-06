@@ -120,6 +120,17 @@ const mapsUrl = computed(() => {
 <style scoped>
 @import 'leaflet/dist/leaflet.css';
 
+/* Sin controles de zoom +/- ni atribución "Leaflet | OpenStreetMap"
+   flotando sobre el mapa — Leaflet los inyecta fuera del árbol scoped,
+   por eso :global(). Mismo criterio que search/MapView.vue. */
+:global(.leaflet-control-zoom) {
+  display: none;
+}
+
+:global(.leaflet-control-attribution) {
+  display: none;
+}
+
 /* ── Card base ───────────────────────────────────────────────── */
 .info-section {
   overflow: hidden;

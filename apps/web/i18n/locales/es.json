@@ -144,7 +144,8 @@
     "about": "Sobre nosotros",
     "privacy": "Privacidad",
     "terms": "Términos",
-    "rights": "Todos los derechos reservados"
+    "rights": "Todos los derechos reservados",
+    "map_credit": "Datos de mapas © colaboradores de OpenStreetMap"
   },
   "suggest": {
     "title": "Sugerir una actividad",

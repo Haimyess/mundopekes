@@ -142,7 +142,8 @@
     "about": "אודות",
     "privacy": "פרטיות",
     "terms": "תנאים",
-    "rights": "כל הזכויות שמורות"
+    "rights": "כל הזכויות שמורות",
+    "map_credit": "נתוני מפה © תורמי OpenStreetMap"
   },
   "suggest": {
     "title": "הצע פעילות",

@@ -28,7 +28,10 @@ const footerLinks = [
           </button>
         </nav>
 
-        <p class="footer__copy">© {{ currentYear }} MundoPekes</p>
+        <div class="footer__legal">
+          <p class="footer__copy">© {{ currentYear }} MundoPekes</p>
+          <p class="footer__map-credit">{{ t('footer.map_credit') }}</p>
+        </div>
       </div>
     </UiContainer>
   </footer>
@@ -80,10 +83,29 @@ const footerLinks = [
   color: var(--color-text-primary);
 }
 
+.footer__legal {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
 .footer__copy {
   font-size: var(--font-size-xs);
   color: var(--color-text-tertiary, #a3a3a3);
   margin: 0;
+}
+
+.footer__map-credit {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-tertiary, #a3a3a3);
+  margin: 0;
+}
+
+@media (min-width: 768px) {
+  .footer__legal {
+    align-items: flex-end;
+  }
 }
 
 @media (min-width: 768px) {

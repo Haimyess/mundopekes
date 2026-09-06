@@ -375,7 +375,11 @@ onBeforeUnmount(() => {
         <SharedActivityCard :activity="activity" variant="compact" />
       </div>
 
-      <div v-if="!geoActivities.length && activities.length" class="search-map__empty">
+      <div v-if="!activities.length" class="search-map__empty">
+        <UIcon name="i-heroicons-face-frown" class="search-map__empty-icon" />
+        <p>{{ t('search.no_results') }}</p>
+      </div>
+      <div v-else-if="!geoActivities.length" class="search-map__empty">
         <UIcon name="i-heroicons-map-pin" class="search-map__empty-icon" />
         <p>{{ t('search.map_no_locations') }}</p>
       </div>
@@ -493,7 +497,11 @@ onBeforeUnmount(() => {
         <SearchMapCard :activity="activity" :user-coords="userCoords" />
       </div>
 
-      <div v-if="!geoActivities.length && activities.length" class="search-map__carousel-empty">
+      <div v-if="!activities.length" class="search-map__carousel-empty">
+        <UIcon name="i-heroicons-face-frown" class="search-map__empty-icon" />
+        <p>{{ t('search.no_results') }}</p>
+      </div>
+      <div v-else-if="!geoActivities.length" class="search-map__carousel-empty">
         <UIcon name="i-heroicons-map-pin" class="search-map__empty-icon" />
         <p>{{ t('search.map_no_locations') }}</p>
       </div>
@@ -503,6 +511,18 @@ onBeforeUnmount(() => {
 
 <style scoped>
 @import 'leaflet/dist/leaflet.css';
+
+/* Sin controles de zoom +/- (pinch-to-zoom / rueda alcanzan en mobile y
+   desktop) ni atribución "Leaflet | OpenStreetMap" flotando sobre el
+   mapa — mismo patrón :global() que .leaflet-popup-pane más abajo, ya
+   que estos controles los inyecta Leaflet fuera del árbol scoped. */
+:global(.leaflet-control-zoom) {
+  display: none;
+}
+
+:global(.leaflet-control-attribution) {
+  display: none;
+}
 
 .search-map {
   display: flex;

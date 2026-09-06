@@ -512,12 +512,11 @@ useSeoMeta({
           <p class="search-page__subtitle">{{ t('search.subtitle') }}</p>
         </div>
 
-        <!-- Barra de filtros — oculta cuando no hay resultados y no carga -->
-        <div
-          v-if="loading || activities.length > 0"
-          ref="filterBarEl"
-          class="search-page__filter-bar"
-        >
+        <!-- Barra de filtros — siempre visible, incluso con 0 resultados,
+             para que el usuario pueda ver/cambiar el filtro que lo llevó
+             ahí (antes se ocultaba entera y no había forma de volver a
+             tocar el select de categoría salvo editando la URL). -->
+        <div ref="filterBarEl" class="search-page__filter-bar">
           <!-- ── DESKTOP ──────────────────────────────────────────── -->
           <div class="search-page__desktop-filters">
             <UiSelect

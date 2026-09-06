@@ -142,7 +142,8 @@
     "about": "About us",
     "privacy": "Privacy",
     "terms": "Terms",
-    "rights": "All rights reserved"
+    "rights": "All rights reserved",
+    "map_credit": "Map data © OpenStreetMap contributors"
   },
   "suggest": {
     "title": "Suggest an activity",
