@@ -43,7 +43,6 @@ interface CityOption {
 // ver EntityFormLabels['i18nField'] más abajo.
 export interface I18nFieldLabels {
   hint: string
-  translateError: string
   showMore: string
   hideEmpty: string
   autoTranslated: string
@@ -140,6 +139,9 @@ const emit = defineEmits<{
   'update:nameI18n': [value: Record<string, string>]
   'update:titleI18n': [value: Record<string, string>]
   'update:descriptionI18n': [value: Record<string, string>]
+  'update:nameI18nStatus': [value: FieldI18nStatus | undefined]
+  'update:titleI18nStatus': [value: FieldI18nStatus | undefined]
+  'update:descriptionI18nStatus': [value: FieldI18nStatus | undefined]
   'update:city': [value: string]
   'update:address': [value: string]
   'update:cityId': [value: number | null]
@@ -224,7 +226,9 @@ const showPlaceIdentity = computed(() => props.showPlaceIdentity !== false)
     :label="labels.placeName"
     :status="nameI18nStatus"
     :labels="labels.i18nField"
+    :ui-locale="locale"
     required
+    @update:status="emit('update:nameI18nStatus', $event)"
   />
 
   <UiI18nTabs
@@ -232,8 +236,10 @@ const showPlaceIdentity = computed(() => props.showPlaceIdentity !== false)
     :label="labels.description"
     :status="descriptionI18nStatus"
     :labels="labels.i18nField"
+    :ui-locale="locale"
     type="textarea"
     :rows="3"
+    @update:status="emit('update:descriptionI18nStatus', $event)"
   />
 
   <UiI18nTabs
@@ -242,7 +248,9 @@ const showPlaceIdentity = computed(() => props.showPlaceIdentity !== false)
     :label="labels.activityTitle"
     :status="titleI18nStatus"
     :labels="labels.i18nField"
+    :ui-locale="locale"
     :required="type === 'activity'"
+    @update:status="emit('update:titleI18nStatus', $event)"
   />
 
   <!-- Ubicación: sugerencia usa ciudad/dirección en texto libre (viene del wizard), -->

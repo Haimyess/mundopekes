@@ -416,10 +416,8 @@
     "loading": "Cargando…",
     "i18nField": {
       "hint": "Escribí en cualquier idioma — el resto se completa solo",
-      "translateError": "No se pudo traducir automáticamente",
-      "missingLanguages": "Faltan estos idiomas",
       "showMore": "Ver más idiomas",
-      "hideEmpty": "Ocultar idiomas vacíos",
+      "hideEmpty": "Ocultar idiomas",
       "autoTranslated": "Traducido automáticamente",
       "translationFailed": "La traducción automática falló — se conservó el texto anterior"
     },

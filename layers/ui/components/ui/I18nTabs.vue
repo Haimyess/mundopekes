@@ -2,24 +2,25 @@
 // Editor de un campo i18n (Record<locale,string>) — sin tabs, sin acordeón
 // (probamos ambos, Haim los sacó: se veían mal/desordenados y el segundo
 // ocultaba idiomas ya traducidos detrás de un popover de sólo lectura, sin
-// dejar editarlos). Diseño actual: un input por cada locale que YA tiene
-// contenido (editable directo, con su etiqueta de idioma arriba); si ningún
-// locale tiene contenido todavía (alta nueva) se muestra un único input
-// "primario" sin idioma asignado para arrancar a escribir. Un botón "Ver más
-// idiomas" revela inputs editables para el resto (vacíos) — no un preview de
-// sólo lectura.
+// dejar editarlos). Diseño actual: se muestra un único input por default, el
+// del idioma de interfaz del admin (`uiLocale`, es/en) — tenga o no contenido
+// todavía. Un botón "Ver más idiomas" revela el resto (editables, tengan o no
+// contenido) — no un preview de sólo lectura.
 //
-// Al perder el foco de cualquier input se llama a POST /api/i18n/translate-field:
-// - el input primario (sin locale conocido) manda sólo el texto — el server
-//   detecta el idioma con DeepL (DeepLProvider.detectLanguage).
-// - cualquier input ya identificado (tiene su propio locale) manda ese
-//   locale directo, sin detección.
-// En ambos casos el server corre después el mismo translateI18nField que ya
-// se usaba al guardar la entidad (protege locales marcados 'manual', traduce
-// el resto) — sólo que ahora se ve en vivo mientras el drawer sigue abierto.
+// Al perder el foco de cualquier input se llama a POST /api/i18n/translate-field
+// con su locale (siempre conocido: es el del input, sea el default o uno
+// expandido) — el server corre translateI18nField, el mismo que ya se usaba
+// al guardar la entidad (protege locales marcados 'manual', traduce el
+// resto a partir de ESE input, sin importar cuál sea) — sólo que ahora se ve
+// en vivo mientras el drawer sigue abierto.
 //
 // `status` (opcional) es el FieldI18nStatus de ese campo (suggestions.i18n_status,
 // places.i18n_status, activities.i18n_status — ver layers/domain/types/i18n-status.ts).
+// El componente emite `update:status` con el resultado de cada traducción en
+// vivo — el caller lo debe guardar y mandarlo de vuelta al servidor al hacer
+// Guardar (ver EntityFormFields.vue y los 3 drawers), porque el servidor ya
+// no puede reconstruirlo comparando contra la DB (el blur tradujo antes de
+// que el guardado llegue, así que todo aparece "cambiado").
 // Reutilizado en los 3 drawers del admin (actividad/lugar/sugerencia) vía
 // EntityFormFields.
 import type { FieldI18nStatus, LocaleStatusEntry } from '../../../domain/types/i18n-status'
@@ -46,8 +47,6 @@ interface TranslateFieldResponse {
 // lo pasan.
 interface I18nFieldLabels {
   hint: string
-  translateError: string
-  missingLanguages: string
   showMore: string
   hideEmpty: string
   autoTranslated: string
@@ -56,10 +55,8 @@ interface I18nFieldLabels {
 
 const DEFAULT_LABELS: I18nFieldLabels = {
   hint: 'Type in any language — the rest fills in on its own',
-  translateError: 'Automatic translation failed',
-  missingLanguages: 'Missing',
   showMore: 'Show more languages',
-  hideEmpty: 'Hide empty languages',
+  hideEmpty: 'Hide languages',
   autoTranslated: 'Automatically translated',
   translationFailed: 'Automatic translation failed — the previous text was kept',
 }
@@ -70,11 +67,14 @@ const props = withDefaults(
     type?: 'input' | 'textarea'
     rows?: number
     label?: string
-    placeholder?: string
     required?: boolean
     locales?: LocaleItem[]
     status?: FieldI18nStatus
     labels?: I18nFieldLabels
+    // Idioma de interfaz del admin (es/en) — decide qué input se muestra por
+    // default, colapsado. No confundir con `locales` (los idiomas de
+    // CONTENIDO que se pueden editar acá).
+    uiLocale?: string
   }>(),
   {
     type: 'input',
@@ -87,6 +87,7 @@ const t = computed<I18nFieldLabels>(() => props.labels ?? DEFAULT_LABELS)
 
 const emit = defineEmits<{
   'update:modelValue': [value: Record<string, string>]
+  'update:status': [value: FieldI18nStatus | undefined]
 }>()
 
 const { localeMeta } = useContentLocales()
@@ -94,8 +95,6 @@ const { localeMeta } = useContentLocales()
 const resolvedLocales = computed<LocaleItem[]>(
   () => props.locales ?? localeMeta.map((l) => ({ key: l.code, label: l.name }))
 )
-
-const isMissing = (key: string) => !props.modelValue?.[key]?.trim()
 
 // Refleja el status ya guardado (props.status) hasta que una traducción en
 // vivo de esta sesión de edición lo actualice.
@@ -124,13 +123,25 @@ const statusTitle = (key: string): string | undefined => {
   return undefined
 }
 
-// Se muestran siempre los locales con contenido; si ninguno tiene todavía
-// (alta nueva) se usa el input primario en su lugar (ver template).
-const filledLocales = computed(() => resolvedLocales.value.filter((l) => !isMissing(l.key)))
+// Se muestra siempre un único input por default: el del idioma de interfaz
+// del admin (uiLocale), tenga o no contenido — "Ver más idiomas" revela el
+// resto (también tengan o no contenido, ya no depende de si están vacíos).
+const defaultLocale = computed<LocaleItem | undefined>(
+  () => resolvedLocales.value.find((l) => l.key === props.uiLocale) ?? resolvedLocales.value[0]
+)
 const expanded = ref(false)
-const shownLocales = computed(() => (expanded.value ? resolvedLocales.value : filledLocales.value))
-const hiddenLocales = computed(() =>
-  resolvedLocales.value.filter((l) => !filledLocales.value.some((s) => s.key === l.key))
+// Todos los locales salvo el default — constante sin importar `expanded`,
+// se usa para decidir si el toggle "ver más/ocultar" tiene sentido y para
+// el contador del botón.
+const otherLocales = computed<LocaleItem[]>(() =>
+  resolvedLocales.value.filter((l) => l.key !== defaultLocale.value?.key)
+)
+const shownLocales = computed<LocaleItem[]>(() =>
+  expanded.value ? resolvedLocales.value : defaultLocale.value ? [defaultLocale.value] : []
+)
+// Un idioma oculto en 'error' no debería perder visibilidad sólo por estar colapsado.
+const hiddenHasError = computed(
+  () => !expanded.value && otherLocales.value.some((l) => translationState(l.key) === 'error')
 )
 
 // "Baseline": el último estado confirmado con el server (carga inicial o
@@ -153,12 +164,11 @@ watch(
     if (JSON.stringify(newVal ?? {}) === JSON.stringify(lastEmitted)) return
     baseline.value = { ...(newVal ?? {}) }
     liveStatus.value = undefined
+    expanded.value = false
   }
 )
 
 const loadingLocale = ref<string | null>(null)
-const primaryDraft = ref('')
-const primaryError = ref(false)
 
 const handleBlur = async (locale: string) => {
   const text = props.modelValue?.[locale] ?? ''
@@ -176,36 +186,11 @@ const handleBlur = async (locale: string) => {
     })
     emitValue(value)
     liveStatus.value = status
+    emit('update:status', status)
     baseline.value = { ...value }
   } catch {
     // Sin traducción automática, al menos no perdemos lo que se tipeó.
     baseline.value = { ...props.modelValue }
-  } finally {
-    loadingLocale.value = null
-  }
-}
-
-const handlePrimaryBlur = async () => {
-  const text = primaryDraft.value
-  if (!text.trim()) return
-
-  loadingLocale.value = '__primary__'
-  primaryError.value = false
-  try {
-    const { value, status } = await $fetch<TranslateFieldResponse>('/api/i18n/translate-field', {
-      method: 'POST',
-      body: { text, previous: baseline.value, priorStatus: effectiveStatus.value },
-    })
-    emitValue(value)
-    liveStatus.value = status
-    baseline.value = { ...value }
-    primaryDraft.value = ''
-  } catch {
-    primaryError.value = true
-    const fallbackLocale = resolvedLocales.value[0]?.key ?? 'es'
-    const value = { ...props.modelValue, [fallbackLocale]: text }
-    emitValue(value)
-    baseline.value = { ...value }
   } finally {
     loadingLocale.value = null
   }
@@ -218,32 +203,7 @@ const setLocaleText = (key: string, value: string) => {
 
 <template>
   <UFormField :label="label" :required="required">
-    <template v-if="filledLocales.length === 0">
-      <UTextarea
-        v-if="type === 'textarea'"
-        v-model="primaryDraft"
-        :rows="rows"
-        :placeholder="placeholder ?? label"
-        class="w-full"
-        @blur="handlePrimaryBlur"
-      />
-      <UInput
-        v-else
-        v-model="primaryDraft"
-        :placeholder="placeholder ?? label"
-        class="w-full"
-        @blur="handlePrimaryBlur"
-      />
-      <p class="text-xs text-(--ui-text-muted) mt-1 flex items-center gap-1.5">
-        <UIcon
-          v-if="loadingLocale === '__primary__'"
-          name="i-lucide-loader-2"
-          class="animate-spin size-3"
-        />
-        <template v-if="primaryError">{{ t.translateError }}</template>
-        <template v-else>{{ t.hint }}</template>
-      </p>
-    </template>
+    <p v-if="!expanded" class="text-xs text-(--ui-text-muted) mb-1">{{ t.hint }}</p>
 
     <div v-for="l in shownLocales" :key="l.key" class="flex flex-col gap-1 mb-2 last:mb-0">
       <span class="text-xs text-(--ui-text-muted) flex items-center gap-1.5">
@@ -276,10 +236,7 @@ const setLocaleText = (key: string, value: string) => {
       />
     </div>
 
-    <div v-if="!expanded && hiddenLocales.length" class="flex flex-col gap-1 items-start">
-      <p class="text-xs text-(--ui-text-muted)">
-        {{ t.missingLanguages }}: {{ hiddenLocales.map((l) => l.label).join(', ') }}
-      </p>
+    <div v-if="!expanded && otherLocales.length" class="flex items-center gap-2">
       <UButton
         size="xs"
         color="neutral"
@@ -287,11 +244,16 @@ const setLocaleText = (key: string, value: string) => {
         trailing-icon="i-lucide-chevron-down"
         @click="expanded = true"
       >
-        {{ t.showMore }} ({{ hiddenLocales.length }})
+        {{ t.showMore }} ({{ otherLocales.length }})
       </UButton>
+      <span
+        v-if="hiddenHasError"
+        class="w-2 h-2 rounded-full inline-block bg-red-500"
+        :title="t.translationFailed"
+      />
     </div>
     <UButton
-      v-else-if="expanded && hiddenLocales.length"
+      v-else-if="expanded && otherLocales.length"
       size="xs"
       color="neutral"
       variant="ghost"

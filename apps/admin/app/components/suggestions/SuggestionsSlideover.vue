@@ -158,8 +158,6 @@ const FORM_LABELS = computed(() => ({
   loading: t('suggestionsSlideover.loading'),
   i18nField: {
     hint: t('entityForm.i18nField.hint'),
-    translateError: t('entityForm.i18nField.translateError'),
-    missingLanguages: t('entityForm.i18nField.missingLanguages'),
     showMore: t('entityForm.i18nField.showMore'),
     hideEmpty: t('entityForm.i18nField.hideEmpty'),
     autoTranslated: t('entityForm.i18nField.autoTranslated'),
@@ -273,6 +271,9 @@ const isEditing = ref(false)
 const editForm = reactive({
   name_i18n: {} as Record<string, string>,
   description_i18n: {} as Record<string, string>,
+  name_i18n_status: undefined as FieldI18nStatus | undefined,
+  description_i18n_status: undefined as FieldI18nStatus | undefined,
+  title_i18n_status: undefined as FieldI18nStatus | undefined,
   location: { city: '', address: '' },
   category_id: '' as string,
   age_range_ids: [] as number[],
@@ -301,6 +302,9 @@ const startEditing = () => {
 
   editForm.name_i18n = { ...(s.name_i18n ?? {}) }
   editForm.description_i18n = { ...(s.description_i18n ?? {}) }
+  editForm.name_i18n_status = s.i18n_status?.name
+  editForm.description_i18n_status = s.i18n_status?.description
+  editForm.title_i18n_status = s.i18n_status?.title
   editForm.location.city = s.location?.city ?? ''
   editForm.location.address = s.location?.address ?? ''
   editForm.category_id = s.category_id ?? ''
@@ -362,8 +366,14 @@ const saveEdit = async () => {
           // with editForm's unused defaults.
           ...(isExistingPlace
             ? {}
-            : { name_i18n: editForm.name_i18n, location: editForm.location }),
+            : {
+                name_i18n: editForm.name_i18n,
+                name_i18n_status: editForm.name_i18n_status,
+                location: editForm.location,
+              }),
           description_i18n: editForm.description_i18n,
+          description_i18n_status: editForm.description_i18n_status,
+          title_i18n_status: editForm.title_i18n_status,
           category_id: editForm.category_id || null,
           age_range: { ids: editForm.age_range_ids },
           best_season: editForm.best_season,
@@ -887,6 +897,9 @@ const pickI18n = (obj: Record<string, string> | null | undefined): string => {
             v-model:name-i18n="editForm.name_i18n"
             v-model:description-i18n="editForm.description_i18n"
             v-model:title-i18n="editForm.meta_title_i18n"
+            v-model:name-i18n-status="editForm.name_i18n_status"
+            v-model:description-i18n-status="editForm.description_i18n_status"
+            v-model:title-i18n-status="editForm.title_i18n_status"
             v-model:city="editForm.location.city"
             v-model:address="editForm.location.address"
             v-model:category-id="editForm.category_id"
@@ -905,9 +918,7 @@ const pickI18n = (obj: Record<string, string> | null | undefined): string => {
             v-model:activity-website="editForm.meta_activity_website"
             v-model:images="editForm.images"
             type="suggestion"
-            :name-i18n-status="suggestion?.i18n_status?.name"
-            :description-i18n-status="suggestion?.i18n_status?.description"
-            :title-i18n-status="suggestion?.i18n_status?.title"
+            :locale="locale"
             :show-place-identity="suggestion.suggestion_type !== 'experience_for_existing_place'"
             :subcategory-options="subcategories"
             :age-range-options="dbAgeRanges"
@@ -919,7 +930,6 @@ const pickI18n = (obj: Record<string, string> | null | undefined): string => {
             :google-photos="meta.photos ?? []"
             :upload-fn="uploadFromUrl"
             :labels="FORM_LABELS"
-            :locale="locale"
           />
         </template>
       </div>

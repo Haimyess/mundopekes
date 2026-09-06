@@ -21,8 +21,6 @@ const overlay = useOverlay()
 const { loading, run } = useEntitySave()
 const { uploadFromUrl } = useImageUpload()
 
-const activityI18nStatus = computed(() => props.activity?.i18n_status)
-
 const AGE_LABELS = computed<Record<string, string>>(() => ({
   'age.all': t('entityForm.ageLabels.all'),
   'age.babies': t('entityForm.ageLabels.babies'),
@@ -67,8 +65,6 @@ const FORM_LABELS = computed(() => ({
   loading: t('entityForm.loading'),
   i18nField: {
     hint: t('entityForm.i18nField.hint'),
-    translateError: t('entityForm.i18nField.translateError'),
-    missingLanguages: t('entityForm.i18nField.missingLanguages'),
     showMore: t('entityForm.i18nField.showMore'),
     hideEmpty: t('entityForm.i18nField.hideEmpty'),
     autoTranslated: t('entityForm.i18nField.autoTranslated'),
@@ -116,6 +112,8 @@ const form = reactive({
   category_id: null as string | null,
   title_i18n: {} as Record<string, string>,
   description_i18n: {} as Record<string, string>,
+  title_i18n_status: undefined as FieldI18nStatus | undefined,
+  description_i18n_status: undefined as FieldI18nStatus | undefined,
   price: null as number | null,
   is_free: true,
   stroller_friendly: false,
@@ -233,6 +231,8 @@ watch(
       form.category_id = val.category_id ?? null
       form.title_i18n = (val.title_i18n as Record<string, string>) ?? {}
       form.description_i18n = (val.description_i18n as Record<string, string>) ?? {}
+      form.title_i18n_status = v.i18n_status?.title
+      form.description_i18n_status = v.i18n_status?.description
       form.price = val.price
       form.is_free = val.is_free
       form.stroller_friendly = val.stroller_friendly
@@ -252,6 +252,8 @@ watch(
       form.category_id = null
       form.title_i18n = {}
       form.description_i18n = {}
+      form.title_i18n_status = undefined
+      form.description_i18n_status = undefined
       form.price = null
       form.is_free = true
       form.stroller_friendly = false
@@ -296,6 +298,8 @@ const save = async () => {
     category_id: form.category_id ?? null,
     title_i18n: form.title_i18n,
     description_i18n: form.description_i18n,
+    title_i18n_status: form.title_i18n_status,
+    description_i18n_status: form.description_i18n_status,
     price: form.price,
     is_free: form.is_free,
     stroller_friendly: form.stroller_friendly,
@@ -416,6 +420,8 @@ const save = async () => {
         <UiEntityFormFields
           v-model:title-i18n="form.title_i18n"
           v-model:description-i18n="form.description_i18n"
+          v-model:title-i18n-status="form.title_i18n_status"
+          v-model:description-i18n-status="form.description_i18n_status"
           v-model:category-id="form.category_id"
           v-model:age-range-ids="form.age_range_ids"
           v-model:best-season="form.best_season"
@@ -430,8 +436,6 @@ const save = async () => {
           v-model:activity-website="form.website"
           v-model:images="form.images"
           type="activity"
-          :title-i18n-status="activityI18nStatus?.title"
-          :description-i18n-status="activityI18nStatus?.description"
           :subcategory-options="reference?.subcategories ?? []"
           :age-range-options="reference?.ageRanges ?? []"
           :season-options="reference?.seasons ?? []"

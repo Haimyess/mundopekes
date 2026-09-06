@@ -416,10 +416,8 @@
     "loading": "Loading…",
     "i18nField": {
       "hint": "Type in any language — the rest fills in on its own",
-      "translateError": "Automatic translation failed",
-      "missingLanguages": "Missing languages",
       "showMore": "Show more languages",
-      "hideEmpty": "Hide empty languages",
+      "hideEmpty": "Hide languages",
       "autoTranslated": "Automatically translated",
       "translationFailed": "Automatic translation failed — the previous text was kept"
     },

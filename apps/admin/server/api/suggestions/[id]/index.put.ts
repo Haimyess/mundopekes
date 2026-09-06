@@ -43,8 +43,16 @@ export default defineEventHandler(async (event) => {
   // same behavior as places/[id].put.ts and activities/[id].put.ts, which this
   // endpoint was missing (edits to a pending suggestion never propagated across
   // locales until approval).
-  if (deeplApiKey) {
-    if (body.name_i18n && typeof body.name_i18n === 'object') {
+  //
+  // Si el body ya trae el status calculado por I18nTabs (traducción en vivo en
+  // blur, antes de este guardado), confiamos en él tal cual en vez de volver a
+  // diffear contra la DB — ver el comentario más largo en activities/[id].put.ts
+  // (mismo problema, mismo fix).
+  if (body.name_i18n && typeof body.name_i18n === 'object') {
+    if (body.name_i18n_status) {
+      i18nStatus.name = body.name_i18n_status as FieldI18nStatus
+      i18nStatusChanged = true
+    } else if (deeplApiKey) {
       const { value, status } = await translateI18nField({
         existing: body.name_i18n,
         apiKey: deeplApiKey,
@@ -57,7 +65,12 @@ export default defineEventHandler(async (event) => {
         i18nStatusChanged = true
       }
     }
-    if (body.description_i18n && typeof body.description_i18n === 'object') {
+  }
+  if (body.description_i18n && typeof body.description_i18n === 'object') {
+    if (body.description_i18n_status) {
+      i18nStatus.description = body.description_i18n_status as FieldI18nStatus
+      i18nStatusChanged = true
+    } else if (deeplApiKey) {
       const { value, status } = await translateI18nField({
         existing: body.description_i18n,
         apiKey: deeplApiKey,
@@ -70,10 +83,15 @@ export default defineEventHandler(async (event) => {
         i18nStatusChanged = true
       }
     }
-    // Activity title lives nested inside metadata.title_i18n (set by the wizard) —
-    // enrich it the same way before it gets merged into u.metadata below.
-    const incomingTitle = (body.metadata as Record<string, unknown> | undefined)?.title_i18n
-    if (incomingTitle && typeof incomingTitle === 'object') {
+  }
+  // Activity title lives nested inside metadata.title_i18n (set by the wizard) —
+  // enrich it the same way before it gets merged into u.metadata below.
+  const incomingTitle = (body.metadata as Record<string, unknown> | undefined)?.title_i18n
+  if (incomingTitle && typeof incomingTitle === 'object') {
+    if (body.title_i18n_status) {
+      i18nStatus.title = body.title_i18n_status as FieldI18nStatus
+      i18nStatusChanged = true
+    } else if (deeplApiKey) {
       const existingTitle = (existing?.metadata as Record<string, unknown> | undefined)
         ?.title_i18n as Record<string, string> | undefined
       const { value, status } = await translateI18nField({

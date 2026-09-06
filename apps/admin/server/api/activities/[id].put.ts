@@ -21,28 +21,44 @@ export default defineEventHandler(async (event) => {
     const priorStatus = (existing?.i18n_status as Record<string, FieldI18nStatus>) ?? {}
     const i18nStatus: Record<string, FieldI18nStatus> = { ...priorStatus }
 
+    // Si el body ya trae el status calculado por I18nTabs (traducción en vivo
+    // en blur, antes de este guardado), confiamos en él tal cual en vez de
+    // volver a diffear contra la DB — a esta altura `body.title_i18n` ya
+    // difiere de `existing.title_i18n` en TODOS los locales que el blur tocó,
+    // no sólo en el que el admin tipeó, así que translateI18nField ya no
+    // puede distinguir "fuente editada a mano" de "ya traducido por el blur".
     if (body.title_i18n && typeof body.title_i18n === 'object') {
-      const { value, status } = await translateI18nField({
-        existing: body.title_i18n,
-        apiKey: config.deeplApiKey,
-        previous: (existing?.title_i18n as Record<string, string>) ?? undefined,
-        priorStatus: priorStatus.title,
-      })
-      body.title_i18n = value
-      if (status) i18nStatus.title = status
+      if (body.title_i18n_status) {
+        i18nStatus.title = body.title_i18n_status as FieldI18nStatus
+      } else {
+        const { value, status } = await translateI18nField({
+          existing: body.title_i18n,
+          apiKey: config.deeplApiKey,
+          previous: (existing?.title_i18n as Record<string, string>) ?? undefined,
+          priorStatus: priorStatus.title,
+        })
+        body.title_i18n = value
+        if (status) i18nStatus.title = status
+      }
     }
     if (body.description_i18n && typeof body.description_i18n === 'object') {
-      const { value, status } = await translateI18nField({
-        existing: body.description_i18n,
-        apiKey: config.deeplApiKey,
-        previous: (existing?.description_i18n as Record<string, string>) ?? undefined,
-        priorStatus: priorStatus.description,
-      })
-      body.description_i18n = value
-      if (status) i18nStatus.description = status
+      if (body.description_i18n_status) {
+        i18nStatus.description = body.description_i18n_status as FieldI18nStatus
+      } else {
+        const { value, status } = await translateI18nField({
+          existing: body.description_i18n,
+          apiKey: config.deeplApiKey,
+          previous: (existing?.description_i18n as Record<string, string>) ?? undefined,
+          priorStatus: priorStatus.description,
+        })
+        body.description_i18n = value
+        if (status) i18nStatus.description = status
+      }
     }
     body.i18n_status = i18nStatus
   }
+  delete body.title_i18n_status
+  delete body.description_i18n_status
 
   // Pivots no son columnas de `activities` — se escriben aparte en las tablas pivote
   const { age_range_ids, best_season, ...activityRow } = body

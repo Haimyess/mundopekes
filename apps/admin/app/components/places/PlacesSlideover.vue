@@ -14,14 +14,12 @@ const emit = defineEmits<{
   close: [place?: Place]
 }>()
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const toast = useToast()
 // useEntitySave/hasI18nContent se auto-importan desde app/composables/useEntitySave
 const { loading, run } = useEntitySave()
 const { geocode, isLoading: geocoding } = useGeocode()
 const { uploadFromUrl } = useImageUpload()
-
-const placeI18nStatus = computed(() => props.place?.i18n_status)
 
 const labels = computed(() => ({
   placeName: t('entityForm.placeName'),
@@ -51,8 +49,6 @@ const labels = computed(() => ({
   loading: t('entityForm.loading'),
   i18nField: {
     hint: t('entityForm.i18nField.hint'),
-    translateError: t('entityForm.i18nField.translateError'),
-    missingLanguages: t('entityForm.i18nField.missingLanguages'),
     showMore: t('entityForm.i18nField.showMore'),
     hideEmpty: t('entityForm.i18nField.hideEmpty'),
     autoTranslated: t('entityForm.i18nField.autoTranslated'),
@@ -124,6 +120,8 @@ const emptyMetadata = (): PlaceMeta => ({
 const form = reactive({
   name_i18n: {} as Record<string, string>,
   description_i18n: {} as Record<string, string>,
+  name_i18n_status: undefined as FieldI18nStatus | undefined,
+  description_i18n_status: undefined as FieldI18nStatus | undefined,
   city_id: null as number | null,
   lat: null as number | null,
   lng: null as number | null,
@@ -149,6 +147,8 @@ watch(
     if (val) {
       form.name_i18n = { ...(val.name_i18n ?? {}) }
       form.description_i18n = { ...(val.description_i18n ?? {}) }
+      form.name_i18n_status = val.i18n_status?.name
+      form.description_i18n_status = val.i18n_status?.description
       form.city_id = val.city_id
       form.lat = val.lat
       form.lng = val.lng
@@ -165,6 +165,8 @@ watch(
     } else {
       form.name_i18n = {}
       form.description_i18n = {}
+      form.name_i18n_status = undefined
+      form.description_i18n_status = undefined
       form.city_id = null
       form.lat = null
       form.lng = null
@@ -293,6 +295,8 @@ const save = async () => {
         <UiEntityFormFields
           v-model:name-i18n="form.name_i18n"
           v-model:description-i18n="form.description_i18n"
+          v-model:name-i18n-status="form.name_i18n_status"
+          v-model:description-i18n-status="form.description_i18n_status"
           v-model:city-id="form.city_id"
           v-model:address="form.metadata.address"
           v-model:phone="form.metadata.phone"
@@ -303,8 +307,7 @@ const save = async () => {
           v-model:has-safe-room="form.metadata.has_safe_room"
           v-model:images="form.images"
           type="place"
-          :name-i18n-status="placeI18nStatus?.name"
-          :description-i18n-status="placeI18nStatus?.description"
+          :locale="locale"
           :age-range-ids="[]"
           :best-season="[]"
           :stroller-friendly="false"

@@ -10,24 +10,35 @@ export default defineEventHandler(async (event) => {
 
   const i18nStatus: Record<string, FieldI18nStatus> = {}
 
-  if (config.deeplApiKey) {
-    if (body.title_i18n && typeof body.title_i18n === 'object') {
-      const { value, status } = await translateI18nField({
-        existing: body.title_i18n,
-        apiKey: config.deeplApiKey,
-      })
-      body.title_i18n = value
-      if (status) i18nStatus.title = status
-    }
-    if (body.description_i18n && typeof body.description_i18n === 'object') {
-      const { value, status } = await translateI18nField({
-        existing: body.description_i18n,
-        apiKey: config.deeplApiKey,
-      })
-      body.description_i18n = value
-      if (status) i18nStatus.description = status
-    }
+  // Si el body ya trae el status calculado por I18nTabs (traducción en vivo
+  // en blur, antes de este guardado), confiamos en él tal cual — ver el
+  // comentario más largo en activities/[id].put.ts.
+  if (body.title_i18n_status) {
+    i18nStatus.title = body.title_i18n_status as FieldI18nStatus
+  } else if (config.deeplApiKey && body.title_i18n && typeof body.title_i18n === 'object') {
+    const { value, status } = await translateI18nField({
+      existing: body.title_i18n,
+      apiKey: config.deeplApiKey,
+    })
+    body.title_i18n = value
+    if (status) i18nStatus.title = status
   }
+  if (body.description_i18n_status) {
+    i18nStatus.description = body.description_i18n_status as FieldI18nStatus
+  } else if (
+    config.deeplApiKey &&
+    body.description_i18n &&
+    typeof body.description_i18n === 'object'
+  ) {
+    const { value, status } = await translateI18nField({
+      existing: body.description_i18n,
+      apiKey: config.deeplApiKey,
+    })
+    body.description_i18n = value
+    if (status) i18nStatus.description = status
+  }
+  delete body.title_i18n_status
+  delete body.description_i18n_status
 
   // Duplicate check — non-blocking, same pattern as places/index.post.ts and
   // the public suggestion flow (findExperienceDuplicates: cross-layer
