@@ -195,3 +195,54 @@ usage before manually triggering that step, or budgeting Snyk's test calls
 (e.g. `--all-projects` in one call instead of the three separate
 per-manifest calls the local hook currently runs) so the same push doesn't
 burn 3 tests instead of 1.
+
+---
+
+## 2026-09-07 — Admin i18n auto-translate silently does nothing on Vercel, works (partially) locally
+
+**Symptom:** editing título/descripción in an activity's edit drawer: on the
+Vercel deploy, nothing happens at all — no translation, no error toast, only
+a failed-request error visible in the browser console. Locally, translation
+runs but sometimes only reaches one of the three target locales instead of
+all three.
+
+**Root cause (Vercel): `DEEPL_API_KEY` is only a Bitbucket-side value —
+never configured as a Vercel Environment Variable for the admin project.**
+`deploy-admin-prod`/`deploy-admin-preview` shell out to
+`npx vercel --token=$VERCEL_TOKEN [--prod] --yes` with no `vercel build`/
+`vercel env pull` step, so Vercel does a **remote** build using whatever
+Environment Variables are configured in the Vercel dashboard for that
+project — `$VERCEL_TOKEN`/`$VERCEL_ORG_ID`/`$VERCEL_PROJECT_ID_ADMIN` (the
+Bitbucket repo variables) only authenticate _triggering_ the deploy, they
+never inject `DEEPL_API_KEY` into it. `apps/admin/nuxt.config.ts` reads
+`deeplApiKey: process.env.DEEPL_API_KEY ?? ''`, so on Vercel this resolves
+to `''` (falsy): `/api/i18n/translate-field` (live translate-on-blur) 400s
+with "DeepL no está configurado", and the PUT/POST save endpoints' `if
+(config.deeplApiKey && ...)` guard skips translation entirely — both fail
+silently by design (`I18nTabs.vue`'s blur handler swallows the fetch error
+so a transient network hiccup doesn't wipe out what was typed), which is
+exactly why nothing visible happens on save either.
+
+**Fix:** add `DEEPL_API_KEY` (and double-check `GOOGLE_PLACES_API_KEY`,
+same pattern) to the Vercel dashboard → admin project → Settings →
+Environment Variables, for both Preview and Production, then redeploy.
+
+**Root cause (local, separate issue): stale `manual` locks from a bug that
+shipped with the live-translate-on-blur feature, fixed in commit `7f4eab1`.**
+Before that fix, the save endpoints recomputed `i18n_status` by diffing the
+incoming payload against the DB — but the live-blur call had already
+rewritten _other_ locales client-side before Guardar was even clicked, so
+the diff saw every blur-touched locale as "changed" and mis-tagged it
+`manual`, permanently protecting it from future auto-translation (by
+design, a `manual` locale is never overwritten by another locale's edit).
+Confirmed via direct simulation against `translateI18nField` that the
+current code correctly cascades to all locales once those false locks are
+gone. Two activities (Haim's own QA test rows) had this signature in
+production and were cleaned up in
+`supabase/migrations/20260907040000_clear_stale_manual_locks_test_activities.sql`.
+
+**Not yet resolved:** there is no UI indicator distinguishing a
+legitimately protected (`manual`) locale from one that just hasn't been
+translated yet, and blur/save failures never surface a toast — so a real
+misconfiguration (like the missing Vercel env var above) looks identical to
+"nothing happened." Worth adding both once this settles.
