@@ -69,6 +69,7 @@ const FORM_LABELS = computed(() => ({
     hideEmpty: t('entityForm.i18nField.hideEmpty'),
     autoTranslated: t('entityForm.i18nField.autoTranslated'),
     translationFailed: t('entityForm.i18nField.translationFailed'),
+    manualLocked: t('entityForm.i18nField.manualLocked'),
   },
   scheduleEditor: {
     sectionLabel: t('entityForm.scheduleEditor.sectionLabel'),

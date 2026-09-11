@@ -419,7 +419,8 @@
       "showMore": "Ver más idiomas",
       "hideEmpty": "Ocultar idiomas",
       "autoTranslated": "Traducido automáticamente",
-      "translationFailed": "La traducción automática falló — se conservó el texto anterior"
+      "translationFailed": "La traducción automática falló — se conservó el texto anterior",
+      "manualLocked": "Protegido — este idioma fue editado a mano y no se actualiza automáticamente"
     },
     "placeSearch": {
       "label": "Buscar lugar en Google",

@@ -419,7 +419,8 @@
       "showMore": "Show more languages",
       "hideEmpty": "Hide languages",
       "autoTranslated": "Automatically translated",
-      "translationFailed": "Automatic translation failed — the previous text was kept"
+      "translationFailed": "Automatic translation failed — the previous text was kept",
+      "manualLocked": "Protected — this language was edited by hand and is not auto-updated"
     },
     "placeSearch": {
       "label": "Search place on Google",

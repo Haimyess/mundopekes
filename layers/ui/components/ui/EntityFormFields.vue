@@ -47,6 +47,7 @@ export interface I18nFieldLabels {
   hideEmpty: string
   autoTranslated: string
   translationFailed: string
+  manualLocked: string
 }
 
 // Idioma de interfaz del admin (es/en, ver apps/admin/nuxt.config.ts) — decide

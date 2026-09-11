@@ -51,6 +51,7 @@ interface I18nFieldLabels {
   hideEmpty: string
   autoTranslated: string
   translationFailed: string
+  manualLocked: string
 }
 
 const DEFAULT_LABELS: I18nFieldLabels = {
@@ -59,6 +60,7 @@ const DEFAULT_LABELS: I18nFieldLabels = {
   hideEmpty: 'Hide languages',
   autoTranslated: 'Automatically translated',
   translationFailed: 'Automatic translation failed — the previous text was kept',
+  manualLocked: 'Protected — this language was edited by hand and is not auto-updated',
 }
 
 const props = withDefaults(
@@ -123,6 +125,29 @@ const statusTitle = (key: string): string | undefined => {
   return undefined
 }
 
+// Locale cuyo POST /api/i18n/translate-field falló por completo (network,
+// DeepL sin configurar, etc. — no un target puntual que translateI18nField
+// ya marcó 'error') — ver handleBlur. Se limpia en el próximo blur (éxito o
+// no) y si el admin vuelve a tocar ese mismo input.
+const requestFailedLocale = ref<string | null>(null)
+
+// Mensaje visible debajo del input — no sólo el punto de color — para que
+// "no se tradujo" nunca sea silencioso: cubre la traducción de ESTE locale
+// como target que falló (status 'error'), el pedido completo que falló
+// (requestFailedLocale), y el locale protegido por una edición manual
+// anterior en OTRO locale (status 'manual' pero no es el sourceLocale de
+// este edit — si lo fuera, 'manual' es simplemente "esto es lo que
+// tipeaste", no algo para señalar).
+const notTranslatedMessage = (key: string): string | undefined => {
+  if (requestFailedLocale.value === key) return t.value.translationFailed
+  const state = translationState(key)
+  if (state === 'error') return t.value.translationFailed
+  if (state === 'manual' && key !== effectiveStatus.value?.sourceLocale) {
+    return t.value.manualLocked
+  }
+  return undefined
+}
+
 // Se muestra siempre un único input por default: el del idioma de interfaz
 // del admin (uiLocale), tenga o no contenido — "Ver más idiomas" revela el
 // resto (también tengan o no contenido, ya no depende de si están vacíos).
@@ -179,6 +204,7 @@ const handleBlur = async (locale: string) => {
   }
 
   loadingLocale.value = locale
+  requestFailedLocale.value = null
   try {
     const { value, status } = await $fetch<TranslateFieldResponse>('/api/i18n/translate-field', {
       method: 'POST',
@@ -189,7 +215,10 @@ const handleBlur = async (locale: string) => {
     emit('update:status', status)
     baseline.value = { ...value }
   } catch {
-    // Sin traducción automática, al menos no perdemos lo que se tipeó.
+    // Sin traducción automática, al menos no perdemos lo que se tipeó —
+    // pero sí se lo avisamos al admin (ver notTranslatedMessage) en vez de
+    // fallar en silencio.
+    requestFailedLocale.value = locale
     baseline.value = { ...props.modelValue }
   } finally {
     loadingLocale.value = null
@@ -197,6 +226,7 @@ const handleBlur = async (locale: string) => {
 }
 
 const setLocaleText = (key: string, value: string) => {
+  if (requestFailedLocale.value === key) requestFailedLocale.value = null
   emitValue({ ...props.modelValue, [key]: value })
 }
 </script>
@@ -234,6 +264,15 @@ const setLocaleText = (key: string, value: string) => {
         @update:model-value="(v) => setLocaleText(l.key, String(v ?? ''))"
         @blur="handleBlur(l.key)"
       />
+      <p
+        v-if="notTranslatedMessage(l.key)"
+        :class="[
+          'text-xs',
+          translationState(l.key) === 'manual' ? 'text-(--ui-text-muted)' : 'text-red-500',
+        ]"
+      >
+        {{ notTranslatedMessage(l.key) }}
+      </p>
     </div>
 
     <div v-if="!expanded && otherLocales.length" class="flex items-center gap-2">
