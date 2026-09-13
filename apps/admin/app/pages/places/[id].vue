@@ -37,7 +37,7 @@ const {
   loading: activitiesLoading,
   fetch: fetchActivities,
   remove: removeActivity,
-} = useActivities({ placeId: id })
+} = useActivities({ placeId: id, pageSize: 100 })
 
 const openEditPlace = async () => {
   const slideover = overlay.create(PlacesSlideover, {

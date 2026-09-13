@@ -44,7 +44,7 @@ export const useActivities = (options: UseActivitiesOptions = {}) => {
     place_id: options.placeId,
     is_free: undefined,
     page: 1,
-    pageSize: options.pageSize ?? 20,
+    pageSize: options.pageSize ?? 10,
   })
 
   // Debounce sólo del search para no martillar el server al teclear

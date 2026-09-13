@@ -1,40 +1,158 @@
 <script setup lang="ts">
 import type { TableColumn } from '@nuxt/ui'
+import type { Period } from '~/types'
+import { syncUrlPage, syncUrlParam } from '~/composables/useUrlPage'
+import EventsChart from '~/components/user-events/EventsChart.client.vue'
+import EventsDonutChart from '~/components/user-events/EventsDonutChart.client.vue'
+import type { RecentUserEvent } from '~/composables/useRecentUserEvents'
 
 const UBadge = resolveComponent('UBadge')
 const UButton = resolveComponent('UButton')
 
-interface UserEventsSummary {
-  totalEvents: number
-  eventsLast7Days: number
-  topSearches: Array<{ term: string; count: number }>
-  topActivities: Array<{ activity_id: string; title: string; count: number }>
-  eventsByType: Array<{ event_type: string; count: number }>
-  recentEvents: Array<{
-    id: string
-    event_type: string
-    session_id: string | null
-    locale: string | null
-    payload: Record<string, unknown>
-    created_at: string | null
-  }>
+const { t, locale } = useI18n()
+const { tc } = useI18nContent()
+const eventTypeLabels = useEventTypeLabels()
+
+const eventTypeOptions = computed(() => [
+  { label: t('userEvents.filters.allEventTypes'), value: 'all' },
+  ...USER_EVENT_TYPES.map((value) => ({ label: eventTypeLabels.value[value] ?? value, value })),
+])
+
+// ─── Overview: tarjetas, tendencia, donuts, top-N — controlado solo por fecha ──
+const { summary, isLoading, range, fromDate, toDate, fetch: load } = useUserEvents()
+syncUrlParam(fromDate, 'from')
+syncUrlParam(toDate, 'to')
+
+const period = ref<Period>('daily')
+
+const formatPercent = (value: number) =>
+  new Intl.NumberFormat(locale.value, { style: 'percent', maximumFractionDigits: 1 }).format(value)
+
+const formatAgeRange = (min: number | null, max: number | null) => {
+  if (min === null || max === null) return '—'
+  const toLabel = (months: number) =>
+    months < 24 ? `${months}m` : `${Math.round(months / 12)}${locale.value === 'en' ? 'y' : 'a'}`
+  return `${toLabel(min)} – ${toLabel(max)}`
 }
 
-const { t } = useI18n()
+const searchesTotal = computed(
+  () => summary.value?.eventsByType.find((e) => e.event_type === 'search')?.count ?? 0
+)
 
-const eventTypeLabels = computed<Record<string, string>>(() => ({
-  page_view: t('userEvents.eventTypes.pageView'),
-  search: t('userEvents.eventTypes.search'),
-  activity_view: t('userEvents.eventTypes.activityView'),
-  contact_send: t('userEvents.eventTypes.contactSend'),
-  suggestion_submit: t('userEvents.eventTypes.suggestionSubmit'),
-  provider_interest: t('userEvents.eventTypes.providerInterest'),
-}))
+const eventsByTypeDonutData = computed(
+  () =>
+    summary.value?.eventsByType.map((item) => ({
+      label: eventTypeLabels.value[item.event_type] ?? item.event_type,
+      value: item.count,
+    })) ?? []
+)
 
-const summary = ref<UserEventsSummary | null>(null)
-const isLoading = ref(false)
+const topCategoriesDonutData = computed(
+  () =>
+    summary.value?.topCategories.map((item) => ({
+      label: item.name_i18n ? tc(item.name_i18n) : item.slug,
+      value: item.count,
+    })) ?? []
+)
+
+const topCitiesDonutData = computed(
+  () => summary.value?.topCities.map((item) => ({ label: item.city_name, value: item.count })) ?? []
+)
+
+const topSearchesRanked = computed(
+  () => summary.value?.topSearches.map((item) => ({ label: item.term, value: item.count })) ?? []
+)
+
+const zeroResultSearchesRanked = computed(
+  () =>
+    summary.value?.zeroResultSearches.map((item) => ({ label: item.term, value: item.count })) ?? []
+)
+
+const topAgeRangesRanked = computed(
+  () =>
+    summary.value?.topAgeRanges.map((item) => ({
+      label: formatAgeRange(item.min_months, item.max_months),
+      value: item.count,
+    })) ?? []
+)
+
+const topActivitiesRanked = computed(
+  () =>
+    summary.value?.topActivities.map((item) => ({
+      label: item.title,
+      value: item.views,
+      sublabel: `${item.contacts} ${t('userEvents.topActivitiesColumns.contacts').toLowerCase()} · ${item.directions} ${t('userEvents.topActivitiesColumns.directions').toLowerCase()} · ${formatPercent(item.conversion_rate)} ${t('userEvents.topActivitiesColumns.conversion').toLowerCase()}`,
+      to: `/business-report?type=activity&id=${item.activity_id}`,
+    })) ?? []
+)
+
+const topPlacesRanked = computed(
+  () =>
+    summary.value?.topPlaces.map((item) => ({
+      label: item.title,
+      value: item.views,
+      sublabel: `${item.directions} ${t('userEvents.topActivitiesColumns.directions').toLowerCase()}`,
+      to: `/business-report?type=place&id=${item.place_id}`,
+    })) ?? []
+)
+
+// ─── Tabla "Eventos recientes": paginada, con su propio filtro de tipo ──────
+const {
+  events: recentEvents,
+  page: recentPage,
+  totalPages: recentTotalPages,
+  total: recentTotal,
+  isLoading: recentIsLoading,
+  eventType: recentEventType,
+  term: recentTerm,
+  category: recentCategory,
+  targetId: recentTargetId,
+  filterOptions: recentFilterOptions,
+  fetch: loadRecent,
+} = useRecentUserEvents()
+syncUrlPage(recentPage, 'eventsPage')
+syncUrlParam(recentEventType, 'eventsType')
+syncUrlParam(recentTerm, 'eventsTerm')
+syncUrlParam(recentCategory, 'eventsCategory')
+syncUrlParam(recentTargetId, 'eventsTarget')
+
+// El botón de refresh del header antes solo llamaba a load() (stat cards +
+// gráficos) y nunca a loadRecent() — la tabla "Eventos recientes" quedaba
+// congelada aunque llegaran eventos nuevos.
+const refresh = () => {
+  load()
+  loadRecent()
+}
+
+const termOptions = computed(() => [
+  { label: t('userEvents.filters.allTerms'), value: 'all' },
+  ...(recentFilterOptions.value.terms ?? []).map((o) => ({
+    label: `${o.label} (${o.count})`,
+    value: o.value,
+  })),
+])
+const categoryOptions = computed(() => [
+  { label: t('userEvents.filters.allCategories'), value: 'all' },
+  ...(recentFilterOptions.value.categories ?? []).map((o) => ({
+    label: `${o.label} (${o.count})`,
+    value: o.value,
+  })),
+])
+const targetOptions = computed(() => [
+  { label: t('userEvents.filters.allTargets'), value: 'all' },
+  ...(recentFilterOptions.value.activities ?? recentFilterOptions.value.places ?? []).map((o) => ({
+    label: `${o.label} (${o.count})`,
+    value: o.value,
+  })),
+])
+
 const payloadModal = ref(false)
 const selectedPayload = ref<unknown>(null)
+
+const openPayload = (payload: unknown) => {
+  selectedPayload.value = payload
+  payloadModal.value = true
+}
 
 const formatDate = (date: string | null) => {
   if (!date) return '—'
@@ -42,18 +160,7 @@ const formatDate = (date: string | null) => {
   return `${d.getDate().toString().padStart(2, '0')}/${(d.getMonth() + 1).toString().padStart(2, '0')} ${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`
 }
 
-const load = async () => {
-  isLoading.value = true
-  try {
-    summary.value = await $fetch<UserEventsSummary>('/api/user-events/summary')
-  } finally {
-    isLoading.value = false
-  }
-}
-
-type RecentEvent = UserEventsSummary['recentEvents'][number]
-
-const columns = computed<TableColumn<RecentEvent>[]>(() => [
+const columns = computed<TableColumn<RecentUserEvent>[]>(() => [
   {
     accessorKey: 'created_at',
     header: t('userEvents.columns.date'),
@@ -101,17 +208,14 @@ const columns = computed<TableColumn<RecentEvent>[]>(() => [
           size: 'xs',
           color: 'neutral',
           variant: 'outline',
-          onClick: () => {
-            selectedPayload.value = row.original.payload
-            payloadModal.value = true
-          },
+          onClick: () => openPayload(row.original.payload),
         },
         () => t('userEvents.view')
       ),
   },
 ])
 
-await load()
+await Promise.all([load(), loadRecent()])
 </script>
 
 <template>
@@ -127,125 +231,206 @@ await load()
             color="neutral"
             variant="ghost"
             size="sm"
-            :loading="isLoading"
-            @click="load"
+            :loading="isLoading || recentIsLoading"
+            @click="refresh"
           />
         </template>
       </UDashboardNavbar>
+
+      <UDashboardToolbar>
+        <template #left>
+          <HomeDateRangePicker v-model="range" class="-ms-1" />
+          <HomePeriodSelect v-model="period" :range="range" />
+        </template>
+      </UDashboardToolbar>
     </template>
 
     <template #body>
       <div class="p-4 flex flex-col gap-6">
-        <!-- SECTION 1 — Stat cards -->
-        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <div class="bg-elevated rounded-xl p-4 flex flex-col gap-2 border border-default">
+        <!-- Stat cards -->
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          <div class="bg-elevated rounded-2xl p-5 flex flex-col gap-2 border border-default">
             <div class="flex items-center gap-2">
               <UIcon name="i-lucide-activity" class="size-4 text-primary" />
               <span class="text-xs text-(--ui-text-muted)">{{ t('userEvents.totalEvents') }}</span>
             </div>
-            <span class="text-2xl font-bold">{{ summary?.totalEvents ?? '—' }}</span>
+            <span class="text-3xl font-bold tabular-nums">{{ summary?.totalEvents ?? '—' }}</span>
           </div>
-          <div class="bg-elevated rounded-xl p-4 flex flex-col gap-2 border border-default">
+          <div class="bg-elevated rounded-2xl p-5 flex flex-col gap-2 border border-default">
             <div class="flex items-center gap-2">
               <UIcon name="i-lucide-trending-up" class="size-4 text-primary" />
-              <span class="text-xs text-(--ui-text-muted)">{{ t('userEvents.last7Days') }}</span>
+              <span class="text-xs text-(--ui-text-muted)">{{
+                t('userEvents.eventsInRange')
+              }}</span>
             </div>
-            <span class="text-2xl font-bold">{{ summary?.eventsLast7Days ?? '—' }}</span>
+            <span class="text-3xl font-bold tabular-nums">{{ summary?.eventsInRange ?? '—' }}</span>
+          </div>
+          <div class="bg-elevated rounded-2xl p-5 flex flex-col gap-2 border border-default">
+            <div class="flex items-center gap-2">
+              <UIcon name="i-lucide-users" class="size-4 text-primary" />
+              <span class="text-xs text-(--ui-text-muted)">{{
+                t('userEvents.distinctSessions')
+              }}</span>
+            </div>
+            <span class="text-3xl font-bold tabular-nums">{{
+              summary?.distinctSessions ?? '—'
+            }}</span>
+          </div>
+          <div class="bg-elevated rounded-2xl p-5 flex flex-col gap-2 border border-default">
+            <div class="flex items-center gap-2">
+              <UIcon name="i-lucide-search" class="size-4 text-primary" />
+              <span class="text-xs text-(--ui-text-muted)">{{
+                t('userEvents.searchesInRange')
+              }}</span>
+            </div>
+            <span class="text-3xl font-bold tabular-nums">{{ searchesTotal }}</span>
           </div>
         </div>
 
-        <!-- SECTION 2 — Distribución por tipo -->
-        <div v-if="summary && summary.eventsByType.length > 0">
-          <h2 class="text-sm font-semibold mb-3 text-(--ui-text-muted) uppercase tracking-wider">
-            {{ t('userEvents.sections.byType') }}
-          </h2>
-          <div class="flex flex-col gap-2">
-            <div
-              v-for="item in summary.eventsByType"
-              :key="item.event_type"
-              class="flex items-center gap-3"
+        <!-- Tendencia -->
+        <DashboardSectionCard
+          :title="t('userEvents.sections.timeseries')"
+          :subtitle="t('userEvents.sections.timeseriesHint')"
+        >
+          <EventsChart :data="summary?.timeseries ?? []" :period="period" />
+        </DashboardSectionCard>
+
+        <!-- Donuts: distribución, categorías, ciudades -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <DashboardSectionCard :title="t('userEvents.sections.byType')">
+            <p
+              v-if="eventsByTypeDonutData.length === 0"
+              class="text-sm text-(--ui-text-muted) text-center py-4"
             >
-              <span class="text-sm w-40 flex-shrink-0">
-                {{ eventTypeLabels[item.event_type] ?? item.event_type }}
-              </span>
-              <div class="bg-elevated rounded h-1.5 flex-1">
-                <div
-                  class="bg-primary/40 rounded h-full"
-                  :style="{ width: (item.count / summary.eventsByType[0].count) * 100 + '%' }"
-                />
-              </div>
-              <UBadge color="neutral" variant="subtle" size="xs">
-                {{ item.count }}
-              </UBadge>
-            </div>
+              {{ t('userEvents.emptySearches') }}
+            </p>
+            <EventsDonutChart v-else :data="eventsByTypeDonutData" />
+          </DashboardSectionCard>
+          <DashboardSectionCard :title="t('userEvents.sections.byCategory')">
+            <p
+              v-if="topCategoriesDonutData.length === 0"
+              class="text-sm text-(--ui-text-muted) text-center py-4"
+            >
+              {{ t('userEvents.emptyCategories') }}
+            </p>
+            <EventsDonutChart v-else :data="topCategoriesDonutData" />
+          </DashboardSectionCard>
+          <DashboardSectionCard :title="t('userEvents.sections.byCity')">
+            <p
+              v-if="topCitiesDonutData.length === 0"
+              class="text-sm text-(--ui-text-muted) text-center py-4"
+            >
+              {{ t('userEvents.emptyCities') }}
+            </p>
+            <EventsDonutChart v-else :data="topCitiesDonutData" />
+          </DashboardSectionCard>
+        </div>
+
+        <!-- Búsquedas -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <DashboardSectionCard :title="t('userEvents.sections.topSearches')">
+            <p
+              v-if="topSearchesRanked.length === 0"
+              class="text-sm text-(--ui-text-muted) text-center py-4"
+            >
+              {{ t('userEvents.emptySearches') }}
+            </p>
+            <DashboardRankedBarList v-else :items="topSearchesRanked" />
+          </DashboardSectionCard>
+          <DashboardSectionCard :title="t('userEvents.sections.zeroResultSearches')">
+            <p
+              v-if="zeroResultSearchesRanked.length === 0"
+              class="text-sm text-(--ui-text-muted) text-center py-4"
+            >
+              {{ t('userEvents.emptyZeroResultSearches') }}
+            </p>
+            <DashboardRankedBarList v-else :items="zeroResultSearchesRanked" />
+          </DashboardSectionCard>
+        </div>
+
+        <!-- Rangos etarios -->
+        <DashboardSectionCard :title="t('userEvents.sections.byAgeRange')">
+          <p
+            v-if="topAgeRangesRanked.length === 0"
+            class="text-sm text-(--ui-text-muted) text-center py-4"
+          >
+            {{ t('userEvents.emptyAgeRanges') }}
+          </p>
+          <DashboardRankedBarList v-else :items="topAgeRangesRanked" />
+        </DashboardSectionCard>
+
+        <!-- Actividades / Lugares más vistos -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <DashboardSectionCard :title="t('userEvents.sections.topActivities')">
+            <p
+              v-if="topActivitiesRanked.length === 0"
+              class="text-sm text-(--ui-text-muted) text-center py-4"
+            >
+              {{ t('userEvents.emptyActivities') }}
+            </p>
+            <DashboardRankedBarList v-else :items="topActivitiesRanked" />
+          </DashboardSectionCard>
+          <DashboardSectionCard :title="t('userEvents.sections.topPlaces')">
+            <p
+              v-if="topPlacesRanked.length === 0"
+              class="text-sm text-(--ui-text-muted) text-center py-4"
+            >
+              {{ t('userEvents.emptyPlaces') }}
+            </p>
+            <DashboardRankedBarList v-else :items="topPlacesRanked" />
+          </DashboardSectionCard>
+        </div>
+
+        <!-- Eventos recientes: filtro propio + tabla paginada -->
+        <DashboardSectionCard :title="t('userEvents.sections.recentEvents')">
+          <template #actions>
+            <UBadge color="neutral" variant="subtle" size="sm">
+              {{ recentTotal }}
+            </UBadge>
+          </template>
+
+          <div class="flex flex-wrap items-center gap-3">
+            <USelect
+              v-model="recentEventType"
+              :items="eventTypeOptions"
+              value-key="value"
+              label-key="label"
+              :placeholder="t('userEvents.filters.eventTypePlaceholder')"
+              class="w-48"
+            />
+            <USelect
+              v-if="recentEventType === 'search'"
+              v-model="recentTerm"
+              :items="termOptions"
+              value-key="value"
+              label-key="label"
+              :placeholder="t('userEvents.filters.termPlaceholder')"
+              class="w-56"
+            />
+            <USelect
+              v-if="recentEventType === 'search'"
+              v-model="recentCategory"
+              :items="categoryOptions"
+              value-key="value"
+              label-key="label"
+              :placeholder="t('userEvents.filters.categoryPlaceholder')"
+              class="w-48"
+            />
+            <USelect
+              v-if="['activity_view', 'place_view', 'directions_click'].includes(recentEventType)"
+              v-model="recentTargetId"
+              :items="targetOptions"
+              value-key="value"
+              label-key="label"
+              :placeholder="t('userEvents.filters.targetPlaceholder')"
+              class="w-56"
+            />
           </div>
-        </div>
 
-        <!-- SECTION 3 — Top búsquedas -->
-        <div>
-          <h2 class="text-sm font-semibold mb-3 text-(--ui-text-muted) uppercase tracking-wider">
-            {{ t('userEvents.sections.topSearches') }}
-          </h2>
-          <p
-            v-if="!summary || summary.topSearches.length === 0"
-            class="text-sm text-(--ui-text-muted) text-center py-4"
-          >
-            {{ t('userEvents.emptySearches') }}
-          </p>
-          <ol v-else class="flex flex-col gap-2">
-            <li
-              v-for="(item, index) in summary.topSearches"
-              :key="item.term"
-              class="flex items-center gap-3"
-            >
-              <span class="text-xs text-(--ui-text-muted) w-5 text-right flex-shrink-0">
-                {{ index + 1 }}
-              </span>
-              <span class="text-sm flex-1">{{ item.term }}</span>
-              <UBadge color="neutral" variant="subtle" size="xs">
-                {{ item.count }}
-              </UBadge>
-            </li>
-          </ol>
-        </div>
-
-        <!-- SECTION 4 — Actividades más vistas -->
-        <div>
-          <h2 class="text-sm font-semibold mb-3 text-(--ui-text-muted) uppercase tracking-wider">
-            {{ t('userEvents.sections.topActivities') }}
-          </h2>
-          <p
-            v-if="!summary || summary.topActivities.length === 0"
-            class="text-sm text-(--ui-text-muted) text-center py-4"
-          >
-            {{ t('userEvents.emptyActivities') }}
-          </p>
-          <ol v-else class="flex flex-col gap-2">
-            <li
-              v-for="(item, index) in summary.topActivities"
-              :key="item.activity_id"
-              class="flex items-center gap-3"
-            >
-              <span class="text-xs text-(--ui-text-muted) w-5 text-right flex-shrink-0">
-                {{ index + 1 }}
-              </span>
-              <span class="text-sm flex-1">{{ item.title }}</span>
-              <UBadge color="neutral" variant="subtle" size="xs">
-                {{ item.count }}
-              </UBadge>
-            </li>
-          </ol>
-        </div>
-
-        <!-- SECTION 5 — Eventos recientes -->
-        <div>
-          <h2 class="text-sm font-semibold mb-3 text-(--ui-text-muted) uppercase tracking-wider">
-            {{ t('userEvents.sections.recentEvents') }}
-          </h2>
           <UTable
-            :data="summary?.recentEvents ?? []"
+            :data="recentEvents"
             :columns="columns"
-            :loading="isLoading"
+            :loading="recentIsLoading"
             class="w-full"
             :ui="{
               base: 'table-fixed border-separate border-spacing-0',
@@ -256,7 +441,10 @@ await load()
               td: 'border-b border-default',
             }"
           />
-        </div>
+          <div v-if="recentTotalPages > 1" class="flex justify-center pt-4">
+            <UPagination v-model:page="recentPage" :total="recentTotal" :items-per-page="50" />
+          </div>
+        </DashboardSectionCard>
       </div>
     </template>
   </UDashboardPanel>

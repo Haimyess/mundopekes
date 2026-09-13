@@ -85,6 +85,27 @@ export const usePlaces = () => {
     }
   }
 
+  const removeMany = async (ids: string[]) => {
+    try {
+      await Promise.all(ids.map((id) => $fetch(`/api/places/${id}`, { method: 'DELETE' })))
+      toast.add({
+        title: t(
+          ids.length > 1 ? 'places.toast.deletedManyPlural' : 'places.toast.deletedManySingular',
+          { count: ids.length }
+        ),
+        color: 'success',
+      })
+      await fetch()
+    } catch (e: unknown) {
+      toast.add({
+        title: t('places.toast.errorTitle'),
+        description: e instanceof Error ? e.message : String(e),
+        color: 'error',
+      })
+      throw e
+    }
+  }
+
   // Reset a página 1 cuando cambian filtros (no cuando cambia la página misma)
   watch([debouncedQ, () => filters.city, () => filters.status], () => {
     if (!hasLoadedOnce.value) return
@@ -108,5 +129,6 @@ export const usePlaces = () => {
     filters,
     fetch,
     remove,
+    removeMany,
   }
 }

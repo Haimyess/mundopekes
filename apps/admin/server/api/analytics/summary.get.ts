@@ -7,6 +7,7 @@ export default defineEventHandler(async (event) => {
   const [
     activities,
     places,
+    providers,
     suggestions,
     pendingSuggestions,
     contactRequests,
@@ -15,6 +16,7 @@ export default defineEventHandler(async (event) => {
   ] = await Promise.all([
     supabase.from('activities').select('*', { count: 'exact', head: true }),
     supabase.from('places').select('*', { count: 'exact', head: true }),
+    supabase.from('providers').select('*', { count: 'exact', head: true }).eq('status', 'active'),
     supabase.from('suggestions').select('*', { count: 'exact', head: true }),
     supabase
       .from('suggestions')
@@ -36,6 +38,7 @@ export default defineEventHandler(async (event) => {
   return {
     totalActivities: activities.count ?? 0,
     totalPlaces: places.count ?? 0,
+    totalProviders: providers.count ?? 0,
     totalSuggestions: suggestions.count ?? 0,
     pendingSuggestions: pendingSuggestions.count ?? 0,
     totalContactRequests: contactRequests.count ?? 0,

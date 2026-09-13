@@ -28,13 +28,35 @@ export const useUrlPage = (paramName = 'page') => {
 export const syncUrlPage = (pageRef: Ref<number>, paramName = 'page') => {
   const { page: urlPage } = useUrlPage(paramName)
 
-  if (pageRef.value !== urlPage.value) pageRef.value = urlPage.value
+  // Bajo <keep-alive> (ver definePageMeta({ keepalive: true }) en
+  // places/activities/suggestions) el componente no se destruye al navegar
+  // afuera — sólo se "desactiva". Un watch() normal sigue corriendo mientras
+  // tanto, así que sin esta guarda vería el `route` de la página a la que
+  // navegaste y pisaría este page/filtro con el de esa otra ruta. `active`
+  // sólo baja con onDeactivated (no-op si el componente no está bajo
+  // keep-alive, así que esto es seguro en cualquier caso).
+  let active = true
+
+  const adopt = () => {
+    if (pageRef.value !== urlPage.value) pageRef.value = urlPage.value
+  }
+  adopt()
 
   watch(urlPage, (value) => {
+    if (!active) return
     if (pageRef.value !== value) pageRef.value = value
   })
   watch(pageRef, (value) => {
+    if (!active) return
     if (urlPage.value !== value) urlPage.value = value
+  })
+
+  onActivated(() => {
+    active = true
+    adopt()
+  })
+  onDeactivated(() => {
+    active = false
   })
 }
 
@@ -57,17 +79,33 @@ export const syncUrlParam = (valueRef: Ref<string>, paramName: string, emptyValu
     },
   })
 
+  // Misma guarda que syncUrlPage — ver el comentario ahí para el porqué.
+  let active = true
+
   // Solo adoptamos el valor de la URL al montar si el query param ya estaba
   // presente (deep-link / refresh) — si no, dejamos el default del composable
   // (p.ej. status=pending en Sugerencias) en vez de pisarlo con emptyValue.
-  if (typeof route.query[paramName] === 'string' && valueRef.value !== urlValue.value) {
-    valueRef.value = urlValue.value
+  const adopt = () => {
+    if (typeof route.query[paramName] === 'string' && valueRef.value !== urlValue.value) {
+      valueRef.value = urlValue.value
+    }
   }
+  adopt()
 
   watch(urlValue, (value) => {
+    if (!active) return
     if (valueRef.value !== value) valueRef.value = value
   })
   watch(valueRef, (value) => {
+    if (!active) return
     if (urlValue.value !== value) urlValue.value = value
+  })
+
+  onActivated(() => {
+    active = true
+    adopt()
+  })
+  onDeactivated(() => {
+    active = false
   })
 }

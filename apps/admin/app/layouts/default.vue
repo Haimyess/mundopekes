@@ -4,6 +4,16 @@ import type { NavigationMenuItem } from '@nuxt/ui'
 const { t } = useI18n()
 const open = ref(false)
 
+// Compartido con app.vue: navegar desde el sidebar suprime la barra de carga
+// superior (ver app.vue — cada página ya muestra su propio TableSkeleton al
+// instante, así que la barra es redundante acá). Se resetea sola al terminar
+// la navegación vía el hook 'page:loading:end' registrado en app.vue.
+const hideLoadingIndicator = useState('hide-loading-indicator', () => false)
+const onNavSelect = () => {
+  open.value = false
+  hideLoadingIndicator.value = true
+}
+
 const links = computed(
   () =>
     [
@@ -12,49 +22,37 @@ const links = computed(
           label: t('nav.dashboard'),
           icon: 'i-lucide-layout-dashboard',
           to: '/',
-          onSelect: () => {
-            open.value = false
-          },
+          onSelect: onNavSelect,
         },
         {
           label: t('nav.places'),
           icon: 'i-lucide-map-pin',
           to: '/places',
-          onSelect: () => {
-            open.value = false
-          },
+          onSelect: onNavSelect,
         },
         {
           label: t('nav.activities'),
           icon: 'i-lucide-zap',
           to: '/activities',
-          onSelect: () => {
-            open.value = false
-          },
+          onSelect: onNavSelect,
         },
         {
           label: t('nav.suggestions'),
           icon: 'i-lucide-lightbulb',
           to: '/suggestions',
-          onSelect: () => {
-            open.value = false
-          },
+          onSelect: onNavSelect,
         },
         {
           label: t('nav.categories'),
           icon: 'i-lucide-tag',
           to: '/categories',
-          onSelect: () => {
-            open.value = false
-          },
+          onSelect: onNavSelect,
         },
         {
           label: t('nav.providers'),
           icon: 'i-lucide-store',
           to: '/providers',
-          onSelect: () => {
-            open.value = false
-          },
+          onSelect: onNavSelect,
         },
         {
           label: t('nav.monitoring'),
@@ -67,33 +65,25 @@ const links = computed(
               label: t('nav.overview'),
               icon: 'i-lucide-layout-dashboard',
               to: '/overview',
-              onSelect: () => {
-                open.value = false
-              },
+              onSelect: onNavSelect,
             },
             {
               label: t('nav.systemLogs'),
               icon: 'i-lucide-terminal',
               to: '/system-logs',
-              onSelect: () => {
-                open.value = false
-              },
+              onSelect: onNavSelect,
             },
             {
               label: t('nav.userEvents'),
               icon: 'i-lucide-activity',
               to: '/user-events',
-              onSelect: () => {
-                open.value = false
-              },
+              onSelect: onNavSelect,
             },
             {
               label: t('nav.contactRequests'),
               icon: 'i-lucide-inbox',
               to: '/contact-requests',
-              onSelect: () => {
-                open.value = false
-              },
+              onSelect: onNavSelect,
             },
           ],
         },
@@ -108,16 +98,12 @@ const links = computed(
               label: t('nav.helpDesk'),
               to: '/support',
               exact: true,
-              onSelect: () => {
-                open.value = false
-              },
+              onSelect: onNavSelect,
             },
             {
               label: t('nav.faqs'),
               to: '/support/faqs',
-              onSelect: () => {
-                open.value = false
-              },
+              onSelect: onNavSelect,
             },
           ],
         },
@@ -132,23 +118,17 @@ const links = computed(
               label: t('nav.settingsGeneral'),
               to: '/settings',
               exact: true,
-              onSelect: () => {
-                open.value = false
-              },
+              onSelect: onNavSelect,
             },
             {
               label: t('nav.settingsNotifications'),
               to: '/settings/notifications',
-              onSelect: () => {
-                open.value = false
-              },
+              onSelect: onNavSelect,
             },
             {
               label: t('nav.settingsSecurity'),
               to: '/settings/security',
-              onSelect: () => {
-                open.value = false
-              },
+              onSelect: onNavSelect,
             },
           ],
         },

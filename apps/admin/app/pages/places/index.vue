@@ -4,6 +4,13 @@ import type { Place } from '~/types'
 import PlacesSlideover from '~/components/places/PlacesSlideover.vue'
 import { syncUrlPage, syncUrlParam } from '~/composables/useUrlPage'
 import { useFacets } from '~/composables/useFacets'
+import { usePlacesStale } from '~/composables/useCatalogStale'
+
+// Nombre explícito para que el matching de <keep-alive> (definePageMeta de
+// abajo) no dependa del nombre inferido del archivo, que podría colisionar
+// con otro index.vue de otra carpeta.
+defineOptions({ name: 'PlacesIndexPage' })
+definePageMeta({ keepalive: true })
 
 interface PlaceFacetRow {
   status: string
@@ -13,13 +20,14 @@ interface PlaceFacetRow {
 const UButton = resolveComponent('UButton')
 const UBadge = resolveComponent('UBadge')
 const UDropdownMenu = resolveComponent('UDropdownMenu')
+const UCheckbox = resolveComponent('UCheckbox')
 
 const { tc } = useI18nContent()
 const { t } = useI18n()
 const overlay = useOverlay()
 const router = useRouter()
 
-const { places, total, loading, filters, fetch: loadPlaces, remove } = usePlaces()
+const { places, total, loading, filters, fetch: loadPlaces, remove, removeMany } = usePlaces()
 
 syncUrlPage(toRef(filters, 'page'))
 syncUrlParam(toRef(filters, 'city') as unknown as Ref<string>, 'city')
@@ -29,7 +37,7 @@ const pageCount = computed(() => Math.max(1, Math.ceil(total.value / filters.pag
 
 // Se carga en onMounted, junto con el resto de la carga inicial — no
 // bloquea la navegación (ver el onMounted al final del script).
-const cities = ref<{ name: string }[]>([])
+const cities = ref<{ id: number; name: string }[]>([])
 
 // Conteos por faceta — cuántos lugares quedarían con cada opción, manteniendo
 // el resto de filtros fijos (mismo patrón que Sugerencias/apps/web).
@@ -67,7 +75,7 @@ const statusOptions = computed(() => [
 
 const openCreate = async () => {
   const slideover = overlay.create(PlacesSlideover, {
-    props: { place: null },
+    props: { place: null, cities: cities.value },
   })
   await slideover.open()
   await Promise.all([loadPlaces(), facets.load()])
@@ -75,7 +83,7 @@ const openCreate = async () => {
 
 const openEdit = async (place: Place) => {
   const slideover = overlay.create(PlacesSlideover, {
-    props: { place },
+    props: { place, cities: cities.value },
   })
   await slideover.open()
   await Promise.all([loadPlaces(), facets.load()])
@@ -90,6 +98,28 @@ const deletePlace = async (id: string) => {
   }
 }
 
+// Selección de filas — mismo patrón que activities/index.vue
+const rowSelection = ref<Record<string, boolean>>({})
+
+const selectedRows = computed(() => places.value.filter((_, index) => rowSelection.value[index]))
+
+const deleteLoading = ref(false)
+
+const handleDelete = async (ids: string[]) => {
+  deleteLoading.value = true
+  try {
+    if (ids.length === 1) {
+      await deletePlace(ids[0])
+    } else {
+      await removeMany(ids)
+      await facets.load()
+    }
+    rowSelection.value = {}
+  } finally {
+    deleteLoading.value = false
+  }
+}
+
 const statusColor = {
   active: 'success',
   inactive: 'neutral',
@@ -101,6 +131,24 @@ const statusLabel = computed(() => ({
 }))
 
 const columns = computed<TableColumn<Place>[]>(() => [
+  {
+    id: 'select',
+    header: ({ table }) =>
+      h(UCheckbox, {
+        modelValue: table.getIsSomePageRowsSelected()
+          ? 'indeterminate'
+          : table.getIsAllPageRowsSelected(),
+        'onUpdate:modelValue': (value: boolean | 'indeterminate') =>
+          table.toggleAllPageRowsSelected(!!value),
+        ariaLabel: t('places.table.selectAll'),
+      }),
+    cell: ({ row }) =>
+      h(UCheckbox, {
+        modelValue: row.getIsSelected(),
+        'onUpdate:modelValue': (value: boolean | 'indeterminate') => row.toggleSelected(!!value),
+        ariaLabel: t('places.table.selectRow'),
+      }),
+  },
   {
     accessorKey: 'name_i18n',
     header: t('places.table.name'),
@@ -173,10 +221,21 @@ onMounted(async () => {
   await Promise.all([
     loadPlaces(),
     facets.load(),
-    $fetch<{ name: string }[]>('/api/cities').then((r) => {
+    $fetch<{ id: number; name: string }[]>('/api/cities').then((r) => {
       cities.value = r
     }),
   ])
+})
+
+// Con keepalive esta página no se vuelve a montar al navegar de vuelta —
+// sólo se reactiva. Places no cambia sola: se refresca acá sólo si aprobar/
+// fusionar una sugerencia (en otra página) la marcó como "sucia" (ver
+// useCatalogStale.ts) — evita pegarle a la base en cada visita sin motivo.
+const placesStale = usePlacesStale()
+onActivated(() => {
+  if (!placesStale.value) return
+  placesStale.value = false
+  Promise.all([loadPlaces(), facets.load()])
 })
 </script>
 
@@ -209,6 +268,34 @@ onMounted(async () => {
           />
 
           <div class="flex flex-wrap items-center gap-1.5">
+            <!-- Acciones bulk -->
+            <PlacesDeleteModal
+              v-if="selectedRows.length"
+              :count="selectedRows.length"
+              :loading="deleteLoading"
+              @confirm="handleDelete(selectedRows.map((r) => r.id))"
+            >
+              <UButton
+                :label="t('places.deleteButton')"
+                color="error"
+                variant="subtle"
+                icon="i-lucide-trash"
+              >
+                <template #trailing>
+                  <UKbd>{{ selectedRows.length }}</UKbd>
+                </template>
+              </UButton>
+            </PlacesDeleteModal>
+
+            <UButton
+              v-if="selectedRows.length === 1"
+              :label="t('places.editButton')"
+              color="neutral"
+              variant="subtle"
+              icon="i-lucide-pencil"
+              @click="openEdit(selectedRows[0])"
+            />
+
             <USelect v-model="filters.city" :items="cityOptions" class="min-w-44" />
             <USelect v-model="filters.status" :items="statusOptions" class="min-w-36" />
           </div>
@@ -217,6 +304,7 @@ onMounted(async () => {
         <!-- Zona scrolleable: solo la tabla -->
         <div class="flex-1 min-h-0 overflow-y-auto p-4">
           <UTable
+            v-model:row-selection="rowSelection"
             :data="places"
             :columns="columns"
             :loading="loading"
@@ -233,6 +321,8 @@ onMounted(async () => {
                 const target = e.target as HTMLElement
                 if (target.closest('[data-radix-popper-content-wrapper]')) return
                 if (target.closest('button')) return
+                if (target.closest('input[type=checkbox]')) return
+                if (target.closest('label')) return
                 const tr = target.closest('tbody tr')
                 if (!tr) return
                 const idEl = tr.querySelector('[data-place-id]')
@@ -244,8 +334,13 @@ onMounted(async () => {
         </div>
 
         <!-- Zona fija: paginación, siempre visible abajo -->
-        <div v-if="pageCount > 1" class="shrink-0 flex justify-end p-4 border-t border-default">
+        <div class="shrink-0 flex items-center justify-between gap-3 p-4 border-t border-default">
+          <div class="text-sm text-muted">
+            {{ t('places.pagination.selected', { selected: selectedRows.length, total }) }}
+          </div>
+
           <UPagination
+            v-if="pageCount > 1"
             :default-page="filters.page"
             :items-per-page="filters.pageSize"
             :total="total"

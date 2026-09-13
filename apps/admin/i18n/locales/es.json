@@ -71,7 +71,25 @@
     "home": "Home",
     "notifications": "Notificaciones",
     "newMail": "Nuevo correo",
-    "newCustomer": "Nuevo cliente"
+    "newCustomer": "Nuevo cliente",
+    "catalogTitle": "Catálogo",
+    "catalogActivities": "Actividades activas",
+    "catalogPlaces": "Lugares activos",
+    "catalogProviders": "Proveedores activos",
+    "catalogPendingSuggestions": "Sugerencias pendientes",
+    "catalogPendingContacts": "Contactos pendientes",
+    "eventsInRange": "Eventos en el rango",
+    "sessions": "Sesiones únicas",
+    "searches": "Búsquedas",
+    "searchSuccessRate": "Búsquedas exitosas",
+    "vsPreviousPeriod": "vs. período anterior",
+    "trendTitle": "Tendencia de tráfico",
+    "weekdayTitle": "Día con más actividad",
+    "weekdayPeakCaption": "eventos el {day}",
+    "gaugeCaption": "de las búsquedas devolvieron resultados",
+    "recentFeedbackTitle": "Feedback reciente",
+    "viewAll": "Ver todo",
+    "emptyTraffic": "Sin datos de tráfico aún en este rango"
   },
   "userMenu": {
     "appearance": "Apariencia",
@@ -264,23 +282,55 @@
   },
   "userEvents": {
     "title": "Actividad de usuarios",
-    "totalEvents": "Total eventos",
-    "last7Days": "Últimos 7 días",
+    "totalEvents": "Total eventos (histórico)",
+    "eventsInRange": "Eventos en el rango",
+    "distinctSessions": "Sesiones únicas",
+    "searchesInRange": "Búsquedas en el rango",
+    "filters": {
+      "eventTypePlaceholder": "Tipo de evento",
+      "allEventTypes": "Todos los tipos",
+      "termPlaceholder": "Término buscado",
+      "allTerms": "Todos los términos",
+      "categoryPlaceholder": "Categoría",
+      "allCategories": "Todas las categorías",
+      "targetPlaceholder": "Actividad / lugar",
+      "allTargets": "Todos"
+    },
     "sections": {
+      "timeseries": "Tendencia",
+      "timeseriesHint": "Total de eventos registrados por día en el rango de fechas seleccionado",
       "byType": "Distribución por tipo",
-      "topSearches": "Top búsquedas · 7 días",
-      "topActivities": "Actividades más vistas · 7 días",
+      "byCategory": "Top categorías buscadas",
+      "byCity": "Top ciudades buscadas",
+      "byAgeRange": "Top rangos etarios buscados",
+      "topSearches": "Top búsquedas",
+      "zeroResultSearches": "Búsquedas sin resultados",
+      "topActivities": "Actividades más vistas",
+      "topPlaces": "Lugares más vistos",
       "recentEvents": "Eventos recientes"
     },
     "emptySearches": "Sin búsquedas registradas aún",
+    "emptyZeroResultSearches": "Sin búsquedas sin resultados en este rango",
     "emptyActivities": "Sin vistas registradas aún",
+    "emptyPlaces": "Sin vistas registradas aún",
+    "emptyCategories": "Sin datos de categorías aún — se completa a medida que haya más búsquedas",
+    "emptyCities": "Sin datos de ciudades aún — se completa a medida que haya más búsquedas",
+    "emptyAgeRanges": "Sin datos de rangos etarios aún — se completa a medida que haya más búsquedas",
     "eventTypes": {
       "pageView": "Vista de página",
       "search": "Búsqueda",
       "activityView": "Actividad vista",
+      "placeView": "Lugar visto",
+      "directionsClick": "Click en cómo llegar",
       "contactSend": "Contacto enviado",
       "suggestionSubmit": "Sugerencia",
       "providerInterest": "Interés proveedor"
+    },
+    "topActivitiesColumns": {
+      "views": "Vistas",
+      "contacts": "Contactos",
+      "directions": "Cómo llegar",
+      "conversion": "Conversión"
     },
     "columns": {
       "date": "Fecha",
@@ -291,6 +341,26 @@
     },
     "view": "Ver",
     "payloadModalTitle": "Payload del evento"
+  },
+  "businessReport": {
+    "title": "Reporte por negocio",
+    "typePlace": "Lugar",
+    "typeProvider": "Proveedor",
+    "typeActivity": "Actividad",
+    "entityPlaceholder": "Elegí un lugar o proveedor",
+    "emptyState": "Elegí un lugar o proveedor arriba para ver su reporte de tráfico",
+    "views": "Vistas de página",
+    "directions": "Clicks en cómo llegar",
+    "contacts": "Contactos",
+    "uniqueSessions": "Visitantes únicos",
+    "searchingSessionsTitle": "Visitantes que buscaron antes de encontrarte",
+    "searchingSessionsHint": "Sesiones que hicieron una búsqueda y después vieron este negocio en la misma sesión — es una correlación real, no una atribución exacta a una búsqueda puntual.",
+    "marketContextTitle": "Demanda de mercado",
+    "marketContextHint": "Volumen de búsquedas total en la categoría/ciudad de este negocio — no está atribuido a este negocio en particular, es el tamaño de la oportunidad.",
+    "categorySearches": "Búsquedas en esta categoría",
+    "citySearches": "Búsquedas en esta ciudad",
+    "trendTitle": "Tendencia de vistas",
+    "emptyTrend": "Sin vistas registradas aún en este rango"
   },
   "home": {
     "chart": {
@@ -328,6 +398,8 @@
     "title": "Lugares",
     "newButton": "Nuevo lugar",
     "searchPlaceholder": "Buscar lugares...",
+    "deleteButton": "Eliminar",
+    "editButton": "Editar",
     "filters": {
       "allCities": "Todas las ciudades",
       "allActivities": "Todas",
@@ -340,6 +412,8 @@
       "inactive": "Inactivo"
     },
     "table": {
+      "selectAll": "Seleccionar todos",
+      "selectRow": "Seleccionar fila",
       "name": "Nombre",
       "city": "Ciudad",
       "activities": "Actividades",
@@ -349,9 +423,14 @@
       "edit": "Editar",
       "delete": "Eliminar"
     },
+    "pagination": {
+      "selected": "{selected} de {total} lugares seleccionados"
+    },
     "toast": {
       "loadError": "Error cargando lugares",
       "deleted": "Lugar eliminado",
+      "deletedManySingular": "{count} lugar eliminado",
+      "deletedManyPlural": "{count} lugares eliminados",
       "errorTitle": "Error"
     }
   },
@@ -492,6 +571,13 @@
       "errorTitle": "Error",
       "possibleDuplicate": "Esto podría ya existir: \"{name}\""
     }
+  },
+  "placesDeleteModal": {
+    "titleSingular": "Eliminar {count} lugar",
+    "titlePlural": "Eliminar {count} lugares",
+    "description": "Esta acción no se puede deshacer.",
+    "cancel": "Cancelar",
+    "confirm": "Eliminar"
   },
   "activities": {
     "title": "Actividades",
@@ -765,6 +851,15 @@
   "suggestions": {
     "title": "Sugerencias",
     "pendingBadge": "pendientes",
+    "deleteButton": "Eliminar",
+    "editButton": "Editar",
+    "table": {
+      "selectAll": "Seleccionar todas",
+      "selectRow": "Seleccionar fila"
+    },
+    "pagination": {
+      "selected": "{selected} de {total} sugerencias seleccionadas"
+    },
     "tabs": {
       "pending": "Pendientes",
       "approved": "Aprobadas",
@@ -820,6 +915,8 @@
       "rejectError": "Error al rechazar",
       "deleted": "Sugerencia eliminada",
       "deleteError": "Error al eliminar",
+      "deletedManySingular": "{count} sugerencia eliminada",
+      "deletedManyPlural": "{count} sugerencias eliminadas",
       "defaultNewPlaceName": "nuevo lugar",
       "defaultExistingPlaceName": "el lugar existente"
     }
@@ -913,6 +1010,13 @@
       "openWeekendsLabel": "Abre fines de semana",
       "priceLabel": "Precio"
     }
+  },
+  "suggestionsDeleteModal": {
+    "titleSingular": "Eliminar {count} sugerencia",
+    "titlePlural": "Eliminar {count} sugerencias",
+    "description": "Esta acción no se puede deshacer.",
+    "cancel": "Cancelar",
+    "confirm": "Eliminar"
   },
   "categories": {
     "title": "Categorías",

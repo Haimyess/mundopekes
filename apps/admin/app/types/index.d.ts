@@ -45,3 +45,8 @@ export interface Category {
   parent_id: string | null
   created_at: string
 }
+
+// Usados por el scaffold de dashboard (HomeChart/HomeDateRangePicker/
+// HomePeriodSelect) y por la página de analytics de eventos de usuario.
+export type Range = { start: Date; end: Date }
+export type Period = 'daily' | 'weekly' | 'monthly'

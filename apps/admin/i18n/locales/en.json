@@ -71,7 +71,25 @@
     "home": "Home",
     "notifications": "Notifications",
     "newMail": "New mail",
-    "newCustomer": "New customer"
+    "newCustomer": "New customer",
+    "catalogTitle": "Catalog",
+    "catalogActivities": "Active activities",
+    "catalogPlaces": "Active places",
+    "catalogProviders": "Active providers",
+    "catalogPendingSuggestions": "Pending suggestions",
+    "catalogPendingContacts": "Pending contact requests",
+    "eventsInRange": "Events in range",
+    "sessions": "Unique sessions",
+    "searches": "Searches",
+    "searchSuccessRate": "Successful searches",
+    "vsPreviousPeriod": "vs. previous period",
+    "trendTitle": "Traffic trend",
+    "weekdayTitle": "Most active day",
+    "weekdayPeakCaption": "events on {day}",
+    "gaugeCaption": "of searches returned results",
+    "recentFeedbackTitle": "Recent feedback",
+    "viewAll": "View all",
+    "emptyTraffic": "No traffic data yet for this range"
   },
   "userMenu": {
     "appearance": "Appearance",
@@ -264,23 +282,55 @@
   },
   "userEvents": {
     "title": "User Activity",
-    "totalEvents": "Total events",
-    "last7Days": "Last 7 days",
+    "totalEvents": "Total events (all time)",
+    "eventsInRange": "Events in range",
+    "distinctSessions": "Unique sessions",
+    "searchesInRange": "Searches in range",
+    "filters": {
+      "eventTypePlaceholder": "Event type",
+      "allEventTypes": "All event types",
+      "termPlaceholder": "Search term",
+      "allTerms": "All terms",
+      "categoryPlaceholder": "Category",
+      "allCategories": "All categories",
+      "targetPlaceholder": "Activity / place",
+      "allTargets": "All"
+    },
     "sections": {
+      "timeseries": "Trend",
+      "timeseriesHint": "Total tracked events per day for the selected date range",
       "byType": "Distribution by type",
-      "topSearches": "Top searches · 7 days",
-      "topActivities": "Most viewed activities · 7 days",
+      "byCategory": "Top categories searched",
+      "byCity": "Top cities searched",
+      "byAgeRange": "Top age ranges searched",
+      "topSearches": "Top searches",
+      "zeroResultSearches": "Zero-result searches",
+      "topActivities": "Most viewed activities",
+      "topPlaces": "Most viewed places",
       "recentEvents": "Recent events"
     },
     "emptySearches": "No searches recorded yet",
+    "emptyZeroResultSearches": "No zero-result searches in this range",
     "emptyActivities": "No views recorded yet",
+    "emptyPlaces": "No views recorded yet",
+    "emptyCategories": "No category data yet — will fill in as search traffic comes in",
+    "emptyCities": "No city data yet — will fill in as search traffic comes in",
+    "emptyAgeRanges": "No age range data yet — will fill in as search traffic comes in",
     "eventTypes": {
       "pageView": "Page view",
       "search": "Search",
       "activityView": "Activity viewed",
+      "placeView": "Place viewed",
+      "directionsClick": "Directions clicked",
       "contactSend": "Contact sent",
       "suggestionSubmit": "Suggestion",
       "providerInterest": "Provider interest"
+    },
+    "topActivitiesColumns": {
+      "views": "Views",
+      "contacts": "Contacts",
+      "directions": "Directions",
+      "conversion": "Conversion"
     },
     "columns": {
       "date": "Date",
@@ -291,6 +341,26 @@
     },
     "view": "View",
     "payloadModalTitle": "Event payload"
+  },
+  "businessReport": {
+    "title": "Business report",
+    "typePlace": "Place",
+    "typeProvider": "Provider",
+    "typeActivity": "Activity",
+    "entityPlaceholder": "Choose a place or provider",
+    "emptyState": "Choose a place or provider above to see its traffic report",
+    "views": "Page views",
+    "directions": "Directions clicked",
+    "contacts": "Contacts",
+    "uniqueSessions": "Unique visitors",
+    "searchingSessionsTitle": "Visitors who searched before finding you",
+    "searchingSessionsHint": "Sessions that performed a search and then viewed this business in the same session — real correlation, not an exact match to a specific search.",
+    "marketContextTitle": "Market demand",
+    "marketContextHint": "Overall search volume in this business's category/city — not attributed to this business specifically, just the size of the opportunity.",
+    "categorySearches": "Searches in this category",
+    "citySearches": "Searches in this city",
+    "trendTitle": "Views trend",
+    "emptyTrend": "No views recorded yet for this range"
   },
   "home": {
     "chart": {
@@ -328,6 +398,8 @@
     "title": "Places",
     "newButton": "New place",
     "searchPlaceholder": "Search places...",
+    "deleteButton": "Delete",
+    "editButton": "Edit",
     "filters": {
       "allCities": "All cities",
       "allActivities": "All",
@@ -340,6 +412,8 @@
       "inactive": "Inactive"
     },
     "table": {
+      "selectAll": "Select all",
+      "selectRow": "Select row",
       "name": "Name",
       "city": "City",
       "activities": "Activities",
@@ -349,9 +423,14 @@
       "edit": "Edit",
       "delete": "Delete"
     },
+    "pagination": {
+      "selected": "{selected} of {total} places selected"
+    },
     "toast": {
       "loadError": "Error loading places",
       "deleted": "Place deleted",
+      "deletedManySingular": "{count} place deleted",
+      "deletedManyPlural": "{count} places deleted",
       "errorTitle": "Error"
     }
   },
@@ -492,6 +571,13 @@
       "errorTitle": "Error",
       "possibleDuplicate": "This might already exist: \"{name}\""
     }
+  },
+  "placesDeleteModal": {
+    "titleSingular": "Delete {count} place",
+    "titlePlural": "Delete {count} places",
+    "description": "This action cannot be undone.",
+    "cancel": "Cancel",
+    "confirm": "Delete"
   },
   "activities": {
     "title": "Activities",
@@ -765,6 +851,15 @@
   "suggestions": {
     "title": "Suggestions",
     "pendingBadge": "pending",
+    "deleteButton": "Delete",
+    "editButton": "Edit",
+    "table": {
+      "selectAll": "Select all",
+      "selectRow": "Select row"
+    },
+    "pagination": {
+      "selected": "{selected} of {total} suggestions selected"
+    },
     "tabs": {
       "pending": "Pending",
       "approved": "Approved",
@@ -820,6 +915,8 @@
       "rejectError": "Error rejecting",
       "deleted": "Suggestion deleted",
       "deleteError": "Error deleting",
+      "deletedManySingular": "{count} suggestion deleted",
+      "deletedManyPlural": "{count} suggestions deleted",
       "defaultNewPlaceName": "new place",
       "defaultExistingPlaceName": "the existing place"
     }
@@ -913,6 +1010,13 @@
       "openWeekendsLabel": "Open on weekends",
       "priceLabel": "Price"
     }
+  },
+  "suggestionsDeleteModal": {
+    "titleSingular": "Delete {count} suggestion",
+    "titlePlural": "Delete {count} suggestions",
+    "description": "This action cannot be undone.",
+    "cancel": "Cancel",
+    "confirm": "Delete"
   },
   "categories": {
     "title": "Categories",

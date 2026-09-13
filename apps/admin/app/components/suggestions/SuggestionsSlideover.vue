@@ -47,7 +47,9 @@ watch(
 
     if (s.suggestion_type === 'experience_for_existing_place' && s.place_id) {
       try {
-        linkedPlace.value = await $fetch<PlaceLite>(`/api/places/${s.place_id}`)
+        linkedPlace.value = await $fetch<PlaceLite>(`/api/places/${s.place_id}`, {
+          params: { lite: 1 },
+        })
       } catch {
         // Linked place may have been deleted since the suggestion was created
       }
@@ -56,7 +58,9 @@ watch(
     if (s.flagged_possible_duplicate) {
       try {
         if (s.possible_duplicate_of) {
-          duplicatePlace.value = await $fetch<PlaceLite>(`/api/places/${s.possible_duplicate_of}`)
+          duplicatePlace.value = await $fetch<PlaceLite>(`/api/places/${s.possible_duplicate_of}`, {
+            params: { lite: 1 },
+          })
         } else if (s.possible_duplicate_activity_id) {
           duplicateActivity.value = await $fetch<ActivityLite>(
             `/api/activities/${s.possible_duplicate_activity_id}`

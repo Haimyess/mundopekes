@@ -5,6 +5,12 @@ import type { Suggestion } from '~/composables/useSuggestions'
 import { syncUrlPage, syncUrlParam } from '~/composables/useUrlPage'
 import { useFacets } from '~/composables/useFacets'
 
+// Nombre explícito para que el matching de <keep-alive> (definePageMeta de
+// abajo) no dependa del nombre inferido del archivo, que podría colisionar
+// con otro archivo de otra carpeta.
+defineOptions({ name: 'SuggestionsPage' })
+definePageMeta({ keepalive: true })
+
 interface SuggestionFacetRow {
   status: string
   category_id: string | null
@@ -17,6 +23,7 @@ interface SuggestionFacetRow {
 const UBadge = resolveComponent('UBadge')
 const UButton = resolveComponent('UButton')
 const UIcon = resolveComponent('UIcon')
+const UCheckbox = resolveComponent('UCheckbox')
 
 const { t, locale } = useI18n()
 const { tc } = useI18nContent()
@@ -47,6 +54,7 @@ const {
   page,
   pageSize,
   fetch: loadSuggestions,
+  removeMany,
 } = useSuggestions()
 
 syncUrlPage(page)
@@ -168,6 +176,26 @@ const onAction = async () => {
   await Promise.all([loadSuggestions(), facets.load()])
 }
 
+// Selección de filas — mismo patrón que activities/index.vue
+const rowSelection = ref<Record<string, boolean>>({})
+
+const selectedRows = computed(() =>
+  suggestions.value.filter((_, index) => rowSelection.value[index])
+)
+
+const deleteLoading = ref(false)
+
+const handleDelete = async (ids: string[]) => {
+  deleteLoading.value = true
+  try {
+    await removeMany(ids)
+    await facets.load()
+    rowSelection.value = {}
+  } finally {
+    deleteLoading.value = false
+  }
+}
+
 // Tabs de filtro — con conteo por status (facetas, no solo la página actual)
 const tabs = computed(() => [
   {
@@ -217,6 +245,24 @@ const isFromAgent = (suggestion: Suggestion) =>
   (suggestion.metadata as { source?: string } | null)?.source === 'agent'
 
 const columns = computed<TableColumn<Suggestion>[]>(() => [
+  {
+    id: 'select',
+    header: ({ table }) =>
+      h(UCheckbox, {
+        modelValue: table.getIsSomePageRowsSelected()
+          ? 'indeterminate'
+          : table.getIsAllPageRowsSelected(),
+        'onUpdate:modelValue': (value: boolean | 'indeterminate') =>
+          table.toggleAllPageRowsSelected(!!value),
+        ariaLabel: t('suggestions.table.selectAll'),
+      }),
+    cell: ({ row }) =>
+      h(UCheckbox, {
+        modelValue: row.getIsSelected(),
+        'onUpdate:modelValue': (value: boolean | 'indeterminate') => row.toggleSelected(!!value),
+        ariaLabel: t('suggestions.table.selectRow'),
+      }),
+  },
   {
     accessorKey: 'name_i18n',
     header: t('suggestions.columns.name'),
@@ -369,6 +415,15 @@ onMounted(async () => {
     }),
   ])
 })
+
+// Con keepalive esta página no se vuelve a montar al navegar de vuelta —
+// sólo se reactiva. A diferencia de Places/Activities, las sugerencias
+// pueden llegar desde afuera de esta sesión de admin (sitio público, agente)
+// en cualquier momento, así que acá sí conviene revalidar cada vez que se
+// vuelve a entrar.
+onActivated(() => {
+  Promise.all([loadSuggestions(), facets.load()])
+})
 </script>
 
 <template>
@@ -410,7 +465,35 @@ onMounted(async () => {
             </UButton>
           </div>
 
-          <div class="flex gap-2 flex-wrap">
+          <div class="flex gap-2 flex-wrap items-center">
+            <!-- Acciones bulk -->
+            <SuggestionsDeleteModal
+              v-if="selectedRows.length"
+              :count="selectedRows.length"
+              :loading="deleteLoading"
+              @confirm="handleDelete(selectedRows.map((r) => r.id))"
+            >
+              <UButton
+                :label="t('suggestions.deleteButton')"
+                color="error"
+                variant="subtle"
+                icon="i-lucide-trash"
+              >
+                <template #trailing>
+                  <UKbd>{{ selectedRows.length }}</UKbd>
+                </template>
+              </UButton>
+            </SuggestionsDeleteModal>
+
+            <UButton
+              v-if="selectedRows.length === 1"
+              :label="t('suggestions.editButton')"
+              color="neutral"
+              variant="subtle"
+              icon="i-lucide-pencil"
+              @click="openSuggestion(selectedRows[0])"
+            />
+
             <USelect v-model="categoryFilter" :items="categoryOptions" class="min-w-44" />
             <USelect v-model="cityFilter" :items="cityOptions" class="min-w-40" />
             <USelect v-model="isFreeFilter" :items="freeOptions" class="min-w-36" />
@@ -426,6 +509,7 @@ onMounted(async () => {
         <!-- Zona scrolleable: solo la tabla -->
         <div class="flex-1 min-h-0 overflow-y-auto p-4">
           <UTable
+            v-model:row-selection="rowSelection"
             :data="suggestions"
             :columns="columns"
             :loading="loading"
@@ -438,12 +522,36 @@ onMounted(async () => {
               th: 'py-2 first:rounded-l-lg last:rounded-r-lg border-y border-default first:border-l last:border-r',
               td: 'border-b border-default',
             }"
+            @click="
+              (e: MouseEvent) => {
+                const target = e.target as HTMLElement
+                if (target.closest('[data-radix-popper-content-wrapper]')) return
+                if (target.closest('button')) return
+                if (target.closest('input[type=checkbox]')) return
+                if (target.closest('label')) return
+
+                const tr = target.closest('tbody tr')
+                if (!tr) return
+
+                const tbody = tr.closest('tbody')
+                if (!tbody) return
+                const rows = Array.from(tbody.querySelectorAll('tr'))
+                const index = rows.indexOf(tr as HTMLTableRowElement)
+                const suggestion = suggestions[index]
+                if (suggestion) openSuggestion(suggestion)
+              }
+            "
           />
         </div>
 
         <!-- Zona fija: paginación, siempre visible abajo -->
-        <div v-if="pageCount > 1" class="shrink-0 flex justify-end p-4 border-t border-default">
+        <div class="shrink-0 flex items-center justify-between gap-3 p-4 border-t border-default">
+          <div class="text-sm text-muted">
+            {{ t('suggestions.pagination.selected', { selected: selectedRows.length, total }) }}
+          </div>
+
           <UPagination
+            v-if="pageCount > 1"
             :default-page="page"
             :items-per-page="pageSize"
             :total="total"

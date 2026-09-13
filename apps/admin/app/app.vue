@@ -2,6 +2,16 @@
 const colorMode = useColorMode()
 const { t, locale } = useI18n()
 
+// Compartido con layouts/default.vue: los clicks en los links del sidebar
+// suprimen la barra de carga superior (redundante — cada página ya muestra
+// su propio TableSkeleton al instante). Se resetea sola cuando termina la
+// navegación, así que sigue funcionando normal para todo lo demás (ej. click
+// en una fila de Places, que navega a /places/[id] y no tiene skeleton propio).
+const hideLoadingIndicator = useState('hide-loading-indicator', () => false)
+useNuxtApp().hook('page:loading:end', () => {
+  hideLoadingIndicator.value = false
+})
+
 const color = computed(() => (colorMode.value === 'dark' ? '#1b1718' : 'white'))
 
 useHead({
@@ -32,7 +42,7 @@ useSeoMeta({
 
 <template>
   <UApp>
-    <NuxtLoadingIndicator />
+    <NuxtLoadingIndicator v-if="!hideLoadingIndicator" />
 
     <NuxtLayout>
       <NuxtPage />

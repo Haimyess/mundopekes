@@ -7,6 +7,9 @@ import type { Place } from '~/types'
 
 const props = defineProps<{
   place?: Place | null
+  // Ciudades ya cargadas por la página que abre el drawer (evita repetir el
+  // fetch de /api/cities en cada apertura — ver places/index.vue).
+  cities?: Array<{ id: number; name: string }> | null
 }>()
 
 const emit = defineEmits<{
@@ -138,7 +141,22 @@ const isActive = computed({
   },
 })
 
-const { data: cities } = await useFetch<Array<{ id: number; name: string }>>('/api/cities')
+// El drawer se monta instantáneo (ver overlay.create/openEdit en
+// places/index.vue) — este fetch ya no bloquea el setup con un `await` de
+// nivel superior. Si la página que abrió el drawer ya tiene las ciudades
+// cargadas (prop `cities`), se reutilizan sin red; si no, se buscan acá sin
+// bloquear el montaje (ver <EntityFormSkeleton> en el template).
+const cities = ref<Array<{ id: number; name: string }>>(props.cities ?? [])
+const citiesLoading = ref(!props.cities?.length)
+
+onMounted(async () => {
+  if (props.cities?.length) return
+  try {
+    cities.value = await $fetch<Array<{ id: number; name: string }>>('/api/cities')
+  } finally {
+    citiesLoading.value = false
+  }
+})
 
 const googlePhotos = computed(() => form.metadata.photos ?? [])
 
@@ -275,7 +293,8 @@ const save = async () => {
     @close="emit('close')"
   >
     <template #body>
-      <div class="flex flex-col gap-4 p-4">
+      <EntityFormSkeleton v-if="citiesLoading" :fields="6" />
+      <div v-else class="flex flex-col gap-4 p-4">
         <UFormField
           :label="t('placesSlideover.form.active')"
           :description="t('placesSlideover.form.activeDescription')"

@@ -7,6 +7,9 @@ const props = defineProps<{
   activity?: Activity | null
   placeId?: string
   place?: Place | null
+  // Lista de lugares ya cargada por la página que abre el drawer (evita
+  // repetir el fetch de /api/places en cada apertura — ver activities/index.vue).
+  places?: Place[] | null
 }>()
 
 const emit = defineEmits<{
@@ -134,14 +137,33 @@ const form = reactive({
   website: '',
 })
 
-const { data: reference } = await useFetch<{
+// El drawer se monta instantáneo (ver overlay.create/openEdit en
+// activities/index.vue) — estos fetches ya no bloquean el setup con un
+// `await` de nivel superior (antes el click no mostraba nada hasta que la
+// red respondía). El body muestra <EntityFormSkeleton> mientras
+// referenceLoading es true.
+interface ReferenceData {
   subcategories: { id: string; name_i18n: Record<string, string>; slug: string }[]
   seasons: { value: string; label_key: string }[]
   ageRanges: { id: number; label_key: string }[]
-}>('/api/reference')
-const { data: places } = props.placeId
-  ? { data: ref<Place[] | null>(null) }
-  : await useFetch<Place[]>('/api/places')
+}
+const reference = ref<ReferenceData | null>(null)
+const referenceLoading = ref(true)
+const places = ref<Place[] | null>(props.places ?? null)
+
+onMounted(async () => {
+  try {
+    const needsPlaces = !props.placeId && !props.places?.length
+    const [refData, placesData] = await Promise.all([
+      $fetch<ReferenceData>('/api/reference'),
+      needsPlaces ? $fetch<Place[]>('/api/places') : Promise.resolve(null),
+    ])
+    reference.value = refData
+    if (placesData) places.value = placesData
+  } finally {
+    referenceLoading.value = false
+  }
+})
 
 const allAgeId = computed(
   () => reference.value?.ageRanges.find((a) => a.label_key === 'age.all')?.id
@@ -361,7 +383,8 @@ const save = async () => {
     @close="emit('close')"
   >
     <template #body>
-      <div class="flex flex-col gap-4 p-4">
+      <EntityFormSkeleton v-if="referenceLoading" :fields="6" />
+      <div v-else class="flex flex-col gap-4 p-4">
         <!-- Lugar ya vinculado (editando, o creada desde la página del lugar): -->
         <!-- sólo informativo, no se puede cambiar acá. -->
         <UFormField v-if="isPlaceLocked" :label="t('activitiesSlideover.form.place')">

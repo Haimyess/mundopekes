@@ -5,6 +5,13 @@ import type { Activity, Category, Place } from '~/types'
 import ActivitiesSlideover from '~/components/activities/ActivitiesSlideover.vue'
 import { syncUrlPage, syncUrlParam } from '~/composables/useUrlPage'
 import { useFacets } from '~/composables/useFacets'
+import { useActivitiesStale } from '~/composables/useCatalogStale'
+
+// Nombre explícito para que el matching de <keep-alive> (definePageMeta de
+// abajo) no dependa del nombre inferido del archivo, que podría colisionar
+// con otro index.vue de otra carpeta.
+defineOptions({ name: 'ActivitiesIndexPage' })
+definePageMeta({ keepalive: true })
 
 interface ActivityFacetRow {
   status: string
@@ -119,7 +126,7 @@ const selectedRows = computed(() => {
 // Slideover
 const openCreate = async () => {
   const slideover = overlay.create(ActivitiesSlideover, {
-    props: { place: null },
+    props: { place: null, places: places.value },
   })
   await slideover.open()
   await Promise.all([fetchActivities(), facets.load()])
@@ -127,7 +134,7 @@ const openCreate = async () => {
 
 const openEdit = async (activity: Activity) => {
   const slideover = overlay.create(ActivitiesSlideover, {
-    props: { activity },
+    props: { activity, places: places.value },
   })
   await slideover.open()
   await Promise.all([fetchActivities(), facets.load()])
@@ -305,6 +312,17 @@ onMounted(async () => {
       places.value = r
     }),
   ])
+})
+
+// Con keepalive esta página no se vuelve a montar al navegar de vuelta —
+// sólo se reactiva. Activities no cambia sola: se refresca acá sólo si
+// aprobar/fusionar una sugerencia (en otra página) la marcó como "sucia"
+// (ver useCatalogStale.ts) — evita pegarle a la base en cada visita sin motivo.
+const activitiesStale = useActivitiesStale()
+onActivated(() => {
+  if (!activitiesStale.value) return
+  activitiesStale.value = false
+  Promise.all([fetchActivities(), facets.load()])
 })
 </script>
 

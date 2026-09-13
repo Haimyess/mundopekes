@@ -120,6 +120,11 @@ export const useSuggestions = () => {
           method: 'POST',
         }
       )
+      // Places/Activities pueden estar cacheadas (keepalive) y no enterarse
+      // de este alta — se marcan "sucias" para que se refresquen solas la
+      // próxima vez que se entra a esas páginas (ver useCatalogStale.ts).
+      usePlacesStale().value = true
+      useActivitiesStale().value = true
       const placeName =
         result.place?.name_i18n?.['es'] ||
         result.place?.name_i18n?.['he'] ||
@@ -152,6 +157,10 @@ export const useSuggestions = () => {
         `/api/suggestions/${id}/merge`,
         { method: 'POST', body: { target_place_id: targetPlaceId } }
       )
+      // Ver el comentario equivalente en approve() — este merge crea una
+      // actividad sobre un lugar existente.
+      usePlacesStale().value = true
+      useActivitiesStale().value = true
       const placeName =
         result.place?.name_i18n?.['es'] ||
         result.place?.name_i18n?.['he'] ||
@@ -184,6 +193,11 @@ export const useSuggestions = () => {
         `/api/suggestions/${id}/merge`,
         { method: 'POST', body: { target_activity_id: targetActivityId } }
       )
+      // Ver el comentario equivalente en approve() — este merge sólo marca
+      // la sugerencia como resuelta contra una actividad existente, pero
+      // igual puede haber tocado sus datos.
+      usePlacesStale().value = true
+      useActivitiesStale().value = true
       const activityName =
         result.activity?.title_i18n?.['es'] ||
         result.activity?.title_i18n?.['he'] ||
@@ -250,6 +264,32 @@ export const useSuggestions = () => {
     }
   }
 
+  // Eliminar varias
+  const removeMany = async (ids: string[]) => {
+    actionLoading.value = true
+    try {
+      await Promise.all(ids.map((id) => $fetch(`/api/suggestions/${id}`, { method: 'DELETE' })))
+      toast.add({
+        title: t(
+          ids.length > 1
+            ? 'suggestions.toast.deletedManyPlural'
+            : 'suggestions.toast.deletedManySingular',
+          { count: ids.length }
+        ),
+        color: 'neutral',
+      })
+      await fetch()
+    } catch (e) {
+      toast.add({
+        title: t('suggestions.toast.deleteError'),
+        description: e instanceof Error ? e.message : String(e),
+        color: 'error',
+      })
+    } finally {
+      actionLoading.value = false
+    }
+  }
+
   // Contadores por status
   const counts = computed(() => ({
     pending: suggestions.value.filter((s) => s.status === 'pending').length,
@@ -293,5 +333,6 @@ export const useSuggestions = () => {
     mergeActivity,
     reject,
     remove,
+    removeMany,
   }
 }
