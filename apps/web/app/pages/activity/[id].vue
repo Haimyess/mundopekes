@@ -9,7 +9,7 @@
 const route = useRoute()
 const { t } = useI18n()
 const { tc } = useI18nContent()
-const { getActivityById, getActivitiesByPlaceId } = useActivities()
+const { getActivityById } = useActivities()
 
 const id = computed(() => route.params.id as string)
 
@@ -27,18 +27,30 @@ watch(status, (s) => {
   }
 })
 
-// ─── Other activities at the same place ────────────────────────
-// Practical info (phone/website/hours/wheelchair via live Google Details) now
-// lives exclusively on the Place Page — this page only links to it.
-const { data: siblingActivitiesData } = useAsyncData(
-  () => `activity-siblings-${activity.value?.place_id}`,
-  () =>
-    activity.value?.place_id
-      ? getActivitiesByPlaceId(activity.value.place_id, { excludeId: id.value, limit: 4 })
-      : Promise.resolve([]),
-  { watch: [() => activity.value?.place_id] }
+// ─── Tracking ─────────────────────────────────────────────────
+// page_view + activity_view solo cuando la actividad resuelve — antes no se
+// disparaba ningún tracking desde esta página, así que "actividades más
+// vistas" en el analytics interno (apps/admin) no tenía datos reales.
+const { trackPageView, trackActivityView, trackDirectionsClick } = useTracking()
+watch(
+  () => activity.value?.id,
+  (activityId) => {
+    if (!activityId || !activity.value) return
+    const title = tc(activity.value.title_i18n)
+    trackPageView(route.fullPath, title)
+    trackActivityView({
+      id: activityId,
+      title,
+      category: activity.value.category?.slug ?? '',
+      city: activity.value.place?.city?.name ?? '',
+    })
+  },
+  // immediate: true — useAsyncData resuelve en sync desde el cache de
+  // Nuxt (nuxtApp.payload.data) cuando ya se visitó esta misma actividad
+  // en la sesión SPA actual. Sin immediate, el watch nunca ve un "cambio"
+  // en ese caso y el evento no se registra nunca en revisitas.
+  { immediate: true }
 )
-const siblingActivities = computed(() => siblingActivitiesData.value ?? [])
 
 // ─── Imágenes: SOLO activity.images ──────────────────────────
 const dbImages = computed(() => (activity.value?.images ?? []).filter(Boolean))
@@ -288,6 +300,7 @@ const hasFeatures = computed(
                   target="_blank"
                   rel="noopener"
                   class="act-tools__btn act-tools__btn--maps"
+                  @click="activity && trackDirectionsClick('activity', activity.id, 'maps')"
                 >
                   <UIcon name="i-heroicons-map-pin" class="act-tools__btn-icon" />
                   Google Maps
@@ -298,6 +311,7 @@ const hasFeatures = computed(
                   target="_blank"
                   rel="noopener"
                   class="act-tools__btn act-tools__btn--waze"
+                  @click="activity && trackDirectionsClick('activity', activity.id, 'waze')"
                 >
                   <UIcon name="i-heroicons-arrow-turn-up-right" class="act-tools__btn-icon" />
                   Waze
@@ -404,27 +418,6 @@ const hasFeatures = computed(
             <div v-show="open.map" class="act-section__body">
               <ActivityInfoLocation :place="activity.place" hide-actions />
             </div>
-          </div>
-
-          <!-- ── SECCIÓN: Otras actividades en este lugar ── -->
-          <div v-if="siblingActivities.length" class="act-section">
-            <span class="act-section__heading">{{ t('activity.other_activities_here') }}</span>
-            <div class="act-section__body act-siblings-grid">
-              <SharedActivityCard
-                v-for="sibling in siblingActivities"
-                :key="sibling.id"
-                :activity="sibling"
-                variant="compact"
-              />
-            </div>
-            <NuxtLink
-              v-if="activity.place"
-              :to="`/place/${activity.place.id}`"
-              class="act-siblings-see-all"
-            >
-              {{ t('activity.see_place_page') }}
-              <UIcon name="i-heroicons-arrow-right" class="icon--directional" />
-            </NuxtLink>
           </div>
 
           <!-- ── Reporte ────────────────────────────────── -->
@@ -708,34 +701,6 @@ const hasFeatures = computed(
   height: 1rem;
   color: var(--text-muted);
   flex-shrink: 0;
-}
-
-/* ── Otras actividades en este lugar ────────────────────────────── */
-.act-siblings-grid {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
-}
-
-.act-siblings-see-all {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-1);
-  margin-top: var(--space-3);
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-medium);
-  color: var(--green);
-  text-decoration: none;
-}
-
-.act-siblings-see-all:hover {
-  text-decoration: underline;
-}
-
-.act-siblings-see-all svg,
-.act-siblings-see-all :deep(svg) {
-  width: 1rem;
-  height: 1rem;
 }
 
 /* ── Tools ────────────────────────────────────────────────────── */

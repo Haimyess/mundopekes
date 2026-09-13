@@ -51,6 +51,11 @@ const hideBottomNav = computed(
   height: 100dvh;
   overflow: hidden;
   background: var(--color-bg-primary);
+  /* Acá sí existe el pill de PwaBottomNav (56px) — pwa.css define el
+     default global sin él, porque MapView.vue en chrome="fullbleed"
+     también corre fuera de este shell (mobile web normal) donde no hay
+     bottom nav que reservar. */
+  --pwa-bottom-nav-height: calc(56px + var(--pwa-bottom-nav-offset) + var(--space-2));
 }
 
 .pwa-shell__content {

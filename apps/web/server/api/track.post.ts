@@ -6,6 +6,8 @@ const VALID_EVENT_TYPES = [
   'page_view',
   'search',
   'activity_view',
+  'place_view',
+  'directions_click',
   'contact_send',
   'suggestion_submit',
   'provider_interest',

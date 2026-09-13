@@ -13,9 +13,21 @@
  *
  * El descarte se persiste en localStorage — por viewer, no por sesión —
  * para no insistir en cada visita.
+ *
+ * Solo Home ("/"): el componente vive en el layout, que Vue Router NO
+ * desmonta entre navegaciones dentro del mismo layout — sin este chequeo
+ * de ruta, una vez visible seguía mostrándose (fixed, encima de todo) al
+ * navegar a cualquier otra página. Pedido explícito de Haim: que aparezca
+ * al llegar al sitio por Home, y desaparezca (sin necesidad de descartarlo)
+ * apenas se navega a otra página — vuelve a aparecer si se vuelve a Home,
+ * a menos que ya se haya descartado.
  */
+import { useRoute } from 'nuxt/app'
+
 const { isStandalone } = usePwaMode()
 const { t } = useI18n()
+const route = useRoute()
+const isHome = computed(() => route.path === '/')
 
 const DISMISS_KEY = 'pwa-install-dismissed'
 
@@ -38,7 +50,7 @@ onMounted(() => {
 
 const canInstall = computed(() => !!deferredPrompt.value)
 const visible = computed(
-  () => !dismissed.value && !isStandalone.value && (canInstall.value || isIos.value)
+  () => isHome.value && !dismissed.value && !isStandalone.value && (canInstall.value || isIos.value)
 )
 
 async function install() {

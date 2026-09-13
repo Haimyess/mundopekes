@@ -93,32 +93,6 @@ const handleKeydown = (e: KeyboardEvent) => {
               />
             </div>
           </div>
-
-          <!-- Flechas (si hay más de 1 imagen) -->
-          <template v-if="totalImages > 1">
-            <button
-              class="absolute left-3 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/60 text-white rounded-full w-8 h-8 flex items-center justify-center transition-colors"
-              aria-label="Previous image"
-              @click.stop="goPrev"
-            >
-              <UIcon name="i-heroicons-chevron-left" class="w-4 h-4" />
-            </button>
-            <button
-              class="absolute right-3 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/60 text-white rounded-full w-8 h-8 flex items-center justify-center transition-colors"
-              aria-label="Next image"
-              @click.stop="goNext"
-            >
-              <UIcon name="i-heroicons-chevron-right" class="w-4 h-4" />
-            </button>
-          </template>
-
-          <!-- Counter badge -->
-          <div
-            v-if="totalImages > 1"
-            class="absolute top-3 right-3 bg-black/50 text-white text-xs px-2 py-1 rounded-full"
-          >
-            {{ activeIndex + 1 }} / {{ totalImages }}
-          </div>
         </div>
 
         <!-- Indicadores de línea -->

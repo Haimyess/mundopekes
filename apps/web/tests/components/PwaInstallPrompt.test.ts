@@ -5,6 +5,9 @@ vi.mock('vue-i18n', () => ({
   useI18n: () => ({ t: (k: string) => k, locale: { value: 'es' } }),
 }))
 
+const __mockRoute = { path: '/' }
+vi.mock('nuxt/app', () => ({ useRoute: () => __mockRoute }))
+
 const stubs = {
   UIcon: true,
 }
@@ -37,6 +40,7 @@ describe('PwaInstallPrompt', () => {
     localStorage.clear()
     mockMatchMedia(false)
     mockUserAgent(ANDROID_UA)
+    __mockRoute.path = '/'
     // @ts-expect-error test-only cleanup of iOS legacy flag between cases
     delete window.navigator.standalone
   })
@@ -113,6 +117,23 @@ describe('PwaInstallPrompt', () => {
     mockUserAgent(IOS_UA)
     const wrapper = mount(PwaInstallPrompt, { global: { stubs } })
     await flushPromises()
+    expect(wrapper.find('.pwa-install-prompt').exists()).toBe(false)
+  })
+
+  it('is hidden outside Home even when otherwise installable', async () => {
+    __mockRoute.path = '/search'
+    const wrapper = mount(PwaInstallPrompt, { global: { stubs } })
+    await flushPromises()
+
+    const event = new Event('beforeinstallprompt', { cancelable: true }) as Event & {
+      prompt: () => void
+      userChoice: Promise<{ outcome: string }>
+    }
+    event.prompt = vi.fn()
+    event.userChoice = Promise.resolve({ outcome: 'accepted' })
+    window.dispatchEvent(event)
+    await flushPromises()
+
     expect(wrapper.find('.pwa-install-prompt').exists()).toBe(false)
   })
 

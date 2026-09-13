@@ -38,6 +38,33 @@ const viewMode = ref<'list' | 'map'>('list')
 const filterBarEl = ref<HTMLElement | null>(null)
 const mapWrapEl = ref<HTMLElement | null>(null)
 
+// Mobile ahora usa chrome="fullbleed" (el mismo diseño que PwaExploreScreen:
+// mapa a pantalla completa + carousel flotante) en vez del chrome="split"
+// (lista apilada + mapa) que tenía antes — pedido explícito de Haim para que
+// el mapa de mobile web se vea igual que en la PWA instalada, no solo quien
+// tiene la app agregada a la pantalla de inicio.
+const isMobileViewport = ref(false)
+const mapChrome = computed(() => (isMobileViewport.value ? 'fullbleed' : 'split'))
+
+// Mobile + mapa: el mapa pasa a ocupar la pantalla completa (fixed, tapa
+// navbar/footer), con los filtros como botón flotante arriba y el toggle
+// lista/mapa flotando abajo — mismo lenguaje visual que la PWA instalada,
+// pedido explícito de Haim para que también se vea así en mobile web
+// (no solo con la app agregada a la pantalla de inicio).
+const mobileMapFullscreen = computed(() => isMobileViewport.value && viewMode.value === 'map')
+
+// Bloquea el scroll del body mientras el mapa está fullscreen — si no,
+// el contenido de atrás (header/filtros/footer, ocultos con v-if pero el
+// browser igual puede scrollear la página) queda scrolleable "a ciegas"
+// detrás del mapa fijo.
+watch(mobileMapFullscreen, (isFullscreen) => {
+  if (!import.meta.client) return
+  document.body.style.overflow = isFullscreen ? 'hidden' : ''
+})
+onBeforeUnmount(() => {
+  if (import.meta.client) document.body.style.overflow = ''
+})
+
 // Alto del bloque mapa+lista en vista mapa. Se mide en JS (viewport -
 // posición real del bloque) en vez de intentar lograrlo con una cadena
 // de flex:1/min-height:0 — esta página vive dentro del layout compartido
@@ -47,16 +74,16 @@ const mapWrapEl = ref<HTMLElement | null>(null)
 // de su propio contenido en vez de limitarlo — por eso el mapa se
 // escapaba del viewport. Midiendo con getBoundingClientRect() no hace
 // falta adivinar la altura del navbar ni de los filtros.
+// Antes esto se salteaba en mobile (mapWrapHeight quedaba null, el bloque
+// apilaba lista+mapa con alturas fijas en vh) — con chrome="fullbleed" el
+// mapa necesita un contenedor con alto real y position:relative (igual que
+// .pwa-shell__content le da a PwaExploreScreen), así que ahora se mide
+// también en mobile.
 const mapWrapHeight = ref<number | null>(null)
 
 function updateMapWrapHeight() {
+  isMobileViewport.value = window.innerWidth < 768
   if (!mapWrapEl.value) return
-  // Mobile apila lista/mapa con alturas fijas (vh) propias y ya funciona
-  // bien — esta medida es solo para el layout de escritorio (lado a lado).
-  if (window.innerWidth < 768) {
-    mapWrapHeight.value = null
-    return
-  }
   const top = mapWrapEl.value.getBoundingClientRect().top
   const available = window.innerHeight - top
   mapWrapHeight.value = Math.max(available, 400)
@@ -84,6 +111,11 @@ watch(viewMode, (mode) => {
 })
 
 onMounted(() => {
+  // Sin esto, isMobileViewport (y por lo tanto mapChrome) quedaba en su
+  // default hasta el primer resize o cambio de viewMode — un mobile que
+  // abre la vista mapa por primera vez arrancaba con chrome="split" un
+  // instante antes de saltar a "fullbleed".
+  updateMapWrapHeight()
   window.addEventListener('resize', updateMapWrapHeight)
 })
 onBeforeUnmount(() => {
@@ -484,7 +516,7 @@ useSeoMeta({
   <template v-else>
     <div class="search-page">
       <div class="search-page__container">
-        <div class="search-page__header">
+        <div v-if="!mobileMapFullscreen" class="search-page__header">
           <div class="search-page__header-row">
             <h1 class="search-page__title">{{ t('search.title') }}</h1>
 
@@ -516,7 +548,7 @@ useSeoMeta({
              para que el usuario pueda ver/cambiar el filtro que lo llevó
              ahí (antes se ocultaba entera y no había forma de volver a
              tocar el select de categoría salvo editando la URL). -->
-        <div ref="filterBarEl" class="search-page__filter-bar">
+        <div v-if="!mobileMapFullscreen" ref="filterBarEl" class="search-page__filter-bar">
           <!-- ── DESKTOP ──────────────────────────────────────────── -->
           <div class="search-page__desktop-filters">
             <UiSelect
@@ -647,7 +679,10 @@ useSeoMeta({
 
         <!-- Places strip — parallel to the activity results, only when the
            free-text query also matches a place in our own DB. -->
-        <div v-if="displayedPlaces.length" class="search-page__places-strip">
+        <div
+          v-if="displayedPlaces.length && !mobileMapFullscreen"
+          class="search-page__places-strip"
+        >
           <span class="search-page__places-strip-label">{{ t('search.places_found') }}</span>
           <div class="search-page__places-strip-row">
             <PlaceCard v-for="place in displayedPlaces" :key="place.id" :place="place" />
@@ -675,9 +710,33 @@ useSeoMeta({
           v-else
           ref="mapWrapEl"
           class="search-page__map-wrap"
-          :style="mapWrapHeight ? { height: `${mapWrapHeight}px` } : undefined"
+          :class="{ 'search-page__map-wrap--fullscreen': mobileMapFullscreen }"
+          :style="
+            mapWrapHeight && !mobileMapFullscreen ? { height: `${mapWrapHeight}px` } : undefined
+          "
         >
-          <SearchMapView :activities="displayActivities" @switch-to-list="viewMode = 'list'" />
+          <!-- Botón flotante de filtros — reemplaza a la barra de filtros
+               completa en el mapa fullscreen de mobile, mismo lenguaje que
+               PwaFloatingSearchBar en la PWA instalada. -->
+          <button
+            v-if="mobileMapFullscreen"
+            type="button"
+            class="search-page__map-filter-fab"
+            @click="drawerOpen = true"
+          >
+            <UIcon name="i-heroicons-adjustments-horizontal" class="search-page__filter-icon" />
+            <span>{{ t('search.filters') }}</span>
+            <span v-if="activeFiltersCount > 0" class="search-page__filter-badge">
+              {{ activeFiltersCount }}
+            </span>
+          </button>
+
+          <SearchMapView
+            :activities="displayActivities"
+            :chrome="mapChrome"
+            :user-coords="userCoords"
+            @switch-to-list="viewMode = 'list'"
+          />
         </div>
       </div>
     </div>
@@ -789,6 +848,46 @@ useSeoMeta({
 .search-page__map-wrap {
   display: flex;
   min-height: 400px;
+  /* chrome="fullbleed" (mobile) posiciona su contenido con position:absolute;
+     inset:0 — necesita este contenedor como referencia, igual que
+     .pwa-shell__content se lo da a PwaExploreScreen. */
+  position: relative;
+}
+
+/* Mobile + mapa: fixed a toda la pantalla, tapando navbar/footer (que
+   siguen en el DOM, solo fuera de la vista) — mismo resultado visual que
+   la PWA instalada, sin depender de layouts/pwa.vue. z-index-fixed queda
+   por debajo de drawers/modales (SearchFilterDrawer sigue abriendo por
+   encima) y del bottom-nav de la PWA (irrelevante acá, ese layout no
+   aplica en esta rama). */
+.search-page__map-wrap--fullscreen {
+  position: fixed;
+  inset: 0;
+  height: 100% !important;
+  z-index: var(--z-index-fixed);
+}
+
+/* Botón flotante de filtros sobre el mapa fullscreen — mismo estilo que
+   el botón de filtros mobile normal, pero flotando con fondo propio en
+   vez de vivir dentro de la barra de filtros (que en este modo no se
+   renderiza). */
+.search-page__map-filter-fab {
+  position: absolute;
+  top: var(--space-4);
+  inset-inline-start: var(--space-4);
+  z-index: 20;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1-5, 0.375rem);
+  padding: var(--space-2) var(--space-3);
+  border: none;
+  border-radius: var(--border-radius-full);
+  background: var(--color-bg-primary);
+  color: var(--color-text-primary);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  box-shadow: var(--shadow-lg);
+  cursor: pointer;
 }
 
 .search-page__pagination {

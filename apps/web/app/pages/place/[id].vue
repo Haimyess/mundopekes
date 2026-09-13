@@ -27,6 +27,26 @@ watch(status, (s) => {
   }
 })
 
+// ─── Tracking ─────────────────────────────────────────────────
+const { trackPageView, trackPlaceView, trackDirectionsClick } = useTracking()
+watch(
+  () => place.value?.id,
+  (placeId) => {
+    if (!placeId || !place.value) return
+    const title = tc(place.value.name_i18n)
+    const city = place.value.city?.name ?? ''
+    trackPageView(route.fullPath, title)
+    trackPlaceView({ id: placeId, title, city })
+  },
+  // immediate: true — useAsyncData resuelve en sync desde el cache de Nuxt
+  // (nuxtApp.payload.data) cuando ya se visitó este mismo lugar en la sesión
+  // SPA actual. Sin immediate, el watch nunca ve un "cambio" en ese caso y
+  // el evento no se registra nunca en revisitas. (Lee de place.value
+  // directo, no de los computeds placeName/cityName definidos más abajo,
+  // para poder ejecutar en sync sin depender de su orden de declaración.)
+  { immediate: true }
+)
+
 const { data: activitiesData } = useAsyncData(`place-activities-${id.value}`, () =>
   getActivitiesByPlaceId(id.value)
 )
@@ -76,6 +96,18 @@ const scheduleRows = computed(() => {
     }
   })
 })
+
+// Colapsable, con resumen de "hoy" + badge abierto/cerrado en el trigger —
+// mismo patrón que activity/[id].vue tenía antes de que esta sección se
+// moviera acá desde ahí (ver Confluence: el horario general del lugar via
+// Google Details vive en la Place Page por diseño; lo que se perdió en la
+// mudanza fue solo el tratamiento colapsable, no el dato en sí).
+const hoursOpen = ref(false)
+const todayRow = computed(() => scheduleRows.value?.find((row) => row.isToday) ?? null)
+const todayScheduleText = computed(() =>
+  todayRow.value ? `${todayRow.value.label}: ${todayRow.value.hours}` : null
+)
+const isOpenNow = computed(() => placeDetails.value?.opening_hours?.open_now ?? null)
 
 // ─── Textos ───────────────────────────────────────────────────
 const placeName = computed(() => (place.value ? tc(place.value.name_i18n) : ''))
@@ -186,6 +218,7 @@ useSeoMeta({
                 target="_blank"
                 rel="noopener"
                 class="place-tools__btn place-tools__btn--maps"
+                @click="place && trackDirectionsClick('place', place.id, 'maps')"
               >
                 <UIcon name="i-heroicons-map-pin" class="place-tools__btn-icon" />
                 Google Maps
@@ -196,6 +229,7 @@ useSeoMeta({
                 target="_blank"
                 rel="noopener"
                 class="place-tools__btn place-tools__btn--waze"
+                @click="place && trackDirectionsClick('place', place.id, 'waze')"
               >
                 <UIcon name="i-heroicons-arrow-turn-up-right" class="place-tools__btn-icon" />
                 Waze
@@ -223,11 +257,31 @@ useSeoMeta({
 
           <!-- ── Horarios ──────────────────────────────────── -->
           <div v-if="scheduleRows" class="place-section">
-            <span class="place-section__heading">{{ t('activity.hours') }}</span>
-            <SharedScheduleTable
-              :rows="scheduleRows"
-              :open-now="placeDetails?.opening_hours?.open_now ?? null"
-            />
+            <button class="place-section__trigger" @click="hoursOpen = !hoursOpen">
+              <div class="place-section__heading-block">
+                <div class="place-hours__trigger-top">
+                  <span class="place-section__heading">{{ t('activity.hours') }}</span>
+                  <span
+                    v-if="isOpenNow !== null"
+                    class="place-hours__badge"
+                    :class="isOpenNow ? 'place-hours__badge--open' : 'place-hours__badge--closed'"
+                  >
+                    {{ isOpenNow ? t('activity.open_now') : t('activity.closed_now') }}
+                  </span>
+                </div>
+                <span v-if="todayScheduleText" class="place-hours__today-text">{{
+                  todayScheduleText
+                }}</span>
+              </div>
+              <UIcon
+                name="i-heroicons-chevron-down"
+                class="place-section__chevron"
+                :class="{ 'place-section__chevron--open': hoursOpen }"
+              />
+            </button>
+            <div v-show="hoursOpen" class="place-section__body">
+              <SharedScheduleTable :rows="scheduleRows" :open-now="isOpenNow" />
+            </div>
           </div>
 
           <!-- ── Mapa ──────────────────────────────────────── -->
@@ -297,6 +351,75 @@ useSeoMeta({
   font-size: var(--font-size-base);
   font-weight: var(--font-weight-semibold);
   color: var(--color-text-primary);
+}
+
+/* ── Trigger colapsable (usado por Horarios) ──────────────────── */
+.place-section__trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  text-align: start;
+  gap: var(--space-2);
+}
+
+.place-section__heading-block {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  text-align: start;
+}
+
+.place-section__chevron {
+  width: 1rem;
+  height: 1rem;
+  color: var(--color-text-secondary);
+  flex-shrink: 0;
+  transition: transform 0.2s;
+}
+
+.place-section__chevron--open {
+  transform: rotate(180deg);
+}
+
+.place-hours__trigger-top {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.place-hours__badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  padding: 2px var(--space-2);
+  border-radius: 9999px;
+  line-height: 1.4;
+  flex-shrink: 0;
+}
+
+.place-hours__badge--open {
+  background: var(--color-secondary-100, #dcfce7);
+  color: var(--color-secondary-700, #15803d);
+  border: 1px solid var(--color-secondary-300, #86efac);
+}
+
+.place-hours__badge--closed {
+  background: var(--color-neutral-100, #f5f5f5);
+  color: var(--color-neutral-500, #737373);
+  border: 1px solid var(--color-neutral-200, #e5e5e5);
+}
+
+.place-hours__today-text {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  font-weight: var(--font-weight-normal);
+  margin-top: 1px;
 }
 
 .place-header__title {

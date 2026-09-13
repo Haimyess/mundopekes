@@ -78,13 +78,16 @@ const cityName = computed(() => props.activity?.place?.city?.name ?? null)
 </template>
 
 <style scoped>
-/* Sin hover, sin shadow, sin border — nada que pelear con nada compartido. */
+/* Sin hover, sin shadow, sin border — nada que pelear con nada compartido.
+   border-radius chico (casi recto) a pedido de Haim — antes usaba
+   --border-radius-lg (12px), se veía demasiado redondeado para una card
+   tan ancha (ver width en .search-map__carousel-item, MapView.vue). */
 .map-card {
   display: flex;
   flex-direction: column;
   text-decoration: none;
   color: inherit;
-  border-radius: var(--border-radius-lg);
+  border-radius: var(--border-radius-sm);
   overflow: hidden;
   background: var(--color-bg-primary);
 }
@@ -94,11 +97,13 @@ const cityName = computed(() => props.activity?.place?.city?.name ?? null)
    que la imagen crezca en alto también — eso movería la card hacia
    arriba/abajo. Con altura fija, crecer en ancho solo muestra un poco
    más de imagen a los costados (object-fit: cover ya lo maneja), la card
-   se mueve únicamente hacia los lados. */
+   se mueve únicamente hacia los lados. Subida de 5.9rem a 8rem — con el
+   ancho nuevo (~65% de pantalla, antes 10.5rem fijo) la card quedaba
+   chata/desproporcionada. */
 .map-card__image-wrap {
   position: relative;
   width: 100%;
-  height: 5.9rem;
+  height: 8rem;
   background: var(--color-neutral-100);
 }
 
@@ -136,8 +141,8 @@ const cityName = computed(() => props.activity?.place?.city?.name ?? null)
    las cards del carousel midan lo mismo aunque a alguna le falte la
    dirección. */
 .map-card__body {
-  padding: 6px 8px 8px;
-  min-height: 2.75rem;
+  padding: 8px 10px 10px;
+  min-height: 3.25rem;
   background: var(--color-bg-primary);
 }
 

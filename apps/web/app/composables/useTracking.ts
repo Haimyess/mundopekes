@@ -10,7 +10,12 @@ export const useTracking = () => {
     $fetch('/api/track', {
       method: 'POST',
       body: { event_type, session_id: sessionId.value, locale: locale.value, payload },
-    }).catch(() => {})
+    }).catch((err) => {
+      // Tracking nunca debe romper la UX, pero un catch mudo hace invisibles
+      // fallos reales — sin esto, un evento que nunca llega a la DB es
+      // indistinguible de uno que nunca se disparó.
+      if (import.meta.dev) console.warn(`[tracking] ${event_type} failed:`, err)
+    })
   }
 
   function trackPageView(path: string, title?: string) {
@@ -53,6 +58,22 @@ export const useTracking = () => {
     })
   }
 
+  function trackPlaceView(place: { id: string; title: string; city: string }) {
+    if (!import.meta.client) return
+    gtag('event', 'view_item')
+    post('place_view', { place_id: place.id, title: place.title, city: place.city })
+  }
+
+  function trackDirectionsClick(
+    targetType: 'activity' | 'place',
+    targetId: string,
+    method: 'maps' | 'waze'
+  ) {
+    if (!import.meta.client) return
+    gtag('event', 'directions_click', { method })
+    post('directions_click', { target_type: targetType, target_id: targetId, method })
+  }
+
   function trackContactSend(intent: string, activityId?: string) {
     if (!import.meta.client) return
     gtag('event', 'contact_form_send', { intent })
@@ -75,6 +96,8 @@ export const useTracking = () => {
     trackPageView,
     trackSearch,
     trackActivityView,
+    trackPlaceView,
+    trackDirectionsClick,
     trackContactSend,
     trackSuggestionSubmit,
     trackProviderInterest,

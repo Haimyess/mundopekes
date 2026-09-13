@@ -36,9 +36,18 @@ interface Props {
    * carousel del mapa (fullbleed) muestra la distancia en un badge sobre
    * cada card. null/undefined = sin "cerca de mí" activo, sin badge. */
   userCoords?: { lat: number; lng: number } | null
+  /** Toggle Lista/Mapa flotante. true en split (siempre) y en el fullbleed
+   * de mobile web (search.vue) — ahí es la única forma de volver a la
+   * lista. false en PwaExploreScreen: la PWA instalada no tiene un modo
+   * "lista" para el mapa, ese switch no aplica. */
+  showToggle?: boolean
 }
 
-const props = withDefaults(defineProps<Props>(), { chrome: 'split', userCoords: null })
+const props = withDefaults(defineProps<Props>(), {
+  chrome: 'split',
+  userCoords: null,
+  showToggle: true,
+})
 
 const emit = defineEmits<{
   'switch-to-list': []
@@ -167,6 +176,18 @@ const hoverSource = ref<'card' | 'marker' | null>(null)
 
 function registerMarker(id: string, marker: unknown) {
   markerById.set(id, marker)
+  // Bug real detrás de "no se ven los pines": vue-leaflet (setupMarker/
+  // shouldBlankIcon en vue-leaflet.es.js) blanquea el `icon` prop a un
+  // divIcon vacío (className: "", sin iconSize custom → cae al default de
+  // Leaflet de 12x12) cada vez que detecta contenido en el slot default
+  // del <LMarker> que no reconoce como su propio LPopup/LTooltip por
+  // nombre de componente — y no lo reconoce porque acá <LPopup> llega
+  // auto-importado globalmente por Nuxt (@nuxtjs/leaflet), no con el
+  // import directo que esa función espera. Confirmado con Playwright
+  // contra el dev server real: los 15 markers se creaban bien posicionados
+  // pero sin la clase "map-pin" ni el <span> del punto — exactamente este
+  // blanqueo. Se pisa acá, después de creado, con el ícono real.
+  if (pinIcon.value) (marker as { setIcon?: (icon: unknown) => void }).setIcon?.(pinIcon.value)
 }
 
 function setCardEl(id: string, el: Element | ComponentPublicInstance | null) {
@@ -274,7 +295,7 @@ watch(leafletMap, (map) => {
   canvasResizeObserver?.disconnect()
   canvasResizeObserver = new ResizeObserver(() => {
     map.invalidateSize()
-    if (props.chrome === 'fullbleed') void fitToResults(map)
+    if (props.chrome === 'fullbleed') fitToResults(map)
   })
   canvasResizeObserver.observe(canvasEl.value)
 
@@ -325,24 +346,48 @@ watch(hoveredId, (id, prevId) => {
 // después (mismo patrón defensivo que onMapReady, que sí resolvió el bug
 // original de "pines invisibles").
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function fitToResults(map: any) {
+function fitToResults(map: any) {
   if (!geoActivities.value.length) return
   map.invalidateSize()
-  const L = await import('leaflet')
-  if (geoActivities.value.length === 1) {
-    map.setView(mapCenter.value, 14)
+
+  // Solo coordenadas realmente numéricas: Number(a.place.lat/lng) puede dar
+  // NaN si el dato en DB viene mal formado — L.latLng(NaN, NaN) tira
+  // "Invalid LatLng object" sin capturar si se cuela acá.
+  const points = geoActivities.value
+    .map((a) => [Number(a.place.lat), Number(a.place.lng)] as [number, number])
+    .filter(([lat, lng]) => Number.isFinite(lat) && Number.isFinite(lng))
+
+  if (points.length <= 1) {
+    map.setView(points[0] ?? mapCenter.value, 14)
     return
   }
-  const bounds = L.latLngBounds(
-    geoActivities.value.map((a) => [Number(a.place.lat), Number(a.place.lng)] as [number, number])
-  )
-  map.fitBounds(bounds, { padding: [32, 32], maxZoom: 15 })
+
+  // Antes esto construía el bounds con L.latLngBounds() usando NUESTRO
+  // propio `await import('leaflet')` — pero LMap corre con
+  // use-global-leaflet="false", así que arma el mapa con SU PROPIA copia
+  // del módulo. Vite en dev no siempre dedupea un import() dinámico contra
+  // el leaflet que ya trae vue-leaflet, y map.fitBounds() hace un
+  // `instanceof LatLngBounds` interno contra SU copia — si el bounds vino
+  // de la copia equivocada, ese instanceof falla, Leaflet lo trata como
+  // dato crudo sin poder iterarlo, y arma un bounds nunca inicializado →
+  // "Bounds are not valid.", siempre, no por una carrera (confirmado: el
+  // catch de abajo lo atrapaba en cada llamada, no de forma intermitente).
+  // Pasarle el array plano directo a fitBounds() lo esquiva del todo: lo
+  // convierte internamente con SU PROPIA copia de Leaflet, sin construir
+  // nada nosotros — mismo array [[lat,lng], ...] que antes, sin el
+  // intermediario. Ya no hace falta el import de leaflet acá.
+  try {
+    map.fitBounds(points, { padding: [32, 32], maxZoom: 15 })
+  } catch (err) {
+    if (import.meta.dev) console.warn('[map] fitBounds failed, falling back to setView', err)
+    map.setView(mapCenter.value, 12)
+  }
 }
 
 watch([leafletMap, geoActivities], async ([map]) => {
   if (!map) return
   await nextTick()
-  await fitToResults(map)
+  fitToResults(map)
   // Tamaño de contenedor 0 (o muy chico) al primer intento → getSize()
   // sigue reportando eso hasta el próximo invalidateSize real; reintentar
   // el encuadre completo (no solo invalidateSize) cubre el caso donde el
@@ -460,9 +505,8 @@ onBeforeUnmount(() => {
             </template>
           </LMap>
 
-          <!-- Toggle List/Mapa flotando sobre el mapa (solo chrome="split"
-               — en fullbleed no hay vista de lista separada). -->
-          <div v-if="chrome === 'split'" class="search-map__toggle" role="group">
+          <!-- Toggle List/Mapa flotando sobre el mapa. -->
+          <div v-if="showToggle" class="search-map__toggle" role="group">
             <button type="button" class="search-map__toggle-btn" @click="emit('switch-to-list')">
               <UIcon name="i-heroicons-list-bullet" class="search-map__toggle-icon" />
               <span class="search-map__toggle-label">{{ t('search.view_list') }}</span>
@@ -513,15 +557,22 @@ onBeforeUnmount(() => {
 @import 'leaflet/dist/leaflet.css';
 
 /* Sin controles de zoom +/- (pinch-to-zoom / rueda alcanzan en mobile y
-   desktop) ni atribución "Leaflet | OpenStreetMap" flotando sobre el
-   mapa — mismo patrón :global() que .leaflet-popup-pane más abajo, ya
-   que estos controles los inyecta Leaflet fuera del árbol scoped. */
+   desktop) — mismo patrón :global() que .leaflet-popup-pane más abajo, ya
+   que Leaflet los inyecta fuera del árbol scoped. La atribución (OSM) NO
+   se oculta: su política de uso de tiles exige mostrarla visiblemente
+   sobre el mapa — solo se le baja el tamaño/opacidad para que estorbe lo
+   menos posible.
+   Tiles: OpenStreetMap directo, sin API key (CARTO Voyager se probó acá
+   y mostraba "API KEY REQUIRED" superpuesto en cada tile — su plan
+   gratuito ya no sirve tiles anónimos sin key). */
 :global(.leaflet-control-zoom) {
   display: none;
 }
 
 :global(.leaflet-control-attribution) {
-  display: none;
+  font-size: 9px;
+  background: rgba(255, 255, 255, 0.7);
+  padding: 0 4px;
 }
 
 .search-map {
@@ -712,6 +763,17 @@ onBeforeUnmount(() => {
   border-radius: 0;
 }
 
+/* El toggle base se posiciona pegado al fondo del canvas (bottom: space-4)
+   — en fullbleed ese fondo queda tapado por el carousel de cards. Lo subo
+   lo justo para que quede flotando arriba de esas cards en vez de
+   superpuesto. Alto aproximado de una card del carousel (ver
+   MapCard.vue: imagen 8rem + body ~3.5rem) + el mismo offset de fondo que
+   usa el carousel (--pwa-bottom-nav-height, chico/0 fuera de la PWA
+   instalada) + un respiro. */
+.search-map--fullbleed .search-map__toggle {
+  bottom: calc(12.5rem + var(--pwa-bottom-nav-height, 0px) + var(--space-3));
+}
+
 /* El LPopup se renderiza siempre (ver comentario en el template) pero en
    fullbleed el preview real es el carousel de abajo — se oculta visual,
    no se saca del DOM. */
@@ -743,7 +805,11 @@ onBeforeUnmount(() => {
 
 .search-map__carousel-item {
   flex: 0 0 auto;
-  width: 10.5rem;
+  /* 65% de la pantalla (antes 10.5rem fijo, quedaban chicas) — el min()
+     evita que se vuelvan enormes en un teléfono grande/tablet en modo
+     retrato, único contexto donde corre este carousel (fullbleed = solo
+     mobile, ver isMobileViewport en search.vue). */
+  width: min(65vw, 22rem);
   scroll-snap-align: center;
   /* width real (no transform:scale) — así crecer empuja a las vecinas de
      verdad en vez de superponerse encima, y el gap del carousel mantiene
@@ -762,9 +828,9 @@ onBeforeUnmount(() => {
 .search-map__carousel-item--focused {
   position: relative;
   z-index: 1;
-  width: 12.6rem;
+  width: min(75vw, 25rem);
   box-shadow: var(--shadow-lg);
-  border-radius: var(--border-radius-lg);
+  border-radius: var(--border-radius-sm);
 }
 
 .search-map__carousel-empty {

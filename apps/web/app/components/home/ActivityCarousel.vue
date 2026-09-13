@@ -75,9 +75,13 @@ const onClickCapture = (e: MouseEvent) => {
       </div>
     </div>
 
-    <!-- Loading -->
-    <div v-if="loading" class="carousel__skeleton">
-      <div v-for="n in 4" :key="n" class="carousel__skeleton-item" />
+    <!-- Loading — mismo track horizontal que el contenido real (abajo),
+         no una grilla vertical, para que el skeleton no "salte" de layout
+         apenas llegan los datos. -->
+    <div v-if="loading" class="carousel__scroll">
+      <div class="carousel__track">
+        <div v-for="n in 4" :key="n" class="carousel__skeleton-item" />
+      </div>
     </div>
 
     <!-- Activities -->
@@ -134,14 +138,11 @@ const onClickCapture = (e: MouseEvent) => {
 }
 
 /* ── Skeleton ────────────────────────────────────────────────── */
-.carousel__skeleton {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: var(--space-6);
-}
-
+/* Silueta aproximada de SharedActivityCard (imagen 16:9 + body) — mismo
+   ancho de columna que el track real (ver .carousel__track), así el
+   skeleton no cambia de layout al llegar los datos. */
 .carousel__skeleton-item {
-  height: 20rem;
+  aspect-ratio: 4 / 3;
   background-color: var(--color-neutral-200);
   border-radius: var(--border-radius-lg);
   animation: pulse 1.5s ease-in-out infinite;
@@ -203,10 +204,6 @@ const onClickCapture = (e: MouseEvent) => {
     font-size: var(--font-size-3xl);
   }
 
-  .carousel__skeleton {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
   .carousel__track {
     gap: var(--space-3);
     grid-auto-columns: calc(100% / 2.5);
@@ -214,10 +211,6 @@ const onClickCapture = (e: MouseEvent) => {
 }
 
 @media (min-width: 1024px) {
-  .carousel__skeleton {
-    grid-template-columns: repeat(4, 1fr);
-  }
-
   .carousel__track {
     gap: var(--space-4);
     grid-auto-columns: calc(25% - var(--space-3));

@@ -80,7 +80,12 @@ function onApplyFilters(filters: ActivityFilters) {
       @open-filters="drawerOpen = true"
     />
 
-    <SearchMapView :activities="activities" chrome="fullbleed" :user-coords="userCoords" />
+    <SearchMapView
+      :activities="activities"
+      chrome="fullbleed"
+      :user-coords="userCoords"
+      :show-toggle="false"
+    />
 
     <SearchFilterDrawer
       v-model:open="drawerOpen"

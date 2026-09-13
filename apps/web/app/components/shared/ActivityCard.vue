@@ -145,9 +145,6 @@ const hasMeta = computed(() => !!(cityName.value || categoryName.value))
 /* ── Card ────────────────────────────────────────────────────── */
 .activity-card__card {
   height: 100%;
-  transition:
-    box-shadow var(--transition-slow),
-    transform var(--transition-slow);
 }
 
 .activity-card :deep(.rounded-lg) {
@@ -155,9 +152,11 @@ const hasMeta = computed(() => !!(cityName.value || categoryName.value))
   box-shadow: none;
 }
 
-.activity-card:hover .activity-card__card {
-  box-shadow: var(--shadow-md);
-  transform: translateY(-2px);
+/* Nuxt UI aplica un .p-4 por defecto al wrapper interno de UCard; lo
+   neutralizamos acá porque .activity-card__body ya define su propio
+   padding y quedaba duplicado. */
+.activity-card :deep(.activity-card__card > div:first-child) {
+  padding: 0;
 }
 
 /* ── Imagen ──────────────────────────────────────────────────── */
@@ -174,11 +173,6 @@ const hasMeta = computed(() => !!(cityName.value || categoryName.value))
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: transform var(--transition-slow);
-}
-
-.activity-card:hover .activity-card__image {
-  transform: scale(1.03);
 }
 
 /* ── Body ────────────────────────────────────────────────────── */
@@ -279,7 +273,6 @@ const hasMeta = computed(() => !!(cityName.value || categoryName.value))
   display: flex;
   flex-direction: row;
   align-items: stretch;
-  padding: 0;
   gap: 0;
 }
 

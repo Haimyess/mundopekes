@@ -36,6 +36,31 @@ const mapsUrl = computed(() => {
   const [lat, lng] = mapCenter.value
   return `https://maps.google.com/?q=${lat},${lng}`
 })
+
+// vue-leaflet blanquea el `icon` del marker a un divIcon vacío (className:
+// "", sin tamaño custom → cae al 12x12 default de Leaflet) cada vez que el
+// slot default del <LMarker> trae contenido que no reconoce como su propio
+// LPopup — acá <LPopup> llega auto-importado globalmente por Nuxt, no con
+// el import directo que esa función espera reconocer por nombre de
+// componente (mismo bug confirmado con Playwright en search/MapView.vue:
+// el pin quedaba posicionado bien pero invisible). Se pisa acá con
+// setIcon() una vez creado el marker, mismo ícono que en MapView.vue.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const pinIcon = shallowRef<any>(null)
+onMounted(async () => {
+  const L = await import('leaflet')
+  pinIcon.value = L.divIcon({
+    className: 'map-pin',
+    html: '<span class="map-pin__dot"></span>',
+    iconSize: [18, 18],
+    iconAnchor: [9, 9],
+    popupAnchor: [0, -10],
+  })
+})
+
+function onMarkerReady(marker: unknown) {
+  if (pinIcon.value) (marker as { setIcon?: (icon: unknown) => void }).setIcon?.(pinIcon.value)
+}
 </script>
 
 <template>
@@ -67,7 +92,7 @@ const mapsUrl = computed(() => {
               layer-type="base"
               name="OpenStreetMap"
             />
-            <LMarker :lat-lng="mapCenter">
+            <LMarker :lat-lng="mapCenter" :icon="pinIcon ?? undefined" @ready="onMarkerReady">
               <LPopup>
                 <strong>{{ place.name }}</strong>
                 <br v-if="place.city?.name" />
@@ -120,15 +145,39 @@ const mapsUrl = computed(() => {
 <style scoped>
 @import 'leaflet/dist/leaflet.css';
 
-/* Sin controles de zoom +/- ni atribución "Leaflet | OpenStreetMap"
-   flotando sobre el mapa — Leaflet los inyecta fuera del árbol scoped,
-   por eso :global(). Mismo criterio que search/MapView.vue. */
+/* Sin controles de zoom +/- flotando sobre el mapa — Leaflet los inyecta
+   fuera del árbol scoped, por eso :global(). La atribución (OSM) NO se
+   oculta: su política de uso de tiles exige mostrarla visiblemente sobre
+   el mapa — solo se le baja el tamaño/opacidad para que estorbe lo menos
+   posible. Mismo criterio que search/MapView.vue (que también volvió a
+   OpenStreetMap directo: CARTO Voyager exige API key para tiles anónimos). */
 :global(.leaflet-control-zoom) {
   display: none;
 }
 
 :global(.leaflet-control-attribution) {
-  display: none;
+  font-size: 9px;
+  background: rgba(255, 255, 255, 0.7);
+  padding: 0 4px;
+}
+
+/* ── Pin custom (divIcon) — mismo estilo que search/MapView.vue, pero
+   definido acá también porque esta página no comparte bundle con ese
+   componente (:global() solo alcanza al CSS que efectivamente se carga
+   en esta ruta). ── */
+:global(.map-pin) {
+  background: none;
+  border: none;
+}
+
+:global(.map-pin__dot) {
+  display: block;
+  width: 18px;
+  height: 18px;
+  border-radius: 9999px;
+  background: var(--color-accent-500);
+  border: 2px solid white;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
 }
 
 /* ── Card base ───────────────────────────────────────────────── */
