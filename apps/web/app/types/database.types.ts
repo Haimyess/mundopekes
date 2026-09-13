@@ -704,6 +704,123 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      analytics_business_report: {
+        Args: {
+          p_activity_ids: string[]
+          p_from: string
+          p_place_ids: string[]
+          p_to: string
+        }
+        Returns: {
+          contacts: number
+          directions: number
+          searching_sessions: number
+          unique_sessions: number
+          views: number
+        }[]
+      }
+      analytics_business_timeseries: {
+        Args: {
+          p_activity_ids: string[]
+          p_from: string
+          p_place_ids: string[]
+          p_to: string
+        }
+        Returns: {
+          count: number
+          day: string
+        }[]
+      }
+      analytics_distinct_sessions: {
+        Args: { p_from: string; p_to: string }
+        Returns: number
+      }
+      analytics_events_by_type: {
+        Args: { p_from: string; p_to: string }
+        Returns: {
+          count: number
+          event_type: string
+        }[]
+      }
+      analytics_market_context: {
+        Args: {
+          p_category_slugs: string[]
+          p_city: string
+          p_from: string
+          p_to: string
+        }
+        Returns: {
+          category_searches: number
+          city_searches: number
+        }[]
+      }
+      analytics_search_stats: {
+        Args: { p_from: string; p_to: string }
+        Returns: {
+          total_searches: number
+          zero_result_searches: number
+        }[]
+      }
+      analytics_timeseries: {
+        Args: { p_event_type?: string; p_from: string; p_to: string }
+        Returns: {
+          count: number
+          day: string
+        }[]
+      }
+      analytics_top_activities: {
+        Args: { p_from: string; p_limit?: number; p_to: string }
+        Returns: {
+          activity_id: string
+          contacts: number
+          conversion_rate: number
+          directions: number
+          title: string
+          views: number
+        }[]
+      }
+      analytics_top_age_ranges: {
+        Args: { p_from: string; p_limit?: number; p_to: string }
+        Returns: {
+          age_range_id: string
+          count: number
+        }[]
+      }
+      analytics_top_categories: {
+        Args: { p_from: string; p_limit?: number; p_to: string }
+        Returns: {
+          category_slug: string
+          count: number
+        }[]
+      }
+      analytics_top_cities: {
+        Args: { p_from: string; p_limit?: number; p_to: string }
+        Returns: {
+          city_name: string
+          count: number
+        }[]
+      }
+      analytics_top_places: {
+        Args: { p_from: string; p_limit?: number; p_to: string }
+        Returns: {
+          directions: number
+          place_id: string
+          title: string
+          views: number
+        }[]
+      }
+      analytics_top_search_terms: {
+        Args: {
+          p_from: string
+          p_limit?: number
+          p_to: string
+          p_zero_results?: boolean
+        }
+        Returns: {
+          count: number
+          term: string
+        }[]
+      }
       categories_next_order: { Args: { parent?: string }; Returns: number }
       get_i18n_text: { Args: { data: Json; locale: string }; Returns: string }
       is_admin: { Args: never; Returns: boolean }
@@ -728,12 +845,12 @@ export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
         DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -757,11 +874,11 @@ export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -782,11 +899,11 @@ export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -807,11 +924,11 @@ export type Enums<
   DefaultSchemaEnumNameOrOptions extends
     | keyof DefaultSchema["Enums"]
     | { schema: keyof DatabaseWithoutInternals },
-  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+  EnumName extends (DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaEnumNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -824,11 +941,11 @@ export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]
     | { schema: keyof DatabaseWithoutInternals },
-  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+  CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-    : never = never,
+    : never) = never,
 > = PublicCompositeTypeNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
