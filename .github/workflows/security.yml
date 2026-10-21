@@ -1,0 +1,33 @@
+name: security
+
+on:
+  push:
+    branches: [main, dev]
+  pull_request:
+  schedule:
+    # Weekly: new vulnerabilities show up in dependencies nobody touched.
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+
+concurrency:
+  group: security-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  snyk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci --legacy-peer-deps
+
+      - name: Snyk scan
+        run: npx snyk test --all-projects --severity-threshold=high --policy-path=.snyk
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
