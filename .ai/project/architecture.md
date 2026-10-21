@@ -48,8 +48,6 @@ layers). Backend is Supabase (Postgres + RLS + Auth + Storage).
 - **Resend**: transactional email (contact form, provider approval/rejection)
 - **Sentry**: error tracking — **configured in `apps/web` only**, not in
   `apps/admin`
-- **Anthropic Claude (Haiku)**: `scripts/catalog-agent` weekly place
-  -discovery agent (separate from the app runtime)
 
 ## Known architecture caveats
 

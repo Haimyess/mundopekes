@@ -1,5 +1,10 @@
 # CI/CD troubleshooting log
 
+> **Nota (2026-10-20):** el proyecto migró de Bitbucket Pipelines a GitHub
+> Actions (`.github/workflows/`) y el deploy lo hace la integración nativa de
+> Vercel. El catalog-agent y el agente QA fueron eliminados. Las entradas de
+> abajo que mencionan Bitbucket son históricas.
+
 Real failures this pipeline has hit, their root cause, the fix, and — most
 important — the checklist item that would have caught it before it burned a
 Bitbucket build or a Vercel deploy. Add a new entry every time a pipeline or

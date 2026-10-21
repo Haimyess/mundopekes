@@ -80,7 +80,7 @@ SCOPES COMUNES EN ESTE REPO
   api       Endpoints del servidor
   i18n      Traducciones / internacionalizacion
   shared    Paquetes compartidos (packages/)
-  ci        Pipeline / Bitbucket Pipelines
+  ci        Pipeline / GitHub Actions
 
 ----------------------------------------------------
 RAMAS Y DESPLIEGUE
