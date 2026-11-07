@@ -25,7 +25,7 @@ jobs:
           cache: npm
 
       - name: Install dependencies
-        run: npm ci --legacy-peer-deps
+        run: npm ci
 
       - name: Snyk scan
         run: npx snyk test --all-projects --severity-threshold=high --policy-path=.snyk
