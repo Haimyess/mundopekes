@@ -1,0 +1,15 @@
+{
+  "name": "@mundopekes/config",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./tsconfig.base.json": "./tsconfig.base.json",
+    "./eslint/base": "./eslint/base.mjs",
+    "./eslint/vue": "./eslint/vue.mjs"
+  },
+  "files": [
+    "tsconfig.base.json",
+    "eslint"
+  ]
+}

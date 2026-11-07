@@ -1,0 +1,23 @@
+{
+  "name": "@mundopekes/types",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./database": "./src/database.types.ts"
+  },
+  "files": [
+    "src"
+  ],
+  "scripts": {
+    "gen": "supabase gen types typescript --linked --workdir ../.. > src/database.types.ts && prettier --write src/database.types.ts",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@mundopekes/config": "workspace:*",
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.11"
+  }
+}
