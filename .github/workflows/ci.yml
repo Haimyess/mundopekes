@@ -33,3 +33,6 @@ jobs:
 
       - name: Test admin
         run: pnpm test:admin
+
+      - name: Test packages
+        run: pnpm test:packages

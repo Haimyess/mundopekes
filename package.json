@@ -13,6 +13,7 @@
     "format": "prettier --write .",
     "test:web": "pnpm --filter ./apps/web test",
     "test:admin": "pnpm --filter ./apps/admin test",
+    "test:packages": "pnpm --filter \"./packages/**\" test",
     "commit": "cz",
     "security:check": "snyk test --all-projects --policy-path=.snyk",
     "security:monitor": "snyk monitor --all-projects",
@@ -38,6 +39,7 @@
   "devDependencies": {
     "@commitlint/cli": "^20.5.0",
     "@commitlint/config-conventional": "^20.5.0",
+    "@mundopekes/config": "workspace:*",
     "@nuxt/eslint": "^1.15.2",
     "@nuxt/eslint-config": "^1.17.0",
     "@stylistic/eslint-plugin": "^5.10.0",
