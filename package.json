@@ -2,39 +2,21 @@
   "name": "mundopekes-monorepo",
   "private": true,
   "version": "0.0.1",
-  "workspaces": [
-    "apps/*",
-    "layers/*"
-  ],
+  "packageManager": "pnpm@10.34.8",
   "scripts": {
-    "dev:web": "npm run dev --workspace=apps/web -- --host",
-    "dev:admin": "npm run dev --workspace=apps/admin",
-    "build:web": "npm run build --workspace=apps/web",
-    "build:admin": "npm run build --workspace=apps/admin",
+    "preinstall": "node -e \"if(!/^pnpm\\//.test(process.env.npm_config_user_agent||'')){console.error('Use pnpm: corepack enable && pnpm install');process.exit(1)}\"",
+    "dev:web": "pnpm --filter ./apps/web dev --host",
+    "dev:admin": "pnpm --filter ./apps/admin dev",
+    "build:web": "pnpm --filter ./apps/web build",
+    "build:admin": "pnpm --filter ./apps/admin build",
     "lint": "eslint .",
     "format": "prettier --write .",
-    "test:web": "npm run test --workspace=apps/web",
-    "test:admin": "npm run test --workspace=apps/admin",
+    "test:web": "pnpm --filter ./apps/web test",
+    "test:admin": "pnpm --filter ./apps/admin test",
     "commit": "cz",
-    "security:check": "snyk test --file=package.json --policy-path=.snyk && snyk test --file=apps/web/package.json --policy-path=.snyk && snyk test --file=apps/admin/package.json --policy-path=.snyk",
+    "security:check": "snyk test --all-projects --policy-path=.snyk",
     "security:monitor": "snyk monitor --all-projects",
     "prepare": "node -e \"const{execSync}=require('child_process');if(process.env.CI!=='1')execSync('husky',{stdio:'inherit'})\""
-  },
-  "overrides": {
-    "devalue": "5.8.1",
-    "brace-expansion": "5.0.9",
-    "ws": "8.21.1",
-    "nitropack": "2.13.4",
-    "sharp": "0.35.4",
-    "h3": "1.15.11",
-    "esbuild": "^0.28.1",
-    "fast-uri": "4.1.4",
-    "nanoid": "3.3.18",
-    "js-yaml": "4.3.2",
-    "semver": "7.8.5",
-    "@vercel/analytics": {
-      "vue-router": "$vue-router"
-    }
   },
   "engines": {
     "node": "22.x"
@@ -66,13 +48,13 @@
     "husky": "^9.1.7",
     "lint-staged": "^16.4.0",
     "prettier": "^3.8.3",
-    "snyk": "^1.1304.0"
+    "snyk": "^1.1304.0",
+    "typescript": "^5.9.3"
   },
   "dependencies": {
     "@nuxt/image": "^2.0.0",
     "@vercel/analytics": "^2.0.1",
     "h3": "1.15.11",
-    "resend": "^6.12.3",
-    "vue-router": "^5.0.3"
+    "resend": "^6.12.3"
   }
 }

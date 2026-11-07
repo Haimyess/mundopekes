@@ -4,6 +4,13 @@
 > Actions (`.github/workflows/`) y el deploy lo hace la integración nativa de
 > Vercel. El catalog-agent y el agente QA fueron eliminados. Las entradas de
 > abajo que mencionan Bitbucket son históricas.
+>
+> **Nota (2026-11-07):** el monorepo migró de npm a **pnpm workspaces**
+> (`pnpm@10.34.8`, fijado en `packageManager`). `--legacy-peer-deps` ya no
+> existe: el único peer incompatible (`@vercel/analytics@2.0.1` →
+> `vue-router@^4`) está permitido explícitamente en
+> `pnpm-workspace.yaml` → `peerDependencyRules`. Las entradas de abajo que
+> mencionan `npm ci`/`npm install` son históricas.
 
 Real failures this pipeline has hit, their root cause, the fix, and — most
 important — the checklist item that would have caught it before it burned a
@@ -31,6 +38,17 @@ whenever a new package is added that's used by a shared Nuxt layer
       monorepo root. Vercel installs each app in isolation; Bitbucket/local
       installs from the workspace root and hoists, which hides this class of
       bug until it hits Vercel.
+- [ ] Every workspace (`apps/*`, `layers/*`, `packages/*`) declares in its
+      own `package.json` every package its source files import. pnpm's
+      isolated `node_modules` makes a missing declaration fail locally
+      (lint, typecheck, build) instead of only on Vercel — don't "fix" it
+      with `shamefully-hoist` or a broad `public-hoist-pattern`. Layers
+      that contain `.vue` files need `vue` as a `peerDependency` so
+      `vue-tsc` can type `defineProps`.
+- [ ] A dependency with an install script must be listed in
+      `pnpm-workspace.yaml` → `onlyBuiltDependencies` (or
+      `ignoredBuiltDependencies` if the script is a no-op), otherwise pnpm
+      skips it silently.
 - [ ] `engines.node` in **every** `package.json` in the monorepo (root,
       `apps/web`, `apps/admin`) matches `.nvmrc`. Vercel reads `engines.node`
       from whichever `package.json` sits in that Vercel project's configured

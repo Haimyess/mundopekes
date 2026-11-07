@@ -1,0 +1,9 @@
+{
+  "name": "@mundopekes/layer-core",
+  "private": true,
+  "type": "module",
+  "main": "./nuxt.config.ts",
+  "dependencies": {
+    "h3": "1.15.11"
+  }
+}

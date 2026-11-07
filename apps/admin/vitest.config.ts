@@ -7,7 +7,7 @@ export default defineVitestConfig({
       '~': resolve(__dirname, 'app'),
       '#supabase/server': resolve(
         __dirname,
-        '../../node_modules/@nuxtjs/supabase/dist/runtime/server/services/index.js'
+        'node_modules/@nuxtjs/supabase/dist/runtime/server/services/index.js'
       ),
     },
   },

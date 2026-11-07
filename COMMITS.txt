@@ -61,9 +61,7 @@ COMO HACER UN COMMIT
 
 OPCION A - Asistente interactivo (recomendado):
 
-  npm run commit
-    o
-  npm run cz
+  pnpm commit
 
   Te guia paso a paso: tipo, scope, descripcion, etc.
 

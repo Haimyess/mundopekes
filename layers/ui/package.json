@@ -1,0 +1,9 @@
+{
+  "name": "@mundopekes/layer-ui",
+  "private": true,
+  "type": "module",
+  "main": "./nuxt.config.ts",
+  "peerDependencies": {
+    "vue": "^3.5.30"
+  }
+}

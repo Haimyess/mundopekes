@@ -15,24 +15,21 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - uses: pnpm/action-setup@v4
+
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
-          cache: npm
+          node-version-file: .nvmrc
+          cache: pnpm
 
       - name: Install dependencies
-        run: npm ci
-
-      - name: Prepare Nuxt
-        run: |
-          cd apps/admin && npx nuxt prepare
-          cd ../web && npx nuxt prepare
+        run: pnpm install --frozen-lockfile
 
       - name: Lint
-        run: npm run lint
+        run: pnpm lint
 
       - name: Test web
-        run: npm run test:web -- --run
+        run: pnpm test:web
 
       - name: Test admin
-        run: npm run test:admin -- --run
+        run: pnpm test:admin

@@ -21,7 +21,7 @@ export default defineVitestConfig({
     alias: {
       '#supabase/server': resolve(
         __dirname,
-        '../../node_modules/@nuxtjs/supabase/dist/runtime/server/services/index.js'
+        'node_modules/@nuxtjs/supabase/dist/runtime/server/services/index.js'
       ),
       '~': resolve(__dirname, '.'),
     },

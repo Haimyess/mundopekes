@@ -1,0 +1,13 @@
+{
+  "name": "@mundopekes/layer-domain",
+  "private": true,
+  "type": "module",
+  "main": "./nuxt.config.ts",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.112.2",
+    "h3": "1.15.11"
+  },
+  "peerDependencies": {
+    "vue": "^3.5.30"
+  }
+}

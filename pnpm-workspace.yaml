@@ -1,0 +1,31 @@
+packages:
+  - apps/*
+  - layers/*
+  - packages/*
+
+overrides:
+  devalue: 5.8.1
+  brace-expansion: 5.0.9
+  ws: 8.21.1
+  nitropack: 2.13.4
+  sharp: 0.35.4
+  h3: 1.15.11
+  esbuild: ^0.28.1
+  fast-uri: 4.1.4
+  nanoid: 3.3.18
+  js-yaml: 4.3.2
+  semver: 7.8.5
+
+peerDependencyRules:
+  allowedVersions:
+    '@vercel/analytics>vue-router': '5'
+
+onlyBuiltDependencies:
+  - '@sentry/cli'
+  - esbuild
+  - snyk
+  - unrs-resolver
+  - vue-demi
+
+ignoredBuiltDependencies:
+  - maplibre-gl
