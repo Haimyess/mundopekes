@@ -6,8 +6,8 @@ import {
   SEASONS_EMBED,
   SEASONS_EMBED_INNER,
   normalizeActivity,
-} from '~/composables/useActivities'
-import { sanitizeSearchQuery } from '~/utils/sanitize'
+} from './useActivities'
+import { sanitizeSearchQuery } from '../utils/sanitize'
 
 export const useActivityFilters = () => {
   const client = useSupabaseClient()
@@ -361,16 +361,16 @@ export const useActivityFilters = () => {
       query = query.eq('seasons.season.value', filters.season as string)
     }
 
-    return query.order('created_at', { ascending: false })
+    return { query: query.order('created_at', { ascending: false }) }
   }
 
   // ── Fetch principal (sin paginar) — usado por la vista Mapa, que
   // necesita el set completo de resultados para posicionar los pines ──
   const fetchFilteredActivities = async (filters: ActivityFilters): Promise<Activity[]> => {
-    const query = await buildFilteredQuery(filters)
-    if (!query) return []
+    const built = await buildFilteredQuery(filters)
+    if (!built) return []
 
-    const { data, error } = await query
+    const { data, error } = await built.query
 
     if (error) {
       console.error('Error fetching filtered activities:', error)
@@ -386,13 +386,13 @@ export const useActivityFilters = () => {
     page = 1,
     pageSize = 20
   ): Promise<{ data: Activity[]; total: number }> => {
-    const query = await buildFilteredQuery(filters, { withCount: true })
-    if (!query) return { data: [], total: 0 }
+    const built = await buildFilteredQuery(filters, { withCount: true })
+    if (!built) return { data: [], total: 0 }
 
     const from = (page - 1) * pageSize
     const to = from + pageSize - 1
 
-    const { data, error, count } = await query.range(from, to)
+    const { data, error, count } = await built.query.range(from, to)
 
     if (error) {
       console.error('Error fetching paginated activities:', error)
