@@ -2,8 +2,6 @@ import type { PlaceSearchResult, PlaceDetails } from '~/composables/usePlacesSea
 import type { LocalPlaceMatch } from '~/composables/useLocalPlaceSearch'
 import type { LocalActivityMatch } from '~/composables/useLocalActivitySearch'
 
-export type { PlaceDetails }
-
 export interface ScheduleDay {
   open: boolean
   start: string
