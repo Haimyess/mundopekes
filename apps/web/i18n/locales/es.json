@@ -351,5 +351,12 @@
     "day_thursday": "Jueves",
     "day_friday": "Viernes",
     "day_saturday": "Sábado"
+  },
+  "cookieConsent": {
+    "title": "Usamos cookies",
+    "description": "Usamos cookies necesarias para que el sitio funcione y, si lo aceptas, cookies de medición (Google Analytics) para entender cómo se usa y mejorarlo.",
+    "acceptAll": "Aceptar todas",
+    "necessaryOnly": "Solo necesarias",
+    "privacyLink": "Política de privacidad"
   }
 }

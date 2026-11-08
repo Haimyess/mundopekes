@@ -185,7 +185,19 @@ export default defineNuxtConfig({
 
   gtag: {
     id: process.env.NUXT_PUBLIC_GA4_ID,
-    initCommands: [['consent', 'default', { analytics_storage: 'granted' }]],
+    initMode: 'manual',
+    initCommands: [
+      [
+        'consent',
+        'default',
+        {
+          analytics_storage: 'denied',
+          ad_storage: 'denied',
+          ad_user_data: 'denied',
+          ad_personalization: 'denied',
+        },
+      ],
+    ],
   },
 
   sentry: {

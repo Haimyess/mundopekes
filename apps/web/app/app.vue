@@ -15,5 +15,6 @@ useHead({
     <NuxtLayout>
       <NuxtPage />
     </NuxtLayout>
+    <CookieConsentBanner />
   </div>
 </template>

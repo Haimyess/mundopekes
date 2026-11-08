@@ -348,5 +348,12 @@
     "day_thursday": "חמישי",
     "day_friday": "שישי",
     "day_saturday": "שבת"
+  },
+  "cookieConsent": {
+    "title": "אנחנו משתמשים בעוגיות",
+    "description": "אנחנו משתמשים בעוגיות הכרחיות כדי שהאתר יפעל, ואם תאשרו, גם בעוגיות מדידה (Google Analytics) כדי להבין איך משתמשים בו ולשפר אותו.",
+    "acceptAll": "לאשר הכול",
+    "necessaryOnly": "רק הכרחיות",
+    "privacyLink": "מדיניות פרטיות"
   }
 }

@@ -348,5 +348,12 @@
     "day_thursday": "Thursday",
     "day_friday": "Friday",
     "day_saturday": "Saturday"
+  },
+  "cookieConsent": {
+    "title": "We use cookies",
+    "description": "We use necessary cookies to make the site work and, if you accept, measurement cookies (Google Analytics) to understand how it is used and improve it.",
+    "acceptAll": "Accept all",
+    "necessaryOnly": "Necessary only",
+    "privacyLink": "Privacy policy"
   }
 }
