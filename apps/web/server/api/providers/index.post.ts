@@ -1,7 +1,6 @@
 import { z } from 'zod'
 import { Resend } from 'resend'
 import { serverSupabaseServiceRole } from '#supabase/server'
-import { logError, logInfo } from '../../utils/logger'
 
 const dayScheduleSchema = z.object({
   open: z.string().optional(),

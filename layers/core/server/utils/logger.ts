@@ -23,7 +23,7 @@ export async function log(
       context,
       message,
       metadata: metadata ?? {},
-      app: 'web',
+      app: useRuntimeConfig(event).appName,
     })
   } catch (err) {
     console.error('[logger] Failed to write to app_logs:', err)

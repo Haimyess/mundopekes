@@ -45,10 +45,8 @@ vi.mock('#supabase/server', () => ({
 }))
 
 // ── Logger mock ────────────────────────────────────────────────────────────
-vi.mock('~/server/utils/logger', () => ({
-  logInfo: vi.fn().mockResolvedValue(undefined),
-  logError: vi.fn().mockResolvedValue(undefined),
-}))
+vi.stubGlobal('logInfo', vi.fn().mockResolvedValue(undefined))
+vi.stubGlobal('logError', vi.fn().mockResolvedValue(undefined))
 
 // ── Global stubs ───────────────────────────────────────────────────────────
 const h3 = await import('h3')

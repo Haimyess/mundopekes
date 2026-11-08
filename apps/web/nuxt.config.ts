@@ -6,6 +6,7 @@ export default defineNuxtConfig({
   ssr: false,
   extends: ['../../layers/core', '../../layers/ui', '../../layers/domain'],
   runtimeConfig: {
+    appName: 'web',
     googlePlacesApiKey: process.env.GOOGLE_PLACES_API_KEY,
   },
   compatibilityDate: '2025-07-15',

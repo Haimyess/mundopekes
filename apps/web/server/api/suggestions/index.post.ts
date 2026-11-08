@@ -1,7 +1,6 @@
 import { z } from 'zod'
 import { randomUUID } from 'node:crypto'
 import { serverSupabaseClient } from '#supabase/server'
-import { logError, logInfo } from '../../utils/logger'
 // findPlaceDuplicates / findExperienceDuplicates come from
 // layers/domain/server/utils/duplicate-detection.ts via Nitro's cross-layer
 // server/utils auto-import (same mechanism that exposes checkRateLimit here).

@@ -48,10 +48,8 @@ vi.mock('resend', () => ({
 }))
 
 // ── Logger mock ────────────────────────────────────────────────────────────
-vi.mock('~/server/utils/logger', () => ({
-  logInfo: vi.fn().mockResolvedValue(undefined),
-  logError: vi.fn().mockResolvedValue(undefined),
-}))
+vi.stubGlobal('logInfo', vi.fn().mockResolvedValue(undefined))
+vi.stubGlobal('logError', vi.fn().mockResolvedValue(undefined))
 
 // ── Nuxt server auto-import globals ───────────────────────────────────────
 const h3 = await import('h3')

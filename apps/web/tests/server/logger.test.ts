@@ -8,7 +8,14 @@ vi.mock('#supabase/server', () => ({
   serverSupabaseServiceRole: vi.fn().mockReturnValue({ from: mockFrom }),
 }))
 
-const { logError, logWarn, logInfo } = await import('../../server/utils/logger')
+const mockRuntimeConfig = vi.hoisted(() => vi.fn().mockReturnValue({ appName: 'web' }))
+
+vi.mock('../../node_modules/nuxt/dist/app/nuxt.js', async (importOriginal) => ({
+  ...(await importOriginal<Record<string, unknown>>()),
+  useRuntimeConfig: mockRuntimeConfig,
+}))
+
+const { logError, logWarn, logInfo } = await import('../../../../layers/core/server/utils/logger')
 
 const mockEvent = {} as H3Event
 
@@ -17,6 +24,7 @@ describe('logger', () => {
     vi.clearAllMocks()
     mockInsert.mockResolvedValue({ error: null })
     mockFrom.mockReturnValue({ insert: mockInsert })
+    mockRuntimeConfig.mockReturnValue({ appName: 'web' })
   })
 
   it('logError inserts with level="error"', async () => {
@@ -46,5 +54,17 @@ describe('logger', () => {
     const meta = { userId: 'abc', extra: 42 }
     await logInfo(mockEvent, 'ctx', 'with meta', meta)
     expect(mockInsert).toHaveBeenCalledWith(expect.objectContaining({ metadata: meta }))
+  })
+
+  it('labels the log with the app name from runtime config', async () => {
+    await logInfo(mockEvent, 'ctx', 'from web')
+    expect(mockRuntimeConfig).toHaveBeenCalledWith(mockEvent)
+    expect(mockInsert).toHaveBeenCalledWith(expect.objectContaining({ app: 'web' }))
+  })
+
+  it('labels admin logs as admin', async () => {
+    mockRuntimeConfig.mockReturnValue({ appName: 'admin' })
+    await logError(mockEvent, 'ctx', 'from admin')
+    expect(mockInsert).toHaveBeenCalledWith(expect.objectContaining({ app: 'admin' }))
   })
 })
