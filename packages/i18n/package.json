@@ -1,0 +1,23 @@
+{
+  "name": "@mundopekes/i18n",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./locales/*": "./locales/*"
+  },
+  "files": [
+    "src",
+    "locales"
+  ],
+  "scripts": {
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@mundopekes/config": "workspace:*",
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.11"
+  }
+}

@@ -1,0 +1,4 @@
+{
+  "extends": "@mundopekes/config/tsconfig.base.json",
+  "include": ["src", "tests"]
+}
