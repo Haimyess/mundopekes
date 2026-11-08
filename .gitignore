@@ -16,3 +16,4 @@ coverage/
 Thumbs.db
 .claude/worktrees/
 .claude/
+supabase/.temp/
