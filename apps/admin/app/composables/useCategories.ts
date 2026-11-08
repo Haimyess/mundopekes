@@ -1,5 +1,5 @@
 // app/composables/useCategories.ts
-import type { Tables } from '~/types/database.types'
+import type { Tables } from '@mundopekes/types'
 
 export type Category = Tables<'categories'>
 

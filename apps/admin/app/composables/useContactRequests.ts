@@ -1,4 +1,4 @@
-import type { Tables } from '~/types/database.types'
+import type { Tables } from '@mundopekes/types'
 
 export type ContactRequest = Tables<'contact_requests'>
 

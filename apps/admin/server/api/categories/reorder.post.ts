@@ -1,7 +1,7 @@
 // server/api/categories/reorder.post.ts
 // Recibe un array de { id, order } y actualiza todos en batch
 import { serverSupabaseClient } from '#supabase/server'
-import type { Database } from '~/types/database.types'
+import type { Database } from '@mundopekes/types'
 
 export default defineEventHandler(async (event) => {
   const body = (await readBody(event)) as { items: { id: string; order: number }[] }

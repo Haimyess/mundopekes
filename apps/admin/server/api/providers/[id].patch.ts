@@ -1,7 +1,7 @@
 import { z } from 'zod'
 import { Resend } from 'resend'
 import { serverSupabaseServiceRole } from '#supabase/server'
-import type { Database } from '~/types/database.types'
+import type { Database } from '@mundopekes/types'
 
 const bodySchema = z.object({
   status: z.enum(['active', 'suspended', 'rejected']),

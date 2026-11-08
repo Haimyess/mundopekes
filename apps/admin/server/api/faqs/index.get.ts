@@ -1,6 +1,6 @@
 // server/api/faqs/index.get.ts
 import { serverSupabaseClient } from '#supabase/server'
-import type { Database } from '~/types/database.types'
+import type { Database } from '@mundopekes/types'
 
 export default defineEventHandler(async (event) => {
   const supabase = await serverSupabaseClient<Database>(event)

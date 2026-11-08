@@ -1,5 +1,5 @@
 import { serverSupabaseServiceRole } from '#supabase/server'
-import type { Database } from '~/types/database.types'
+import type { Database } from '@mundopekes/types'
 
 const DEFAULT_RANGE_DAYS = 30
 

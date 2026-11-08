@@ -5,7 +5,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { translateI18nField } from './translate'
 import type { FieldI18nStatus } from './translate'
-import type { Json, Database } from '~/types/database.types'
+import type { Json, Database } from '@mundopekes/types'
 
 type PlaceRow = Database['public']['Tables']['places']['Row']
 

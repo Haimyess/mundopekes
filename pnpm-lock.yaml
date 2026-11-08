@@ -91,6 +91,9 @@ importers:
       '@internationalized/date':
         specifier: ^3.12.0
         version: 3.12.4
+      '@mundopekes/types':
+        specifier: workspace:*
+        version: link:../../packages/types
       '@nuxt/image':
         specifier: ^2.0.0
         version: 2.1.0(@types/node@26.4.1)(magic-string@1.2.3)(magicast@0.5.4)(oxc-parser@0.148.0)(rolldown@1.2.7)(unplugin@3.3.0(esbuild@0.28.2)(rolldown@1.2.7)(rollup@4.63.1)(vite@8.2.2(@types/node@26.4.1)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(yaml@2.9.0)))(unstorage@1.17.5(db0@0.3.4)(ioredis@5.11.1))
@@ -194,6 +197,9 @@ importers:
 
   apps/web:
     dependencies:
+      '@mundopekes/types':
+        specifier: workspace:*
+        version: link:../../packages/types
       '@nuxt/fonts':
         specifier: ^0.14.0
         version: 0.14.0(db0@0.3.4)(esbuild@0.28.2)(ioredis@5.11.1)(magic-string@1.2.3)(magicast@0.5.4)(oxc-parser@0.148.0)(rolldown@1.2.7)(rollup@4.63.1)(vite@8.2.2(@types/node@26.4.1)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(yaml@2.9.0))
@@ -297,12 +303,18 @@ importers:
 
   layers/core:
     dependencies:
+      '@mundopekes/types':
+        specifier: workspace:*
+        version: link:../../packages/types
       h3:
         specifier: 1.15.11
         version: 1.15.11
 
   layers/domain:
     dependencies:
+      '@mundopekes/types':
+        specifier: workspace:*
+        version: link:../../packages/types
       '@supabase/supabase-js':
         specifier: ^2.112.2
         version: 2.115.0(@opentelemetry/api@1.9.1)

@@ -1,6 +1,6 @@
 import { z } from 'zod'
 import { serverSupabaseServiceRole } from '#supabase/server'
-import type { Database, Json } from '~/types/database.types'
+import type { Database, Json } from '@mundopekes/types'
 
 const VALID_EVENT_TYPES = [
   'page_view',

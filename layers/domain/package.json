@@ -4,6 +4,7 @@
   "type": "module",
   "main": "./nuxt.config.ts",
   "dependencies": {
+    "@mundopekes/types": "workspace:*",
     "@supabase/supabase-js": "^2.112.2",
     "h3": "1.15.11"
   },

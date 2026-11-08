@@ -1,4 +1,4 @@
-import type { Database } from '~/types/database.types'
+import type { Database } from '@mundopekes/types'
 import { useI18nContent } from '~/composables/useI18nContent'
 
 type CategoryChild = {

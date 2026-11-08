@@ -1,4 +1,4 @@
-import type { FieldI18nStatus } from '../../../../layers/domain/types/i18n-status'
+import type { FieldI18nStatus } from '@mundopekes/types'
 
 export interface Place {
   id: string

@@ -1,4 +1,4 @@
-import type { FieldI18nStatus } from '../types/i18n-status'
+import type { FieldI18nStatus } from '@mundopekes/types'
 
 export type TranslationCompleteness = 'complete' | 'partial' | 'unknown'
 

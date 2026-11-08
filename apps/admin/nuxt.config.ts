@@ -1,3 +1,5 @@
+import { fileURLToPath } from 'node:url'
+
 export default defineNuxtConfig({
   extends: ['../../layers/core', '../../layers/ui', '../../layers/domain'],
 
@@ -56,7 +58,7 @@ export default defineNuxtConfig({
       // Default img-src es 'self' + data: — el dashboard template trae
       // algunos avatares/og-images de hosts externos (github.com, ui.nuxt.com).
       contentSecurityPolicy: {
-        'img-src': ['\'self\'', 'data:', 'https:'],
+        'img-src': ["'self'", 'data:', 'https:'],
       },
     },
     // Ya tenemos rate limiting propio DB-backed (checkRateLimit) en los
@@ -77,7 +79,7 @@ export default defineNuxtConfig({
     key: process.env.SUPABASE_KEY,
     serviceKey: process.env.SUPABASE_SECRET_KEY,
     redirect: false,
-    types: '~/types/database.types.ts',
+    types: fileURLToPath(new URL('../../packages/types/src/database.types.ts', import.meta.url)),
     // Fijado explícitamente (antes implícito por defaults del módulo) para que
     // la postura de seguridad de la cookie de sesión quede versionada, no
     // dependiente de silenciosos cambios de default entre versiones.

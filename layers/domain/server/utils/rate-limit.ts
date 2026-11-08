@@ -1,5 +1,5 @@
 import { serverSupabaseServiceRole } from '#supabase/server'
-import type { Database } from '~/types/database.types'
+import type { Database } from '@mundopekes/types'
 import type { H3Event } from 'h3'
 
 // TODO: add a Supabase cron job to delete rows older than 1 hour:

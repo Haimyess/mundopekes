@@ -1,5 +1,5 @@
 // app/composables/useFaqs.ts
-import type { Tables } from '~/types/database.types'
+import type { Tables } from '@mundopekes/types'
 
 export type Faq = Tables<'faqs'> & {
   faq_category?: { id: string; name: string; slug: string } | null

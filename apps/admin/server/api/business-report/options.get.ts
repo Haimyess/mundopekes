@@ -1,5 +1,5 @@
 import { serverSupabaseServiceRole } from '#supabase/server'
-import type { Database } from '~/types/database.types'
+import type { Database } from '@mundopekes/types'
 
 // Listas livianas para los selectores de "elegí un lugar" / "elegí un
 // proveedor" del reporte de negocio — no pagina, asume un catálogo chico

@@ -1,6 +1,6 @@
 // server/api/categories/[id].put.ts
 import { serverSupabaseClient } from '#supabase/server'
-import type { Database, TablesUpdate } from '~/types/database.types'
+import type { Database, TablesUpdate } from '@mundopekes/types'
 
 export default defineEventHandler(async (event) => {
   const id = getRouterParam(event, 'id')

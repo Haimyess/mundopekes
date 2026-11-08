@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { ContactIntent } from '~/types/contact'
+import type { ContactIntent } from '@mundopekes/types'
 
 const { t } = useI18n()
 const { isOpen, isLoading, intent, form, prefillActivityTitle, close, submit } = useContactForm()

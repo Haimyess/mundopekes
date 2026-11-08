@@ -1,5 +1,5 @@
 import { serverSupabaseServiceRole } from '#supabase/server'
-import type { Database } from '~/types/database.types'
+import type { Database } from '@mundopekes/types'
 import { uploadImageFromUrl } from '../../utils/upload-image-from-url'
 
 /**

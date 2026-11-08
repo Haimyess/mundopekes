@@ -1,6 +1,6 @@
 // server/api/faqs/reorder.post.ts
 import { serverSupabaseClient } from '#supabase/server'
-import type { Database } from '~/types/database.types'
+import type { Database } from '@mundopekes/types'
 
 export default defineEventHandler(async (event) => {
   const body = (await readBody(event)) as { items: { id: string; order: number }[] }

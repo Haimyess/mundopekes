@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { ContactIntent } from '~/types/contact'
+import type { ContactIntent } from '@mundopekes/types'
 
 const props = defineProps<{
   form: { name: string; email: string; message: string }

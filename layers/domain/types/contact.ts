@@ -1,1 +1,2 @@
-export type ContactIntent = 'outdated_activity' | 'feedback' | 'provider_inquiry' | 'other'
+export { CONTACT_INTENTS } from '@mundopekes/types'
+export type { ContactIntent } from '@mundopekes/types'

@@ -1,5 +1,5 @@
 import { refDebounced } from '@vueuse/core'
-import type { Tables } from '~/types/database.types'
+import type { Tables } from '@mundopekes/types'
 
 export type AppLog = Tables<'app_logs'>
 

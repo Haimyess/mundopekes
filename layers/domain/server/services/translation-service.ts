@@ -1,9 +1,5 @@
 import { getConfiguredLocales } from '../utils/get-configured-locales'
-import type {
-  FieldI18nStatus,
-  LocaleStatusEntry,
-  LocaleTranslationStatus,
-} from '../../types/i18n-status'
+import type { FieldI18nStatus, LocaleStatusEntry, LocaleTranslationStatus } from '@mundopekes/types'
 
 export type { FieldI18nStatus, LocaleStatusEntry, LocaleTranslationStatus }
 

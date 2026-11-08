@@ -1,6 +1,6 @@
 // server/api/categories/index.post.ts
 import { serverSupabaseClient } from '#supabase/server'
-import type { Database, TablesInsert } from '~/types/database.types'
+import type { Database, TablesInsert } from '@mundopekes/types'
 
 export default defineEventHandler(async (event) => {
   const body = await readBody(event)

@@ -2,7 +2,7 @@
 // estructura WizardSchedule por día. Best-effort: cualquier línea que no se pueda
 // parsear conserva el default de ese día. Para he/ru NO se intenta parsear (los
 // strings están localizados); el usuario edita manualmente.
-import { defaultSchedule, type WizardSchedule } from '../types/schedule'
+import { defaultSchedule, type WizardSchedule } from '@mundopekes/types'
 
 const DAY_BY_NAME: Record<string, keyof WizardSchedule> = {
   sunday: 'sunday',

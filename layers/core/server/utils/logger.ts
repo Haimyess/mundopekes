@@ -1,8 +1,9 @@
 import { serverSupabaseServiceRole } from '#supabase/server'
 import type { H3Event } from 'h3'
+import type { Json } from '@mundopekes/types'
 
 type LogLevel = 'error' | 'warn' | 'info'
-type LogMetadata = Record<string, unknown>
+type LogMetadata = { [key: string]: Json | undefined }
 
 export async function log(
   event: H3Event,

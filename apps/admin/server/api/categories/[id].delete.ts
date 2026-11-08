@@ -1,6 +1,6 @@
 // server/api/categories/[id].delete.ts
 import { serverSupabaseClient } from '#supabase/server'
-import type { Database } from '~/types/database.types'
+import type { Database } from '@mundopekes/types'
 
 export default defineEventHandler(async (event) => {
   const id = getRouterParam(event, 'id')

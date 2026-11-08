@@ -1,4 +1,4 @@
-import type { ContactIntent } from '~/types/contact'
+import type { ContactIntent } from '@mundopekes/types'
 
 export function useContactForm() {
   // ✅ Llamado al top-level del composable (que se ejecuta dentro de setup)

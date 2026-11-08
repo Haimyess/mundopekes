@@ -65,4 +65,4 @@ export interface FilterOptions {
 }
 
 // ── Database ──────────────────────────────────────────────────────
-export type { Database } from './database.types'
+export type { Database } from '@mundopekes/types'

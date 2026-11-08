@@ -1,5 +1,5 @@
 import { serverSupabaseServiceRole } from '#supabase/server'
-import type { Database } from '~/types/database.types'
+import type { Database } from '@mundopekes/types'
 
 // Opciones para el dropdown secundario que aparece en la tabla de eventos
 // recientes cuando se elige un tipo de evento puntual (ej. "Búsqueda" ->

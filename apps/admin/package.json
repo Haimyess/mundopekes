@@ -18,6 +18,7 @@
     "@iconify-json/lucide": "^1.2.98",
     "@iconify-json/simple-icons": "^1.2.74",
     "@internationalized/date": "^3.12.0",
+    "@mundopekes/types": "workspace:*",
     "@nuxt/image": "^2.0.0",
     "@nuxt/ui": "^4.5.1",
     "@nuxtjs/i18n": "^10.2.3",

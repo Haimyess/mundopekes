@@ -6,7 +6,7 @@
 // without re-editing anything). Locales that are fine (manual/auto) are left
 // completely untouched via translateI18nField's forceLocales param.
 import { serverSupabaseClient } from '#supabase/server'
-import type { Database } from '~/types/database.types'
+import type { Database } from '@mundopekes/types'
 import { getDeeplApiKey } from '../../../utils/admin-runtime-config'
 import { translateI18nField } from '../../../utils/translate'
 import type { FieldI18nStatus } from '../../../utils/translate'

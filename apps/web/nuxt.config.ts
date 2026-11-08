@@ -1,3 +1,4 @@
+import { fileURLToPath } from 'node:url'
 import { CONTENT_LOCALE_META } from '../../layers/domain/config/locales'
 
 // https://nuxt.com/docs/api/configuration/nuxt-config
@@ -23,7 +24,7 @@ export default defineNuxtConfig({
     //  'leaflet/dist/leaflet.css'
   ],
   supabase: {
-    types: './types/database.types.ts',
+    types: fileURLToPath(new URL('../../packages/types/src/database.types.ts', import.meta.url)),
     redirectOptions: {
       login: '/login',
       callback: '/confirm',

@@ -1,5 +1,5 @@
 import { serverSupabaseClient } from '#supabase/server'
-import type { Database, TablesUpdate } from '~/types/database.types'
+import type { Database, TablesUpdate } from '@mundopekes/types'
 import { getDeeplApiKey } from '../../../utils/admin-runtime-config'
 import { translateI18nField } from '../../../utils/translate'
 import type { FieldI18nStatus } from '../../../utils/translate'
