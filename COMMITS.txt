@@ -44,16 +44,15 @@ PIPELINE AUTOMATICO AL HACER COMMIT
 
   1. pre-commit
      Corre lint-staged sobre los archivos en staging:
-       - *.ts / *.vue  -> ESLint --fix + Prettier --write
+       - *.ts / *.vue / *.js / *.mjs / *.cjs -> ESLint --fix + Prettier --write
        - *.json / *.md -> Prettier --write
 
   2. commit-msg
      Valida el mensaje con CommitLint.
      Si el formato no es correcto, el commit es rechazado.
 
-  3. pre-push
-     Corre Snyk para detectar vulnerabilidades criticas.
-     Bloquea el push si encuentra problemas de seguridad.
+  Lint, tests y Snyk corren en CI (GitHub Actions) en cada push
+  y pull request; no hay hook pre-push.
 
 ----------------------------------------------------
 COMO HACER UN COMMIT

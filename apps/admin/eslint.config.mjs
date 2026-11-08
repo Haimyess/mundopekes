@@ -9,6 +9,10 @@ export default withNuxt({
     ...vueRules,
     'vue/no-multiple-template-root': 'off',
     'vue/html-closing-bracket-newline': 'off',
-    '@stylistic/quotes': ['error', 'single', { allowTemplateLiterals: 'always', avoidEscape: true }],
+    '@stylistic/quotes': [
+      'error',
+      'single',
+      { allowTemplateLiterals: 'always', avoidEscape: true },
+    ],
   },
 })

@@ -4,10 +4,10 @@ import { baseRules } from '@mundopekes/config/eslint/base'
 import { vueRules } from '@mundopekes/config/eslint/vue'
 
 export default createConfigForNuxt({
-  features: { tooling: true }
+  features: { tooling: true },
 }).append(
   {
-    ignores: ['**/database.types.ts', '**/.nuxt/**', '**/node_modules/**']
+    ignores: ['**/database.types.ts', '**/.nuxt/**', '**/node_modules/**'],
   },
   {
     files: ['**/*.ts', '**/*.tsx', '**/*.vue', '**/*.js', '**/*.mjs', '**/*.cjs'],
@@ -16,6 +16,6 @@ export default createConfigForNuxt({
       ...baseRules,
       ...vueRules,
       'unicorn/prefer-number-properties': 'warn',
-    }
+    },
   }
 )

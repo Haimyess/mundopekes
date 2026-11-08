@@ -23,7 +23,7 @@
     "node": "22.x"
   },
   "lint-staged": {
-    "*.{ts,vue}": [
+    "*.{ts,vue,js,mjs,cjs}": [
       "eslint --fix",
       "prettier --write"
     ],
