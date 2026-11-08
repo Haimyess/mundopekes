@@ -14,6 +14,8 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@mundopekes/i18n": "workspace:*",
+    "@mundopekes/schemas": "workspace:*",
     "@mundopekes/types": "workspace:*",
     "@nuxt/fonts": "^0.14.0",
     "@nuxt/image": "^2.0.0",

@@ -20,7 +20,7 @@ const DEEPL_API_URL = 'https://api-free.deepl.com/v2/translate'
 // DeepL necesita códigos especiales para un puñado de locales (variantes de
 // región para target, sin región para source) — el resto usa directamente su
 // código en mayúsculas, válido para la gran mayoría de idiomas de DeepL. Así,
-// agregar un locale nuevo a CONTENT_LOCALES (layers/domain/config/locales.ts)
+// agregar un locale nuevo a CONTENT_LOCALES (@mundopekes/i18n)
 // no requiere tocar esto salvo que necesite una excepción como 'en'.
 const DEEPL_TARGET_OVERRIDES: Record<string, string> = { en: 'EN-US' }
 const DEEPL_SOURCE_OVERRIDES: Record<string, string> = {}

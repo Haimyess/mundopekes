@@ -1,12 +1,7 @@
-import { z } from 'zod'
+import { providerStatusUpdateSchema } from '@mundopekes/schemas'
 import { Resend } from 'resend'
 import { serverSupabaseServiceRole } from '#supabase/server'
 import type { Database } from '@mundopekes/types'
-
-const bodySchema = z.object({
-  status: z.enum(['active', 'suspended', 'rejected']),
-  notes: z.string().optional(),
-})
 
 export default defineEventHandler(async (event) => {
   const supabase = serverSupabaseServiceRole<Database>(event)
@@ -15,7 +10,7 @@ export default defineEventHandler(async (event) => {
   if (!id) throw createError({ statusCode: 400, statusMessage: 'Missing provider id' })
 
   const raw = await readBody(event)
-  const parsed = bodySchema.safeParse(raw)
+  const parsed = providerStatusUpdateSchema.safeParse(raw)
   if (!parsed.success) {
     throw createError({
       statusCode: 400,

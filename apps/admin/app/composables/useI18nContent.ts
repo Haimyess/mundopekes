@@ -1,7 +1,7 @@
 /**
  * useI18nContent para el admin
  * El admin no usa @nuxtjs/i18n para esto — el fallback de contenido se arma a
- * partir de SOURCE_LOCALE + CONTENT_LOCALES (layers/domain/config/locales.ts),
+ * partir de SOURCE_LOCALE + CONTENT_LOCALES (@mundopekes/i18n),
  * no de una lista hardcodeada acá.
  */
 

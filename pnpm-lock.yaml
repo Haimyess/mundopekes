@@ -91,6 +91,12 @@ importers:
       '@internationalized/date':
         specifier: ^3.12.0
         version: 3.12.4
+      '@mundopekes/i18n':
+        specifier: workspace:*
+        version: link:../../packages/i18n
+      '@mundopekes/schemas':
+        specifier: workspace:*
+        version: link:../../packages/schemas
       '@mundopekes/types':
         specifier: workspace:*
         version: link:../../packages/types
@@ -197,6 +203,12 @@ importers:
 
   apps/web:
     dependencies:
+      '@mundopekes/i18n':
+        specifier: workspace:*
+        version: link:../../packages/i18n
+      '@mundopekes/schemas':
+        specifier: workspace:*
+        version: link:../../packages/schemas
       '@mundopekes/types':
         specifier: workspace:*
         version: link:../../packages/types
@@ -312,6 +324,9 @@ importers:
 
   layers/domain:
     dependencies:
+      '@mundopekes/i18n':
+        specifier: workspace:*
+        version: link:../../packages/i18n
       '@mundopekes/types':
         specifier: workspace:*
         version: link:../../packages/types

@@ -1,7 +1,6 @@
 // Pure helpers extracted from server/api/places handlers for testability.
 // These contain no Nuxt runtime dependencies (no useRuntimeConfig, etc.).
-
-export const VALID_LANGS = new Set(['es', 'en', 'he', 'ru'])
+import { isContentLocale } from '@mundopekes/i18n'
 
 export const GOOGLE_TYPES_MAP: Record<string, { id: string; name: string }> = {
   beach: { id: '30d7ea34-bcf8-4209-b418-cdede2e431e6', name: 'Agua y playas' },
@@ -26,7 +25,7 @@ export const GOOGLE_TYPES_MAP: Record<string, { id: string; name: string }> = {
 }
 
 export function resolveSearchLang(raw: string): string {
-  return VALID_LANGS.has(raw) ? raw : 'he'
+  return isContentLocale(raw) ? raw : 'he'
 }
 
 export function buildSearchUrl(q: string, lang: string, key: string): string {

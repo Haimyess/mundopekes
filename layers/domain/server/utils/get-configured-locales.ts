@@ -1,4 +1,4 @@
-import { CONTENT_LOCALES, SOURCE_LOCALE } from '../../config/locales'
+import { CONTENT_LOCALES, SOURCE_LOCALE } from '@mundopekes/i18n'
 
 // Punto único server-side para saber "a qué idiomas traducimos" — reemplaza
 // las listas hardcodeadas que antes vivían sueltas en translate.ts. No depende

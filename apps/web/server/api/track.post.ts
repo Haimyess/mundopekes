@@ -1,32 +1,12 @@
-import { z } from 'zod'
+import { trackingEventSchema } from '@mundopekes/schemas'
 import { serverSupabaseServiceRole } from '#supabase/server'
 import type { Database, Json } from '@mundopekes/types'
-
-const VALID_EVENT_TYPES = [
-  'page_view',
-  'search',
-  'activity_view',
-  'place_view',
-  'directions_click',
-  'contact_send',
-  'suggestion_submit',
-  'provider_interest',
-] as const
-
-const bodySchema = z.object({
-  event_type: z.enum(VALID_EVENT_TYPES),
-  session_id: z.string().min(1).max(100),
-  locale: z.string().min(1).max(10),
-  payload: z
-    .record(z.string(), z.unknown())
-    .refine((p) => JSON.stringify(p).length <= 4000, 'payload too large'),
-})
 
 export default defineEventHandler(async (event) => {
   await checkRateLimit(event, 'track', { limit: 60, windowSeconds: 60 })
 
   const raw = await readBody(event)
-  const parsed = bodySchema.safeParse(raw)
+  const parsed = trackingEventSchema.safeParse(raw)
 
   if (!parsed.success) {
     throw createError({

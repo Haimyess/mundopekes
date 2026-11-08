@@ -1,4 +1,4 @@
-import { CONTENT_LOCALE_META, CONTENT_LOCALES, SOURCE_LOCALE } from '../config/locales'
+import { CONTENT_LOCALE_META, CONTENT_LOCALES, SOURCE_LOCALE } from '@mundopekes/i18n'
 
 // Equivalente client-side de get-configured-locales.ts (server) — un solo
 // punto para leer la lista de locales de contenido desde componentes/composables

@@ -1,5 +1,5 @@
 import { fileURLToPath } from 'node:url'
-import { CONTENT_LOCALE_META } from '../../layers/domain/config/locales'
+import { CONTENT_LOCALE_META } from '@mundopekes/i18n'
 
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
@@ -198,7 +198,7 @@ export default defineNuxtConfig({
   i18n: {
     // Locales de contenido (name_i18n/description_i18n/etc.) y de interfaz de
     // esta app coinciden 1:1 — CONTENT_LOCALE_META es la fuente única, ver
-    // layers/domain/config/locales.ts.
+    // @mundopekes/i18n.
     locales: [...CONTENT_LOCALE_META],
     langDir: 'locales', // ← Ahora apunta a la raíz
     defaultLocale: 'he',

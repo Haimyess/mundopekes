@@ -1,17 +1,10 @@
+import { TRACKING_EVENT_TYPES } from '@mundopekes/schemas'
+import type { TrackingEventType } from '@mundopekes/schemas'
 import type { Range } from '~/types'
 
-export const USER_EVENT_TYPES = [
-  'page_view',
-  'search',
-  'activity_view',
-  'place_view',
-  'directions_click',
-  'contact_send',
-  'suggestion_submit',
-  'provider_interest',
-] as const
+export const USER_EVENT_TYPES = TRACKING_EVENT_TYPES
 
-export type UserEventType = (typeof USER_EVENT_TYPES)[number]
+export type UserEventType = TrackingEventType
 
 export interface UserEventsSummary {
   range: { from: string; to: string }

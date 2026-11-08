@@ -7,7 +7,7 @@ export function useI18nContent() {
   const { locales, sourceLocale } = useContentLocales()
   // Prioridad de fallback: locale actual del visitante primero, luego
   // SOURCE_LOCALE (contenido siempre existe ahí), luego el resto de
-  // CONTENT_LOCALES — ver layers/domain/config/locales.ts.
+  // CONTENT_LOCALES — ver @mundopekes/i18n.
   const restLocales = locales.filter((l) => l !== sourceLocale)
 
   function tc(content: I18nContent | null | undefined): string {

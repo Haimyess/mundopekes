@@ -1,3 +1,4 @@
+import type { TrackingEventType } from '@mundopekes/schemas'
 import { useGtag } from '#imports'
 import { useSessionId } from './useSessionId'
 
@@ -6,7 +7,7 @@ export const useTracking = () => {
   const sessionId = useSessionId()
   const locale = (useNuxtApp().$i18n as { locale: Ref<string> }).locale
 
-  function post(event_type: string, payload: object) {
+  function post(event_type: TrackingEventType, payload: object) {
     $fetch('/api/track', {
       method: 'POST',
       body: { event_type, session_id: sessionId.value, locale: locale.value, payload },
