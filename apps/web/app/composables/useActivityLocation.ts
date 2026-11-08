@@ -21,29 +21,6 @@ export const useActivityLocation = () => {
   const error = computed(() => geoError.value?.message || null)
 
   /**
-   * Obtener actividades cercanas basado en ciudad
-   * TODO: Implementar con coordenadas y radio
-   */
-  const getNearbyActivitiesByCity = async (
-    city: string,
-    limit: number = 10
-  ): Promise<Activity[]> => {
-    const { data, error } = await client
-      .from('activities')
-      .select('*')
-      .eq('status', 'approved')
-      .eq('location->>city', city)
-      .limit(limit)
-
-    if (error) {
-      console.error('Error fetching nearby activities:', error)
-      return []
-    }
-
-    return data as Activity[]
-  }
-
-  /**
    * Obtener actividades cercanas basado en coordenadas
    * Por ahora retorna todas y filtra en memoria
    * TODO: Implementar con PostGIS en Supabase para búsqueda geoespacial
@@ -158,7 +135,6 @@ export const useActivityLocation = () => {
     error,
 
     // Funciones
-    getNearbyActivitiesByCity,
     getNearbyActivities,
     sortByDistance,
     getDistanceToActivity,
