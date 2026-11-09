@@ -14,6 +14,7 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@mundopekes/core": "workspace:*",
     "@mundopekes/i18n": "workspace:*",
     "@mundopekes/types": "workspace:*",
     "zod": "^4.3.6"

@@ -14,6 +14,8 @@ export type {
   ProviderSignupInput,
   ProviderStatusUpdate,
 } from './provider'
+export { childAgeSchema, childAgesQuerySchema, childAgesSchema, whenQuerySchema } from './search'
+export type { ChildAges } from './search'
 export {
   SUGGESTION_LIMITS,
   suggestionShortFormSchema,
