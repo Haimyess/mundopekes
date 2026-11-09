@@ -19,7 +19,8 @@ export default defineNuxtConfig({
 
   // CSS Global
   css: [
-    '~/assets/css/design-system.css',
+    fileURLToPath(new URL('../../layers/ui/assets/css/tokens.css', import.meta.url)),
+    fileURLToPath(new URL('../../layers/ui/assets/css/base.css', import.meta.url)),
     '~/assets/css/pwa.css',
     '~/assets/css/main.css',
     //  'leaflet/dist/leaflet.css'

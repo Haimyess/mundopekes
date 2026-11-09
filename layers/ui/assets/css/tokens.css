@@ -1,11 +1,18 @@
-/**
- * FamilySpots Design System
- * Variables CSS para colores, tipografía, espaciado, sombras y más
- */
-
 :root {
   /* ===== COLORES ===== */
-  
+
+  /* Accent - Interactivo/CTA (Teal) — usar para botones destacados, badges y texto de acento */
+  --color-accent-50: color-mix(in srgb, #00a896 10%, white);
+  --color-accent-100: color-mix(in srgb, #00a896 20%, white);
+  --color-accent-200: color-mix(in srgb, #00a896 35%, white);
+  --color-accent-300: color-mix(in srgb, #00a896 55%, white);
+  --color-accent-400: color-mix(in srgb, #00a896 80%, white);
+  --color-accent-500: #00a896;
+  --color-accent-600: color-mix(in srgb, #00a896 85%, black);
+  --color-accent-700: color-mix(in srgb, #00a896 70%, black);
+  --color-accent-800: color-mix(in srgb, #00a896 55%, black);
+  --color-accent-900: color-mix(in srgb, #00a896 40%, black);
+
   /* Primary - Familia/Kids (Naranja cálido) */
   --color-primary-50: #fff7ed;
   --color-primary-100: #ffedd5;
@@ -18,17 +25,23 @@
   --color-primary-800: #9a3412;
   --color-primary-900: #7c2d12;
 
-  /* Secondary - Juguetón (Verde menta) */
-  --color-secondary-50: #f0fdf4;
-  --color-secondary-100: #dcfce7;
-  --color-secondary-200: #bbf7d0;
-  --color-secondary-300: #86efac;
-  --color-secondary-400: #4ade80;
-  --color-secondary-500: #22c55e;
-  --color-secondary-600: #16a34a;
-  --color-secondary-700: #15803d;
-  --color-secondary-800: #166534;
-  --color-secondary-900: #14532d;
+  /*
+   * Secondary — alias del nuevo color de acento (Teal).
+   * Todo el sitio usaba este verde menta como color interactivo principal
+   * (botones, badges, hovers). En vez de tocar cada archivo que referencia
+   * --color-secondary-*, se redefine la paleta acá para que el cambio de
+   * marca se propague solo. --color-accent-* sigue siendo la fuente única.
+   */
+  --color-secondary-50: var(--color-accent-50);
+  --color-secondary-100: var(--color-accent-100);
+  --color-secondary-200: var(--color-accent-200);
+  --color-secondary-300: var(--color-accent-300);
+  --color-secondary-400: var(--color-accent-400);
+  --color-secondary-500: var(--color-accent-500);
+  --color-secondary-600: var(--color-accent-600);
+  --color-secondary-700: var(--color-accent-700);
+  --color-secondary-800: var(--color-accent-800);
+  --color-secondary-900: var(--color-accent-900);
 
   /* Neutral - Grises */
   --color-neutral-50: #fafafa;
@@ -147,6 +160,10 @@
   --z-index-dropdown: 1000;
   --z-index-sticky: 1020;
   --z-index-fixed: 1030;
+  /* Bottom nav de la PWA (Fase 2): fixed sobre el contenido, pero por
+     debajo de modal/sheet — un bottom sheet abierto debe poder taparla.
+     (La top bar ya no es fixed, ver PwaTopBar.vue — no necesita z-index.) */
+  --z-index-bottom-nav: 1035;
   --z-index-modal-backdrop: 1040;
   --z-index-modal: 1050;
   --z-index-popover: 1060;
@@ -180,66 +197,4 @@
   --container-2xl: 1536px;
 
   --max-width-prose: 65ch;
-}
-
-/* ===== UTILIDADES BASE ===== */
-
-* {
-  box-sizing: border-box;
-}
-
-html {
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-body {
-  margin: 0;
-  font-family: var(--font-family-base);
-  font-size: var(--font-size-base);
-  line-height: var(--line-height-normal);
-  color: var(--color-text-primary);
-  background-color: var(--color-bg-primary);
-}
-
-/* ===== HEADINGS ===== */
-
-h1, h2, h3, h4, h5, h6 {
-  margin: 0;
-  font-family: var(--font-family-display);
-  font-weight: var(--font-weight-bold);
-  line-height: var(--line-height-tight);
-  color: var(--color-text-primary);
-}
-
-h1 { font-size: var(--font-size-5xl); }
-h2 { font-size: var(--font-size-4xl); }
-h3 { font-size: var(--font-size-3xl); }
-h4 { font-size: var(--font-size-2xl); }
-h5 { font-size: var(--font-size-xl); }
-h6 { font-size: var(--font-size-lg); }
-
-/* ===== RESET ===== */
-
-p, ul, ol, blockquote, pre {
-  margin: 0;
-}
-
-ul, ol {
-  padding: 0;
-  list-style: none;
-}
-
-a {
-  color: inherit;
-  text-decoration: none;
-}
-
-img, picture, video, canvas, svg {
-  display: block;
-  max-width: 100%;
-}
-
-input, button, textarea, select {
-  font: inherit;
 }
