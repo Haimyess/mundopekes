@@ -183,6 +183,12 @@ export default defineNuxtConfig({
     xssValidator: false,
   },
 
+  icon: {
+    serverBundle: {
+      collections: ['heroicons', 'lucide'],
+    },
+  },
+
   gtag: {
     id: process.env.NUXT_PUBLIC_GA4_ID,
     initMode: 'manual',
