@@ -42,10 +42,18 @@ describe('parseGoogleHoursToSchedule', () => {
     expect(s.wednesday).toEqual(def.wednesday)
   })
 
-  it('ignores lines for unknown day names (localized)', () => {
-    const def = defaultSchedule()
-    const s = parseGoogleHoursToSchedule(['יום שני: 09:00–17:00'])
-    // No English day matched → schedule stays default
-    expect(s).toEqual(def)
+  it('parses localized Hebrew and Spanish lines', () => {
+    const s = parseGoogleHoursToSchedule([
+      'יום שני: 6:00–14:00, 16:00–21:00',
+      'sábado: Cerrado',
+      'domingo: Abierto 24 horas',
+    ])
+    expect(s.monday).toEqual({ open: true, start: '06:00', end: '14:00' })
+    expect(s.saturday.open).toBe(false)
+    expect(s.sunday).toEqual({ open: true, start: '00:00', end: '23:59' })
+  })
+
+  it('ignores lines for unknown day names', () => {
+    expect(parseGoogleHoursToSchedule(['Funday: 09:00–17:00'])).toEqual(defaultSchedule())
   })
 })
