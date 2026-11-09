@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { mount } from '@vue/test-utils'
-import { UIconStub } from './stubs'
+import { NuxtLinkStub, UIconStub } from './stubs'
 import UiChip from '../../../../../layers/ui/components/ui/Chip.vue'
 import UiIcon from '../../../../../layers/ui/components/ui/Icon.vue'
 
@@ -8,7 +8,7 @@ const mountChip = (props: Record<string, unknown> = {}) =>
   mount(UiChip, {
     props,
     slots: { default: 'Gratis' },
-    global: { stubs: { UIcon: UIconStub }, components: { UiIcon } },
+    global: { stubs: { UIcon: UIconStub, NuxtLink: NuxtLinkStub }, components: { UiIcon } },
   })
 
 describe('UiChip', () => {
@@ -45,5 +45,16 @@ describe('UiChip', () => {
     const count = mountChip({ count: 12 }).find('.ui-chip__count')
     expect(count.text()).toBe('12')
     expect(count.attributes('dir')).toBe('ltr')
+  })
+
+  it('renders as a link and marks the current one', () => {
+    const link = mountChip({ to: '/search?category=parks', selected: true }).find('a')
+    expect(link.attributes('href')).toBe('/search?category=parks')
+    expect(link.attributes('aria-current')).toBe('page')
+    expect(link.classes()).toContain('ui-chip--selected')
+  })
+
+  it('does not mark links that are not current', () => {
+    expect(mountChip({ to: '/search' }).find('a').attributes('aria-current')).toBeUndefined()
   })
 })

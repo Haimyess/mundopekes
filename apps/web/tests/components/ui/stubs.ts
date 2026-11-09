@@ -2,9 +2,12 @@ import { defineComponent, h } from 'vue'
 
 export const NuxtLinkStub = defineComponent({
   name: 'NuxtLink',
-  props: { to: { type: String, required: true } },
+  props: { to: { type: String, required: true }, custom: { type: Boolean, default: false } },
   setup(props, { slots, attrs }) {
-    return () => h('a', { ...attrs, href: props.to }, slots.default?.())
+    return () =>
+      props.custom
+        ? slots.default?.({ href: props.to, navigate: () => undefined })
+        : h('a', { ...attrs, href: props.to }, slots.default?.())
   },
 })
 

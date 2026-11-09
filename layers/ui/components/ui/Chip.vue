@@ -7,6 +7,7 @@ interface Props {
   count?: number
   size?: ChipSize
   as?: 'button' | 'span'
+  to?: string
   disabled?: boolean
 }
 
@@ -16,6 +17,7 @@ const props = withDefaults(defineProps<Props>(), {
   count: undefined,
   size: 'md',
   as: 'button',
+  to: undefined,
   disabled: false,
 })
 
@@ -41,8 +43,22 @@ const handleClick = () => {
 </script>
 
 <template>
+  <NuxtLink v-if="to" v-slot="{ href, navigate }" :to="to" custom>
+    <a
+      :href="href ?? undefined"
+      class="ui-chip"
+      :class="[`ui-chip--${size}`, { 'ui-chip--selected': selected }]"
+      :aria-current="selected ? 'page' : undefined"
+      @click="navigate"
+    >
+      <UiIcon v-if="icon" :name="icon" :size="16" />
+      <span class="ui-chip__label"><slot /></span>
+      <span v-if="count !== undefined" class="ui-chip__count" dir="ltr">{{ count }}</span>
+    </a>
+  </NuxtLink>
   <component
     :is="as"
+    v-else
     class="ui-chip"
     :class="[
       `ui-chip--${size}`,
@@ -60,6 +76,7 @@ const handleClick = () => {
 <style scoped>
 .ui-chip {
   position: relative;
+  text-decoration: none;
   display: inline-flex;
   align-items: center;
   gap: 6px;
