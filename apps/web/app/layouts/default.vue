@@ -1,27 +1,28 @@
-<script setup lang="ts">
-// Layout base con Container global
-// import Navbar from '~/components/Layout/Navbar.vue';
-// import Footer from '~/components/Layout/Footer.vue';
-</script>
-
 <template>
-  <div class="min-h-screen flex flex-col">
-    <!-- Navbar (sticky, fuera del container para full-width background) -->
-    <LayoutNavbar />
-
-    <!-- Main content con Container -->
-    <main class="flex-1">
+  <div class="layout-shell">
+    <LayoutHeader />
+    <main id="main-content" class="layout-shell__main" tabindex="-1">
       <UiContainer>
         <slot />
       </UiContainer>
     </main>
-
-    <!-- Footer (fuera del container para full-width background) -->
     <LayoutFooter />
-
     <ContactDrawer />
-    <PwaInstallPrompt />
   </div>
 </template>
 
-<style scoped></style>
+<style scoped>
+.layout-shell {
+  display: flex;
+  flex-direction: column;
+  min-block-size: 100dvh;
+}
+
+.layout-shell__main {
+  flex: 1;
+}
+
+.layout-shell__main:focus {
+  outline: none;
+}
+</style>

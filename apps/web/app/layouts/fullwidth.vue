@@ -1,14 +1,26 @@
 <template>
-  <div class="min-h-screen flex flex-col">
-    <LayoutNavbar />
-
-    <main class="flex-1">
+  <div class="layout-shell">
+    <LayoutHeader />
+    <main id="main-content" class="layout-shell__main" tabindex="-1">
       <slot />
     </main>
-
     <LayoutFooter />
-
     <ContactDrawer />
-    <PwaInstallPrompt />
   </div>
 </template>
+
+<style scoped>
+.layout-shell {
+  display: flex;
+  flex-direction: column;
+  min-block-size: 100dvh;
+}
+
+.layout-shell__main {
+  flex: 1;
+}
+
+.layout-shell__main:focus {
+  outline: none;
+}
+</style>
