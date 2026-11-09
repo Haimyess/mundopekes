@@ -23,3 +23,23 @@ export const NuxtImgStub = defineComponent({
     return () => h('img', { ...attrs, src: props.src })
   },
 })
+
+export const recordingStub = (name: string, slotNames: string[] = ['default']) => {
+  const received: Record<string, unknown>[] = []
+  const component = defineComponent({
+    name,
+    inheritAttrs: false,
+    setup(_, { slots, attrs }) {
+      received.push({ ...attrs })
+      return () =>
+        h(
+          'div',
+          { 'data-stub': name },
+          slotNames.map((slot) =>
+            h('div', { 'data-slot': slot }, slots[slot]?.({ item: attrs.items, day: undefined }))
+          )
+        )
+    },
+  })
+  return { component, received }
+}
