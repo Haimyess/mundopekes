@@ -1,123 +1,259 @@
 <script setup lang="ts">
+interface FooterLink {
+  label: string
+  to: string
+}
+
+interface FooterGroup {
+  label: string
+  value: string
+  links: FooterLink[]
+}
+
 const { t } = useI18n()
-const { open: openContact } = useContactForm()
+const { locales, currentLocale, switchLocale } = useLanguageSwitch()
+const { resetConsent } = useCookieConsent()
 
 const currentYear = new Date().getFullYear()
 
-const footerLinks = [
-  { label: 'footer.about', to: '/about' },
-  { label: 'footer.privacy', to: '/privacy' },
-  { label: 'footer.terms', to: '/terms' },
-  // Deshabilitado temporalmente — ver pages/become-provider.vue
-  // { label: 'provider.footer_link', to: '/become-provider' },
-]
+const linkGroups = computed<FooterGroup[]>(() =>
+  [
+    {
+      label: t('footer.groups.occasions'),
+      value: 'occasions',
+      links: [{ label: t('footer.links.free'), to: '/search?free=true' }],
+    },
+    {
+      label: t('footer.groups.mundopekes'),
+      value: 'mundopekes',
+      links: [{ label: t('footer.links.about'), to: '/about' }],
+    },
+    {
+      label: t('footer.groups.legal'),
+      value: 'legal',
+      links: [
+        { label: t('footer.links.terms'), to: '/terms' },
+        { label: t('footer.links.privacy'), to: '/privacy' },
+      ],
+    },
+  ].filter((group) => group.links.length > 0)
+)
+
+const handleCookiePreferences = () => resetConsent()
 </script>
 
 <template>
-  <footer class="footer">
-    <UiContainer>
-      <div class="footer__inner">
-        <span class="footer__logo">MundoPekes</span>
-
-        <nav class="footer__nav">
-          <NuxtLink v-for="link in footerLinks" :key="link.to" :to="link.to" class="footer__link">
-            {{ t(link.label) }}
-          </NuxtLink>
-          <button class="footer__link footer__link--btn" @click="openContact('other')">
-            {{ t('nav.contact') }}
-          </button>
-        </nav>
-
-        <div class="footer__legal">
-          <p class="footer__copy">© {{ currentYear }} MundoPekes</p>
-          <p class="footer__map-credit">{{ t('footer.map_credit') }}</p>
-        </div>
+  <footer class="layout-footer">
+    <div class="layout-footer__inner">
+      <div class="layout-footer__brand">
+        <LayoutLogo size="sm" />
+        <p class="layout-footer__tagline">{{ t('footer.tagline') }}</p>
       </div>
-    </UiContainer>
+
+      <nav class="layout-footer__nav" :aria-label="t('footer.nav')">
+        <div class="layout-footer__columns">
+          <section v-for="group in linkGroups" :key="group.value" class="layout-footer__column">
+            <h2 class="layout-footer__heading">{{ group.label }}</h2>
+            <ul class="layout-footer__links">
+              <li v-for="link in group.links" :key="link.to">
+                <NuxtLink :to="link.to" class="layout-footer__link">{{ link.label }}</NuxtLink>
+              </li>
+              <li v-if="group.value === 'legal'">
+                <button type="button" class="layout-footer__link" @click="handleCookiePreferences">
+                  {{ t('footer.links.cookies') }}
+                </button>
+              </li>
+            </ul>
+          </section>
+        </div>
+        <div class="layout-footer__accordion">
+          <UiAccordion :items="linkGroups">
+            <template #panel="{ item }">
+              <ul class="layout-footer__links">
+                <li v-for="link in item.links" :key="link.to">
+                  <NuxtLink :to="link.to" class="layout-footer__link">{{ link.label }}</NuxtLink>
+                </li>
+                <li v-if="item.value === 'legal'">
+                  <button
+                    type="button"
+                    class="layout-footer__link"
+                    @click="handleCookiePreferences"
+                  >
+                    {{ t('footer.links.cookies') }}
+                  </button>
+                </li>
+              </ul>
+            </template>
+          </UiAccordion>
+        </div>
+      </nav>
+
+      <section class="layout-footer__languages" :aria-label="t('footer.groups.language')">
+        <h2 class="layout-footer__heading">{{ t('footer.groups.language') }}</h2>
+        <ul class="layout-footer__language-list">
+          <li v-for="language in locales" :key="language.code">
+            <button
+              type="button"
+              class="layout-footer__language"
+              :lang="language.code"
+              :aria-current="language.code === currentLocale ? 'true' : undefined"
+              @click="switchLocale(language.code)"
+            >
+              {{ language.name }}
+            </button>
+          </li>
+        </ul>
+      </section>
+
+      <div class="layout-footer__bottom">
+        <p class="layout-footer__app">
+          {{ t('footer.app') }}
+          <span class="layout-footer__badge">{{ t('footer.appStore') }}</span>
+          <span class="layout-footer__badge">{{ t('footer.googlePlay') }}</span>
+        </p>
+        <p class="layout-footer__copyright">
+          {{ t('footer.copyright', { year: currentYear }) }}
+        </p>
+      </div>
+    </div>
   </footer>
 </template>
 
 <style scoped>
-.footer {
-  border-top: 1px solid var(--color-neutral-200, #e5e5e5);
-  padding: var(--space-8) 0;
-  margin-top: auto;
-  background: #fff;
+.layout-footer {
+  margin-block-start: var(--mp-section-gap);
+  border-block-start: 1px solid var(--mp-border-soft);
+  background: var(--mp-surface);
+  color: var(--mp-ink);
+  font-family: var(--mp-font);
 }
 
-.footer__inner {
+.layout-footer__inner {
   display: flex;
   flex-direction: column;
+  gap: 24px;
+  padding: 32px var(--mp-gutter) calc(32px + env(safe-area-inset-bottom));
+}
+
+.layout-footer__tagline {
+  margin: 8px 0 0;
+  color: var(--mp-text-2);
+  font-size: var(--mp-fs-body);
+}
+
+.layout-footer__columns {
+  display: none;
+}
+
+.layout-footer__heading {
+  margin: 0 0 8px;
+  font-size: var(--mp-fs-label);
+  font-weight: var(--mp-fw-bold);
+  letter-spacing: var(--mp-ls-label);
+  text-transform: uppercase;
+}
+
+.layout-footer__links,
+.layout-footer__language-list {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.layout-footer__language-list {
+  flex-flow: row wrap;
+  gap: 4px 16px;
+}
+
+.layout-footer__link,
+.layout-footer__language {
+  display: inline-flex;
   align-items: center;
-  gap: var(--space-5);
-  text-align: center;
+  min-block-size: var(--mp-tap);
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--mp-text-2);
+  font: inherit;
+  font-size: var(--mp-fs-body);
+  text-decoration: none;
+  cursor: pointer;
 }
 
-.footer__logo {
-  font-size: var(--font-size-lg);
-  font-weight: var(--font-weight-bold);
-  color: var(--color-secondary-700);
-  letter-spacing: -0.02em;
+.layout-footer__link:hover,
+.layout-footer__language:hover {
+  color: var(--mp-ink);
+  text-decoration: underline;
 }
 
-.footer__nav {
+.layout-footer__language[aria-current='true'] {
+  color: var(--mp-ink);
+  font-weight: var(--mp-fw-bold);
+}
+
+.layout-footer__link:focus-visible,
+.layout-footer__language:focus-visible {
+  outline: var(--mp-focus-ring);
+  outline-offset: 2px;
+}
+
+.layout-footer__bottom {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-block-start: 16px;
+  border-block-start: 1px solid var(--mp-border-soft);
+  color: var(--mp-text-3);
+  font-size: var(--mp-fs-body-sm);
+}
+
+.layout-footer__app,
+.layout-footer__copyright {
   display: flex;
   flex-wrap: wrap;
-  justify-content: center;
-  gap: var(--space-1) var(--space-5);
-}
-
-.footer__link {
-  font-size: var(--font-size-sm);
-  color: var(--color-text-secondary);
-  text-decoration: none;
-  transition: color 0.15s;
-  background: none;
-  border: none;
-  padding: 0;
-  cursor: pointer;
-  font-family: inherit;
-}
-
-.footer__link:hover {
-  color: var(--color-text-primary);
-}
-
-.footer__legal {
-  display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 2px;
-}
-
-.footer__copy {
-  font-size: var(--font-size-xs);
-  color: var(--color-text-tertiary, #a3a3a3);
+  gap: 8px;
   margin: 0;
 }
 
-.footer__map-credit {
-  font-size: var(--font-size-xs);
-  color: var(--color-text-tertiary, #a3a3a3);
-  margin: 0;
+.layout-footer__badge {
+  padding: 4px 10px;
+  border: 1px solid var(--mp-border);
+  border-radius: var(--mp-r-pill);
+  color: var(--mp-text-2);
+  font-weight: var(--mp-fw-semibold);
 }
 
-@media (min-width: 768px) {
-  .footer__legal {
-    align-items: flex-end;
+@media (min-width: 1200px) {
+  .layout-footer__inner {
+    display: grid;
+    grid-template-columns: 2fr 5fr;
+    gap: 32px 48px;
+    max-inline-size: var(--mp-container);
+    margin-inline: auto;
+    padding-inline: 0;
   }
-}
 
-@media (min-width: 768px) {
-  .footer__inner {
+  .layout-footer__columns {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 32px;
+  }
+
+  .layout-footer__accordion {
+    display: none;
+  }
+
+  .layout-footer__languages {
+    grid-column: 2;
+  }
+
+  .layout-footer__bottom {
+    grid-column: 1 / -1;
     flex-direction: row;
     justify-content: space-between;
-    align-items: center;
-    text-align: left;
-  }
-
-  .footer__nav {
-    justify-content: flex-start;
   }
 }
 </style>
