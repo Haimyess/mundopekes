@@ -207,6 +207,13 @@ export default defineNuxtConfig({
         subsets: ['hebrew', 'latin'],
       },
       {
+        name: 'Onest',
+        provider: 'google',
+        global: true,
+        weights: [400, 500, 600, 700, 800],
+        subsets: ['cyrillic', 'cyrillic-ext', 'latin'],
+      },
+      {
         name: 'Poppins',
         provider: 'google',
         weights: [400, 500, 600, 700],

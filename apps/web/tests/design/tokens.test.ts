@@ -56,6 +56,11 @@ describe('design tokens', () => {
     expect(TOKENS_CSS).toMatch(/\[dir='rtl'\]\s*\{\s*--mp-font:\s*var\(--mp-font-he\);/)
   })
 
+  it('uses Onest for Russian, which Albert Sans cannot render', () => {
+    expect(tokens['--mp-font-ru']).toMatch(/^'Onest'/)
+    expect(TOKENS_CSS).toMatch(/:root:lang\(ru\)\s*\{\s*--mp-font:\s*var\(--mp-font-ru\);/)
+  })
+
   it('keeps the logo in Albert Sans in every language', () => {
     expect(tokens['--mp-font-logo']).toBe('var(--mp-font-latin)')
   })

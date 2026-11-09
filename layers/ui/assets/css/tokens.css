@@ -216,6 +216,7 @@
 
   --mp-font-latin: 'Albert Sans', system-ui, sans-serif;
   --mp-font-he: 'Heebo', system-ui, sans-serif;
+  --mp-font-ru: 'Onest', system-ui, sans-serif;
   --mp-font: var(--mp-font-latin);
   --mp-font-logo: var(--mp-font-latin);
 
@@ -269,6 +270,10 @@
 
 [dir='rtl'] {
   --mp-font: var(--mp-font-he);
+}
+
+:root:lang(ru) {
+  --mp-font: var(--mp-font-ru);
 }
 
 @media (min-width: 1200px) {
