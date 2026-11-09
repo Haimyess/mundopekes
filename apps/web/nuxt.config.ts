@@ -3,7 +3,7 @@ import { CONTENT_LOCALE_META } from '@mundopekes/i18n'
 
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
-  ssr: false,
+  ssr: true,
   extends: ['../../layers/core', '../../layers/ui', '../../layers/domain'],
   runtimeConfig: {
     appName: 'web',

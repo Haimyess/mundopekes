@@ -56,7 +56,6 @@
   "dependencies": {
     "@nuxt/image": "^2.0.0",
     "@vercel/analytics": "^2.0.1",
-    "h3": "1.15.11",
     "resend": "^6.12.3"
   }
 }
