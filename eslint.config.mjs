@@ -7,7 +7,7 @@ export default createConfigForNuxt({
   features: { tooling: true },
 }).append(
   {
-    ignores: ['**/database.types.ts', '**/.nuxt/**', '**/node_modules/**'],
+    ignores: ['**/database.types.ts', '**/.nuxt/**', '**/node_modules/**', 'docs/design/**'],
   },
   {
     files: ['**/*.ts', '**/*.tsx', '**/*.vue', '**/*.js', '**/*.mjs', '**/*.cjs'],
