@@ -422,6 +422,42 @@ export type Database = {
           },
         ]
       }
+      occasions: {
+        Row: {
+          created_at: string
+          ends_on: string
+          id: string
+          is_active: boolean
+          key: string
+          kind: string
+          name_i18n: Json
+          starts_on: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          ends_on: string
+          id?: string
+          is_active?: boolean
+          key: string
+          kind: string
+          name_i18n: Json
+          starts_on: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          ends_on?: string
+          id?: string
+          is_active?: boolean
+          key?: string
+          kind?: string
+          name_i18n?: Json
+          starts_on?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       places: {
         Row: {
           city_id: number | null
