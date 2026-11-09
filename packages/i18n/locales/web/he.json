@@ -1,0 +1,52 @@
+{
+  "layout": {
+    "home": "MundoPekes, דף הבית",
+    "search": "חיפוש",
+    "language": "החלפת שפה",
+    "languageTitle": "שפה",
+    "close": "סגירה",
+    "categoriesNav": "קטגוריות",
+    "allCategories": "הכול",
+    "free": "בחינם",
+    "skipToContent": "דילוג לתוכן"
+  },
+  "footer": {
+    "tagline": "מה עושים עם הילדים בישראל, לפי גיל, אזור ויום.",
+    "nav": "קישורים באתר",
+    "groups": {
+      "occasions": "לפי הזדמנות",
+      "mundopekes": "MundoPekes",
+      "legal": "מידע משפטי",
+      "language": "שפה"
+    },
+    "links": {
+      "free": "בחינם",
+      "about": "עלינו",
+      "terms": "תנאי שימוש",
+      "privacy": "פרטיות",
+      "cookies": "עוגיות"
+    },
+    "app": "אפליקציה · בקרוב",
+    "appStore": "App Store",
+    "googlePlay": "Google Play",
+    "copyright": "© {year} MundoPekes · נעשה בישראל"
+  },
+  "errors": {
+    "notFound": {
+      "title": "הדף הזה לא קיים",
+      "description": "ייתכן שהקישור שגוי. אפשר לחפש תוכנית מכאן:"
+    },
+    "gone": {
+      "title": "הפעילות הזו כבר לא זמינה",
+      "description": "היא כבר לא מתקיימת. אפשר לחפש תוכניות אחרות מכאן:"
+    },
+    "generic": {
+      "title": "משהו השתבש",
+      "description": "יש לנו תקלה. נסו שוב בעוד כמה דקות."
+    },
+    "searchLabel": "פעילות, מקום או עיר",
+    "searchSubmit": "חיפוש",
+    "retry": "לנסות שוב",
+    "home": "חזרה לדף הבית"
+  }
+}

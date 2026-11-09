@@ -1,0 +1,52 @@
+{
+  "layout": {
+    "home": "MundoPekes, главная",
+    "search": "Поиск",
+    "language": "Сменить язык",
+    "languageTitle": "Язык",
+    "close": "Закрыть",
+    "categoriesNav": "Категории",
+    "allCategories": "Все",
+    "free": "Бесплатно",
+    "skipToContent": "Перейти к содержимому"
+  },
+  "footer": {
+    "tagline": "Чем заняться с детьми в Израиле — по возрасту, району и дню.",
+    "nav": "Ссылки сайта",
+    "groups": {
+      "occasions": "По поводу",
+      "mundopekes": "MundoPekes",
+      "legal": "Правовая информация",
+      "language": "Язык"
+    },
+    "links": {
+      "free": "Бесплатно",
+      "about": "О нас",
+      "terms": "Условия",
+      "privacy": "Конфиденциальность",
+      "cookies": "Файлы cookie"
+    },
+    "app": "Приложение · скоро",
+    "appStore": "App Store",
+    "googlePlay": "Google Play",
+    "copyright": "© {year} MundoPekes · Сделано в Израиле"
+  },
+  "errors": {
+    "notFound": {
+      "title": "Такой страницы нет",
+      "description": "Возможно, в ссылке ошибка. Найдите, чем заняться, здесь:"
+    },
+    "gone": {
+      "title": "Это занятие больше недоступно",
+      "description": "Оно больше не проводится. Найдите другие варианты здесь:"
+    },
+    "generic": {
+      "title": "Что-то пошло не так",
+      "description": "У нас возникла проблема. Попробуйте снова через несколько минут."
+    },
+    "searchLabel": "Занятие, место или город",
+    "searchSubmit": "Найти",
+    "retry": "Повторить",
+    "home": "На главную"
+  }
+}

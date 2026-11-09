@@ -3,6 +3,10 @@ import commonEn from '../locales/common/en.json'
 import commonEs from '../locales/common/es.json'
 import commonHe from '../locales/common/he.json'
 import commonRu from '../locales/common/ru.json'
+import webEn from '../locales/web/en.json'
+import webEs from '../locales/web/es.json'
+import webHe from '../locales/web/he.json'
+import webRu from '../locales/web/ru.json'
 import {
   CONTENT_LOCALES,
   CONTENT_LOCALE_META,
@@ -16,6 +20,7 @@ type Catalog = { [key: string]: string | Catalog }
 
 const CATALOGS: Record<string, Record<ContentLocale, Catalog>> = {
   common: { en: commonEn, es: commonEs, he: commonHe, ru: commonRu },
+  web: { en: webEn, es: webEs, he: webHe, ru: webRu },
 }
 
 const flattenKeys = (catalog: Catalog, prefix = ''): string[] =>

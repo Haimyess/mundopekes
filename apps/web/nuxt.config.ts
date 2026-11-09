@@ -251,7 +251,11 @@ export default defineNuxtConfig({
     // Locales de contenido (name_i18n/description_i18n/etc.) y de interfaz de
     // esta app coinciden 1:1 — CONTENT_LOCALE_META es la fuente única, ver
     // @mundopekes/i18n.
-    locales: [...CONTENT_LOCALE_META],
+    locales: CONTENT_LOCALE_META.map(({ code, name, file }) => ({
+      code,
+      name,
+      files: [file, `../../../../packages/i18n/locales/web/${file}`],
+    })),
     langDir: 'locales', // ← Ahora apunta a la raíz
     defaultLocale: 'he',
     strategy: 'no_prefix',

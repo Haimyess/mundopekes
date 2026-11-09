@@ -1,0 +1,52 @@
+{
+  "layout": {
+    "home": "MundoPekes, inicio",
+    "search": "Buscar",
+    "language": "Cambiar idioma",
+    "languageTitle": "Idioma",
+    "close": "Cerrar",
+    "categoriesNav": "Categorías",
+    "allCategories": "Todo",
+    "free": "Gratis",
+    "skipToContent": "Saltar al contenido"
+  },
+  "footer": {
+    "tagline": "Qué hacer con chicos en Israel, por edad, zona y día.",
+    "nav": "Enlaces del sitio",
+    "groups": {
+      "occasions": "Por ocasión",
+      "mundopekes": "MundoPekes",
+      "legal": "Legal",
+      "language": "Idioma"
+    },
+    "links": {
+      "free": "Gratis",
+      "about": "Sobre nosotros",
+      "terms": "Términos",
+      "privacy": "Privacidad",
+      "cookies": "Cookies"
+    },
+    "app": "App · próximamente",
+    "appStore": "App Store",
+    "googlePlay": "Google Play",
+    "copyright": "© {year} MundoPekes · Hecho en Israel"
+  },
+  "errors": {
+    "notFound": {
+      "title": "Esta página no existe",
+      "description": "Puede que el enlace esté mal escrito. Busca un plan desde aquí:"
+    },
+    "gone": {
+      "title": "Esta actividad ya no está disponible",
+      "description": "Ya no se realiza. Busca otros planes desde aquí:"
+    },
+    "generic": {
+      "title": "Algo salió mal",
+      "description": "Estamos teniendo un problema. Inténtalo de nuevo en unos minutos."
+    },
+    "searchLabel": "Actividad, lugar o ciudad",
+    "searchSubmit": "Buscar",
+    "retry": "Reintentar",
+    "home": "Volver al inicio"
+  }
+}

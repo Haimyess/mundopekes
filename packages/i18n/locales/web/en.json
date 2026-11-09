@@ -1,0 +1,52 @@
+{
+  "layout": {
+    "home": "MundoPekes, home",
+    "search": "Search",
+    "language": "Change language",
+    "languageTitle": "Language",
+    "close": "Close",
+    "categoriesNav": "Categories",
+    "allCategories": "All",
+    "free": "Free",
+    "skipToContent": "Skip to content"
+  },
+  "footer": {
+    "tagline": "Things to do with kids in Israel, by age, area and day.",
+    "nav": "Site links",
+    "groups": {
+      "occasions": "By occasion",
+      "mundopekes": "MundoPekes",
+      "legal": "Legal",
+      "language": "Language"
+    },
+    "links": {
+      "free": "Free",
+      "about": "About us",
+      "terms": "Terms",
+      "privacy": "Privacy",
+      "cookies": "Cookies"
+    },
+    "app": "App · coming soon",
+    "appStore": "App Store",
+    "googlePlay": "Google Play",
+    "copyright": "© {year} MundoPekes · Made in Israel"
+  },
+  "errors": {
+    "notFound": {
+      "title": "This page does not exist",
+      "description": "The link may be mistyped. Find a plan from here:"
+    },
+    "gone": {
+      "title": "This activity is no longer available",
+      "description": "It no longer takes place. Find other plans from here:"
+    },
+    "generic": {
+      "title": "Something went wrong",
+      "description": "We are having a problem. Please try again in a few minutes."
+    },
+    "searchLabel": "Activity, place or city",
+    "searchSubmit": "Search",
+    "retry": "Try again",
+    "home": "Back to home"
+  }
+}
