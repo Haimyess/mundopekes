@@ -1,46 +1,39 @@
-/**
- * Composable para manejo de responsiveness
- * Usa VueUse para detectar tamaños de pantalla
- */
+export const RESPONSIVE_BREAKPOINTS = {
+  sm: 640,
+  md: 768,
+  lg: 1024,
+  xl: 1280,
+  '2xl': 1536,
+} as const
 
-export const useResponsive = () => {
-  // VueUse composables
-  const { width, height } = useWindowSize()
+export const MOBILE_FIRST_WIDTH = 375
+export const MOBILE_FIRST_HEIGHT = 812
 
-  // Breakpoints basados en Tailwind
-  const breakpoints = {
-    sm: 640,
-    md: 768,
-    lg: 1024,
-    xl: 1280,
-    '2xl': 1536
-  }
+export function useResponsive() {
+  const isMounted = useMounted()
+  const windowSize = useWindowSize()
 
-  const isMobile = computed(() => width.value < breakpoints.md)
-  const isTablet = computed(() => width.value >= breakpoints.md && width.value < breakpoints.lg)
-  const isDesktop = computed(() => width.value >= breakpoints.lg)
-  const isLargeDesktop = computed(() => width.value >= breakpoints.xl)
+  const width = computed(() => (isMounted.value ? windowSize.width.value : MOBILE_FIRST_WIDTH))
+  const height = computed(() => (isMounted.value ? windowSize.height.value : MOBILE_FIRST_HEIGHT))
 
-  // Orientación
+  const isMobile = computed(() => width.value < RESPONSIVE_BREAKPOINTS.md)
+  const isTablet = computed(
+    () => width.value >= RESPONSIVE_BREAKPOINTS.md && width.value < RESPONSIVE_BREAKPOINTS.lg
+  )
+  const isDesktop = computed(() => width.value >= RESPONSIVE_BREAKPOINTS.lg)
+  const isLargeDesktop = computed(() => width.value >= RESPONSIVE_BREAKPOINTS.xl)
   const isPortrait = computed(() => height.value > width.value)
   const isLandscape = computed(() => width.value > height.value)
 
   return {
-    // Dimensiones
     width,
     height,
-    
-    // Breakpoints
     isMobile,
     isTablet,
     isDesktop,
     isLargeDesktop,
-    
-    // Orientación
     isPortrait,
     isLandscape,
-    
-    // Helpers
-    breakpoints
+    breakpoints: RESPONSIVE_BREAKPOINTS,
   }
 }

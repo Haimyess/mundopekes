@@ -4,7 +4,7 @@ import type { ContactIntent } from '@mundopekes/types'
 const { t } = useI18n()
 const { isOpen, isLoading, intent, form, prefillActivityTitle, close, submit } = useContactForm()
 
-const isMobile = useMediaQuery('(max-width: 767px)')
+const isMobile = useHydrationSafeMediaQuery('(max-width: 767px)', { ssrValue: true })
 
 const isProviderIntent = computed(() => intent.value === 'provider_inquiry')
 

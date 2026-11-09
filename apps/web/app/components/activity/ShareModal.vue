@@ -16,8 +16,7 @@ interface Props {
 const props = defineProps<Props>()
 const { t } = useI18n()
 
-// Reactive breakpoint — auto-updates on resize (VueUse, auto-imported)
-const isDesktop = useMediaQuery('(min-width: 768px)')
+const isDesktop = useHydrationSafeMediaQuery('(min-width: 768px)')
 
 const drawerOpen = ref(false)
 const copied = ref(false)
