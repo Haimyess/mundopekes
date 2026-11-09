@@ -3,7 +3,6 @@
 * Importa el design system y estilos adicionales
 */
 
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
 @import "tailwindcss";
 /* dark: solo activa con clase .dark en un ancestro — nunca por prefers-color-scheme.
    Esto es la base correcta para cuando se implemente dark mode propio en el futuro. */

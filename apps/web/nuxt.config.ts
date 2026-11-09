@@ -190,6 +190,31 @@ export default defineNuxtConfig({
     },
   },
 
+  fonts: {
+    families: [
+      {
+        name: 'Albert Sans',
+        provider: 'google',
+        global: true,
+        weights: [400, 500, 600, 700, 800],
+        subsets: ['latin', 'latin-ext'],
+      },
+      {
+        name: 'Heebo',
+        provider: 'google',
+        global: true,
+        weights: [400, 500, 600, 700, 800],
+        subsets: ['hebrew', 'latin'],
+      },
+      {
+        name: 'Poppins',
+        provider: 'google',
+        weights: [400, 500, 600, 700],
+        subsets: ['latin', 'latin-ext'],
+      },
+    ],
+  },
+
   gtag: {
     id: process.env.NUXT_PUBLIC_GA4_ID,
     initMode: 'manual',

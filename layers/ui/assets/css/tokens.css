@@ -198,3 +198,83 @@
 
   --max-width-prose: 65ch;
 }
+
+:root {
+  --mp-ink: #111111;
+  --mp-text-2: #4a4a4a;
+  --mp-text-3: #6b6b6b;
+  --mp-border-soft: #e6e6e6;
+  --mp-border: #dadada;
+  --mp-skeleton: #f2f1ef;
+  --mp-surface: #ffffff;
+  --mp-coral: #e8412f;
+  --mp-coral-50: #ffe9e5;
+  --mp-coral-700: #c7362b;
+  --mp-discount-text: #a82a21;
+  --mp-green: #0f7b45;
+  --mp-blue: #1f6fd1;
+
+  --mp-font-latin: 'Albert Sans', system-ui, sans-serif;
+  --mp-font-he: 'Heebo', system-ui, sans-serif;
+  --mp-font: var(--mp-font-latin);
+  --mp-font-logo: var(--mp-font-latin);
+
+  --mp-fs-h1: 32px;
+  --mp-fs-detail-title: 28px;
+  --mp-fs-section-title: 21px;
+  --mp-fs-card-title-sm: 15px;
+  --mp-fs-card-title: 17px;
+  --mp-fs-body-sm: 13px;
+  --mp-fs-body: 14px;
+  --mp-fs-body-lg: 16px;
+  --mp-fs-label-sm: 11px;
+  --mp-fs-label: 12px;
+
+  --mp-fw-regular: 400;
+  --mp-fw-medium: 500;
+  --mp-fw-semibold: 600;
+  --mp-fw-bold: 700;
+  --mp-fw-heavy: 800;
+
+  --mp-ls-h1: -0.04em;
+  --mp-ls-detail-title: -0.03em;
+  --mp-ls-section-title: -0.025em;
+  --mp-ls-card-title: -0.015em;
+  --mp-ls-label: 0.06em;
+
+  --mp-r-pill: 999px;
+  --mp-r-input: 12px;
+  --mp-r-btn: 14px;
+  --mp-r-photo: 14px;
+  --mp-r-card: 18px;
+  --mp-r-panel-sm: 20px;
+  --mp-r-panel: 24px;
+  --mp-r-sheet: 28px;
+
+  --mp-gutter: 16px;
+  --mp-container: 1200px;
+  --mp-section-gap: 48px;
+  --mp-tap: 44px;
+
+  --mp-focus-ring-width: 3px;
+  --mp-focus-ring: var(--mp-focus-ring-width) solid var(--mp-ink);
+
+  --mp-icon-xs: 14px;
+  --mp-icon-sm: 16px;
+  --mp-icon-md: 20px;
+  --mp-icon-lg: 24px;
+  --mp-icon-xl: 32px;
+  --mp-icon-2xl: 40px;
+}
+
+[dir='rtl'] {
+  --mp-font: var(--mp-font-he);
+}
+
+@media (min-width: 1200px) {
+  :root {
+    --mp-fs-h1: 56px;
+    --mp-fs-detail-title: 40px;
+    --mp-fs-section-title: 30px;
+  }
+}
