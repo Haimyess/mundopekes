@@ -19,8 +19,8 @@ const { formatAge } = useAgeRange()
 const SEASON_ICONS: Record<string, string> = {
   spring: 'i-heroicons-sparkles',
   summer: 'i-heroicons-sun',
-  autumn: 'i-heroicons-leaf',
-  fall: 'i-heroicons-leaf',
+  autumn: 'i-lucide-leaf',
+  fall: 'i-lucide-leaf',
   winter: 'i-heroicons-cloud',
 }
 
