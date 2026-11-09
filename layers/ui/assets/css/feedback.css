@@ -1,0 +1,27 @@
+.ui-toast {
+  border: 1px solid var(--mp-border-soft);
+  border-radius: var(--mp-r-card);
+  background: var(--mp-surface);
+  color: var(--mp-ink);
+  font-family: var(--mp-font);
+  box-shadow: 0 12px 32px rgb(17 17 17 / 14%);
+}
+
+.ui-toast__title {
+  color: var(--mp-ink);
+  font-size: var(--mp-fs-body);
+  font-weight: var(--mp-fw-bold);
+}
+
+.ui-toast__description {
+  color: var(--mp-text-2);
+  font-size: var(--mp-fs-body-sm);
+}
+
+.ui-toast--success .ui-toast__icon {
+  color: var(--mp-green);
+}
+
+.ui-toast--error .ui-toast__icon {
+  color: var(--mp-coral-700);
+}

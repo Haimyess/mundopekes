@@ -21,6 +21,7 @@ export default defineNuxtConfig({
   css: [
     fileURLToPath(new URL('../../layers/ui/assets/css/tokens.css', import.meta.url)),
     fileURLToPath(new URL('../../layers/ui/assets/css/base.css', import.meta.url)),
+    fileURLToPath(new URL('../../layers/ui/assets/css/feedback.css', import.meta.url)),
     '~/assets/css/pwa.css',
     '~/assets/css/main.css',
     //  'leaflet/dist/leaflet.css'
