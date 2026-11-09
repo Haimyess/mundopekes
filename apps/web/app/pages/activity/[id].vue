@@ -14,17 +14,22 @@ const { getActivityById } = useActivities()
 const id = computed(() => route.params.id as string)
 
 // ─── Fetch ────────────────────────────────────────────────────
-// Non-blocking on purpose: apps/web runs ssr:false, so an `await` here would
-// stall Vue Router and stop the skeleton below from ever painting on a
-// client-side navigation. Not-found is handled reactively once resolved.
-const { data: activity, status } = useAsyncData(`activity-${id.value}`, () =>
-  getActivityById(id.value)
-)
+// Non-blocking on client navigation so the skeleton paints right away; on the
+// server the request is awaited so a missing record answers 404 (and a failed
+// load 503) instead of an empty 200 page.
+const activityRequest = useAsyncData(`activity-${id.value}`, () => getActivityById(id.value))
+const { data: activity, status, error: activityError } = activityRequest
+
+if (import.meta.server) {
+  await activityRequest
+  const recordError = getRecordError('Activity', activity.value, activityError.value)
+  if (recordError) throw recordError
+}
 
 watch(status, (s) => {
-  if (s === 'success' && !activity.value) {
-    showError(createError({ statusCode: 404, statusMessage: 'Activity not found', fatal: true }))
-  }
+  if (s !== 'success' && s !== 'error') return
+  const recordError = getRecordError('Activity', activity.value, activityError.value)
+  if (recordError) showError(recordError)
 })
 
 // ─── Tracking ─────────────────────────────────────────────────

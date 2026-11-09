@@ -182,10 +182,8 @@ export const useActivities = () => {
       .eq('place.status', 'active')
       .single()
 
-    if (error) {
-      console.error('Error fetching activity:', error)
-      return null
-    }
+    if (isNotFoundError(error)) return null
+    if (error) throw error
 
     return data ? normalizeActivity(data) : null
   }

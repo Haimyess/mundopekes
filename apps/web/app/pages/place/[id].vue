@@ -16,15 +16,22 @@ const { getActivitiesByPlaceId } = useActivities()
 const id = computed(() => route.params.id as string)
 
 // ─── Fetch: place + sus actividades ────────────────────────────
-// Non-blocking on purpose: apps/web runs ssr:false, so an `await` here would
-// stall Vue Router and stop the skeleton below from ever painting on a
-// client-side navigation. Not-found is handled reactively once resolved.
-const { data: place, status } = useAsyncData(`place-${id.value}`, () => getPlaceById(id.value))
+// Non-blocking on client navigation so the skeleton paints right away; on the
+// server the request is awaited so a missing record answers 404 (and a failed
+// load 503) instead of an empty 200 page.
+const placeRequest = useAsyncData(`place-${id.value}`, () => getPlaceById(id.value))
+const { data: place, status, error: placeError } = placeRequest
+
+if (import.meta.server) {
+  await placeRequest
+  const recordError = getRecordError('Place', place.value, placeError.value)
+  if (recordError) throw recordError
+}
 
 watch(status, (s) => {
-  if (s === 'success' && !place.value) {
-    showError(createError({ statusCode: 404, statusMessage: 'Place not found', fatal: true }))
-  }
+  if (s !== 'success' && s !== 'error') return
+  const recordError = getRecordError('Place', place.value, placeError.value)
+  if (recordError) showError(recordError)
 })
 
 // ─── Tracking ─────────────────────────────────────────────────

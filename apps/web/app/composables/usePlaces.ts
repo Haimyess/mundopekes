@@ -45,10 +45,8 @@ export const usePlaces = () => {
       .eq('status', 'active')
       .single()
 
-    if (error) {
-      console.error('Error fetching place:', error)
-      return null
-    }
+    if (isNotFoundError(error)) return null
+    if (error) throw error
 
     return data ? normalizePlace(data) : null
   }
