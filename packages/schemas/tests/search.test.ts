@@ -80,6 +80,17 @@ describe('searchQuerySchema', () => {
     expect(searchQuerySchema.parse({ q: '   ', ages: '' })).toEqual({})
   })
 
+  it('parses the kind, amenities in canonical order and open now', () => {
+    expect(
+      searchQuerySchema.parse({ kind: 'place', amenities: 'shade,stroller,shade', open: 'now' })
+    ).toEqual({ kind: 'place', amenities: ['stroller', 'shade'], open: 'now' })
+  })
+
+  it('drops unknown kinds, amenities and open values', () => {
+    expect(searchQuerySchema.parse({ kind: 'event', amenities: 'pool', open: 'later' })).toEqual({})
+    expect(searchQuerySchema.parse({ amenities: '' })).toEqual({})
+  })
+
   it('ignores unknown legacy params', () => {
     expect(searchQuerySchema.parse({ age: '6', city: 'Haifa' })).toEqual({})
   })
