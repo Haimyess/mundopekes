@@ -213,5 +213,52 @@
   },
   "map": {
     "unavailable": "The map is not available right now."
+  },
+  "home": {
+    "title": "What shall we do with the kids?",
+    "searchLabel": "Search plans",
+    "submit": "See what to do",
+    "quickFiltersLabel": "Quick filters",
+    "quickFilters": {
+      "rainy": "Rainy day",
+      "hot": "Hot day",
+      "free": "Free",
+      "outdoor": "Outdoors",
+      "openNow": "Open now",
+      "babies": "For babies"
+    },
+    "seeAll": "See all {count}",
+    "previous": "Previous",
+    "next": "Next",
+    "categories": "Categories",
+    "nearby": {
+      "title": "Near you",
+      "subtitle": "Plans within {radius} km",
+      "useLocation": "Use my location",
+      "mapLabel": "Map of plans near you",
+      "results": "Closest first",
+      "empty": "We found no plans near you. Try a city in the search box."
+    },
+    "free": {
+      "title": "Free",
+      "subtitle": "Plans that cost nothing for the whole family"
+    },
+    "context": {
+      "occasion": "Plans for {name}",
+      "occasionSubtitle": "Open during the holiday",
+      "shabat": "This Shabbat",
+      "shabatSubtitle": "Open on Saturday",
+      "today": "For today",
+      "todaySubtitle": "Open today"
+    },
+    "ctas": {
+      "suggestTitle": "Know a great plan?",
+      "suggestText": "Tell us and we will add it so other families can find it.",
+      "suggestAction": "Suggest a plan"
+    },
+    "seo": {
+      "title": "MundoPekes · Things to do with kids in Israel",
+      "description": "Plans, activities and places to go with kids in Israel, by age, date and area."
+    }
   }
 }

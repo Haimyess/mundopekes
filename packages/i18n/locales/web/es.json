@@ -213,5 +213,52 @@
   },
   "map": {
     "unavailable": "El mapa no está disponible ahora mismo."
+  },
+  "home": {
+    "title": "¿Qué hacemos con los chicos?",
+    "searchLabel": "Buscar planes",
+    "submit": "Ver qué hacer",
+    "quickFiltersLabel": "Filtros rápidos",
+    "quickFilters": {
+      "rainy": "Día de lluvia",
+      "hot": "Mucho calor",
+      "free": "Gratis",
+      "outdoor": "Al aire libre",
+      "openNow": "Abierto ahora",
+      "babies": "Para bebés"
+    },
+    "seeAll": "Ver los {count}",
+    "previous": "Anterior",
+    "next": "Siguiente",
+    "categories": "Categorías",
+    "nearby": {
+      "title": "Cerca de ti",
+      "subtitle": "Planes a menos de {radius} km",
+      "useLocation": "Usar mi ubicación",
+      "mapLabel": "Mapa de planes cerca de ti",
+      "results": "Lo más cerca",
+      "empty": "No encontramos planes cerca de ti. Prueba con una ciudad en el buscador."
+    },
+    "free": {
+      "title": "Gratis",
+      "subtitle": "Planes sin coste para toda la familia"
+    },
+    "context": {
+      "occasion": "Planes para {name}",
+      "occasionSubtitle": "Abiertos durante la festividad",
+      "shabat": "Este Shabat",
+      "shabatSubtitle": "Abiertos el sábado",
+      "today": "Para hoy",
+      "todaySubtitle": "Abiertos hoy"
+    },
+    "ctas": {
+      "suggestTitle": "¿Conoces un buen plan?",
+      "suggestText": "Cuéntanos y lo sumamos para que otras familias lo descubran.",
+      "suggestAction": "Sugerir un plan"
+    },
+    "seo": {
+      "title": "MundoPekes · Qué hacer con niños en Israel",
+      "description": "Planes, actividades y lugares para ir con niños en Israel, por edad, fecha y zona."
+    }
   }
 }

@@ -213,5 +213,52 @@
   },
   "map": {
     "unavailable": "המפה לא זמינה כרגע."
+  },
+  "home": {
+    "title": "מה עושים עם הילדים?",
+    "searchLabel": "חיפוש תוכניות",
+    "submit": "מה עושים",
+    "quickFiltersLabel": "מסננים מהירים",
+    "quickFilters": {
+      "rainy": "יום גשום",
+      "hot": "יום חם",
+      "free": "בחינם",
+      "outdoor": "בחוץ",
+      "openNow": "פתוח עכשיו",
+      "babies": "לתינוקות"
+    },
+    "seeAll": "לכל ה־{count}",
+    "previous": "הקודם",
+    "next": "הבא",
+    "categories": "קטגוריות",
+    "nearby": {
+      "title": "קרוב אליך",
+      "subtitle": "תוכניות במרחק של עד {radius} ק״מ",
+      "useLocation": "שימוש במיקום שלי",
+      "mapLabel": "מפת תוכניות קרובות",
+      "results": "הכי קרוב",
+      "empty": "לא מצאנו תוכניות קרובות. נסו לבחור עיר בחיפוש."
+    },
+    "free": {
+      "title": "בחינם",
+      "subtitle": "תוכניות בלי עלות לכל המשפחה"
+    },
+    "context": {
+      "occasion": "תוכניות ל{name}",
+      "occasionSubtitle": "פתוחים במהלך החג",
+      "shabat": "השבת הזאת",
+      "shabatSubtitle": "פתוחים בשבת",
+      "today": "להיום",
+      "todaySubtitle": "פתוחים היום"
+    },
+    "ctas": {
+      "suggestTitle": "מכירים תוכנית טובה?",
+      "suggestText": "ספרו לנו ונוסיף אותה כדי שמשפחות נוספות יגלו אותה.",
+      "suggestAction": "הצעת תוכנית"
+    },
+    "seo": {
+      "title": "MundoPekes · מה עושים עם ילדים בישראל",
+      "description": "תוכניות, פעילויות ומקומות לבלות עם ילדים בישראל, לפי גיל, תאריך ואזור."
+    }
   }
 }

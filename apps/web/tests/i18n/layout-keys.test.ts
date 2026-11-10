@@ -41,6 +41,12 @@ const SOURCES = [
   'pages/place/[id].vue',
   'pages/activity/[id].vue',
   'components/detail/VenueCard.vue',
+  'pages/index.vue',
+  'components/home/HeroSearch.vue',
+  'components/home/CarouselSection.vue',
+  'components/home/CategoryGrid.vue',
+  'components/home/Nearby.vue',
+  'components/home/Ctas.vue',
   'composables/useSearchLabels.ts',
   'components/search/ResultCard.vue',
   'components/search/ResultList.vue',
@@ -65,6 +71,13 @@ const DYNAMIC_KEYS = [
   ...['directions', 'waze', 'call', 'whatsapp', 'website'].map(
     (action) => `detail.actions.${action}`
   ),
+  ...['rainy', 'hot', 'free', 'outdoor', 'openNow', 'babies'].map(
+    (key) => `home.quickFilters.${key}`
+  ),
+  ...['occasion', 'shabat', 'today'].flatMap((kind) => [
+    `home.context.${kind}`,
+    `home.context.${kind}Subtitle`,
+  ]),
 ]
 
 const usedKeys = [

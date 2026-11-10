@@ -1,78 +1,66 @@
 <script setup lang="ts">
-import { useGeolocation } from '@vueuse/core'
+import type { HomeContextSection, HomeResponse } from '#shared/types/home'
 
-const activitiesStore = useActivitiesStore()
-const {
-  coords,
-  resume,
-  error: geoError,
-  isSupported: geoSupported,
-} = useGeolocation({ immediate: false })
-const geoBlocked = ref(false)
+const { t } = useI18n()
+const { tc } = useI18nContent()
+const { getNavCategoriesWithChildren } = useCategories()
 
-onMounted(async () => {
-  await Promise.all([
-    activitiesStore.loadRecentActivities(),
-    activitiesStore.loadPopularActivities(),
-    activitiesStore.loadRecommendedActivities(),
-    activitiesStore.loadFilterOptions(),
-  ])
+const [{ data: home }, { data: categories }] = await Promise.all([
+  useFetch<HomeResponse>('/api/home', { key: 'home' }),
+  useAsyncData('layout-nav-categories', getNavCategoriesWithChildren, { default: () => [] }),
+])
 
-  console.log('📍 Geolocation supported:', geoSupported.value)
-  console.log('📍 Calling resume()...')
-  resume()
-  console.log('📍 resume() called. Waiting for coords...')
-
-  watchOnce(
-    () => coords.value.latitude,
-    async (lat) => {
-      const lng = coords.value.longitude
-      console.log('📍 coords changed → lat:', lat, 'lng:', lng)
-      if (lat && Number.isFinite(lat) && Number.isFinite(lng)) {
-        await activitiesStore.loadNearbyActivities(lat, lng)
-      }
-    }
-  )
-
-  watchOnce(
-    () => geoError.value,
-    (err) => {
-      console.warn('📍 Geo error:', err?.message, '| code:', err?.code)
-      if (err) geoBlocked.value = true
-    }
-  )
+useSeoMeta({
+  title: () => t('home.seo.title'),
+  description: () => t('home.seo.description'),
+  ogTitle: () => t('home.seo.title'),
+  ogDescription: () => t('home.seo.description'),
 })
+
+function contextTitle(context: HomeContextSection) {
+  if (context.kind === 'occasion')
+    return t('home.context.occasion', { name: tc(context.occasion.name) })
+  return t(`home.context.${context.kind}`)
+}
+
+const categoryName = (slug: string) => {
+  const category = categories.value.find((current) => current.slug === slug)
+  return category ? tc(category.name_i18n) : slug
+}
 </script>
 
-<!-- CREATE A CONTAINER AND A LAYOUT -->
 <template>
-  <div>
-    <HomeHero />
-    <div class="py-4 space-y-10">
-      <HomeActivityCarousel
-        :title="$t('carousels.recent')"
-        :activities="activitiesStore.recentActivities"
-        :loading="activitiesStore.loading.recent"
-      />
-      <HomeActivityCarousel
-        :title="$t('carousels.nearby')"
-        :activities="activitiesStore.nearbyActivities"
-        :loading="activitiesStore.loading.nearby"
-        :empty-message="geoBlocked ? $t('carousels.nearby_blocked') : undefined"
-      />
-      <HomeActivityCarousel
-        :title="$t('carousels.popular')"
-        :activities="activitiesStore.popularActivities"
-        :loading="activitiesStore.loading.popular"
-      />
-      <HomeActivityCarousel
-        :title="$t('carousels.recommended')"
-        :activities="activitiesStore.recommendedActivities"
-        :loading="activitiesStore.loading.recommended"
-      />
-    </div>
-    <HomeCTA />
-    <!-- AGREGAR CUANDO TENGAMOS FLUJO Y ESTADISTICAS Y QUERAMOS COMENZAR CON LAS SUSCRIPCIONES -->
-    <!-- <HomeProviderCTA /> -->
+  <div class="home-page">
+    <HomeHeroSearch :occasion="home?.occasion ?? null" />
+    <HomeCarouselSection
+      v-if="home?.context"
+      :title="contextTitle(home.context)"
+      :subtitle="t(`home.context.${home.context.kind}Subtitle`)"
+      :section="home.context"
+    />
+    <HomeCategoryGrid :counts="home?.categoryCounts ?? {}" />
+    <HomeNearby />
+    <HomeCarouselSection
+      v-if="home?.free"
+      :title="t('home.free.title')"
+      :subtitle="t('home.free.subtitle')"
+      :section="home.free"
+    />
+    <HomeCarouselSection
+      v-for="category in home?.categories ?? []"
+      :key="category.slug"
+      :title="categoryName(category.slug)"
+      :section="category"
+    />
+    <HomeCtas />
   </div>
 </template>
+
+<style scoped>
+.home-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mp-section-gap);
+  padding-block-end: var(--mp-section-gap);
+}
+</style>
