@@ -48,5 +48,40 @@
     "searchSubmit": "Найти",
     "retry": "Повторить",
     "home": "На главную"
+  },
+  "results": {
+    "title": "Планы для вашей семьи",
+    "titleQuery": "Результаты по запросу «{query}»",
+    "count": "Нет планов | {count} план | {count} плана | {count} планов",
+    "loading": "Ищем планы…",
+    "kind": {
+      "activity": "Занятие",
+      "place": "Место"
+    },
+    "activityCount": "нет занятий | {count} занятие | {count} занятия | {count} занятий",
+    "agesLabel": "От {min} до {max} лет",
+    "free": "Бесплатно",
+    "forAges": "Подходит для возраста {ages}",
+    "quickFilters": "Когда",
+    "when": {
+      "today": "Сегодня",
+      "tomorrow": "Завтра",
+      "this-weekend": "Эти выходные",
+      "shabat": "Шабат"
+    },
+    "empty": {
+      "title": "Планов не нашлось",
+      "description": "Попробуйте другие даты или уберите фильтр.",
+      "clear": "Все планы"
+    },
+    "pagination": {
+      "label": "Страницы результатов",
+      "previous": "Назад",
+      "next": "Далее",
+      "status": "Страница {page} из {pageCount}"
+    },
+    "seo": {
+      "description": "Занятия и места для отдыха с детьми в Израиле по возрасту, дате и категории."
+    }
   }
 }

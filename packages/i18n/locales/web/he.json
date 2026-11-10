@@ -48,5 +48,40 @@
     "searchSubmit": "חיפוש",
     "retry": "לנסות שוב",
     "home": "חזרה לדף הבית"
+  },
+  "results": {
+    "title": "תוכניות למשפחה שלכם",
+    "titleQuery": "תוצאות עבור „{query}”",
+    "count": "אין תוכניות | תוכנית אחת | {count} תוכניות",
+    "loading": "מחפשים תוכניות…",
+    "kind": {
+      "activity": "פעילות",
+      "place": "מקום"
+    },
+    "activityCount": "אין פעילויות | פעילות אחת | {count} פעילויות",
+    "agesLabel": "מגיל {min} עד {max}",
+    "free": "חינם",
+    "forAges": "מתאים לגיל {ages}",
+    "quickFilters": "מתי",
+    "when": {
+      "today": "היום",
+      "tomorrow": "מחר",
+      "this-weekend": "סוף השבוע",
+      "shabat": "שבת"
+    },
+    "empty": {
+      "title": "לא מצאנו תוכניות",
+      "description": "נסו תאריכים אחרים או הסירו מסנן.",
+      "clear": "לכל התוכניות"
+    },
+    "pagination": {
+      "label": "עמודי תוצאות",
+      "previous": "הקודם",
+      "next": "הבא",
+      "status": "עמוד {page} מתוך {pageCount}"
+    },
+    "seo": {
+      "description": "פעילויות ומקומות לבלות עם ילדים בישראל, לפי גיל, תאריך וקטגוריה."
+    }
   }
 }

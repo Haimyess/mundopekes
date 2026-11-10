@@ -48,5 +48,40 @@
     "searchSubmit": "Search",
     "retry": "Try again",
     "home": "Back to home"
+  },
+  "results": {
+    "title": "Plans for your family",
+    "titleQuery": "Results for “{query}”",
+    "count": "No plans | 1 plan | {count} plans",
+    "loading": "Looking for plans…",
+    "kind": {
+      "activity": "Activity",
+      "place": "Place"
+    },
+    "activityCount": "no activities | 1 activity | {count} activities",
+    "agesLabel": "Ages {min} to {max}",
+    "free": "Free",
+    "forAges": "Good for age {ages}",
+    "quickFilters": "When",
+    "when": {
+      "today": "Today",
+      "tomorrow": "Tomorrow",
+      "this-weekend": "This weekend",
+      "shabat": "Shabbat"
+    },
+    "empty": {
+      "title": "No plans found",
+      "description": "Try other dates or remove a filter.",
+      "clear": "See all plans"
+    },
+    "pagination": {
+      "label": "Result pages",
+      "previous": "Previous",
+      "next": "Next",
+      "status": "Page {page} of {pageCount}"
+    },
+    "seo": {
+      "description": "Activities and places to go with kids in Israel, by age, date and category."
+    }
   }
 }
