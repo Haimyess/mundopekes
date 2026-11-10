@@ -15,28 +15,14 @@ const emit = defineEmits<{ highlight: [id: string | null] }>()
 
 const MOVE_DEBOUNCE_MS = 400
 
-const { t, locale } = useI18n()
-const { tc } = useI18nContent()
+const { t } = useI18n()
+const { toMapPins } = useMapPins()
 const { state, linkTo } = useSearchState()
 
 const activeId = ref<string | null>(null)
 const isSearchOnMove = ref(!!state.value.bbox)
 
-const pinLabel = (pin: SearchPin) => {
-  if (pin.isFree || pin.price === 0) return t('results.free')
-  if (pin.price !== null) return formatPrice(pin.price, locale.value)
-  return t(`results.kind.${pin.kind}`)
-}
-
-const mapPins = computed<MapPin[]>(() =>
-  props.pins.map((pin) => ({
-    id: pin.id,
-    lat: pin.location.lat,
-    lng: pin.location.lng,
-    label: pinLabel(pin),
-    title: tc(pin.title),
-  }))
-)
+const mapPins = computed<MapPin[]>(() => toMapPins(props.pins))
 
 const activePin = computed(() => props.pins.find(({ id }) => id === activeId.value) ?? null)
 

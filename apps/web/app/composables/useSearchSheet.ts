@@ -2,7 +2,7 @@ import type { Ref } from 'vue'
 import type { SearchState } from '~/utils/search-query'
 
 export function useSearchSheet<T>(isOpen: Ref<boolean>, select: (state: SearchState) => T) {
-  const { state, linkTo } = useSearchState()
+  const { state, linkTo, draft: searchDraft } = useSearchState()
   const draft = ref(select(state.value)) as Ref<T>
 
   watch(isOpen, (open) => {
@@ -11,6 +11,10 @@ export function useSearchSheet<T>(isOpen: Ref<boolean>, select: (state: SearchSt
 
   async function apply(patch: Partial<SearchState>) {
     isOpen.value = false
+    if (searchDraft) {
+      searchDraft.update(patch)
+      return
+    }
     await navigateTo(linkTo(patch))
   }
 
