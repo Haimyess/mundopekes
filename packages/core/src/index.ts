@@ -74,3 +74,10 @@ export {
   toPrivatePoint,
 } from './where'
 export type { SearchRadiusKm, Where } from './where'
+export {
+  HOME_CAROUSEL_MIN_ITEMS,
+  HOME_OCCASION_HORIZON_DAYS,
+  homeContextWhen,
+  selectHomeContext,
+} from './home'
+export type { HomeContext } from './home'
