@@ -14,6 +14,7 @@ function record(overrides: Partial<SearchRecord> & { id: string }): SearchRecord
     ageRanges: [PRESCHOOL, SCHOOL],
     weeklyHours: null,
     amenities: [],
+    discounts: [],
     createdAt: '2026-01-01',
     ...overrides,
   }
@@ -151,7 +152,12 @@ describe('searchRecords', () => {
     ]
     const result = searchRecords(withAmenities, { ...BASE, amenities: ['stroller'] })
     expect(ids(result)).toEqual(['both', 'stroller'])
-    expect(result.facets.amenities).toEqual({ stroller: 2, wheelchair: 0, bathrooms: 0, shade: 1 })
+    expect(result.facets.amenities).toMatchObject({
+      stroller: 2,
+      wheelchair: 0,
+      kosher: 0,
+      shade: 1,
+    })
     expect(
       ids(searchRecords(withAmenities, { ...BASE, amenities: ['stroller', 'shade'] }))
     ).toEqual(['both'])
@@ -166,5 +172,28 @@ describe('searchRecords', () => {
       openAt: { weekday: 1, minutes: 600 },
     })
     expect(ids(result)).toEqual(['open'])
+  })
+
+  it('requires every selected discount and counts them within the hits', () => {
+    const withDiscounts = [
+      record({ id: 'club', discounts: ['club', 'last-minute'] }),
+      record({ id: 'card', discounts: ['credit-card'] }),
+    ]
+    const result = searchRecords(withDiscounts, { ...BASE, discounts: ['club'] })
+    expect(ids(result)).toEqual(['club'])
+    expect(result.facets.discounts).toEqual({ club: 1, 'credit-card': 0, 'last-minute': 1 })
+  })
+
+  it('filters by price band treating free as zero and unknown prices as out', () => {
+    const priced = [
+      record({ id: 'cheap', price: 60 }),
+      record({ id: 'free', isFree: true }),
+      record({ id: 'pricey', price: 250 }),
+      record({ id: 'unknown' }),
+    ]
+    const cheap = searchRecords(priced, { ...BASE, priceBand: 'up-to-80' })
+    expect(ids(cheap).sort()).toEqual(['cheap', 'free'])
+    expect(cheap.facets.priceBands).toEqual({ 'up-to-80': 2, 'from-200': 1 })
+    expect(ids(searchRecords(priced, { ...BASE, priceBand: 'from-200' }))).toEqual(['pricey'])
   })
 })

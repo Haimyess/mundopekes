@@ -2,7 +2,9 @@ import {
   CHILD_AGE_LIMITS,
   parseWhen,
   SEARCH_AMENITIES,
+  SEARCH_DISCOUNTS,
   SEARCH_KINDS,
+  SEARCH_PRICE_BANDS,
   SEARCH_SORTS,
 } from '@mundopekes/core'
 import { z } from 'zod'
@@ -49,6 +51,15 @@ const LIST_SEPARATOR = ','
 
 const optional = <T extends z.ZodType>(schema: T) => schema.optional().catch(undefined)
 
+const canonicalList = <const T extends readonly [string, ...string[]]>(values: T) =>
+  z
+    .string()
+    .transform((value) => [...new Set(value.split(LIST_SEPARATOR))])
+    .pipe(z.array(z.enum(values)).min(1))
+    .transform((selected) =>
+      values.filter((value): value is T[number] => (selected as readonly string[]).includes(value))
+    )
+
 export const searchQuerySchema = z.object({
   q: optional(
     z
@@ -62,13 +73,9 @@ export const searchQuerySchema = z.object({
   ages: optional(childAgesQuerySchema.transform((ages) => (ages.length ? ages : undefined))),
   free: optional(z.literal(TRUE_FLAG).transform(() => true)),
   kind: optional(z.enum(SEARCH_KINDS)),
-  amenities: optional(
-    z
-      .string()
-      .transform((value) => [...new Set(value.split(LIST_SEPARATOR))])
-      .pipe(z.array(z.enum(SEARCH_AMENITIES)).min(1))
-      .transform((amenities) => SEARCH_AMENITIES.filter((amenity) => amenities.includes(amenity)))
-  ),
+  price: optional(z.enum(SEARCH_PRICE_BANDS)),
+  amenities: optional(canonicalList(SEARCH_AMENITIES)),
+  discounts: optional(canonicalList(SEARCH_DISCOUNTS)),
   open: optional(z.literal(OPEN_NOW_FLAG)),
   sort: optional(z.enum(SEARCH_SORTS)),
   page: optional(z.coerce.number().int().min(1).max(SEARCH_QUERY_LIMITS.maxPage)),

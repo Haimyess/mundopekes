@@ -39,8 +39,10 @@ export { matchesSearchText, normalizeSearchText } from './text'
 export {
   isAvailableInRange,
   SEARCH_AMENITIES,
+  SEARCH_DISCOUNTS,
   SEARCH_KINDS,
   SEARCH_PAGE_SIZE,
+  SEARCH_PRICE_BANDS,
   SEARCH_SORTS,
   searchRecords,
 } from './search'
@@ -50,7 +52,10 @@ export type {
   SearchHit,
   SearchPage,
   SearchAmenity,
+  SearchDiscount,
+  SearchPriceBand,
   SearchKind,
   SearchRecord,
   SearchSort,
 } from './search'
+export { SEARCH_AMENITY_METADATA_KEYS, SEARCH_DISCOUNTS_METADATA_KEY } from './search-metadata'

@@ -13,9 +13,31 @@ export const SEARCH_KINDS = ['activity', 'place'] as const
 
 export type SearchKind = (typeof SEARCH_KINDS)[number]
 
-export const SEARCH_AMENITIES = ['stroller', 'wheelchair', 'bathrooms', 'shade'] as const
+export const SEARCH_AMENITIES = [
+  'stroller',
+  'wheelchair',
+  'bathrooms',
+  'changing-table',
+  'safe-room',
+  'parking',
+  'kosher',
+  'shade',
+] as const
 
 export type SearchAmenity = (typeof SEARCH_AMENITIES)[number]
+
+export const SEARCH_DISCOUNTS = ['club', 'credit-card', 'last-minute'] as const
+
+export type SearchDiscount = (typeof SEARCH_DISCOUNTS)[number]
+
+export const SEARCH_PRICE_BANDS = ['up-to-80', 'from-200'] as const
+
+export type SearchPriceBand = (typeof SEARCH_PRICE_BANDS)[number]
+
+const PRICE_BAND_LIMITS: Record<SearchPriceBand, { min: number; max: number }> = {
+  'up-to-80': { min: 0, max: 80 },
+  'from-200': { min: 200, max: Number.POSITIVE_INFINITY },
+}
 
 export interface SearchRecord {
   kind: SearchKind
@@ -27,6 +49,7 @@ export interface SearchRecord {
   ageRanges: readonly AgeRangeMonths[]
   weeklyHours: WeeklyHours | null
   amenities: readonly SearchAmenity[]
+  discounts: readonly SearchDiscount[]
   createdAt: string
 }
 
@@ -38,6 +61,8 @@ export interface SearchCriteria {
   dateRange?: DateRange | null
   kind?: SearchKind
   amenities?: readonly SearchAmenity[]
+  discounts?: readonly SearchDiscount[]
+  priceBand?: SearchPriceBand
   openAt?: Omit<ZonedMoment, 'date'> | null
   sort: SearchSort
 }
@@ -53,6 +78,8 @@ export interface SearchFacets {
   categories: Record<string, number>
   kinds: Record<SearchKind, number>
   amenities: Record<SearchAmenity, number>
+  discounts: Record<SearchDiscount, number>
+  priceBands: Record<SearchPriceBand, number>
 }
 
 export interface SearchPage<T extends SearchRecord> {
@@ -89,16 +116,34 @@ function matchesBaseCriteria(record: SearchRecord, criteria: SearchCriteria): bo
     return false
   }
   if (criteria.openAt && !isOpenAtMoment(record.weeklyHours, criteria.openAt)) return false
-  return (criteria.amenities ?? []).every((amenity) => record.amenities.includes(amenity))
+  if (!(criteria.amenities ?? []).every((amenity) => record.amenities.includes(amenity))) {
+    return false
+  }
+  return (criteria.discounts ?? []).every((discount) => record.discounts.includes(discount))
+}
+
+function effectivePrice(record: SearchRecord): number | null {
+  return isFreeRecord(record) ? 0 : record.price
+}
+
+function isInPriceBand(record: SearchRecord, band: SearchPriceBand): boolean {
+  const price = effectivePrice(record)
+  const { min, max } = PRICE_BAND_LIMITS[band]
+  return price !== null && price >= min && price <= max
 }
 
 interface Dimensions {
   categorySlug?: string
   kind?: SearchKind
+  priceBand?: SearchPriceBand
 }
 
-function matchesDimensions(record: SearchRecord, { categorySlug, kind }: Dimensions): boolean {
+function matchesDimensions(
+  record: SearchRecord,
+  { categorySlug, kind, priceBand }: Dimensions
+): boolean {
   if (categorySlug && !record.categorySlugs.includes(categorySlug)) return false
+  if (priceBand && !isInPriceBand(record, priceBand)) return false
   return !kind || record.kind === kind
 }
 
@@ -107,8 +152,7 @@ function byNewest(first: SearchRecord, second: SearchRecord): number {
 }
 
 function priceRank(record: SearchRecord): number {
-  if (isFreeRecord(record)) return 0
-  return record.price ?? Number.POSITIVE_INFINITY
+  return effectivePrice(record) ?? Number.POSITIVE_INFINITY
 }
 
 function byPrice(first: SearchRecord, second: SearchRecord): number {
@@ -144,7 +188,11 @@ export function searchRecords<T extends SearchRecord>(
   pageSize: number = SEARCH_PAGE_SIZE
 ): SearchPage<T> {
   const candidates = records.filter((record) => matchesBaseCriteria(record, criteria))
-  const selected: Dimensions = { categorySlug: criteria.categorySlug, kind: criteria.kind }
+  const selected: Dimensions = {
+    categorySlug: criteria.categorySlug,
+    kind: criteria.kind,
+    priceBand: criteria.priceBand,
+  }
   const hitsFor = (dimensions: Dimensions) =>
     rank(
       candidates.filter((record) => matchesDimensions(record, dimensions)),
@@ -169,6 +217,14 @@ export function searchRecords<T extends SearchRecord>(
       amenities: countBy(
         SEARCH_AMENITIES,
         (amenity) => hits.filter(({ record }) => record.amenities.includes(amenity)).length
+      ),
+      discounts: countBy(
+        SEARCH_DISCOUNTS,
+        (discount) => hits.filter(({ record }) => record.discounts.includes(discount)).length
+      ),
+      priceBands: countBy(
+        SEARCH_PRICE_BANDS,
+        (priceBand) => hitsFor({ ...selected, priceBand }).length
       ),
     },
   }

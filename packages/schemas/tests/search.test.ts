@@ -86,6 +86,21 @@ describe('searchQuerySchema', () => {
     ).toEqual({ kind: 'place', amenities: ['stroller', 'shade'], open: 'now' })
   })
 
+  it('parses price bands and discounts', () => {
+    expect(
+      searchQuerySchema.parse({
+        price: 'up-to-80',
+        discounts: 'last-minute,club',
+        amenities: 'kosher,safe-room',
+      })
+    ).toEqual({
+      price: 'up-to-80',
+      discounts: ['club', 'last-minute'],
+      amenities: ['safe-room', 'kosher'],
+    })
+    expect(searchQuerySchema.parse({ price: 'cheap', discounts: 'coupon' })).toEqual({})
+  })
+
   it('drops unknown kinds, amenities and open values', () => {
     expect(searchQuerySchema.parse({ kind: 'event', amenities: 'pool', open: 'later' })).toEqual({})
     expect(searchQuerySchema.parse({ amenities: '' })).toEqual({})
