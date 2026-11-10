@@ -276,5 +276,25 @@
       "save": "Save",
       "dismiss": "Not now"
     }
+  },
+  "quickSuggestion": {
+    "title": "Suggest a plan",
+    "description": "We only need the name and where it is. We review it before publishing.",
+    "name": "Name of the place or activity",
+    "nameHint": "For example: Olive Farm",
+    "where": "Where it is",
+    "whereHint": "City or address",
+    "link": "Link (optional)",
+    "linkHint": "Website, Instagram or Google Maps",
+    "why": "Why do you like it? (optional)",
+    "whyHint": "Ages, prices, what you enjoyed most…",
+    "submit": "Send suggestion",
+    "thanks": "Thank you! We will review it and, if it fits, add it within a few days.",
+    "verificationUnavailable": "We could not load the anti-spam check. Reload the page and try again.",
+    "errors": {
+      "rateLimited": "You sent many suggestions in a row. Please try again later.",
+      "verification": "We could not verify that you are not a robot. Please try again.",
+      "generic": "We could not send your suggestion. Please try again."
+    }
   }
 }

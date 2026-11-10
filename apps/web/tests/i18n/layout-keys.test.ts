@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
+import { VALIDATION_ERRORS } from '@mundopekes/schemas'
 import {
   SEARCH_AMENITIES,
   SEARCH_DISCOUNTS,
@@ -12,6 +13,7 @@ import {
 
 const APP_DIR = resolve(__dirname, '../../app')
 const CATALOG_DIR = resolve(__dirname, '../../../../packages/i18n/locales/web')
+const COMMON_CATALOG_DIR = resolve(__dirname, '../../../../packages/i18n/locales/common')
 const LOCALES = ['es', 'en', 'he', 'ru'] as const
 
 const SOURCES = [
@@ -49,6 +51,8 @@ const SOURCES = [
   'components/home/Ctas.vue',
   'components/home/FamilySection.vue',
   'components/search/FamilySavePrompt.vue',
+  'components/suggestions/QuickSheet.vue',
+  'components/suggestions/TurnstileWidget.vue',
   'composables/useSearchLabels.ts',
   'components/search/ResultCard.vue',
   'components/search/ResultList.vue',
@@ -76,6 +80,7 @@ const DYNAMIC_KEYS = [
   ...['rainy', 'hot', 'free', 'outdoor', 'openNow', 'babies'].map(
     (key) => `home.quickFilters.${key}`
   ),
+  ...['rateLimited', 'verification', 'generic'].map((key) => `quickSuggestion.errors.${key}`),
   ...['occasion', 'shabat', 'today'].flatMap((kind) => [
     `home.context.${kind}`,
     `home.context.${kind}Subtitle`,
@@ -121,5 +126,15 @@ describe('layout and search translations', () => {
     ]) {
       expect(String(resolveKey(catalog, key)).split('|')).toHaveLength(4)
     }
+  })
+
+  it.each(LOCALES)('defines every validation message in the shared %s catalog', (locale) => {
+    const catalog = JSON.parse(
+      readFileSync(resolve(COMMON_CATALOG_DIR, `${locale}.json`), 'utf8')
+    ) as Catalog
+    const missing = Object.values(VALIDATION_ERRORS).filter(
+      (key) => typeof resolveKey(catalog, key) !== 'string'
+    )
+    expect(missing).toEqual([])
   })
 })

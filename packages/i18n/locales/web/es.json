@@ -276,5 +276,25 @@
       "save": "Guardar",
       "dismiss": "Ahora no"
     }
+  },
+  "quickSuggestion": {
+    "title": "Sugiere un plan",
+    "description": "Solo necesitamos el nombre y dónde está. Lo revisamos antes de publicarlo.",
+    "name": "Nombre del lugar o la actividad",
+    "nameHint": "Por ejemplo: Granja Los Olivos",
+    "where": "Dónde está",
+    "whereHint": "Ciudad o dirección",
+    "link": "Enlace (opcional)",
+    "linkHint": "Web, Instagram o Google Maps",
+    "why": "¿Por qué te gusta? (opcional)",
+    "whyHint": "Edades, precios, lo que más disfrutaron…",
+    "submit": "Enviar sugerencia",
+    "thanks": "¡Gracias! La revisamos y, si encaja, la sumamos en unos días.",
+    "verificationUnavailable": "No pudimos cargar la verificación anti-spam. Recarga la página e inténtalo de nuevo.",
+    "errors": {
+      "rateLimited": "Enviaste muchas sugerencias seguidas. Inténtalo de nuevo en un rato.",
+      "verification": "No pudimos verificar que no eres un robot. Inténtalo de nuevo.",
+      "generic": "No pudimos enviar la sugerencia. Inténtalo de nuevo."
+    }
   }
 }

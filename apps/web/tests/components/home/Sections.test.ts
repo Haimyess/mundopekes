@@ -211,29 +211,31 @@ describe('HomeNearby', () => {
 })
 
 describe('HomeCtas', () => {
-  it('opens the suggestion wizard', async () => {
-    const WizardStub = defineComponent({
-      name: 'SuggestionsSuggestionWizard',
-      props: { open: Boolean },
-      setup: (props) => () => h('div', { 'data-open': String(props.open) }),
+  it('opens the quick suggestion sheet from its trigger', async () => {
+    const QuickSheetStub = defineComponent({
+      name: 'SuggestionsQuickSheet',
+      props: { open: Boolean, origin: { type: String, required: true } },
+      emits: ['update:open'],
+      setup:
+        (props, { emit, slots }) =>
+        () =>
+          h(
+            'div',
+            {
+              'data-open': String(props.open),
+              'data-origin': props.origin,
+              onClick: () => emit('update:open', true),
+            },
+            slots.trigger?.()
+          ),
     })
     const wrapper = mount(Ctas, {
-      global: {
-        stubs: {
-          ...STUBS,
-          SuggestionsSuggestionWizard: WizardStub,
-          UiButton: defineComponent({
-            emits: ['click'],
-            setup:
-              (_, { emit, slots }) =>
-              () =>
-                h('button', { onClick: () => emit('click') }, slots.default?.()),
-          }),
-        },
-      },
+      global: { stubs: { ...STUBS, SuggestionsQuickSheet: QuickSheetStub } },
     })
-    expect(wrapper.find('[data-open]').attributes('data-open')).toBe('false')
-    await wrapper.find('button').trigger('click')
-    expect(wrapper.find('[data-open]').attributes('data-open')).toBe('true')
+    const sheet = wrapper.get('[data-open]')
+    expect(sheet.attributes('data-origin')).toBe('home')
+    expect(sheet.attributes('data-open')).toBe('false')
+    await wrapper.get('button').trigger('click')
+    expect(wrapper.get('[data-open]').attributes('data-open')).toBe('true')
   })
 })
