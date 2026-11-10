@@ -42,6 +42,8 @@ function activity(id: string, overrides: Record<string, unknown> = {}) {
     category_id: 'cat-park',
     place: {
       id: 'place-1',
+      lat: 32.08,
+      lng: 34.78,
       name_i18n: { es: 'Lugar' },
       images: null,
       created_at: '2026-01-01',
@@ -64,6 +66,8 @@ beforeEach(() => {
         created_at: '2026-02-01',
         place: {
           id: 'place-2',
+          lat: 32.79,
+          lng: 34.99,
           name_i18n: { es: 'Parque' },
           images: null,
           created_at: '2026-01-01',
@@ -142,5 +146,21 @@ describe('GET /api/search', () => {
       kinds: { activity: 1, place: 0 },
       amenities: { stroller: 1, shade: 0 },
     })
+  })
+
+  it('filters by distance, reports it and returns map pins for every match', async () => {
+    mockQuery = { where: 'city:tel-aviv', radius: '10', sort: 'distance' }
+    const response = await handler(event)
+    expect(response.items.map(({ id }) => id)).toEqual(['museo'])
+    expect(response.items[0]?.distanceKm).toBeLessThan(1)
+    expect(response.pins.map(({ id, location }) => [id, location])).toEqual([
+      ['museo', { lat: 32.08, lng: 34.78 }],
+    ])
+  })
+
+  it('limits results to the map bounds', async () => {
+    mockQuery = { bbox: '32.5,34.8,33,35.2' }
+    const response = await handler(event)
+    expect(response.items.map(({ id }) => id)).toEqual(['parque'])
   })
 })

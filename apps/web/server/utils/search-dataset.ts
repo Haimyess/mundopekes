@@ -8,10 +8,10 @@ const SEARCH_CACHE_MAX_AGE_SECONDS = 60
 
 const ACTIVITY_SELECT = `
   id, title_i18n, price, is_free, stroller_friendly, images, created_at, metadata, category_id,
-  place:places!inner ( id, name_i18n, images, created_at, metadata, city:cities ( name ) ),
+  place:places!inner ( id, lat, lng, name_i18n, images, created_at, metadata, city:cities ( name ) ),
   age_ranges:activity_age_ranges ( age_range:age_ranges ( min_months, max_months ) )
 `
-const PLACE_SELECT = 'id, name_i18n, images, created_at, metadata, city:cities ( name )'
+const PLACE_SELECT = 'id, lat, lng, name_i18n, images, created_at, metadata, city:cities ( name )'
 const CATEGORY_SELECT = 'id, slug, parent_id'
 const OCCASION_SELECT = 'key, name_i18n, starts_on, ends_on'
 

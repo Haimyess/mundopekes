@@ -8,6 +8,8 @@ import {
 
 const BEACH: PlaceRow = {
   id: 'place-beach',
+  lat: 32.79,
+  lng: 34.98,
   name_i18n: { he: 'חוף רמבם', es: 'Playa Rambam' },
   images: null,
   created_at: '2026-02-01T00:00:00Z',
@@ -18,7 +20,7 @@ const BEACH: PlaceRow = {
     has_parking: true,
     discounts: ['club', 'unknown-offer'],
   },
-  city: { name: 'Haifa' },
+  city: { name: ' Haifa ' },
 }
 
 const PICNIC: ActivityRow = {
@@ -75,6 +77,7 @@ describe('buildSearchRecords', () => {
     expect(activity).toMatchObject({
       kind: 'activity',
       categorySlugs: ['picnic', 'aire-libre'],
+      location: { lat: 32.79, lng: 34.98 },
       price: 30,
       ageRanges: [
         { minMonths: 36, maxMonths: 71 },

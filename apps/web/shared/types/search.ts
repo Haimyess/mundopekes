@@ -1,4 +1,4 @@
-import type { AgeFit, IsoDate, SearchFacets } from '@mundopekes/core'
+import type { AgeFit, GeoPoint, IsoDate, SearchFacets } from '@mundopekes/core'
 
 export type LocalizedText = Record<string, string>
 
@@ -20,7 +20,11 @@ export interface SearchResultItem {
   activityCount: number | null
   fit: Exclude<AgeFit, 'none'>
   matchingAges: number[]
+  location: GeoPoint | null
+  distanceKm: number | null
 }
+
+export type SearchPin = SearchResultItem & { location: GeoPoint }
 
 export interface SearchOccasion {
   key: string
@@ -37,4 +41,5 @@ export interface SearchResponse {
   facets: SearchFacets
   occasion: SearchOccasion | null
   today: IsoDate
+  pins: SearchPin[]
 }

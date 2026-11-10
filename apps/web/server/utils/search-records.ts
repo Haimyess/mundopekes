@@ -5,6 +5,7 @@ import {
   SEARCH_DISCOUNTS,
   SEARCH_DISCOUNTS_METADATA_KEY,
   type AgeRangeMonths,
+  type GeoPoint,
   type SearchAmenity,
   type SearchDiscount,
   type SearchRecord,
@@ -28,6 +29,8 @@ interface CityRow {
 
 export interface PlaceRow {
   id: string
+  lat: number | null
+  lng: number | null
   name_i18n: LocalizedText | null
   images: string[] | null
   created_at: string | null
@@ -56,7 +59,13 @@ export interface SearchDataset {
 }
 
 export interface SearchResultRecord extends SearchRecord {
-  item: Omit<SearchResultItem, 'fit' | 'matchingAges'>
+  item: Omit<SearchResultItem, 'fit' | 'matchingAges' | 'location' | 'distanceKm'>
+}
+
+function placeLocation(place: PlaceRow | null): GeoPoint | null {
+  if (place?.lat === null || place?.lat === undefined) return null
+  if (place.lng === null || place.lng === undefined) return null
+  return { lat: Number(place.lat), lng: Number(place.lng) }
 }
 
 function single<T>(value: T | T[] | null | undefined): T | null {
@@ -191,6 +200,7 @@ function toActivityRecord(
     weeklyHours: activityHours(activity, place),
     amenities: amenitiesFrom(activitySources(activity, place)),
     discounts: discountsFrom(activitySources(activity, place)),
+    location: placeLocation(place),
     createdAt: activity.created_at ?? '',
     item: {
       kind: 'activity',
@@ -198,7 +208,7 @@ function toActivityRecord(
       title: activity.title_i18n ?? {},
       placeName: place?.name_i18n ?? null,
       imageUrl: activity.images?.[0] ?? place?.images?.[0] ?? null,
-      cityName: single(place?.city)?.name ?? null,
+      cityName: single(place?.city)?.name.trim() ?? null,
       isFree,
       price: activity.price,
       ageSpan: toAgeSpanYears(ageRanges),
@@ -235,6 +245,7 @@ function toPlaceRecord(
       discountsFrom([place.metadata]),
       ...activities.map((record) => record.discounts),
     ]),
+    location: placeLocation(place),
     createdAt: place.created_at ?? '',
     item: {
       kind: 'place',
@@ -242,7 +253,7 @@ function toPlaceRecord(
       title: place.name_i18n ?? {},
       placeName: null,
       imageUrl: place.images?.[0] ?? fallbackImage,
-      cityName: single(place.city)?.name ?? null,
+      cityName: single(place.city)?.name.trim() ?? null,
       isFree,
       price,
       ageSpan: toAgeSpanYears(ageRanges),
