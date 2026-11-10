@@ -38,3 +38,5 @@ export type {
 } from './suggestion'
 export { TRACKING_EVENT_TYPES, TRACKING_PAYLOAD_MAX_LENGTH, trackingEventSchema } from './tracking'
 export type { TrackingEvent, TrackingEventType } from './tracking'
+export { entityIdSchema } from './entity'
+export type { EntityId } from './entity'
