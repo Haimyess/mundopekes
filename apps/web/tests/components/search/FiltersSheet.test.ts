@@ -44,7 +44,18 @@ const PREVIEW = {
     total: 9,
     categories: {},
     kinds: { activity: 5, place: 2 },
-    amenities: { stroller: 4, wheelchair: 3, bathrooms: 0, shade: 1 },
+    amenities: {
+      stroller: 4,
+      wheelchair: 3,
+      bathrooms: 0,
+      'changing-table': 0,
+      'safe-room': 2,
+      parking: 0,
+      kosher: 1,
+      shade: 1,
+    },
+    discounts: { club: 2, 'credit-card': 0, 'last-minute': 0 },
+    priceBands: { 'up-to-80': 6, 'from-200': 1 },
   },
 }
 
@@ -82,18 +93,24 @@ describe('SearchFiltersSheet', () => {
     expect(button(wrapper, 'results.filters.show').text()).toBe('results.filters.show:7')
     expect(
       wrapper.findAll('[data-stub="UiChip"]').map((chip) => chip.attributes('data-count'))
-    ).toEqual(['', '5', '2'])
+    ).toEqual(['', '5', '2', '', '6', '1'])
+    expect(
+      switchFor(wrapper, 'results.filters.discounts.club').attributes('data-description')
+    ).toBe('results.filters.matches:2')
     expect(
       switchFor(wrapper, 'results.filters.amenities.wheelchair').attributes('data-description')
     ).toBe('results.filters.matches:3')
   })
 
-  it('applies kind, price, amenities and opening hours together', async () => {
+  it('applies kind, price, amenities, discounts and opening hours together', async () => {
     const wrapper = await openSheet()
-    await wrapper.findAll('[data-stub="UiChip"]')[2]!.trigger('click')
-    await switchFor(wrapper, 'results.filters.freeOnly').find('input').setValue(true)
+    const chips = wrapper.findAll('[data-stub="UiChip"]')
+    await chips[2]!.trigger('click')
+    await chips[3]!.trigger('click')
+    await chips[4]!.trigger('click')
     await switchFor(wrapper, 'results.filters.amenities.shade').find('input').setValue(true)
     await switchFor(wrapper, 'results.filters.amenities.stroller').find('input').setValue(true)
+    await switchFor(wrapper, 'results.filters.discounts.last-minute').find('input').setValue(true)
     await switchFor(wrapper, 'results.filters.openNow').find('input').setValue(true)
     await new Promise((resolve) => setTimeout(resolve, 300))
     expect(mockFetch).toHaveBeenLastCalledWith('/api/search', {
@@ -101,18 +118,32 @@ describe('SearchFiltersSheet', () => {
         category: 'parques',
         free: 'true',
         kind: 'place',
+        price: 'up-to-80',
         amenities: 'stroller,shade',
+        discounts: 'last-minute',
         open: 'now',
       },
     })
     await button(wrapper, 'results.filters.show').trigger('click')
     expect(mockNavigate).toHaveBeenCalledWith(
-      '/search?category=parques&free=true&kind=place&amenities=stroller,shade&open=now'
+      '/search?category=parques&free=true&kind=place&amenities=stroller,shade&price=up-to-80&discounts=last-minute&open=now'
     )
   })
 
+  it('keeps a single price band selected', async () => {
+    const wrapper = await openSheet()
+    const chips = () => wrapper.findAll('[data-stub="UiChip"]')
+    await chips()[4]!.trigger('click')
+    await chips()[5]!.trigger('click')
+    expect(
+      chips()
+        .map((chip) => chip.attributes('aria-pressed'))
+        .slice(4)
+    ).toEqual(['false', 'true'])
+  })
+
   it('clears the filters in the draft only', async () => {
-    searchState.value = { free: true, kind: 'activity' }
+    searchState.value = { free: true, kind: 'activity', price: 'from-200', discounts: ['club'] }
     const wrapper = await openSheet()
     await button(wrapper, 'results.actions.clear').trigger('click')
     expect(mockNavigate).not.toHaveBeenCalled()

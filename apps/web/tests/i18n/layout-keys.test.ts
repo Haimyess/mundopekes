@@ -1,7 +1,14 @@
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
-import { SEARCH_AMENITIES, SEARCH_KINDS, SEARCH_SORTS, WHEN_SHORTCUTS } from '@mundopekes/core'
+import {
+  SEARCH_AMENITIES,
+  SEARCH_DISCOUNTS,
+  SEARCH_KINDS,
+  SEARCH_PRICE_BANDS,
+  SEARCH_SORTS,
+  WHEN_SHORTCUTS,
+} from '@mundopekes/core'
 
 const APP_DIR = resolve(__dirname, '../../app')
 const CATALOG_DIR = resolve(__dirname, '../../../../packages/i18n/locales/web')
@@ -38,6 +45,8 @@ const DYNAMIC_KEYS = [
   ...SEARCH_KINDS.map((kind) => `results.filters.kinds.${kind}`),
   ...SEARCH_AMENITIES.map((amenity) => `results.filters.amenities.${amenity}`),
   ...SEARCH_SORTS.map((sort) => `results.sort.${sort}`),
+  ...SEARCH_DISCOUNTS.map((discount) => `results.filters.discounts.${discount}`),
+  ...SEARCH_PRICE_BANDS.map((band) => `results.filters.priceBands.${band}`),
 ]
 
 const usedKeys = [

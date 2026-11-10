@@ -124,12 +124,26 @@
         "stroller": "Stroller access",
         "wheelchair": "Wheelchair accessible",
         "bathrooms": "Toilets",
-        "shade": "Shade"
+        "shade": "Shade",
+        "changing-table": "Baby changing table",
+        "safe-room": "Shelter or safe room",
+        "parking": "Parking",
+        "kosher": "Kosher food"
       },
       "matches": "No plans | 1 plan | {count} plans",
       "hours": "Opening hours",
       "openNow": "Open now",
-      "show": "No plans | Show 1 plan | Show {count} plans"
+      "show": "No plans | Show 1 plan | Show {count} plans",
+      "priceBands": {
+        "up-to-80": "Up to ₪80",
+        "from-200": "₪200 or more"
+      },
+      "discountsTitle": "Discounts",
+      "discounts": {
+        "club": "With my club",
+        "credit-card": "With a credit card",
+        "last-minute": "Last minute"
+      }
     },
     "sort": {
       "title": "Sort by",

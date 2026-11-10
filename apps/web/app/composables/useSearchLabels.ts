@@ -29,7 +29,9 @@ export function useSearchLabels() {
       Number(!!state.kind) +
       Number(!!state.free) +
       Number(!!state.open) +
-      (state.amenities?.length ?? 0)
+      Number(!!state.price) +
+      (state.amenities?.length ?? 0) +
+      (state.discounts?.length ?? 0)
     )
   }
 

@@ -1,4 +1,4 @@
-import { SEARCH_AMENITIES, serializeWhen } from '@mundopekes/core'
+import { SEARCH_AMENITIES, SEARCH_DISCOUNTS, serializeWhen } from '@mundopekes/core'
 import { searchQuerySchema, type SearchQuery } from '@mundopekes/schemas'
 import type { LocationQuery, RouteLocationRaw } from 'vue-router'
 
@@ -25,6 +25,12 @@ export function toSearchQuery(state: SearchState): Record<string, string> {
     query.amenities = SEARCH_AMENITIES.filter((amenity) => state.amenities?.includes(amenity)).join(
       ','
     )
+  }
+  if (state.price) query.price = state.price
+  if (state.discounts?.length) {
+    query.discounts = SEARCH_DISCOUNTS.filter((discount) =>
+      state.discounts?.includes(discount)
+    ).join(',')
   }
   if (state.open) query.open = state.open
   if (state.sort && state.sort !== DEFAULT_SORT) query.sort = state.sort

@@ -124,12 +124,26 @@
         "stroller": "Acceso con cochecito",
         "wheelchair": "Accesible en silla de ruedas",
         "bathrooms": "Baños",
-        "shade": "Sombra"
+        "shade": "Sombra",
+        "changing-table": "Cambiador para bebés",
+        "safe-room": "Refugio o espacio protegido",
+        "parking": "Estacionamiento",
+        "kosher": "Comida kasher"
       },
       "matches": "Ningún plan | 1 plan | {count} planes",
       "hours": "Horario",
       "openNow": "Abierto ahora",
-      "show": "No hay planes | Ver 1 plan | Ver {count} planes"
+      "show": "No hay planes | Ver 1 plan | Ver {count} planes",
+      "priceBands": {
+        "up-to-80": "Hasta 80 ₪",
+        "from-200": "200 ₪ o más"
+      },
+      "discountsTitle": "Descuentos",
+      "discounts": {
+        "club": "Con mi club",
+        "credit-card": "Con tarjeta de crédito",
+        "last-minute": "Último minuto"
+      }
     },
     "sort": {
       "title": "Ordenar por",
