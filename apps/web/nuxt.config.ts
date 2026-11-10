@@ -8,8 +8,10 @@ export default defineNuxtConfig({
   runtimeConfig: {
     appName: 'web',
     googlePlacesApiKey: process.env.GOOGLE_PLACES_API_KEY,
+    turnstileSecretKey: '',
     public: {
       mapboxToken: '',
+      turnstileSiteKey: '',
     },
   },
   compatibilityDate: '2025-07-15',
@@ -257,7 +259,11 @@ export default defineNuxtConfig({
     locales: CONTENT_LOCALE_META.map(({ code, name, file }) => ({
       code,
       name,
-      files: [file, `../../../../packages/i18n/locales/web/${file}`],
+      files: [
+        file,
+        `../../../../packages/i18n/locales/web/${file}`,
+        `../../../../packages/i18n/locales/common/${file}`,
+      ],
     })),
     langDir: 'locales', // ← Ahora apunta a la raíz
     defaultLocale: 'he',

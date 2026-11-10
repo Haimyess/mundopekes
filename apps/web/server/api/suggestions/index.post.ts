@@ -195,11 +195,21 @@ function buildActivitySharedFields(a: NewActivity, locale: string | undefined) {
   }
 }
 
+const QUICK_SOURCE = 'quick'
+
+function isQuickSuggestion(raw: unknown): boolean {
+  return (
+    typeof raw === 'object' && raw !== null && (raw as { source?: unknown }).source === QUICK_SOURCE
+  )
+}
+
 export default defineEventHandler(async (event) => {
   await checkRateLimit(event, 'suggestions/create', { limit: 5, windowSeconds: 3600 })
 
-  const client = await serverSupabaseClient(event)
   const raw = await readBody(event)
+  if (isQuickSuggestion(raw)) return createQuickSuggestion(event, raw)
+
+  const client = await serverSupabaseClient(event)
   const parsed = bodySchema.safeParse(raw)
 
   if (!parsed.success) {
