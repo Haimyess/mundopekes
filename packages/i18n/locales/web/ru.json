@@ -180,5 +180,32 @@
       "searchOnMove": "Искать при перемещении карты",
       "empty": "Ни у одного результата нет места на карте."
     }
+  },
+  "detail": {
+    "gallery": "Фотографии: {name}",
+    "photoAlt": "{name}, фото {number}",
+    "about": "Об этом месте",
+    "activities": "Чем здесь заняться",
+    "noActivities": "Здесь пока нет опубликованных занятий.",
+    "amenities": "Удобства и доступность",
+    "hours": "Часы работы",
+    "today": "Сегодня",
+    "closed": "Закрыто",
+    "alwaysOpen": "Круглосуточно",
+    "unknownHours": "Часы работы не указаны",
+    "openNow": "Открыто сейчас",
+    "closedNow": "Сейчас закрыто",
+    "location": "Расположение",
+    "mapLabel": "Карта: {name}",
+    "from": "От {price}",
+    "quickActions": "Быстрые действия",
+    "opensNewTab": "(откроется в новой вкладке)",
+    "actions": {
+      "directions": "Как добраться",
+      "waze": "Waze",
+      "call": "Позвонить",
+      "whatsapp": "WhatsApp",
+      "website": "Сайт"
+    }
   }
 }

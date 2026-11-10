@@ -30,6 +30,14 @@ const SOURCES = [
   'components/search/SortSheet.vue',
   'components/search/WhereSheet.vue',
   'components/search/Map.vue',
+  'components/detail/Gallery.vue',
+  'components/detail/Summary.vue',
+  'components/detail/QuickActions.vue',
+  'components/detail/Hours.vue',
+  'components/detail/Amenities.vue',
+  'components/detail/Location.vue',
+  'components/detail/ActionBar.vue',
+  'pages/place/[id].vue',
   'composables/useSearchLabels.ts',
   'components/search/ResultCard.vue',
   'components/search/ResultList.vue',
@@ -51,6 +59,9 @@ const DYNAMIC_KEYS = [
   ...SEARCH_PRICE_BANDS.map((band) => `results.filters.priceBands.${band}`),
   ...['unsupported', 'denied', 'unavailable'].map((error) => `results.where.errors.${error}`),
   ...SEARCH_KINDS.map((kind) => `results.kind.${kind}`),
+  ...['directions', 'waze', 'call', 'whatsapp', 'website'].map(
+    (action) => `detail.actions.${action}`
+  ),
 ]
 
 const usedKeys = [

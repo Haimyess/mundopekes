@@ -180,5 +180,32 @@
       "searchOnMove": "Search as I move the map",
       "empty": "None of the results has a location on the map."
     }
+  },
+  "detail": {
+    "gallery": "Photos of {name}",
+    "photoAlt": "{name}, photo {number}",
+    "about": "About this place",
+    "activities": "Things to do here",
+    "noActivities": "No activities have been published for this place yet.",
+    "amenities": "Services and accessibility",
+    "hours": "Opening hours",
+    "today": "Today",
+    "closed": "Closed",
+    "alwaysOpen": "Open 24 hours",
+    "unknownHours": "No opening hours published",
+    "openNow": "Open now",
+    "closedNow": "Closed now",
+    "location": "Location",
+    "mapLabel": "Map of {name}",
+    "from": "From {price}",
+    "quickActions": "Quick actions",
+    "opensNewTab": "(opens in a new tab)",
+    "actions": {
+      "directions": "Directions",
+      "waze": "Waze",
+      "call": "Call",
+      "whatsapp": "WhatsApp",
+      "website": "Website"
+    }
   }
 }

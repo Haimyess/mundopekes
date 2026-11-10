@@ -180,5 +180,32 @@
       "searchOnMove": "חיפוש בהזזת המפה",
       "empty": "לאף תוצאה אין מיקום במפה."
     }
+  },
+  "detail": {
+    "gallery": "תמונות של {name}",
+    "photoAlt": "{name}, תמונה {number}",
+    "about": "על המקום",
+    "activities": "מה עושים כאן",
+    "noActivities": "עדיין לא פורסמו פעילויות במקום הזה.",
+    "amenities": "שירותים ונגישות",
+    "hours": "שעות פתיחה",
+    "today": "היום",
+    "closed": "סגור",
+    "alwaysOpen": "פתוח 24 שעות",
+    "unknownHours": "לא פורסמו שעות פתיחה",
+    "openNow": "פתוח עכשיו",
+    "closedNow": "סגור עכשיו",
+    "location": "מיקום",
+    "mapLabel": "מפה של {name}",
+    "from": "החל מ־{price}",
+    "quickActions": "פעולות מהירות",
+    "opensNewTab": "(נפתח בכרטיסייה חדשה)",
+    "actions": {
+      "directions": "איך מגיעים",
+      "waze": "Waze",
+      "call": "התקשרות",
+      "whatsapp": "WhatsApp",
+      "website": "אתר"
+    }
   }
 }
