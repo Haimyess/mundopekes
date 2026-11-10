@@ -35,3 +35,13 @@ export {
   parseOpeningHoursText,
 } from './opening-hours'
 export type { TimeInterval, WeeklyHours } from './opening-hours'
+export { matchesSearchText, normalizeSearchText } from './text'
+export { isAvailableInRange, SEARCH_PAGE_SIZE, SEARCH_SORTS, searchRecords } from './search'
+export type {
+  SearchCriteria,
+  SearchFacets,
+  SearchHit,
+  SearchPage,
+  SearchRecord,
+  SearchSort,
+} from './search'
