@@ -206,7 +206,10 @@
       "call": "Llamar",
       "whatsapp": "WhatsApp",
       "website": "Sitio web"
-    }
+    },
+    "aboutActivity": "Sobre la actividad",
+    "moreAtPlace": "Más en {place}",
+    "venue": "Lugar"
   },
   "map": {
     "unavailable": "El mapa no está disponible ahora mismo."

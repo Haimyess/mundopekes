@@ -206,7 +206,10 @@
       "call": "Позвонить",
       "whatsapp": "WhatsApp",
       "website": "Сайт"
-    }
+    },
+    "aboutActivity": "О занятии",
+    "moreAtPlace": "Ещё в месте «{place}»",
+    "venue": "Место"
   },
   "map": {
     "unavailable": "Карта сейчас недоступна."

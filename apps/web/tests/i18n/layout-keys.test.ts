@@ -39,6 +39,8 @@ const SOURCES = [
   'components/detail/Location.vue',
   'components/detail/ActionBar.vue',
   'pages/place/[id].vue',
+  'pages/activity/[id].vue',
+  'components/detail/VenueCard.vue',
   'composables/useSearchLabels.ts',
   'components/search/ResultCard.vue',
   'components/search/ResultList.vue',

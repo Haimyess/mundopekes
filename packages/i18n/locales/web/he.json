@@ -206,7 +206,10 @@
       "call": "התקשרות",
       "whatsapp": "WhatsApp",
       "website": "אתר"
-    }
+    },
+    "aboutActivity": "על הפעילות",
+    "moreAtPlace": "עוד ב{place}",
+    "venue": "מקום"
   },
   "map": {
     "unavailable": "המפה לא זמינה כרגע."

@@ -206,7 +206,10 @@
       "call": "Call",
       "whatsapp": "WhatsApp",
       "website": "Website"
-    }
+    },
+    "aboutActivity": "About this activity",
+    "moreAtPlace": "More at {place}",
+    "venue": "Place"
   },
   "map": {
     "unavailable": "The map is not available right now."

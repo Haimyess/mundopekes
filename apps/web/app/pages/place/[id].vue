@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import type { PlaceDetail } from '#shared/types/detail'
+
 const DESCRIPTION_MAX_LENGTH = 160
 
 const route = useRoute()
@@ -7,7 +9,7 @@ const { tc } = useI18nContent()
 const { trackPlaceView } = useTracking()
 
 const id = computed(() => String(route.params.id))
-const { place } = await usePlaceDetail(id)
+const { record: place } = await useDetailRecord<PlaceDetail>('places', id)
 
 const name = computed(() => (place.value ? tc(place.value.name) : ''))
 const description = computed(() =>

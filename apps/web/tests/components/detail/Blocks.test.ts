@@ -9,6 +9,9 @@ vi.mock('vue-i18n', () => ({
   }),
 }))
 
+vi.mock('~/app/composables/useI18nContent', () => ({
+  useI18nContent: () => ({ tc: (text: Record<string, string>) => text.es ?? '' }),
+}))
 vi.mock('~/app/components/map/Canvas.vue', async () => {
   const { defineComponent: define, h: render } = await import('vue')
   return {
@@ -34,6 +37,7 @@ const Amenities = (await import('~/app/components/detail/Amenities.vue')).defaul
 const Location = (await import('~/app/components/detail/Location.vue')).default
 const Section = (await import('~/app/components/detail/Section.vue')).default
 const DetailGallery = (await import('~/app/components/detail/Gallery.vue')).default
+const VenueCard = (await import('~/app/components/detail/VenueCard.vue')).default
 
 describe('DetailSummary', () => {
   it('shows the title as the page heading with ages, price and open state', () => {
@@ -164,5 +168,45 @@ describe('DetailGallery', () => {
         isOptimized: false,
       },
     ])
+  })
+})
+
+describe('DetailVenueCard', () => {
+  const NuxtLinkStub = defineComponent({
+    name: 'NuxtLink',
+    props: { to: { type: String, required: true } },
+    setup:
+      (props, { slots }) =>
+      () =>
+        h('a', { href: props.to }, slots.default?.()),
+  })
+  const mountVenue = (imageUrl: string | null) =>
+    mount(VenueCard, {
+      props: {
+        venue: {
+          id: 'p1',
+          name: { es: 'Parque' },
+          cityName: 'Haifa',
+          address: 'Herzl 1',
+          imageUrl,
+        },
+      },
+      global: { stubs: { NuxtLink: NuxtLinkStub, UiIcon: true, NuxtImg: true } },
+    })
+
+  it('links to the place with its name and address', () => {
+    const link = mountVenue(null).find('a')
+    expect(link.attributes('href')).toBe('/place/p1')
+    expect(link.find('.venue-card__name').text()).toBe('Parque')
+    expect(link.find('.venue-card__context').text()).toBe('Herzl 1, Haifa')
+  })
+
+  it('treats the photo as decorative and skips optimization for proxied photos', () => {
+    const wrapper = mountVenue('/api/places/photo?ref=a')
+    expect(wrapper.find('.venue-card__media').attributes('aria-hidden')).toBe('true')
+    expect(wrapper.find('img').attributes()).toMatchObject({
+      alt: '',
+      src: '/api/places/photo?ref=a',
+    })
   })
 })
