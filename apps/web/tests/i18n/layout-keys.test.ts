@@ -30,6 +30,7 @@ const SOURCES = [
   'components/search/SortSheet.vue',
   'components/search/WhereSheet.vue',
   'components/search/Map.vue',
+  'components/map/Canvas.vue',
   'components/detail/Gallery.vue',
   'components/detail/Summary.vue',
   'components/detail/QuickActions.vue',

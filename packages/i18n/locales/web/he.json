@@ -207,5 +207,8 @@
       "whatsapp": "WhatsApp",
       "website": "אתר"
     }
+  },
+  "map": {
+    "unavailable": "המפה לא זמינה כרגע."
   }
 }

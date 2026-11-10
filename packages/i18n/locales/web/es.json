@@ -207,5 +207,8 @@
       "whatsapp": "WhatsApp",
       "website": "Sitio web"
     }
+  },
+  "map": {
+    "unavailable": "El mapa no está disponible ahora mismo."
   }
 }

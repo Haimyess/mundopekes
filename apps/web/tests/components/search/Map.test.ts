@@ -21,7 +21,6 @@ vi.mock('../../../node_modules/nuxt/dist/app/composables/router.js', async (impo
   ...(await importOriginal<Record<string, unknown>>()),
   navigateTo: mockNavigate,
 }))
-vi.mock('@vue-leaflet/vue-leaflet', async () => await import('../map/leaflet-stubs'))
 vi.mock('@vueuse/core', async (importOriginal) => ({
   ...(await importOriginal<Record<string, unknown>>()),
   useDebounceFn: (callback: (...args: unknown[]) => unknown) => callback,

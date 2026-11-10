@@ -8,6 +8,9 @@ export default defineNuxtConfig({
   runtimeConfig: {
     appName: 'web',
     googlePlacesApiKey: process.env.GOOGLE_PLACES_API_KEY,
+    public: {
+      mapboxToken: '',
+    },
   },
   compatibilityDate: '2025-07-15',
   devtools: { enabled: true },
@@ -162,7 +165,7 @@ export default defineNuxtConfig({
         // service worker del módulo PWA (falla sin error visible en consola
         // en algunos navegadores) — el riesgo más alto de "funciona en
         // local, se rompe en producción" de todo el plan PWA.
-        'worker-src': ["'self'"],
+        'worker-src': ["'self'", 'blob:'],
       },
       // nuxt-security bloquea geolocation por defecto (Permissions-Policy:
       // geolocation=()), lo que impide que el navegador muestre el prompt
