@@ -1,9 +1,10 @@
 import { addDays, daysBetween, weekdayOf, type DateRange, type ZonedMoment } from './calendar'
 import { rankByAgeFit, type AgeFit, type AgeRangeMonths } from './ages'
 import { isOpenAt, type WeeklyHours } from './opening-hours'
+import { distanceKm, isInBounds, type GeoBounds, type GeoPoint } from './geo'
 import { matchesSearchText } from './text'
 
-export const SEARCH_SORTS = ['recommended', 'newest', 'price'] as const
+export const SEARCH_SORTS = ['recommended', 'distance', 'newest', 'price'] as const
 
 export type SearchSort = (typeof SEARCH_SORTS)[number]
 
@@ -50,6 +51,7 @@ export interface SearchRecord {
   weeklyHours: WeeklyHours | null
   amenities: readonly SearchAmenity[]
   discounts: readonly SearchDiscount[]
+  location: GeoPoint | null
   createdAt: string
 }
 
@@ -64,6 +66,9 @@ export interface SearchCriteria {
   discounts?: readonly SearchDiscount[]
   priceBand?: SearchPriceBand
   openAt?: Omit<ZonedMoment, 'date'> | null
+  origin?: GeoPoint | null
+  radiusKm?: number
+  bounds?: GeoBounds | null
   sort: SearchSort
 }
 
@@ -71,6 +76,7 @@ export interface SearchHit<T extends SearchRecord> {
   record: T
   fit: Exclude<AgeFit, 'none'>
   matchingAges: number[]
+  distanceKm: number | null
 }
 
 export interface SearchFacets {
@@ -84,6 +90,7 @@ export interface SearchFacets {
 
 export interface SearchPage<T extends SearchRecord> {
   hits: SearchHit<T>[]
+  matches: SearchHit<T>[]
   total: number
   page: number
   pageCount: number
@@ -119,7 +126,22 @@ function matchesBaseCriteria(record: SearchRecord, criteria: SearchCriteria): bo
   if (!(criteria.amenities ?? []).every((amenity) => record.amenities.includes(amenity))) {
     return false
   }
-  return (criteria.discounts ?? []).every((discount) => record.discounts.includes(discount))
+  if (!(criteria.discounts ?? []).every((discount) => record.discounts.includes(discount))) {
+    return false
+  }
+  return matchesArea(record.location, criteria)
+}
+
+function matchesArea(location: GeoPoint | null, criteria: SearchCriteria): boolean {
+  if (!criteria.origin && !criteria.bounds) return true
+  if (!location) return false
+  if (criteria.bounds && !isInBounds(location, criteria.bounds)) return false
+  if (!criteria.origin || criteria.radiusKm === undefined) return true
+  return distanceKm(criteria.origin, location) <= criteria.radiusKm
+}
+
+function distanceFrom(origin: GeoPoint | null | undefined, location: GeoPoint | null) {
+  return origin && location ? distanceKm(origin, location) : null
 }
 
 function effectivePrice(record: SearchRecord): number | null {
@@ -159,18 +181,32 @@ function byPrice(first: SearchRecord, second: SearchRecord): number {
   return priceRank(first) - priceRank(second) || byNewest(first, second)
 }
 
+function byDistance<T extends SearchRecord>(first: SearchHit<T>, second: SearchHit<T>): number {
+  const firstDistance = first.distanceKm ?? Number.POSITIVE_INFINITY
+  const secondDistance = second.distanceKm ?? Number.POSITIVE_INFINITY
+  return firstDistance - secondDistance || byNewest(first.record, second.record)
+}
+
 function rank<T extends SearchRecord>(
   records: readonly T[],
   criteria: SearchCriteria
 ): SearchHit<T>[] {
   const newestFirst = [...records].sort(byNewest)
   const ranked = rankByAgeFit(newestFirst, (record) => record.ageRanges, criteria.childAges).map(
-    ({ item, fit, matchingAges }) => ({ record: item, fit, matchingAges })
+    ({ item, fit, matchingAges }) => ({
+      record: item,
+      fit,
+      matchingAges,
+      distanceKm: distanceFrom(criteria.origin, item.location),
+    })
   )
-  if (criteria.sort === 'price')
+  if (criteria.sort === 'price') {
     return ranked.sort((first, second) => byPrice(first.record, second.record))
-  if (criteria.sort === 'newest')
+  }
+  if (criteria.sort === 'newest') {
     return ranked.sort((first, second) => byNewest(first.record, second.record))
+  }
+  if (criteria.sort === 'distance' && criteria.origin) return ranked.sort(byDistance)
   return ranked
 }
 
@@ -204,6 +240,7 @@ export function searchRecords<T extends SearchRecord>(
   const start = (page - 1) * pageSize
   return {
     hits: hits.slice(start, start + pageSize),
+    matches: hits,
     total: hits.length,
     page,
     pageCount,

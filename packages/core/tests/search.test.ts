@@ -15,6 +15,7 @@ function record(overrides: Partial<SearchRecord> & { id: string }): SearchRecord
     weeklyHours: null,
     amenities: [],
     discounts: [],
+    location: null,
     createdAt: '2026-01-01',
     ...overrides,
   }
@@ -131,6 +132,12 @@ describe('searchRecords', () => {
   it('paginates and reports the page count', () => {
     const result = searchRecords(records, BASE, 2, 3)
     expect(ids(result)).toEqual(['place'])
+    expect(result.matches.map(({ record }) => record.id)).toEqual([
+      'teens',
+      'museum',
+      'park',
+      'place',
+    ])
     expect(result).toMatchObject({ total: 4, page: 2, pageCount: 2 })
   })
 
@@ -195,5 +202,43 @@ describe('searchRecords', () => {
     expect(ids(cheap).sort()).toEqual(['cheap', 'free'])
     expect(cheap.facets.priceBands).toEqual({ 'up-to-80': 2, 'from-200': 1 })
     expect(ids(searchRecords(priced, { ...BASE, priceBand: 'from-200' }))).toEqual(['pricey'])
+  })
+
+  it('filters by radius around an origin and sorts by distance', () => {
+    const telAviv = { lat: 32.0853, lng: 34.7818 }
+    const located = [
+      record({ id: 'jaffa', location: { lat: 32.05, lng: 34.75 }, createdAt: '2026-01-01' }),
+      record({ id: 'herzliya', location: { lat: 32.1624, lng: 34.8447 }, createdAt: '2026-03-01' }),
+      record({ id: 'haifa', location: { lat: 32.794, lng: 34.9896 } }),
+      record({ id: 'nowhere' }),
+    ]
+    const nearby = searchRecords(located, {
+      ...BASE,
+      origin: telAviv,
+      radiusKm: 25,
+      sort: 'distance',
+    })
+    expect(ids(nearby)).toEqual(['jaffa', 'herzliya'])
+    expect(nearby.hits[0]?.distanceKm).toBeGreaterThan(4)
+    expect(nearby.hits[0]?.distanceKm).toBeLessThan(6)
+  })
+
+  it('keeps the default order when sorting by distance without an origin', () => {
+    const result = searchRecords(records, { ...BASE, sort: 'distance' })
+    expect(ids(result)).toEqual(['teens', 'museum', 'park', 'place'])
+    expect(result.hits.every(({ distanceKm }) => distanceKm === null)).toBe(true)
+  })
+
+  it('keeps only located records inside the map bounds', () => {
+    const located = [
+      record({ id: 'inside', location: { lat: 32.08, lng: 34.78 } }),
+      record({ id: 'outside', location: { lat: 31.25, lng: 34.79 } }),
+      record({ id: 'unknown' }),
+    ]
+    const result = searchRecords(located, {
+      ...BASE,
+      bounds: { south: 32, west: 34.7, north: 32.2, east: 34.9 },
+    })
+    expect(ids(result)).toEqual(['inside'])
   })
 })

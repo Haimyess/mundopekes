@@ -59,3 +59,18 @@ export type {
   SearchSort,
 } from './search'
 export { SEARCH_AMENITY_METADATA_KEYS, SEARCH_DISCOUNTS_METADATA_KEY } from './search-metadata'
+export { distanceKm, isInBounds, roundCoordinate } from './geo'
+export type { GeoBounds, GeoPoint } from './geo'
+export { findCity, ISRAEL_CITIES } from './cities'
+export type { IsraelCity } from './cities'
+export type { ContentLocaleNames } from './localized'
+export {
+  DEFAULT_RADIUS_KM,
+  parseWhere,
+  POINT_PRECISION_DECIMALS,
+  resolveWhereOrigin,
+  SEARCH_RADII_KM,
+  serializeWhere,
+  toPrivatePoint,
+} from './where'
+export type { SearchRadiusKm, Where } from './where'
