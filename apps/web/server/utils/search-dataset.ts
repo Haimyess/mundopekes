@@ -7,13 +7,14 @@ import type { ActivityRow, CategoryRow, PlaceRow, SearchDataset } from './search
 const SEARCH_CACHE_MAX_AGE_SECONDS = 60
 
 const ACTIVITY_SELECT = `
-  id, title_i18n, price, is_free, stroller_friendly, images, created_at, metadata, category_id,
+  id, title_i18n, description_i18n, price, is_free, stroller_friendly, images, created_at, updated_at,
+  metadata, category_id,
   place:places!inner ( id, lat, lng, name_i18n, images, created_at, metadata, city:cities ( name ) ),
   age_ranges:activity_age_ranges ( age_range:age_ranges ( min_months, max_months ) )
 `
 const PLACE_SELECT =
   'id, lat, lng, name_i18n, description_i18n, images, created_at, updated_at, metadata, city:cities ( name )'
-const CATEGORY_SELECT = 'id, slug, parent_id'
+const CATEGORY_SELECT = 'id, slug, parent_id, name_i18n'
 const OCCASION_SELECT = 'key, name_i18n, starts_on, ends_on'
 
 function failOnError(event: H3Event, source: string, error: { message: string } | null) {
@@ -76,6 +77,30 @@ export async function getPlaceStatus(event: H3Event, id: string): Promise<string
     const client = serverSupabaseServiceRole<Database>(event)
     const { data } = await client.from('places').select('status').eq('id', id).maybeSingle()
     return data?.status ?? null
+  } catch {
+    return null
+  }
+}
+
+export interface ActivityStatus {
+  status: string | null
+  placeStatus: string | null
+}
+
+export async function getActivityStatus(
+  event: H3Event,
+  id: string
+): Promise<ActivityStatus | null> {
+  try {
+    const client = serverSupabaseServiceRole<Database>(event)
+    const { data } = await client
+      .from('activities')
+      .select('status, place:places ( status )')
+      .eq('id', id)
+      .maybeSingle()
+    if (!data) return null
+    const place = Array.isArray(data.place) ? data.place[0] : data.place
+    return { status: data.status ?? null, placeStatus: place?.status ?? null }
   } catch {
     return null
   }

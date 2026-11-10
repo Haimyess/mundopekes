@@ -39,3 +39,31 @@ export interface PlaceDetail {
   activities: SearchResultItem[]
   updatedAt: string | null
 }
+
+export interface DetailVenue {
+  id: string
+  name: LocalizedText
+  cityName: string | null
+  address: string | null
+  imageUrl: string | null
+}
+
+export interface ActivityDetail {
+  id: string
+  title: LocalizedText
+  description: LocalizedText | null
+  categoryName: LocalizedText | null
+  categorySlug: string | null
+  images: string[]
+  venue: DetailVenue | null
+  location: GeoPoint | null
+  contact: DetailContact
+  hours: DetailHours
+  amenities: SearchAmenity[]
+  discounts: SearchDiscount[]
+  isFree: boolean
+  price: number | null
+  ageSpan: AgeSpanYears | null
+  moreAtPlace: SearchResultItem[]
+  updatedAt: string | null
+}

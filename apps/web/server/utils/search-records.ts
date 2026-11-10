@@ -21,6 +21,7 @@ export interface CategoryRow {
   id: string
   slug: string
   parent_id: string | null
+  name_i18n?: LocalizedText | null
 }
 
 interface CityRow {
@@ -43,6 +44,8 @@ export interface PlaceRow {
 export interface ActivityRow {
   id: string
   title_i18n: LocalizedText | null
+  description_i18n?: LocalizedText | null
+  updated_at?: string | null
   price: number | null
   is_free: boolean | null
   stroller_friendly: boolean | null
@@ -304,5 +307,33 @@ export function toListedResultItem(record: SearchResultRecord): SearchResultItem
     matchingAges: [],
     location: record.location,
     distanceKm: null,
+  }
+}
+
+export interface ActivityRecords {
+  activity: ActivityRow
+  record: SearchResultRecord
+  place: PlaceRow | null
+  category: CategoryRow | null
+  siblings: SearchResultRecord[]
+}
+
+export function buildActivityRecords(
+  dataset: SearchDataset,
+  activityId: string
+): ActivityRecords | null {
+  const activity = dataset.activities.find(({ id }) => id === activityId)
+  if (!activity) return null
+  const place = single(activity.place)
+  const placeRecords = place ? buildPlaceRecords(dataset, place.id) : null
+  const record =
+    placeRecords?.activities.find(({ id }) => id === activityId) ??
+    toActivityRecord(activity, createCategorySlugsResolver(dataset.categories))
+  return {
+    activity,
+    record,
+    place: placeRecords?.place ?? place,
+    category: dataset.categories.find(({ id }) => id === activity.category_id) ?? null,
+    siblings: (placeRecords?.activities ?? []).filter(({ id }) => id !== activityId),
   }
 }

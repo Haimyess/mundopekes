@@ -2,19 +2,11 @@ import { isOpenNow, ISRAEL_TIME_ZONE, toZonedMoment } from '@mundopekes/core'
 import { entityIdSchema } from '@mundopekes/schemas'
 import type { PlaceDetail } from '#shared/types/detail'
 import { buildContact, metadataText } from '../../utils/detail-contact'
+import { galleryImages } from '../../utils/detail-images'
 import { getPlaceStatus, getSearchDataset } from '../../utils/search-dataset'
 import { buildPlaceRecords, toListedResultItem } from '../../utils/search-records'
 
-const MAX_GALLERY_IMAGES = 12
 const INACTIVE_STATUS = 'inactive'
-
-function galleryImages(images: readonly string[] | null, metadata: Record<string, unknown> | null) {
-  const photos = Array.isArray(metadata?.photos) ? metadata.photos : []
-  const candidates = [...(images ?? []), ...photos, metadata?.place_photo_url]
-  return [
-    ...new Set(candidates.filter((src): src is string => typeof src === 'string' && !!src)),
-  ].slice(0, MAX_GALLERY_IMAGES)
-}
 
 function byNewest(first: { createdAt: string }, second: { createdAt: string }) {
   return second.createdAt.localeCompare(first.createdAt)
@@ -42,7 +34,7 @@ export default defineEventHandler(async (event): Promise<PlaceDetail> => {
     id: place.id,
     name: record.item.title,
     description: place.description_i18n ?? null,
-    images: galleryImages(place.images, place.metadata),
+    images: galleryImages(place.images, place.metadata?.photos, place.metadata?.place_photo_url),
     cityName: record.item.cityName,
     address: metadataText(place.metadata, 'address'),
     location: record.location,
