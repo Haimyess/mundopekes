@@ -131,7 +131,10 @@ const handleClose = () => {
 
 .ui-sheet--popover {
   inline-size: min(420px, calc(100vw - 2 * var(--mp-gutter)));
-  max-block-size: min(640px, calc(100dvh - 2 * var(--mp-gutter)));
+  max-block-size: min(
+    640px,
+    var(--reka-popover-content-available-height, calc(100dvh - 2 * var(--mp-gutter)))
+  );
   overflow-y: auto;
   padding: 20px;
   border: 1px solid var(--mp-border-soft);
