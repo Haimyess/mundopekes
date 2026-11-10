@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import PlaceServicesFields from './PlaceServicesFields.vue'
 import type { Place } from '~/types'
 // PlaceSearchResult y PlaceDetails se auto-importan desde layers/domain/composables/usePlacesSearch
 // defaultSchedule se auto-importa desde layers/domain/types/schedule (solo se
@@ -343,6 +344,8 @@ const save = async () => {
           :season-options="[]"
           :labels="labels"
         />
+
+        <PlaceServicesFields v-model="form.metadata" />
 
         <div class="grid grid-cols-2 gap-3">
           <UFormField :label="t('placesSlideover.form.latitude')">

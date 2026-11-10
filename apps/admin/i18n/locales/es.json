@@ -1096,5 +1096,20 @@
       "statusUpdated": "Estado actualizado",
       "updateError": "Error al actualizar"
     }
+  },
+  "placeServices": {
+    "title": "Servicios",
+    "amenities": {
+      "wheelchair": "Accesible en silla de ruedas",
+      "changing-table": "Cambiador para bebés",
+      "parking": "Estacionamiento",
+      "kosher": "Comida kasher"
+    },
+    "discountsTitle": "Descuentos",
+    "discounts": {
+      "club": "Con club",
+      "credit-card": "Con tarjeta de crédito",
+      "last-minute": "Último minuto"
+    }
   }
 }
