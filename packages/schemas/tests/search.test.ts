@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest'
-import { childAgesQuerySchema, childAgesSchema, VALIDATION_ERRORS, whenQuerySchema } from '../src'
+import {
+  childAgesQuerySchema,
+  childAgesSchema,
+  searchQuerySchema,
+  VALIDATION_ERRORS,
+  whenQuerySchema,
+} from '../src'
 
 describe('childAgesQuerySchema', () => {
   it('parses a comma separated list of ages', () => {
@@ -30,5 +36,51 @@ describe('whenQuerySchema', () => {
     const result = whenQuerySchema.safeParse('next-year')
     expect(result.success).toBe(false)
     expect(result.error?.issues[0]?.message).toBe(VALIDATION_ERRORS.invalidOption)
+  })
+})
+
+describe('searchQuerySchema', () => {
+  it('parses a full search query', () => {
+    expect(
+      searchQuerySchema.parse({
+        q: ' museo ',
+        category: 'indoor-juego',
+        when: 'this-weekend',
+        ages: '3,7',
+        free: 'true',
+        sort: 'price',
+        page: '2',
+      })
+    ).toEqual({
+      q: 'museo',
+      category: 'indoor-juego',
+      when: { kind: 'shortcut', shortcut: 'this-weekend' },
+      ages: [3, 7],
+      free: true,
+      sort: 'price',
+      page: 2,
+    })
+  })
+
+  it('drops invalid or repeated params instead of failing', () => {
+    expect(
+      searchQuerySchema.parse({
+        q: ['a', 'b'],
+        category: 'Bad Slug',
+        when: 'someday',
+        ages: '3,40',
+        free: 'yes',
+        sort: 'random',
+        page: '0',
+      })
+    ).toEqual({})
+  })
+
+  it('treats empty text and empty ages as absent', () => {
+    expect(searchQuerySchema.parse({ q: '   ', ages: '' })).toEqual({})
+  })
+
+  it('ignores unknown legacy params', () => {
+    expect(searchQuerySchema.parse({ age: '6', city: 'Haifa' })).toEqual({})
   })
 })

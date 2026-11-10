@@ -14,8 +14,15 @@ export type {
   ProviderSignupInput,
   ProviderStatusUpdate,
 } from './provider'
-export { childAgeSchema, childAgesQuerySchema, childAgesSchema, whenQuerySchema } from './search'
-export type { ChildAges } from './search'
+export {
+  childAgeSchema,
+  childAgesQuerySchema,
+  childAgesSchema,
+  SEARCH_QUERY_LIMITS,
+  searchQuerySchema,
+  whenQuerySchema,
+} from './search'
+export type { ChildAges, SearchQuery } from './search'
 export {
   SUGGESTION_LIMITS,
   suggestionShortFormSchema,

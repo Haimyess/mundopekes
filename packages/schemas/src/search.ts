@@ -1,4 +1,4 @@
-import { CHILD_AGE_LIMITS, parseWhen } from '@mundopekes/core'
+import { CHILD_AGE_LIMITS, parseWhen, SEARCH_SORTS } from '@mundopekes/core'
 import { z } from 'zod'
 import { VALIDATION_ERRORS } from './errors'
 
@@ -30,3 +30,31 @@ export const whenQuerySchema = z.string().transform((value, context) => {
 })
 
 export type ChildAges = z.output<typeof childAgesSchema>
+
+export const SEARCH_QUERY_LIMITS = {
+  maxTextLength: 80,
+  maxPage: 100,
+} as const
+
+const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
+const TRUE_FLAG = 'true'
+
+const optional = <T extends z.ZodType>(schema: T) => schema.optional().catch(undefined)
+
+export const searchQuerySchema = z.object({
+  q: optional(
+    z
+      .string()
+      .trim()
+      .max(SEARCH_QUERY_LIMITS.maxTextLength)
+      .transform((value) => value || undefined)
+  ),
+  category: optional(z.string().regex(SLUG_PATTERN)),
+  when: optional(whenQuerySchema),
+  ages: optional(childAgesQuerySchema.transform((ages) => (ages.length ? ages : undefined))),
+  free: optional(z.literal(TRUE_FLAG).transform(() => true)),
+  sort: optional(z.enum(SEARCH_SORTS)),
+  page: optional(z.coerce.number().int().min(1).max(SEARCH_QUERY_LIMITS.maxPage)),
+})
+
+export type SearchQuery = z.output<typeof searchQuerySchema>
