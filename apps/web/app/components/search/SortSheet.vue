@@ -17,7 +17,13 @@ const groupName = useId()
 const sortLabel = (sort: SearchSort) =>
   sort === DEFAULT_SORT && hasAges.value ? t('results.sort.ageFit') : t(`results.sort.${sort}`)
 
-const options = computed(() => SEARCH_SORTS.map((sort) => ({ sort, label: sortLabel(sort) })))
+const hasOrigin = computed(() => !!state.value.where)
+const options = computed(() =>
+  SEARCH_SORTS.filter((sort) => sort !== 'distance' || hasOrigin.value).map((sort) => ({
+    sort,
+    label: sortLabel(sort),
+  }))
+)
 const triggerValue = computed(() =>
   state.value.sort && state.value.sort !== DEFAULT_SORT ? sortLabel(state.value.sort) : undefined
 )

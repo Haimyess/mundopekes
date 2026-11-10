@@ -17,17 +17,22 @@ const nextLink = computed(() => linkTo({ page: props.page + 1 }))
 
 <template>
   <nav v-if="pageCount > 1" class="search-pagination" :aria-label="t('results.pagination.label')">
-    <NuxtLink v-if="hasPrevious" :to="previousLink" class="search-pagination__link" rel="prev">
+    <SearchQueryLink
+      v-if="hasPrevious"
+      :to="previousLink"
+      class="search-pagination__link"
+      rel="prev"
+    >
       <UiIcon name="i-hugeicons-arrow-left-01" :size="20" class="search-pagination__icon" />
       {{ t('results.pagination.previous') }}
-    </NuxtLink>
+    </SearchQueryLink>
     <p class="search-pagination__status" aria-current="page">
       {{ t('results.pagination.status', { page, pageCount }) }}
     </p>
-    <NuxtLink v-if="hasNext" :to="nextLink" class="search-pagination__link" rel="next">
+    <SearchQueryLink v-if="hasNext" :to="nextLink" class="search-pagination__link" rel="next">
       {{ t('results.pagination.next') }}
       <UiIcon name="i-hugeicons-arrow-right-01" :size="20" class="search-pagination__icon" />
-    </NuxtLink>
+    </SearchQueryLink>
   </nav>
 </template>
 

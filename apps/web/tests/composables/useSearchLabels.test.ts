@@ -20,7 +20,7 @@ const HANUKKAH = {
 }
 
 describe('useSearchLabels', () => {
-  const { whenLabel, agesLabel, activeFilterCount } = useSearchLabels()
+  const { whenLabel, whereLabel, distanceLabel, agesLabel, activeFilterCount } = useSearchLabels()
 
   it('describes every kind of date', () => {
     expect(whenLabel(undefined, null)).toBeUndefined()
@@ -33,6 +33,19 @@ describe('useSearchLabels', () => {
     expect(
       whenLabel({ kind: 'fixed', range: { from: '2026-12-01', to: '2026-12-03' } }, null)
     ).toBe('Tue, Dec 1 – Thu, Dec 3')
+  })
+
+  it('names places in the interface language', () => {
+    expect(whereLabel(undefined)).toBeUndefined()
+    expect(whereLabel({ kind: 'city', slug: 'jerusalem' })).toBe('Jerusalem')
+    expect(whereLabel({ kind: 'point', point: { lat: 32, lng: 34.8 } })).toBe(
+      'results.where.nearMe'
+    )
+  })
+
+  it('formats distances in kilometres', () => {
+    expect(distanceLabel(null)).toBeNull()
+    expect(distanceLabel(2.44)).toBe('2.4 km')
   })
 
   it('lists the ages as a natural sentence', () => {

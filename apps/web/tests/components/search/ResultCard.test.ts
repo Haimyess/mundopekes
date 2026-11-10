@@ -94,6 +94,12 @@ describe('SearchResultCard', () => {
     expect(mountCard(makeResultItem()).find('article').attributes('data-optimized')).toBe('true')
   })
 
+  it('adds the distance when the search has an origin', () => {
+    const wrapper = mountCard(makeResultItem({ distanceKm: 2.4 }))
+    expect(wrapper.find('.result-card__context').text()).toBe('Casa del Arte · Jaffa · 2.4 km')
+    expect(wrapper.find('.result-card__context bdi').text()).toBe('2.4 km')
+  })
+
   it('omits the badge without age data', () => {
     expect(
       mountCard(makeResultItem({ ageSpan: null }))

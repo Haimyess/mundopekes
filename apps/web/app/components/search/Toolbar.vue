@@ -9,7 +9,7 @@ interface Props {
 defineProps<Props>()
 
 const { t } = useI18n()
-const { state } = useSearchState()
+const { state, linkTo } = useSearchState()
 const { activeFilterCount } = useSearchLabels()
 const { hasDecided: hasCookieChoice } = useCookieConsent()
 
@@ -23,6 +23,9 @@ const isFloatingVisible = computed(
   () => isMounted.value && hasCookieChoice.value && !isToolbarVisible.value && !isFiltersOpen.value
 )
 
+const isMapView = computed(() => state.value.view === 'map')
+const viewToggleLink = computed(() => linkTo({ view: isMapView.value ? undefined : 'map' }))
+
 const handleOpenFilters = () => {
   isFiltersOpen.value = true
 }
@@ -30,10 +33,15 @@ const handleOpenFilters = () => {
 
 <template>
   <div ref="toolbar" class="search-toolbar" role="group" :aria-label="t('results.toolbar.label')">
+    <SearchWhereSheet />
     <SearchWhenSheet :occasion="occasion" />
     <SearchWhoSheet />
     <SearchFiltersSheet v-model:open="isFiltersOpen" />
     <SearchSortSheet />
+    <SearchQueryLink :to="viewToggleLink" class="search-toolbar__view">
+      <UiIcon :name="isMapView ? 'i-hugeicons-list-view' : 'i-hugeicons-maps'" :size="16" />
+      {{ isMapView ? t('results.toolbar.list') : t('results.toolbar.map') }}
+    </SearchQueryLink>
   </div>
   <button
     v-if="isFloatingVisible"
@@ -63,6 +71,28 @@ const handleOpenFilters = () => {
   display: none;
 }
 
+.search-toolbar__view {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 6px;
+  min-block-size: var(--mp-tap);
+  padding-inline: 14px;
+  border: 1px solid var(--mp-border);
+  border-radius: var(--mp-r-pill);
+  color: var(--mp-ink);
+  font-size: var(--mp-fs-body-sm);
+  font-weight: var(--mp-fw-medium);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.search-toolbar__view:focus-visible,
+.search-toolbar__floating:focus-visible {
+  outline: var(--mp-focus-ring-width) solid var(--mp-focus-ring);
+  outline-offset: 2px;
+}
+
 .search-toolbar__floating {
   position: fixed;
   z-index: 40;
@@ -88,11 +118,6 @@ const handleOpenFilters = () => {
   transform: translateX(50%);
 }
 
-.search-toolbar__floating:focus-visible {
-  outline: var(--mp-focus-ring-width) solid var(--mp-focus-ring);
-  outline-offset: 2px;
-}
-
 .search-toolbar__floating-count {
   display: inline-grid;
   place-items: center;
@@ -110,6 +135,10 @@ const handleOpenFilters = () => {
     margin-inline: 0;
     padding-inline: 0;
     flex-wrap: wrap;
+  }
+
+  .search-toolbar__view {
+    display: none;
   }
 }
 </style>

@@ -28,6 +28,8 @@ const SOURCES = [
   'components/search/WhoSheet.vue',
   'components/search/FiltersSheet.vue',
   'components/search/SortSheet.vue',
+  'components/search/WhereSheet.vue',
+  'components/search/Map.vue',
   'composables/useSearchLabels.ts',
   'components/search/ResultCard.vue',
   'components/search/ResultList.vue',
@@ -47,6 +49,8 @@ const DYNAMIC_KEYS = [
   ...SEARCH_SORTS.map((sort) => `results.sort.${sort}`),
   ...SEARCH_DISCOUNTS.map((discount) => `results.filters.discounts.${discount}`),
   ...SEARCH_PRICE_BANDS.map((band) => `results.filters.priceBands.${band}`),
+  ...['unsupported', 'denied', 'unavailable'].map((error) => `results.where.errors.${error}`),
+  ...SEARCH_KINDS.map((kind) => `results.kind.${kind}`),
 ]
 
 const usedKeys = [

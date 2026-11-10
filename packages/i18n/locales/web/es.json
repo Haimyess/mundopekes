@@ -88,7 +88,10 @@
       "when": "Cuándo",
       "who": "Quiénes",
       "filters": "Filtros",
-      "sort": "Ordenar"
+      "sort": "Ordenar",
+      "where": "Dónde",
+      "map": "Mapa",
+      "list": "Lista"
     },
     "who": {
       "value": "Edades: {ages}"
@@ -150,12 +153,32 @@
       "ageFit": "Mejor para la edad de tus peques",
       "recommended": "Recomendados",
       "newest": "Más nuevos",
-      "price": "Menor precio"
+      "price": "Menor precio",
+      "distance": "Más cerca"
     },
     "actions": {
       "clear": "Borrar",
       "done": "Listo",
       "apply": "Aplicar"
+    },
+    "where": {
+      "title": "¿Dónde?",
+      "nearMe": "Cerca de mí",
+      "useLocation": "Usar mi ubicación",
+      "locating": "Buscando tu ubicación…",
+      "privacy": "Solo la usamos para esta búsqueda, redondeada a 1 km.",
+      "radius": "Distancia",
+      "cities": "Ciudades",
+      "errors": {
+        "unsupported": "Tu navegador no puede compartir la ubicación.",
+        "denied": "No diste permiso para usar tu ubicación. Elige una ciudad.",
+        "unavailable": "No pudimos obtener tu ubicación. Inténtalo de nuevo o elige una ciudad."
+      }
+    },
+    "map": {
+      "label": "Mapa de resultados",
+      "searchOnMove": "Buscar al mover el mapa",
+      "empty": "Ningún resultado tiene ubicación en el mapa."
     }
   }
 }

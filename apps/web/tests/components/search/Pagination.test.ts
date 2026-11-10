@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { NuxtLinkStub } from '../ui/stubs'
+import QueryLink from '~/app/components/search/QueryLink.vue'
 
 vi.mock('vue-i18n', () => ({
   useI18n: () => ({
@@ -18,7 +19,10 @@ const Pagination = (await import('~/app/components/search/Pagination.vue')).defa
 const mountPagination = (page: number, pageCount: number) =>
   mount(Pagination, {
     props: { page, pageCount },
-    global: { stubs: { NuxtLink: NuxtLinkStub, UiIcon: true } },
+    global: {
+      stubs: { NuxtLink: NuxtLinkStub, UiIcon: true },
+      components: { SearchQueryLink: QueryLink },
+    },
   })
 
 describe('SearchPagination', () => {

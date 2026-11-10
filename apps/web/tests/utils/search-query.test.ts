@@ -20,6 +20,23 @@ describe('search query helpers', () => {
     expect(toSearchQuery(parseSearchQuery(query))).toEqual(query)
   })
 
+  it('serializes where, radius, bounds and the map view', () => {
+    expect(
+      toSearchQuery({
+        where: { kind: 'point', point: { lat: 32.0853, lng: 34.7818 } },
+        radius: 10,
+        bbox: { south: 32, west: 34.7, north: 32.2, east: 34.9 },
+        view: 'map',
+      })
+    ).toEqual({
+      where: 'point:32.09,34.78',
+      radius: '10',
+      bbox: '32.0000,34.7000,32.2000,34.9000',
+      view: 'map',
+    })
+    expect(toSearchQuery({ radius: 10, view: 'list' })).toEqual({})
+  })
+
   it('serializes amenities in one canonical order', () => {
     expect(toSearchQuery({ amenities: ['shade', 'stroller'] })).toEqual({
       amenities: 'stroller,shade',

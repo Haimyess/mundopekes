@@ -33,6 +33,16 @@ const total = computed(() => (isLoading.value ? null : (response.value?.total ??
 const page = computed(() => response.value?.page ?? 1)
 const pageCount = computed(() => response.value?.pageCount ?? 1)
 const occasion = computed(() => response.value?.occasion ?? null)
+const pins = computed(() => response.value?.pins ?? [])
+
+const isMapView = computed(() => state.value.view === 'map')
+const isDesktop = useHydrationSafeMediaQuery('(min-width: 1200px)')
+const shouldRenderMap = computed(() => isMapView.value || isDesktop.value)
+const highlightedId = ref<string | null>(null)
+
+const handleHighlight = (id: string | null) => {
+  highlightedId.value = id
+}
 
 const isUnknownCategory = computed(() => !!state.value.category && !categoryName.value)
 const isPageOutOfRange = computed(
@@ -70,25 +80,75 @@ watch(
 </script>
 
 <template>
-  <div class="search-page">
+  <div class="search-page" :class="{ 'search-page--map': isMapView }">
     <SearchResultsHeader :title="title" :total="total" />
     <SearchToolbar :occasion="occasion" />
-    <SearchResultList
-      :items="items"
-      :is-loading="isLoading"
-      :has-error="hasError"
-      @retry="handleRetry"
-    >
-      <template #empty-actions>
-        <UiButton to="/search" variant="secondary">{{ t('results.empty.clear') }}</UiButton>
-      </template>
-    </SearchResultList>
-    <SearchPagination v-if="!isLoading && !hasError" :page="page" :page-count="pageCount" />
+    <div class="search-page__layout">
+      <div class="search-page__results">
+        <SearchResultList
+          :items="items"
+          :is-loading="isLoading"
+          :has-error="hasError"
+          :highlighted-id="highlightedId"
+          @retry="handleRetry"
+          @highlight="handleHighlight"
+        >
+          <template #empty-actions>
+            <UiButton to="/search" variant="secondary">{{ t('results.empty.clear') }}</UiButton>
+          </template>
+        </SearchResultList>
+        <SearchPagination v-if="!isLoading && !hasError" :page="page" :page-count="pageCount" />
+      </div>
+      <div class="search-page__map">
+        <ClientOnly>
+          <LazySearchMap
+            v-if="shouldRenderMap"
+            :pins="pins"
+            :highlighted-id="highlightedId"
+            @highlight="handleHighlight"
+          />
+        </ClientOnly>
+      </div>
+    </div>
   </div>
 </template>
 
 <style scoped>
 .search-page {
   padding-block-end: var(--mp-section-gap);
+}
+
+.search-page__map {
+  display: none;
+}
+
+.search-page--map .search-page__results {
+  display: none;
+}
+
+.search-page--map .search-page__map {
+  display: block;
+  block-size: max(420px, calc(100dvh - 260px));
+}
+
+@media (min-width: 1200px) {
+  .search-page__layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(360px, 40%);
+    gap: 24px;
+    align-items: start;
+  }
+
+  .search-page--map .search-page__results,
+  .search-page__map {
+    display: block;
+  }
+
+  .search-page__map,
+  .search-page--map .search-page__map {
+    position: sticky;
+    inset-block-start: 16px;
+    block-size: calc(100dvh - 32px);
+  }
 }
 </style>

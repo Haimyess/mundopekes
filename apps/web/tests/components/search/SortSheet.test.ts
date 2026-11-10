@@ -65,6 +65,14 @@ describe('SearchSortSheet', () => {
     expect(wrapper.find('.sort-sheet__label').text()).toBe('results.sort.recommended')
   })
 
+  it('offers the distance sort only when there is a place to measure from', async () => {
+    searchState.value = { where: { kind: 'city', slug: 'haifa' } }
+    const wrapper = await openSheet()
+    expect(
+      wrapper.findAll('input[type="radio"]').map((radio) => radio.attributes('value'))
+    ).toEqual(['recommended', 'distance', 'newest', 'price'])
+  })
+
   it('names the default sort after the ages when there are children', async () => {
     searchState.value = { ages: [4] }
     const wrapper = await openSheet()

@@ -88,7 +88,10 @@
       "when": "When",
       "who": "Who",
       "filters": "Filters",
-      "sort": "Sort"
+      "sort": "Sort",
+      "where": "Where",
+      "map": "Map",
+      "list": "List"
     },
     "who": {
       "value": "Ages {ages}"
@@ -150,12 +153,32 @@
       "ageFit": "Best for your kids’ ages",
       "recommended": "Recommended",
       "newest": "Newest",
-      "price": "Lowest price"
+      "price": "Lowest price",
+      "distance": "Nearest"
     },
     "actions": {
       "clear": "Clear",
       "done": "Done",
       "apply": "Apply"
+    },
+    "where": {
+      "title": "Where?",
+      "nearMe": "Near me",
+      "useLocation": "Use my location",
+      "locating": "Finding your location…",
+      "privacy": "Used only for this search, rounded to 1 km.",
+      "radius": "Distance",
+      "cities": "Cities",
+      "errors": {
+        "unsupported": "Your browser cannot share your location.",
+        "denied": "Location permission was not granted. Choose a city instead.",
+        "unavailable": "We could not get your location. Try again or choose a city."
+      }
+    },
+    "map": {
+      "label": "Results map",
+      "searchOnMove": "Search as I move the map",
+      "empty": "None of the results has a location on the map."
     }
   }
 }

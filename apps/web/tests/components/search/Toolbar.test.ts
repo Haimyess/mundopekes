@@ -1,6 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { flushPromises, mount } from '@vue/test-utils'
 import { defineComponent, h, ref } from 'vue'
+import { NuxtLinkStub } from '../ui/stubs'
+import QueryLink from '~/app/components/search/QueryLink.vue'
 import { searchState } from './search-state-mock'
 
 const isToolbarVisible = ref(true)
@@ -41,12 +43,15 @@ const mountToolbar = () =>
     props: { occasion: null },
     global: {
       stubs: {
+        SearchWhereSheet: sheetStub('SearchWhereSheet'),
         SearchWhenSheet: sheetStub('SearchWhenSheet'),
         SearchWhoSheet: sheetStub('SearchWhoSheet'),
         SearchFiltersSheet: FiltersSheetStub,
         SearchSortSheet: sheetStub('SearchSortSheet'),
         UiIcon: true,
+        NuxtLink: NuxtLinkStub,
       },
+      components: { SearchQueryLink: QueryLink },
     },
   })
 
@@ -57,15 +62,27 @@ describe('SearchToolbar', () => {
     searchState.value = {}
   })
 
-  it('groups the four search sheets under a label', () => {
+  it('groups the search sheets under a label', () => {
     const group = mountToolbar().find('[role="group"]')
     expect(group.attributes('aria-label')).toBe('results.toolbar.label')
     expect(group.findAll('[data-stub]').map((sheet) => sheet.attributes('data-stub'))).toEqual([
+      'SearchWhereSheet',
       'SearchWhenSheet',
       'SearchWhoSheet',
       'SearchFiltersSheet',
       'SearchSortSheet',
     ])
+  })
+
+  it('toggles between the list and the map keeping the filters', () => {
+    searchState.value = { free: true }
+    expect(mountToolbar().find('.search-toolbar__view').attributes('href')).toBe(
+      '/search?free=true&view=map'
+    )
+    searchState.value = { free: true, view: 'map' }
+    const toggle = mountToolbar().find('.search-toolbar__view')
+    expect(toggle.attributes('href')).toBe('/search?free=true')
+    expect(toggle.text()).toBe('results.toolbar.list')
   })
 
   it('shows the floating filters button only when the toolbar scrolls away', async () => {

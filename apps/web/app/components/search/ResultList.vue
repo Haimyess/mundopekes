@@ -5,11 +5,12 @@ interface Props {
   items: readonly SearchResultItem[]
   isLoading: boolean
   hasError: boolean
+  highlightedId?: string | null
 }
 
-const props = defineProps<Props>()
+const props = withDefaults(defineProps<Props>(), { highlightedId: null })
 
-const emit = defineEmits<{ retry: [] }>()
+const emit = defineEmits<{ retry: []; highlight: [id: string | null] }>()
 
 const { t } = useI18n()
 
@@ -19,6 +20,7 @@ const EAGER_IMAGE_COUNT = 2
 const isEmpty = computed(() => !props.isLoading && !props.hasError && props.items.length === 0)
 
 const handleRetry = () => emit('retry')
+const handleHighlight = (id: string | null) => emit('highlight', id)
 </script>
 
 <template>
@@ -49,7 +51,16 @@ const handleRetry = () => emit('retry')
       <slot name="empty-actions" />
     </StateEmpty>
     <ul v-else class="result-list__grid">
-      <li v-for="(item, index) in items" :key="`${item.kind}-${item.id}`">
+      <li
+        v-for="(item, index) in items"
+        :key="`${item.kind}-${item.id}`"
+        class="result-list__item"
+        :class="{ 'result-list__item--highlighted': item.id === highlightedId }"
+        @mouseenter="handleHighlight(item.id)"
+        @mouseleave="handleHighlight(null)"
+        @focusin="handleHighlight(item.id)"
+        @focusout="handleHighlight(null)"
+      >
         <SearchResultCard :item="item" :is-eager="index < EAGER_IMAGE_COUNT" />
       </li>
     </ul>
@@ -66,6 +77,23 @@ const handleRetry = () => emit('retry')
   list-style: none;
 }
 
+.result-list__item {
+  border-radius: var(--mp-r-card);
+  outline: 2px solid transparent;
+  outline-offset: 4px;
+  transition: outline-color 0.15s ease;
+}
+
+.result-list__item--highlighted {
+  outline-color: var(--mp-ink);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .result-list__item {
+    transition: none;
+  }
+}
+
 .result-list__skeleton {
   display: flex;
   flex-direction: column;
@@ -76,13 +104,17 @@ const handleRetry = () => emit('retry')
   aspect-ratio: 1 / 1;
 }
 
-@media (min-width: 768px) {
+.result-list {
+  container-type: inline-size;
+}
+
+@container (min-width: 560px) {
   .result-list__grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 
-@media (min-width: 1200px) {
+@container (min-width: 880px) {
   .result-list__grid {
     grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 28px 20px;

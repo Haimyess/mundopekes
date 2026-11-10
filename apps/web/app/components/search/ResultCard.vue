@@ -14,6 +14,7 @@ const props = withDefaults(defineProps<Props>(), {
 
 const { t, locale } = useI18n()
 const { tc } = useI18nContent()
+const { distanceLabel } = useSearchLabels()
 
 const PROXIED_IMAGE_PREFIX = '/api/'
 
@@ -32,6 +33,8 @@ const context = computed(() =>
     .filter(Boolean)
     .join(' · ')
 )
+
+const distance = computed(() => distanceLabel(props.item.distanceKm))
 
 const priceLabel = computed(() => {
   if (props.item.isFree || props.item.price === 0) return t('results.free')
@@ -70,7 +73,10 @@ const fitLabel = computed(() =>
     <p class="result-card__kind">
       <span v-if="item.kind === 'place'">{{ t('results.kind.place') }} · </span>{{ kindLabel }}
     </p>
-    <p v-if="context" class="result-card__context">{{ context }}</p>
+    <p v-if="context || distance" class="result-card__context">
+      {{ context }}<template v-if="context && distance"> · </template
+      ><bdi v-if="distance">{{ distance }}</bdi>
+    </p>
     <p v-if="priceLabel" class="result-card__price">
       <span dir="ltr">{{ priceLabel }}</span>
     </p>

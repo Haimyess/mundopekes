@@ -1,4 +1,4 @@
-import type { When } from '@mundopekes/core'
+import { findCity, type ContentLocaleNames, type When, type Where } from '@mundopekes/core'
 import type { SearchOccasion } from '#shared/types/search'
 import type { SearchState } from '~/utils/search-query'
 
@@ -18,6 +18,26 @@ export function useSearchLabels() {
       : `${from} – ${formatIsoDate(when.range.to, locale.value)}`
   }
 
+  function cityName(slug: string): string | undefined {
+    const city = findCity(slug)
+    if (!city) return undefined
+    return city.names[locale.value as keyof ContentLocaleNames] ?? city.names.he
+  }
+
+  function whereLabel(where: Where | undefined): string | undefined {
+    if (!where) return undefined
+    return where.kind === 'city' ? cityName(where.slug) : t('results.where.nearMe')
+  }
+
+  function distanceLabel(distanceKm: number | null): string | null {
+    if (distanceKm === null) return null
+    return new Intl.NumberFormat(locale.value, {
+      style: 'unit',
+      unit: 'kilometer',
+      maximumFractionDigits: 1,
+    }).format(distanceKm)
+  }
+
   function agesLabel(ages: readonly number[] | undefined): string | undefined {
     if (!ages?.length) return undefined
     const list = new Intl.ListFormat(locale.value, { type: 'conjunction' }).format(ages.map(String))
@@ -35,5 +55,5 @@ export function useSearchLabels() {
     )
   }
 
-  return { whenLabel, agesLabel, activeFilterCount }
+  return { whenLabel, whereLabel, cityName, distanceLabel, agesLabel, activeFilterCount }
 }

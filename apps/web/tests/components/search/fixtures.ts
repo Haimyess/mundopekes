@@ -14,6 +14,8 @@ export function makeResultItem(overrides: Partial<SearchResultItem> = {}): Searc
     activityCount: null,
     fit: 'all',
     matchingAges: [],
+    location: null,
+    distanceKm: null,
     ...overrides,
   }
 }

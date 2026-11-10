@@ -1,4 +1,4 @@
-import { SEARCH_AMENITIES, SEARCH_DISCOUNTS, serializeWhen } from '@mundopekes/core'
+import { SEARCH_AMENITIES, SEARCH_DISCOUNTS, serializeWhen, serializeWhere } from '@mundopekes/core'
 import { searchQuerySchema, type SearchQuery } from '@mundopekes/schemas'
 import type { LocationQuery, RouteLocationRaw } from 'vue-router'
 
@@ -18,6 +18,12 @@ export function toSearchQuery(state: SearchState): Record<string, string> {
   if (state.q) query.q = state.q
   if (state.category) query.category = state.category
   if (state.when) query.when = serializeWhen(state.when)
+  if (state.where) query.where = serializeWhere(state.where)
+  if (state.where && state.radius) query.radius = String(state.radius)
+  if (state.bbox) {
+    const { south, west, north, east } = state.bbox
+    query.bbox = [south, west, north, east].map((value) => value.toFixed(4)).join(',')
+  }
   if (state.ages?.length) query.ages = state.ages.join(',')
   if (state.free) query.free = 'true'
   if (state.kind) query.kind = state.kind
@@ -35,6 +41,7 @@ export function toSearchQuery(state: SearchState): Record<string, string> {
   if (state.open) query.open = state.open
   if (state.sort && state.sort !== DEFAULT_SORT) query.sort = state.sort
   if (state.page && state.page > FIRST_PAGE) query.page = String(state.page)
+  if (state.view === 'map') query.view = state.view
   return query
 }
 
