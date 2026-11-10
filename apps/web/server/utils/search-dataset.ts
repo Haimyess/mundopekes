@@ -7,7 +7,7 @@ import type { ActivityRow, CategoryRow, PlaceRow, SearchDataset } from './search
 const SEARCH_CACHE_MAX_AGE_SECONDS = 60
 
 const ACTIVITY_SELECT = `
-  id, title_i18n, price, is_free, images, created_at, metadata, category_id,
+  id, title_i18n, price, is_free, stroller_friendly, images, created_at, metadata, category_id,
   place:places!inner ( id, name_i18n, images, created_at, metadata, city:cities ( name ) ),
   age_ranges:activity_age_ranges ( age_range:age_ranges ( min_months, max_months ) )
 `

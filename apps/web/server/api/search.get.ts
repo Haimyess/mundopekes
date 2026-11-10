@@ -1,8 +1,10 @@
 import {
   findUpcomingOccasion,
+  ISRAEL_TIME_ZONE,
   resolveWhen,
   searchRecords,
   todayIn,
+  toZonedMoment,
   type DateRange,
   type When,
 } from '@mundopekes/core'
@@ -22,7 +24,8 @@ function resolveDateRange(
 
 export default defineEventHandler(async (event): Promise<SearchResponse> => {
   const query = searchQuerySchema.parse(getQuery(event))
-  const today = todayIn()
+  const now = new Date()
+  const today = todayIn(ISRAEL_TIME_ZONE, now)
   const [dataset, occasions] = await Promise.all([
     getSearchDataset(event),
     getUpcomingOccasions(event, today),
@@ -36,6 +39,9 @@ export default defineEventHandler(async (event): Promise<SearchResponse> => {
       isFree: query.free,
       childAges: query.ages ?? [],
       dateRange: resolveDateRange(query.when, today, occasions),
+      kind: query.kind,
+      amenities: query.amenities,
+      openAt: query.open ? toZonedMoment(now) : null,
       sort: query.sort ?? 'recommended',
     },
     query.page ?? 1

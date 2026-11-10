@@ -1,6 +1,8 @@
 import {
   parseOpeningHoursText,
+  SEARCH_AMENITIES,
   type AgeRangeMonths,
+  type SearchAmenity,
   type SearchRecord,
   type WeeklyHours,
 } from '@mundopekes/core'
@@ -34,6 +36,7 @@ export interface ActivityRow {
   title_i18n: LocalizedText | null
   price: number | null
   is_free: boolean | null
+  stroller_friendly: boolean | null
   images: string[] | null
   created_at: string | null
   metadata: Record<string, unknown> | null
@@ -109,6 +112,30 @@ function createCategorySlugsResolver(categories: readonly CategoryRow[]) {
   }
 }
 
+function isFlagSet(metadata: Record<string, unknown> | null | undefined, key: string): boolean {
+  return metadata?.[key] === true
+}
+
+function placeAmenities(place: PlaceRow | null): SearchAmenity[] {
+  const amenities: SearchAmenity[] = []
+  if (isFlagSet(place?.metadata, 'wheelchair')) amenities.push('wheelchair')
+  if (isFlagSet(place?.metadata, 'has_bathrooms')) amenities.push('bathrooms')
+  return amenities
+}
+
+function activityAmenities(activity: ActivityRow, place: PlaceRow | null): SearchAmenity[] {
+  const amenities = new Set<SearchAmenity>(placeAmenities(place))
+  if (activity.stroller_friendly === true) amenities.add('stroller')
+  if (isFlagSet(activity.metadata, 'has_bathrooms')) amenities.add('bathrooms')
+  if (isFlagSet(activity.metadata, 'has_shadow')) amenities.add('shade')
+  return SEARCH_AMENITIES.filter((amenity) => amenities.has(amenity))
+}
+
+function mergeAmenities(lists: readonly (readonly SearchAmenity[])[]): SearchAmenity[] {
+  const merged = new Set(lists.flat())
+  return SEARCH_AMENITIES.filter((amenity) => merged.has(amenity))
+}
+
 function metadataPrice(metadata: Record<string, unknown> | null): number | null {
   const raw = metadata?.price
   if (raw === null || raw === undefined || raw === '') return null
@@ -151,6 +178,7 @@ function toActivityRecord(
     price: activity.price,
     ageRanges,
     weeklyHours: activityHours(activity, place),
+    amenities: activityAmenities(activity, place),
     createdAt: activity.created_at ?? '',
     item: {
       kind: 'activity',
@@ -187,6 +215,10 @@ function toPlaceRecord(
     price,
     ageRanges,
     weeklyHours: placeHours(place),
+    amenities: mergeAmenities([
+      placeAmenities(place),
+      ...activities.map((record) => record.amenities),
+    ]),
     createdAt: place.created_at ?? '',
     item: {
       kind: 'place',

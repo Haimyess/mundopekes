@@ -14,7 +14,11 @@ vi.mock('../../server/utils/search-dataset', () => ({
 
 vi.mock('@mundopekes/core', async (importOriginal) => {
   const core = await importOriginal<typeof import('@mundopekes/core')>()
-  return { ...core, todayIn: () => '2026-11-20' }
+  return {
+    ...core,
+    todayIn: () => '2026-11-20',
+    toZonedMoment: () => ({ date: '2026-11-20', weekday: 5, minutes: 600 }),
+  }
 })
 
 const h3 = await import('h3')
@@ -31,6 +35,7 @@ function activity(id: string, overrides: Record<string, unknown> = {}) {
     title_i18n: { es: id },
     price: null,
     is_free: false,
+    stroller_friendly: false,
     images: null,
     created_at: '2026-01-01',
     metadata: null,
@@ -53,7 +58,19 @@ beforeEach(() => {
   mockDataset = {
     activities: [
       activity('museo', { created_at: '2026-03-01' }),
-      activity('parque', { is_free: true, created_at: '2026-02-01' }),
+      activity('parque', {
+        is_free: true,
+        stroller_friendly: true,
+        created_at: '2026-02-01',
+        place: {
+          id: 'place-2',
+          name_i18n: { es: 'Parque' },
+          images: null,
+          created_at: '2026-01-01',
+          metadata: { opening_hours_text: ['viernes: 9:00–17:00'] },
+          city: null,
+        },
+      }),
     ],
     places: [],
     categories: [
@@ -115,5 +132,15 @@ describe('GET /api/search', () => {
     mockQuery = { when: 'occasion:hanukkah' }
     const response = await handler(event)
     expect(response.items.map(({ id }) => id)).toEqual(['parque'])
+  })
+
+  it('filters by kind, amenities and open now and reports their facets', async () => {
+    mockQuery = { amenities: 'stroller', open: 'now', kind: 'activity' }
+    const response = await handler(event)
+    expect(response.items.map(({ id }) => id)).toEqual(['parque'])
+    expect(response.facets).toMatchObject({
+      kinds: { activity: 1, place: 0 },
+      amenities: { stroller: 1, shade: 0 },
+    })
   })
 })

@@ -11,7 +11,11 @@ const BEACH: PlaceRow = {
   name_i18n: { he: 'חוף רמבם', es: 'Playa Rambam' },
   images: null,
   created_at: '2026-02-01T00:00:00Z',
-  metadata: { opening_hours_text: ['יום שבת: סגור', 'יום ראשון: 6:00–20:00'], is_free: true },
+  metadata: {
+    opening_hours_text: ['יום שבת: סגור', 'יום ראשון: 6:00–20:00'],
+    is_free: true,
+    wheelchair: true,
+  },
   city: { name: 'Haifa' },
 }
 
@@ -20,9 +24,11 @@ const PICNIC: ActivityRow = {
   title_i18n: { he: 'פיקניק', es: 'Picnic en el parque' },
   price: 30,
   is_free: false,
+  stroller_friendly: true,
   images: ['https://example.com/picnic.jpg'],
   created_at: '2026-03-01T00:00:00Z',
   metadata: {
+    has_shadow: true,
     schedule_structured: {
       sunday: { open: false, start: '09:00', end: '17:00' },
       monday: { open: true, start: '09:00', end: '17:00' },
@@ -71,6 +77,7 @@ describe('buildSearchRecords', () => {
         { minMonths: 72, maxMonths: 143 },
       ],
       weeklyHours: { 0: [], 6: [{ start: 600, end: 960 }] },
+      amenities: ['stroller', 'wheelchair', 'shade'],
       item: {
         title: PICNIC.title_i18n,
         placeName: BEACH.name_i18n,
@@ -90,6 +97,7 @@ describe('buildSearchRecords', () => {
       isFree: true,
       price: 30,
       weeklyHours: { 6: [], 0: [{ start: 360, end: 1200 }] },
+      amenities: ['stroller', 'wheelchair', 'shade'],
       item: {
         imageUrl: 'https://example.com/picnic.jpg',
         activityCount: 2,
@@ -103,9 +111,11 @@ describe('buildSearchRecords', () => {
     expect(records.map(({ kind }) => kind)).toEqual(['activity'])
   })
 
-  it('keeps places without activities', () => {
+  it('keeps places without activities with their own amenities', () => {
     const records = buildSearchRecords({ activities: [], places: [BEACH], categories: [] })
-    expect(records).toMatchObject([{ kind: 'place', item: { activityCount: 0, ageSpan: null } }])
+    expect(records).toMatchObject([
+      { kind: 'place', amenities: ['wheelchair'], item: { activityCount: 0, ageSpan: null } },
+    ])
   })
 
   it('falls back to the place hours when the activity has no schedule', () => {
