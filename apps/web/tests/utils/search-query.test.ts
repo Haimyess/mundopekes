@@ -20,6 +20,12 @@ describe('search query helpers', () => {
     expect(toSearchQuery(parseSearchQuery(query))).toEqual(query)
   })
 
+  it('serializes amenities in one canonical order', () => {
+    expect(toSearchQuery({ amenities: ['shade', 'stroller'] })).toEqual({
+      amenities: 'stroller,shade',
+    })
+  })
+
   it('omits defaults from the URL', () => {
     expect(toSearchQuery({ sort: 'recommended', page: 1, ages: [] })).toEqual({})
   })

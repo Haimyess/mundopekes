@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
-import { WHEN_SHORTCUTS } from '@mundopekes/core'
+import { SEARCH_AMENITIES, SEARCH_KINDS, SEARCH_SORTS, WHEN_SHORTCUTS } from '@mundopekes/core'
 
 const APP_DIR = resolve(__dirname, '../../app')
 const CATALOG_DIR = resolve(__dirname, '../../../../packages/i18n/locales/web')
@@ -15,7 +15,13 @@ const SOURCES = [
   'error.vue',
   'pages/search.vue',
   'components/search/ResultsHeader.vue',
-  'components/search/QuickChips.vue',
+  'components/search/Toolbar.vue',
+  'components/search/SheetFooter.vue',
+  'components/search/WhenSheet.vue',
+  'components/search/WhoSheet.vue',
+  'components/search/FiltersSheet.vue',
+  'components/search/SortSheet.vue',
+  'composables/useSearchLabels.ts',
   'components/search/ResultCard.vue',
   'components/search/ResultList.vue',
   'components/search/Pagination.vue',
@@ -27,7 +33,12 @@ const STATIC_KEY_PATTERN = /\bt\(\s*'([\w.]+)'/g
 const ERROR_MESSAGE_KEYS = ['errors.notFound', 'errors.gone', 'errors.generic'].flatMap(
   (prefix) => [`${prefix}.title`, `${prefix}.description`]
 )
-const WHEN_SHORTCUT_KEYS = WHEN_SHORTCUTS.map((shortcut) => `results.when.${shortcut}`)
+const DYNAMIC_KEYS = [
+  ...WHEN_SHORTCUTS.map((shortcut) => `results.when.${shortcut}`),
+  ...SEARCH_KINDS.map((kind) => `results.filters.kinds.${kind}`),
+  ...SEARCH_AMENITIES.map((amenity) => `results.filters.amenities.${amenity}`),
+  ...SEARCH_SORTS.map((sort) => `results.sort.${sort}`),
+]
 
 const usedKeys = [
   ...new Set([
@@ -37,7 +48,7 @@ const usedKeys = [
       )
     ),
     ...ERROR_MESSAGE_KEYS,
-    ...WHEN_SHORTCUT_KEYS,
+    ...DYNAMIC_KEYS,
   ]),
 ]
 
@@ -59,7 +70,13 @@ describe('layout and search translations', () => {
 
   it('gives Russian plurals the four forms of its plural rule', () => {
     const catalog = JSON.parse(readFileSync(resolve(CATALOG_DIR, 'ru.json'), 'utf8')) as Catalog
-    for (const key of ['results.count', 'results.activityCount']) {
+    for (const key of [
+      'results.count',
+      'results.activityCount',
+      'results.filters.matches',
+      'results.filters.show',
+      'results.whoSheet.years',
+    ]) {
       expect(String(resolveKey(catalog, key)).split('|')).toHaveLength(4)
     }
   })

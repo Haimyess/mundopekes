@@ -62,12 +62,12 @@
     "agesLabel": "De {min} a {max} años",
     "free": "Gratis",
     "forAges": "Para {ages} años",
-    "quickFilters": "Cuándo",
     "when": {
       "today": "Hoy",
       "tomorrow": "Mañana",
       "this-weekend": "Este finde",
-      "shabat": "Shabat"
+      "shabat": "Shabat",
+      "occasion": "Festivo"
     },
     "empty": {
       "title": "No encontramos planes",
@@ -82,6 +82,66 @@
     },
     "seo": {
       "description": "Actividades y lugares para ir con niños en Israel, por edad, fecha y categoría."
+    },
+    "toolbar": {
+      "label": "Editar búsqueda",
+      "when": "Cuándo",
+      "who": "Quiénes",
+      "filters": "Filtros",
+      "sort": "Ordenar"
+    },
+    "who": {
+      "value": "Edades: {ages}"
+    },
+    "whenSheet": {
+      "title": "¿Cuándo?",
+      "shortcuts": "Atajos de fecha",
+      "calendar": "Elegir una fecha"
+    },
+    "whoSheet": {
+      "title": "¿Quiénes van?",
+      "description": "La edad de cada peque, en años.",
+      "empty": "Agrega a tus peques para ver primero lo que les sirve.",
+      "child": "Peque {number}",
+      "younger": "Menos años para peque {number}",
+      "older": "Más años para peque {number}",
+      "years": "{age} años | {age} año | {age} años",
+      "remove": "Quitar peque {number}",
+      "add": "Agregar peque"
+    },
+    "filters": {
+      "title": "Filtros",
+      "kind": "Tipo",
+      "kindAll": "Todo",
+      "kinds": {
+        "activity": "Actividades",
+        "place": "Lugares"
+      },
+      "price": "Precio",
+      "freeOnly": "Solo gratis",
+      "facilities": "Instalaciones",
+      "amenities": {
+        "stroller": "Acceso con cochecito",
+        "wheelchair": "Accesible en silla de ruedas",
+        "bathrooms": "Baños",
+        "shade": "Sombra"
+      },
+      "matches": "Ningún plan | 1 plan | {count} planes",
+      "hours": "Horario",
+      "openNow": "Abierto ahora",
+      "show": "No hay planes | Ver 1 plan | Ver {count} planes"
+    },
+    "sort": {
+      "title": "Ordenar por",
+      "ageFit": "Mejor para la edad de tus peques",
+      "recommended": "Recomendados",
+      "newest": "Más nuevos",
+      "price": "Menor precio"
+    },
+    "actions": {
+      "clear": "Borrar",
+      "done": "Listo",
+      "apply": "Aplicar"
     }
   }
 }

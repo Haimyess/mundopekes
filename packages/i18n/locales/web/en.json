@@ -62,12 +62,12 @@
     "agesLabel": "Ages {min} to {max}",
     "free": "Free",
     "forAges": "Good for age {ages}",
-    "quickFilters": "When",
     "when": {
       "today": "Today",
       "tomorrow": "Tomorrow",
       "this-weekend": "This weekend",
-      "shabat": "Shabbat"
+      "shabat": "Shabbat",
+      "occasion": "Holiday"
     },
     "empty": {
       "title": "No plans found",
@@ -82,6 +82,66 @@
     },
     "seo": {
       "description": "Activities and places to go with kids in Israel, by age, date and category."
+    },
+    "toolbar": {
+      "label": "Edit search",
+      "when": "When",
+      "who": "Who",
+      "filters": "Filters",
+      "sort": "Sort"
+    },
+    "who": {
+      "value": "Ages {ages}"
+    },
+    "whenSheet": {
+      "title": "When?",
+      "shortcuts": "Date shortcuts",
+      "calendar": "Pick a date"
+    },
+    "whoSheet": {
+      "title": "Who is going?",
+      "description": "Each child’s age, in years.",
+      "empty": "Add your kids to see what suits them first.",
+      "child": "Child {number}",
+      "younger": "Younger age for child {number}",
+      "older": "Older age for child {number}",
+      "years": "{age} years | {age} year | {age} years",
+      "remove": "Remove child {number}",
+      "add": "Add a child"
+    },
+    "filters": {
+      "title": "Filters",
+      "kind": "Type",
+      "kindAll": "All",
+      "kinds": {
+        "activity": "Activities",
+        "place": "Places"
+      },
+      "price": "Price",
+      "freeOnly": "Free only",
+      "facilities": "Facilities",
+      "amenities": {
+        "stroller": "Stroller access",
+        "wheelchair": "Wheelchair accessible",
+        "bathrooms": "Toilets",
+        "shade": "Shade"
+      },
+      "matches": "No plans | 1 plan | {count} plans",
+      "hours": "Opening hours",
+      "openNow": "Open now",
+      "show": "No plans | Show 1 plan | Show {count} plans"
+    },
+    "sort": {
+      "title": "Sort by",
+      "ageFit": "Best for your kids’ ages",
+      "recommended": "Recommended",
+      "newest": "Newest",
+      "price": "Lowest price"
+    },
+    "actions": {
+      "clear": "Clear",
+      "done": "Done",
+      "apply": "Apply"
     }
   }
 }

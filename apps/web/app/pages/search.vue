@@ -72,7 +72,7 @@ watch(
 <template>
   <div class="search-page">
     <SearchResultsHeader :title="title" :total="total" />
-    <SearchQuickChips :occasion="occasion" />
+    <SearchToolbar :occasion="occasion" />
     <SearchResultList
       :items="items"
       :is-loading="isLoading"

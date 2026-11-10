@@ -62,12 +62,12 @@
     "agesLabel": "מגיל {min} עד {max}",
     "free": "חינם",
     "forAges": "מתאים לגיל {ages}",
-    "quickFilters": "מתי",
     "when": {
       "today": "היום",
       "tomorrow": "מחר",
       "this-weekend": "סוף השבוע",
-      "shabat": "שבת"
+      "shabat": "שבת",
+      "occasion": "חג"
     },
     "empty": {
       "title": "לא מצאנו תוכניות",
@@ -82,6 +82,66 @@
     },
     "seo": {
       "description": "פעילויות ומקומות לבלות עם ילדים בישראל, לפי גיל, תאריך וקטגוריה."
+    },
+    "toolbar": {
+      "label": "עריכת החיפוש",
+      "when": "מתי",
+      "who": "מי",
+      "filters": "מסננים",
+      "sort": "מיון"
+    },
+    "who": {
+      "value": "גילאים: {ages}"
+    },
+    "whenSheet": {
+      "title": "מתי?",
+      "shortcuts": "קיצורי תאריך",
+      "calendar": "בחירת תאריך"
+    },
+    "whoSheet": {
+      "title": "מי מגיע?",
+      "description": "הגיל של כל ילד, בשנים.",
+      "empty": "הוסיפו את הילדים כדי לראות קודם מה מתאים להם.",
+      "child": "ילד {number}",
+      "younger": "גיל צעיר יותר לילד {number}",
+      "older": "גיל מבוגר יותר לילד {number}",
+      "years": "{age} שנים | שנה | {age} שנים",
+      "remove": "הסרת ילד {number}",
+      "add": "הוספת ילד"
+    },
+    "filters": {
+      "title": "מסננים",
+      "kind": "סוג",
+      "kindAll": "הכול",
+      "kinds": {
+        "activity": "פעילויות",
+        "place": "מקומות"
+      },
+      "price": "מחיר",
+      "freeOnly": "רק בחינם",
+      "facilities": "מתקנים",
+      "amenities": {
+        "stroller": "נגיש לעגלה",
+        "wheelchair": "נגיש לכיסא גלגלים",
+        "bathrooms": "שירותים",
+        "shade": "צל"
+      },
+      "matches": "אין תוכניות | תוכנית אחת | {count} תוכניות",
+      "hours": "שעות פתיחה",
+      "openNow": "פתוח עכשיו",
+      "show": "אין תוכניות | הצגת תוכנית אחת | הצגת {count} תוכניות"
+    },
+    "sort": {
+      "title": "מיון לפי",
+      "ageFit": "הכי מתאים לגילאי הילדים",
+      "recommended": "מומלצים",
+      "newest": "החדשים ביותר",
+      "price": "המחיר הנמוך ביותר"
+    },
+    "actions": {
+      "clear": "ניקוי",
+      "done": "סיום",
+      "apply": "החלה"
     }
   }
 }
