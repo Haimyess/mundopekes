@@ -7,3 +7,5 @@ export {
   isRtlLocale,
 } from './locales'
 export type { ContentLocale } from './locales'
+export { PLURAL_RULES, russianPluralRule } from './plural-rules'
+export type { PluralRule } from './plural-rules'
