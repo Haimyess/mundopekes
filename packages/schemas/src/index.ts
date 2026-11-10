@@ -40,3 +40,13 @@ export { TRACKING_EVENT_TYPES, TRACKING_PAYLOAD_MAX_LENGTH, trackingEventSchema 
 export type { TrackingEvent, TrackingEventType } from './tracking'
 export { entityIdSchema } from './entity'
 export type { EntityId } from './entity'
+export {
+  FAMILY_COOKIE_MAX_AGE_SECONDS,
+  FAMILY_COOKIE_NAME,
+  FAMILY_COOKIE_VERSION,
+  familyCookieSchema,
+  familyCookieToSearchQuery,
+  parseFamilyCookie,
+  toFamilyCookie,
+} from './family'
+export type { FamilyCookie } from './family'
