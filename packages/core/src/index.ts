@@ -36,12 +36,21 @@ export {
 } from './opening-hours'
 export type { TimeInterval, WeeklyHours } from './opening-hours'
 export { matchesSearchText, normalizeSearchText } from './text'
-export { isAvailableInRange, SEARCH_PAGE_SIZE, SEARCH_SORTS, searchRecords } from './search'
+export {
+  isAvailableInRange,
+  SEARCH_AMENITIES,
+  SEARCH_KINDS,
+  SEARCH_PAGE_SIZE,
+  SEARCH_SORTS,
+  searchRecords,
+} from './search'
 export type {
   SearchCriteria,
   SearchFacets,
   SearchHit,
   SearchPage,
+  SearchAmenity,
+  SearchKind,
   SearchRecord,
   SearchSort,
 } from './search'
