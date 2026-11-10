@@ -27,11 +27,16 @@ export {
 } from './search'
 export type { ChildAges, SearchQuery } from './search'
 export {
+  QUICK_SUGGESTION_SOURCE,
+  quickSuggestionRequestSchema,
   SUGGESTION_LIMITS,
+  SUGGESTION_ORIGINS,
   suggestionShortFormSchema,
   suggestionShortRequestSchema,
 } from './suggestion'
 export type {
+  QuickSuggestionRequest,
+  SuggestionOrigin,
   SuggestionShortForm,
   SuggestionShortFormInput,
   SuggestionShortRequest,

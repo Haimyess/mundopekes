@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  quickSuggestionRequestSchema,
   SUGGESTION_LIMITS,
   VALIDATION_ERRORS,
   suggestionShortFormSchema,
@@ -70,5 +71,45 @@ describe('suggestionShortRequestSchema', () => {
       suggestionShortRequestSchema.safeParse({ ...VALID_FORM, locale: 'fr' }).error?.issues[0]
         ?.message
     ).toBe(VALIDATION_ERRORS.invalidOption)
+  })
+})
+
+describe('suggestion length rules from the design', () => {
+  it('asks for at least two characters in name and place', () => {
+    expect(firstError({ ...VALID_FORM, name: 'a' })).toBe(VALIDATION_ERRORS.tooShort)
+    expect(firstError({ ...VALID_FORM, where: ' b ' })).toBe(VALIDATION_ERRORS.tooShort)
+  })
+
+  it('keeps the design limits', () => {
+    expect(SUGGESTION_LIMITS).toMatchObject({ name: 120, where: 160, why: 500 })
+  })
+})
+
+describe('quickSuggestionRequestSchema', () => {
+  const VALID_REQUEST = { ...VALID_FORM, locale: 'he', source: 'quick', turnstileToken: 'token' }
+
+  it('accepts a quick suggestion with its source, token and origin', () => {
+    expect(quickSuggestionRequestSchema.parse({ ...VALID_REQUEST, origin: 'home' })).toEqual({
+      ...VALID_FORM,
+      locale: 'he',
+      source: 'quick',
+      turnstileToken: 'token',
+      origin: 'home',
+    })
+  })
+
+  it('requires the anti-bot token and the quick source', () => {
+    expect(
+      quickSuggestionRequestSchema.safeParse({ ...VALID_REQUEST, turnstileToken: '' }).success
+    ).toBe(false)
+    expect(
+      quickSuggestionRequestSchema.safeParse({ ...VALID_REQUEST, source: 'wizard' }).success
+    ).toBe(false)
+  })
+
+  it('ignores an unknown origin', () => {
+    expect(
+      quickSuggestionRequestSchema.parse({ ...VALID_REQUEST, origin: 'evil' }).origin
+    ).toBeUndefined()
   })
 })

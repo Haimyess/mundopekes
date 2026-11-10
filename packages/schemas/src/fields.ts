@@ -1,11 +1,14 @@
 import { z } from 'zod'
 import { VALIDATION_ERRORS } from './errors'
 
-export const requiredText = (maxLength: number) =>
+const MIN_REQUIRED_LENGTH = 1
+
+export const requiredText = (maxLength: number, minLength: number = MIN_REQUIRED_LENGTH) =>
   z
     .string({ error: VALIDATION_ERRORS.required })
     .trim()
-    .min(1, { error: VALIDATION_ERRORS.required })
+    .min(MIN_REQUIRED_LENGTH, { error: VALIDATION_ERRORS.required })
+    .min(minLength, { error: VALIDATION_ERRORS.tooShort })
     .max(maxLength, { error: VALIDATION_ERRORS.tooLong })
 
 export const optionalText = (maxLength: number) =>
