@@ -32,6 +32,8 @@ export interface PlaceRow {
   lat: number | null
   lng: number | null
   name_i18n: LocalizedText | null
+  description_i18n?: LocalizedText | null
+  updated_at?: string | null
   images: string[] | null
   created_at: string | null
   metadata: Record<string, unknown> | null
@@ -277,4 +279,30 @@ export function buildSearchRecords({
     .filter(({ placeActivities }) => placeActivities.length !== SINGLE_ACTIVITY)
     .map(({ place, placeActivities }) => toPlaceRecord(place, placeActivities))
   return [...activityRecords, ...placeRecords]
+}
+
+export interface PlaceRecords {
+  place: PlaceRow
+  record: SearchResultRecord
+  activities: SearchResultRecord[]
+}
+
+export function buildPlaceRecords(dataset: SearchDataset, placeId: string): PlaceRecords | null {
+  const place = dataset.places.find(({ id }) => id === placeId)
+  if (!place) return null
+  const resolveCategorySlugs = createCategorySlugsResolver(dataset.categories)
+  const activities = dataset.activities
+    .filter((activity) => single(activity.place)?.id === placeId)
+    .map((activity) => toActivityRecord(activity, resolveCategorySlugs))
+  return { place, record: toPlaceRecord(place, activities), activities }
+}
+
+export function toListedResultItem(record: SearchResultRecord): SearchResultItem {
+  return {
+    ...record.item,
+    fit: 'all',
+    matchingAges: [],
+    location: record.location,
+    distanceKm: null,
+  }
 }

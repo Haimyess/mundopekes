@@ -1,4 +1,4 @@
-import { serverSupabaseClient } from '#supabase/server'
+import { serverSupabaseClient, serverSupabaseServiceRole } from '#supabase/server'
 import type { Database } from '@mundopekes/types'
 import type { H3Event } from 'h3'
 import type { SearchOccasion } from '#shared/types/search'
@@ -11,7 +11,8 @@ const ACTIVITY_SELECT = `
   place:places!inner ( id, lat, lng, name_i18n, images, created_at, metadata, city:cities ( name ) ),
   age_ranges:activity_age_ranges ( age_range:age_ranges ( min_months, max_months ) )
 `
-const PLACE_SELECT = 'id, lat, lng, name_i18n, images, created_at, metadata, city:cities ( name )'
+const PLACE_SELECT =
+  'id, lat, lng, name_i18n, description_i18n, images, created_at, updated_at, metadata, city:cities ( name )'
 const CATEGORY_SELECT = 'id, slug, parent_id'
 const OCCASION_SELECT = 'key, name_i18n, starts_on, ends_on'
 
@@ -69,3 +70,13 @@ export const getUpcomingOccasions = defineCachedFunction(loadUpcomingOccasions, 
   maxAge: SEARCH_CACHE_MAX_AGE_SECONDS,
   getKey: (_event: H3Event, today: string) => today,
 })
+
+export async function getPlaceStatus(event: H3Event, id: string): Promise<string | null> {
+  try {
+    const client = serverSupabaseServiceRole<Database>(event)
+    const { data } = await client.from('places').select('status').eq('id', id).maybeSingle()
+    return data?.status ?? null
+  } catch {
+    return null
+  }
+}
