@@ -15,6 +15,8 @@ const BEACH: PlaceRow = {
     opening_hours_text: ['יום שבת: סגור', 'יום ראשון: 6:00–20:00'],
     is_free: true,
     wheelchair: true,
+    has_parking: true,
+    discounts: ['club', 'unknown-offer'],
   },
   city: { name: 'Haifa' },
 }
@@ -29,6 +31,8 @@ const PICNIC: ActivityRow = {
   created_at: '2026-03-01T00:00:00Z',
   metadata: {
     has_shadow: true,
+    has_kosher_food: true,
+    discounts: ['last-minute'],
     schedule_structured: {
       sunday: { open: false, start: '09:00', end: '17:00' },
       monday: { open: true, start: '09:00', end: '17:00' },
@@ -77,7 +81,8 @@ describe('buildSearchRecords', () => {
         { minMonths: 72, maxMonths: 143 },
       ],
       weeklyHours: { 0: [], 6: [{ start: 600, end: 960 }] },
-      amenities: ['stroller', 'wheelchair', 'shade'],
+      amenities: ['stroller', 'wheelchair', 'parking', 'kosher', 'shade'],
+      discounts: ['club', 'last-minute'],
       item: {
         title: PICNIC.title_i18n,
         placeName: BEACH.name_i18n,
@@ -97,7 +102,8 @@ describe('buildSearchRecords', () => {
       isFree: true,
       price: 30,
       weeklyHours: { 6: [], 0: [{ start: 360, end: 1200 }] },
-      amenities: ['stroller', 'wheelchair', 'shade'],
+      amenities: ['stroller', 'wheelchair', 'parking', 'kosher', 'shade'],
+      discounts: ['club', 'last-minute'],
       item: {
         imageUrl: 'https://example.com/picnic.jpg',
         activityCount: 2,
@@ -114,7 +120,12 @@ describe('buildSearchRecords', () => {
   it('keeps places without activities with their own amenities', () => {
     const records = buildSearchRecords({ activities: [], places: [BEACH], categories: [] })
     expect(records).toMatchObject([
-      { kind: 'place', amenities: ['wheelchair'], item: { activityCount: 0, ageSpan: null } },
+      {
+        kind: 'place',
+        amenities: ['wheelchair', 'parking'],
+        discounts: ['club'],
+        item: { activityCount: 0, ageSpan: null },
+      },
     ])
   })
 

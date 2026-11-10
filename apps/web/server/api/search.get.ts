@@ -41,6 +41,8 @@ export default defineEventHandler(async (event): Promise<SearchResponse> => {
       dateRange: resolveDateRange(query.when, today, occasions),
       kind: query.kind,
       amenities: query.amenities,
+      discounts: query.discounts,
+      priceBand: query.price,
       openAt: query.open ? toZonedMoment(now) : null,
       sort: query.sort ?? 'recommended',
     },

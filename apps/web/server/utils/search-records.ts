@@ -1,8 +1,12 @@
 import {
   parseOpeningHoursText,
   SEARCH_AMENITIES,
+  SEARCH_AMENITY_METADATA_KEYS,
+  SEARCH_DISCOUNTS,
+  SEARCH_DISCOUNTS_METADATA_KEY,
   type AgeRangeMonths,
   type SearchAmenity,
+  type SearchDiscount,
   type SearchRecord,
   type WeeklyHours,
 } from '@mundopekes/core'
@@ -112,28 +116,35 @@ function createCategorySlugsResolver(categories: readonly CategoryRow[]) {
   }
 }
 
-function isFlagSet(metadata: Record<string, unknown> | null | undefined, key: string): boolean {
-  return metadata?.[key] === true
+type Metadata = Record<string, unknown> | null | undefined
+
+function amenitiesFrom(sources: readonly Metadata[]): SearchAmenity[] {
+  return SEARCH_AMENITIES.filter((amenity) =>
+    sources.some((metadata) => metadata?.[SEARCH_AMENITY_METADATA_KEYS[amenity]] === true)
+  )
 }
 
-function placeAmenities(place: PlaceRow | null): SearchAmenity[] {
-  const amenities: SearchAmenity[] = []
-  if (isFlagSet(place?.metadata, 'wheelchair')) amenities.push('wheelchair')
-  if (isFlagSet(place?.metadata, 'has_bathrooms')) amenities.push('bathrooms')
-  return amenities
+function discountsFrom(sources: readonly Metadata[]): SearchDiscount[] {
+  const declared = new Set(
+    sources.flatMap((metadata) => {
+      const discounts = metadata?.[SEARCH_DISCOUNTS_METADATA_KEY]
+      return Array.isArray(discounts) ? discounts : []
+    })
+  )
+  return SEARCH_DISCOUNTS.filter((discount) => declared.has(discount))
 }
 
-function activityAmenities(activity: ActivityRow, place: PlaceRow | null): SearchAmenity[] {
-  const amenities = new Set<SearchAmenity>(placeAmenities(place))
-  if (activity.stroller_friendly === true) amenities.add('stroller')
-  if (isFlagSet(activity.metadata, 'has_bathrooms')) amenities.add('bathrooms')
-  if (isFlagSet(activity.metadata, 'has_shadow')) amenities.add('shade')
-  return SEARCH_AMENITIES.filter((amenity) => amenities.has(amenity))
+function activitySources(activity: ActivityRow, place: PlaceRow | null): Metadata[] {
+  return [
+    activity.metadata,
+    place?.metadata,
+    { [SEARCH_AMENITY_METADATA_KEYS.stroller]: activity.stroller_friendly === true },
+  ]
 }
 
-function mergeAmenities(lists: readonly (readonly SearchAmenity[])[]): SearchAmenity[] {
+function mergeValues<T extends string>(order: readonly T[], lists: readonly (readonly T[])[]): T[] {
   const merged = new Set(lists.flat())
-  return SEARCH_AMENITIES.filter((amenity) => merged.has(amenity))
+  return order.filter((value) => merged.has(value))
 }
 
 function metadataPrice(metadata: Record<string, unknown> | null): number | null {
@@ -178,7 +189,8 @@ function toActivityRecord(
     price: activity.price,
     ageRanges,
     weeklyHours: activityHours(activity, place),
-    amenities: activityAmenities(activity, place),
+    amenities: amenitiesFrom(activitySources(activity, place)),
+    discounts: discountsFrom(activitySources(activity, place)),
     createdAt: activity.created_at ?? '',
     item: {
       kind: 'activity',
@@ -215,9 +227,13 @@ function toPlaceRecord(
     price,
     ageRanges,
     weeklyHours: placeHours(place),
-    amenities: mergeAmenities([
-      placeAmenities(place),
+    amenities: mergeValues(SEARCH_AMENITIES, [
+      amenitiesFrom([place.metadata]),
       ...activities.map((record) => record.amenities),
+    ]),
+    discounts: mergeValues(SEARCH_DISCOUNTS, [
+      discountsFrom([place.metadata]),
+      ...activities.map((record) => record.discounts),
     ]),
     createdAt: place.created_at ?? '',
     item: {
