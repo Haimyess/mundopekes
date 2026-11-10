@@ -51,8 +51,13 @@ const stubMatchMedia = (matches: boolean) => {
   )
 }
 
-const mountSheet = (props: Record<string, unknown> = {}, slots: Record<string, string> = {}) =>
+const mountSheet = (
+  props: Record<string, unknown> = {},
+  slots: Record<string, string> = {},
+  options: { attachTo?: HTMLElement } = {}
+) =>
   mount(UiSheet, {
+    ...options,
     props: { title: '¿Cuándo?', closeLabel: 'Cerrar', open: true, ...props },
     slots: {
       trigger: '<button type="button">Este finde</button>',
@@ -131,5 +136,27 @@ describe('UiSheet', () => {
         .find('[data-slot="footer"]')
         .text()
     ).toBe('Aplicar')
+  })
+
+  it('returns focus to the element that opened the drawer when it closes', async () => {
+    stubMatchMedia(false)
+    vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => {
+      callback(0)
+      return 0
+    })
+    const opener = document.createElement('button')
+    document.body.append(opener)
+    opener.focus()
+    const wrapper = mountSheet({ open: false }, {}, { attachTo: document.body })
+    await wrapper.setProps({ open: true })
+    await nextTick()
+    await nextTick()
+    expect(document.activeElement).not.toBe(opener)
+    await wrapper.setProps({ open: false })
+    await nextTick()
+    await nextTick()
+    expect(document.activeElement).toBe(opener)
+    wrapper.unmount()
+    opener.remove()
   })
 })

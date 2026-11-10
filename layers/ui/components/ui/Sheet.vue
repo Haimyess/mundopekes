@@ -22,11 +22,23 @@ const POPOVER_CONTENT = {
 } as const
 
 const drawerCloseButton = ref<HTMLButtonElement | null>(null)
+let focusReturnTarget: HTMLElement | null = null
 
-watch(open, async (isOpen) => {
-  if (!isOpen || isDesktop.value) return
-  await nextTick()
-  requestAnimationFrame(() => drawerCloseButton.value?.focus())
+function focusAfterRender(target: () => HTMLElement | null | undefined) {
+  void nextTick(() => requestAnimationFrame(() => target()?.focus()))
+}
+
+watch(open, (isOpen) => {
+  if (isDesktop.value) return
+  if (isOpen) {
+    focusReturnTarget =
+      document.activeElement instanceof HTMLElement ? document.activeElement : null
+    focusAfterRender(() => drawerCloseButton.value)
+    return
+  }
+  const target = focusReturnTarget
+  focusReturnTarget = null
+  focusAfterRender(() => (target?.isConnected ? target : null))
 })
 
 const drawerUi = {
