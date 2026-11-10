@@ -7,6 +7,7 @@ interface Props {
   imageSrc?: string | null
   imageAlt?: string
   imageSizes?: string
+  isImageOptimized?: boolean
   aspectRatio?: MediaAspectRatio
   headingLevel?: 2 | 3 | 4
   isEager?: boolean
@@ -17,6 +18,7 @@ const props = withDefaults(defineProps<Props>(), {
   imageSrc: null,
   imageAlt: undefined,
   imageSizes: '(min-width: 1200px) 25vw, (min-width: 768px) 40vw, 80vw',
+  isImageOptimized: true,
   aspectRatio: '4/3',
   headingLevel: 3,
   isEager: false,
@@ -30,11 +32,19 @@ const resolvedAlt = computed(() => props.imageAlt ?? props.title)
   <article class="ui-media-card" :class="{ 'ui-media-card--linked': !!to }">
     <div class="ui-media-card__media" :style="{ aspectRatio }">
       <NuxtImg
-        v-if="imageSrc"
+        v-if="imageSrc && isImageOptimized"
         :src="imageSrc"
         :alt="resolvedAlt"
         :sizes="imageSizes"
         :loading="isEager ? 'eager' : 'lazy'"
+        class="ui-media-card__image"
+      />
+      <img
+        v-else-if="imageSrc"
+        :src="imageSrc"
+        :alt="resolvedAlt"
+        :loading="isEager ? 'eager' : 'lazy'"
+        decoding="async"
         class="ui-media-card__image"
       />
       <div v-else class="ui-media-card__placeholder">

@@ -48,7 +48,7 @@ const handleClick = () => {
       :href="href ?? undefined"
       class="ui-chip"
       :class="[`ui-chip--${size}`, { 'ui-chip--selected': selected }]"
-      :aria-current="selected ? 'page' : undefined"
+      :aria-current="selected ? 'true' : undefined"
       @click="navigate"
     >
       <UiIcon v-if="icon" :name="icon" :size="16" />

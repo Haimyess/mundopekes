@@ -50,7 +50,7 @@ describe('UiChip', () => {
   it('renders as a link and marks the current one', () => {
     const link = mountChip({ to: '/search?category=parks', selected: true }).find('a')
     expect(link.attributes('href')).toBe('/search?category=parks')
-    expect(link.attributes('aria-current')).toBe('page')
+    expect(link.attributes('aria-current')).toBe('true')
     expect(link.classes()).toContain('ui-chip--selected')
   })
 

@@ -47,6 +47,15 @@ describe('UiMediaCard', () => {
     ).toBe('eager')
   })
 
+  it('renders a plain image when optimization is turned off', () => {
+    const plain = mountCard({ title: 'x', imageSrc: '/api/photo', isImageOptimized: false })
+    expect(plain.find('img').attributes('src')).toBe('/api/photo')
+    expect(plain.findComponent({ name: 'NuxtImg' }).exists()).toBe(false)
+    expect(
+      mountCard({ title: 'x', imageSrc: '/a.jpg' }).findComponent({ name: 'NuxtImg' }).exists()
+    ).toBe(true)
+  })
+
   it('shows a placeholder when there is no image', () => {
     const wrapper = mountCard({ title: 'x', imageSrc: null })
     expect(wrapper.find('img').exists()).toBe(false)
