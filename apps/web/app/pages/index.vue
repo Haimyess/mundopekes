@@ -1,14 +1,28 @@
 <script setup lang="ts">
 import type { HomeContextSection, HomeResponse } from '#shared/types/home'
+import type { SearchResponse } from '#shared/types/search'
 
 const { t } = useI18n()
 const { tc } = useI18nContent()
 const { getNavCategoriesWithChildren } = useCategories()
 
-const [{ data: home }, { data: categories }] = await Promise.all([
+const { family, clear: forgetFamily } = useFamily()
+const familyQuery = computed(() => (family.value ? toSearchQuery(family.value) : null))
+
+const [{ data: home }, { data: categories }, { data: familyResults }] = await Promise.all([
   useFetch<HomeResponse>('/api/home', { key: 'home' }),
   useAsyncData('layout-nav-categories', getNavCategoriesWithChildren, { default: () => [] }),
+  useAsyncData(
+    'home-family',
+    () =>
+      familyQuery.value
+        ? $fetch<SearchResponse>('/api/search', { query: familyQuery.value })
+        : Promise.resolve(null),
+    { watch: [familyQuery] }
+  ),
 ])
+
+const handleForgetFamily = () => forgetFamily()
 
 useSeoMeta({
   title: () => t('home.seo.title'),
@@ -32,6 +46,12 @@ const categoryName = (slug: string) => {
 <template>
   <div class="home-page">
     <HomeHeroSearch :occasion="home?.occasion ?? null" />
+    <HomeFamilySection
+      v-if="family"
+      :family="family"
+      :results="familyResults ?? null"
+      @forget="handleForgetFamily"
+    />
     <HomeCarouselSection
       v-if="home?.context"
       :title="contextTitle(home.context)"

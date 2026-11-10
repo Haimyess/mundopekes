@@ -47,6 +47,8 @@ const SOURCES = [
   'components/home/CategoryGrid.vue',
   'components/home/Nearby.vue',
   'components/home/Ctas.vue',
+  'components/home/FamilySection.vue',
+  'components/search/FamilySavePrompt.vue',
   'composables/useSearchLabels.ts',
   'components/search/ResultCard.vue',
   'components/search/ResultList.vue',

@@ -260,5 +260,21 @@
       "title": "MundoPekes · Things to do with kids in Israel",
       "description": "Plans, activities and places to go with kids in Israel, by age, date and area."
     }
+  },
+  "family": {
+    "title": "For your family",
+    "summary": "Your saved search",
+    "edit": "Edit",
+    "forget": "Forget",
+    "results": "Plans for you",
+    "empty": "There are no plans for your saved search right now. Try editing it.",
+    "saved": "Search saved",
+    "prompt": {
+      "title": "Save this search?",
+      "updateTitle": "Update your saved search?",
+      "description": "Next time you will see these plans as soon as you arrive. It is stored on this device only.",
+      "save": "Save",
+      "dismiss": "Not now"
+    }
   }
 }

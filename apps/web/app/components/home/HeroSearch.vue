@@ -24,7 +24,8 @@ const QUICK_FILTERS: readonly QuickFilter[] = [
 
 const { t } = useI18n()
 const router = useRouter()
-const searchDraft = provideSearchDraft()
+const { family } = useFamily()
+const searchDraft = provideSearchDraft(family.value ?? {})
 
 const quickFilters = computed(() =>
   QUICK_FILTERS.map(({ key, icon, query }) => ({

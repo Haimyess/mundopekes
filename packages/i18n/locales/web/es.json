@@ -260,5 +260,21 @@
       "title": "MundoPekes · Qué hacer con niños en Israel",
       "description": "Planes, actividades y lugares para ir con niños en Israel, por edad, fecha y zona."
     }
+  },
+  "family": {
+    "title": "Para tu familia",
+    "summary": "Tu búsqueda guardada",
+    "edit": "Editar",
+    "forget": "Olvidar",
+    "results": "Planes para ustedes",
+    "empty": "Ahora no hay planes con tu búsqueda guardada. Prueba a editarla.",
+    "saved": "Guardamos tu búsqueda",
+    "prompt": {
+      "title": "¿Guardamos esta búsqueda?",
+      "updateTitle": "¿Actualizamos tu búsqueda guardada?",
+      "description": "La próxima vez verás estos planes apenas entres. Se guarda solo en este dispositivo.",
+      "save": "Guardar",
+      "dismiss": "Ahora no"
+    }
   }
 }

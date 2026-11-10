@@ -83,6 +83,7 @@ watch(
   <div class="search-page" :class="{ 'search-page--map': isMapView }">
     <SearchResultsHeader :title="title" :total="total" />
     <SearchToolbar :occasion="occasion" />
+    <SearchFamilySavePrompt />
     <div class="search-page__layout">
       <div class="search-page__results">
         <SearchResultList

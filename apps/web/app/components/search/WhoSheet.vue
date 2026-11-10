@@ -7,8 +7,9 @@ const { t } = useI18n()
 const { agesLabel } = useSearchLabels()
 
 const isOpen = ref(false)
+const { family } = useFamily()
 const { state, draft, apply } = useSearchSheet<number[]>(isOpen, (current) => [
-  ...(current.ages ?? []),
+  ...(current.ages ?? family.value?.ages ?? []),
 ])
 
 const canAddChild = computed(() => draft.value.length < CHILD_AGE_LIMITS.maxChildren)
