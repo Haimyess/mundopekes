@@ -106,6 +106,35 @@ describe('searchQuerySchema', () => {
     expect(searchQuerySchema.parse({ amenities: '' })).toEqual({})
   })
 
+  it('parses where, radius, bounds and view', () => {
+    expect(
+      searchQuerySchema.parse({
+        where: 'point:32.0853,34.7818',
+        radius: '10',
+        bbox: '32,34.7,32.2,34.9',
+        view: 'map',
+        sort: 'distance',
+      })
+    ).toEqual({
+      where: { kind: 'point', point: { lat: 32.09, lng: 34.78 } },
+      radius: 10,
+      bbox: { south: 32, west: 34.7, north: 32.2, east: 34.9 },
+      view: 'map',
+      sort: 'distance',
+    })
+  })
+
+  it('drops unknown places, radii, inverted bounds and views', () => {
+    expect(
+      searchQuerySchema.parse({
+        where: 'city:atlantis',
+        radius: '7',
+        bbox: '32.2,34.9,32,34.7',
+        view: 'grid',
+      })
+    ).toEqual({})
+  })
+
   it('ignores unknown legacy params', () => {
     expect(searchQuerySchema.parse({ age: '6', city: 'Haifa' })).toEqual({})
   })

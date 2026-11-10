@@ -1,6 +1,8 @@
 import {
   CHILD_AGE_LIMITS,
   parseWhen,
+  parseWhere,
+  SEARCH_RADII_KM,
   SEARCH_AMENITIES,
   SEARCH_DISCOUNTS,
   SEARCH_KINDS,
@@ -39,6 +41,28 @@ export const whenQuerySchema = z.string().transform((value, context) => {
 
 export type ChildAges = z.output<typeof childAgesSchema>
 
+export const SEARCH_VIEWS = ['list', 'map'] as const
+
+const BBOX_PATTERN = /^-?\d{1,3}(?:\.\d+)?(?:,-?\d{1,3}(?:\.\d+)?){3}$/
+
+export const whereQuerySchema = z.string().transform((value, context) => {
+  const where = parseWhere(value)
+  if (!where) {
+    context.addIssue({ code: 'custom', message: VALIDATION_ERRORS.invalidOption })
+    return z.NEVER
+  }
+  return where
+})
+
+export const bboxQuerySchema = z
+  .string()
+  .regex(BBOX_PATTERN)
+  .transform((value) => value.split(',').map(Number) as [number, number, number, number])
+  .refine(
+    ([south, west, north, east]) => south < north && west < east && south >= -90 && north <= 90
+  )
+  .transform(([south, west, north, east]) => ({ south, west, north, east }))
+
 export const SEARCH_QUERY_LIMITS = {
   maxTextLength: 80,
   maxPage: 100,
@@ -70,6 +94,16 @@ export const searchQuerySchema = z.object({
   ),
   category: optional(z.string().regex(SLUG_PATTERN)),
   when: optional(whenQuerySchema),
+  where: optional(whereQuerySchema),
+  radius: optional(
+    z.coerce
+      .number()
+      .refine((value): value is (typeof SEARCH_RADII_KM)[number] =>
+        (SEARCH_RADII_KM as readonly number[]).includes(value)
+      )
+  ),
+  bbox: optional(bboxQuerySchema),
+  view: optional(z.enum(SEARCH_VIEWS)),
   ages: optional(childAgesQuerySchema.transform((ages) => (ages.length ? ages : undefined))),
   free: optional(z.literal(TRUE_FLAG).transform(() => true)),
   kind: optional(z.enum(SEARCH_KINDS)),

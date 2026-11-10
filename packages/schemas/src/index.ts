@@ -18,7 +18,10 @@ export {
   childAgeSchema,
   childAgesQuerySchema,
   childAgesSchema,
+  bboxQuerySchema,
   SEARCH_QUERY_LIMITS,
+  SEARCH_VIEWS,
+  whereQuerySchema,
   searchQuerySchema,
   whenQuerySchema,
 } from './search'
