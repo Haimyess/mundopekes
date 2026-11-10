@@ -44,6 +44,12 @@ export default defineEventHandler(async (event) => {
     q = q.eq('flagged_possible_duplicate', query.flagged_possible_duplicate === 'true')
   }
 
+  if (query.source === 'quick') {
+    q = q.eq('metadata->>source', 'quick')
+  } else if (query.source === 'wizard') {
+    q = q.or('metadata->>source.is.null,metadata->>source.neq.quick')
+  }
+
   if (hasPagination) {
     q = q.range(from, to)
   }

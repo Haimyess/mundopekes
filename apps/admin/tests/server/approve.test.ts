@@ -823,3 +823,38 @@ function buildTableMock(table: string, metas: { suggestions?: unknown } = {}) {
     update: vi.fn(() => ({ eq: vi.fn().mockResolvedValue({ error: null }) })),
   }
 }
+
+describe('approve.post — quick suggestions', () => {
+  it('refuses to approve a quick suggestion that is still incomplete', async () => {
+    const suggestion = makeSuggestion({
+      category_id: null,
+      age_range: { ids: [] },
+      schedule: '',
+      location: { city: 'Ramat HaSharon', address: '' },
+      metadata: { source: 'quick', where: 'Ramat HaSharon' },
+    })
+    setupSupabase({ suggestions: { selectSingle: suggestion } })
+
+    await expect(handler(makeEvent())).rejects.toMatchObject({ statusCode: 422 })
+    expect(mockLogWarn).toHaveBeenCalledWith(
+      expect.anything(),
+      'suggestions/approve',
+      'Quick suggestion incomplete',
+      expect.objectContaining({
+        missingFields: ['location', 'category', 'ages', 'hours', 'title'],
+      })
+    )
+    expect(mockSupabase.from).not.toHaveBeenCalledWith('places')
+  })
+
+  it('approves a quick suggestion once the admin completed it', async () => {
+    const suggestion = makeSuggestion({
+      metadata: { ...makeSuggestion().metadata, source: 'quick' },
+    })
+    mockSupabase.from.mockImplementation((table) =>
+      buildTableMock(table, { suggestions: suggestion })
+    )
+
+    await expect(handler(makeEvent())).resolves.toBeDefined()
+  })
+})

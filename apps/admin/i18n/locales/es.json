@@ -897,7 +897,10 @@
       "typeNewPlace": "Lugar nuevo",
       "typeExistingPlace": "Lugar existente",
       "allDuplicates": "Todas",
-      "onlyDuplicates": "Posibles duplicados"
+      "onlyDuplicates": "Posibles duplicados",
+      "allOrigins": "Todos los orígenes",
+      "originQuick": "Rápida",
+      "originWizard": "Wizard"
     },
     "source": {
       "agent": "Agente",
@@ -1009,6 +1012,29 @@
       "websiteLabel": "Website",
       "openWeekendsLabel": "Abre fines de semana",
       "priceLabel": "Precio"
+    },
+    "quickBadge": "Sugerencia rápida",
+    "quickMissingTitle": "Faltan datos para aprobar",
+    "quickMissingDescription": "Completa estos campos antes de crear la ficha:",
+    "completeFromGoogle": "Completar desde Google",
+    "userWroteLabel": "Lo que escribió el usuario",
+    "userWhere": "Dónde",
+    "userLink": "Link",
+    "userWhy": "Por qué",
+    "userOrigin": "Enviada desde",
+    "userLocale": "Idioma",
+    "approveBlocked": "Completa los datos que faltan para aprobar",
+    "quickFields": {
+      "location": "Ubicación (Google)",
+      "category": "Categoría",
+      "ages": "Edades",
+      "hours": "Horario u «horario desconocido»",
+      "title": "Título"
+    },
+    "quickOrigins": {
+      "home": "Home",
+      "search": "Búsqueda",
+      "detail": "Ficha"
     }
   },
   "suggestionsDeleteModal": {

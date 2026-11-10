@@ -897,7 +897,10 @@
       "typeNewPlace": "New place",
       "typeExistingPlace": "Existing place",
       "allDuplicates": "All",
-      "onlyDuplicates": "Possible duplicates"
+      "onlyDuplicates": "Possible duplicates",
+      "allOrigins": "All origins",
+      "originQuick": "Quick",
+      "originWizard": "Wizard"
     },
     "source": {
       "agent": "Agent",
@@ -1009,6 +1012,29 @@
       "websiteLabel": "Website",
       "openWeekendsLabel": "Open on weekends",
       "priceLabel": "Price"
+    },
+    "quickBadge": "Quick suggestion",
+    "quickMissingTitle": "Missing data before approval",
+    "quickMissingDescription": "Complete these fields before creating the listing:",
+    "completeFromGoogle": "Complete from Google",
+    "userWroteLabel": "What the user wrote",
+    "userWhere": "Where",
+    "userLink": "Link",
+    "userWhy": "Why",
+    "userOrigin": "Sent from",
+    "userLocale": "Language",
+    "approveBlocked": "Complete the missing data to approve",
+    "quickFields": {
+      "location": "Location (Google)",
+      "category": "Category",
+      "ages": "Ages",
+      "hours": "Hours or “hours unknown”",
+      "title": "Title"
+    },
+    "quickOrigins": {
+      "home": "Home",
+      "search": "Search",
+      "detail": "Listing"
     }
   },
   "suggestionsDeleteModal": {

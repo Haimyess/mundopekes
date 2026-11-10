@@ -18,6 +18,7 @@ interface SuggestionFacetRow {
   is_free: boolean
   suggestion_type: string
   flagged_possible_duplicate: boolean
+  source: 'quick' | 'wizard'
 }
 
 const UBadge = resolveComponent('UBadge')
@@ -51,6 +52,7 @@ const {
   isFreeFilter,
   suggestionTypeFilter,
   duplicateFilter,
+  sourceFilter,
   page,
   pageSize,
   fetch: loadSuggestions,
@@ -64,6 +66,7 @@ syncUrlParam(cityFilter, 'city')
 syncUrlParam(isFreeFilter as unknown as Ref<string>, 'free')
 syncUrlParam(suggestionTypeFilter as unknown as Ref<string>, 'type')
 syncUrlParam(duplicateFilter as unknown as Ref<string>, 'duplicate')
+syncUrlParam(sourceFilter as unknown as Ref<string>, 'source')
 
 const pageCount = computed(() => Math.max(1, Math.ceil(total.value / pageSize.value)))
 
@@ -82,6 +85,7 @@ const facets = useFacets<SuggestionFacetRow>('/api/suggestions/facets', {
   is_free: isFreeFilter as unknown as Ref<string>,
   suggestion_type: suggestionTypeFilter as unknown as Ref<string>,
   flagged_possible_duplicate: duplicateFilter as unknown as Ref<string>,
+  source: sourceFilter as unknown as Ref<string>,
 })
 
 const withCount = (label: string, count: number) => `${label} (${count})`
@@ -104,6 +108,23 @@ const suggestionTypeOptions = computed(() => [
       facets.countFor('suggestion_type', 'experience_for_existing_place')
     ),
     value: 'experience_for_existing_place',
+  },
+])
+
+const sourceOptions = computed(() => [
+  {
+    label: withCount(t('suggestions.filters.allOrigins'), facets.countFor('source', 'all')),
+    value: 'all',
+  },
+  {
+    label: withCount(t('suggestions.filters.originQuick'), facets.countFor('source', 'quick')),
+    value: 'quick',
+    disabled: facets.isDisabled('source', 'quick'),
+  },
+  {
+    label: withCount(t('suggestions.filters.originWizard'), facets.countFor('source', 'wizard')),
+    value: 'wizard',
+    disabled: facets.isDisabled('source', 'wizard'),
   },
 ])
 
@@ -333,6 +354,13 @@ const columns = computed<TableColumn<Suggestion>[]>(() => [
           },
           () => statusLabel(row.original.status)
         ),
+        isQuickSuggestion(row.original)
+          ? h(
+              UBadge,
+              { color: 'primary', variant: 'subtle', size: 'sm', icon: 'i-lucide-zap' },
+              () => t('suggestions.filters.originQuick')
+            )
+          : null,
         row.original.suggestion_type === 'experience_for_existing_place'
           ? h(UBadge, { color: 'info', variant: 'subtle', size: 'sm' }, () =>
               t('suggestions.filters.typeExistingPlace')
@@ -503,6 +531,7 @@ onActivated(() => {
               class="min-w-48"
             />
             <USelect v-model="duplicateFilter" :items="duplicateOptions" class="min-w-40" />
+            <USelect v-model="sourceFilter" :items="sourceOptions" class="min-w-40" />
           </div>
         </div>
 

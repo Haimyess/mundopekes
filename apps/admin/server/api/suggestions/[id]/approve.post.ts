@@ -7,6 +7,11 @@ import {
   createPlaceFromSuggestion,
 } from '../../../utils/suggestion-approval'
 import { resolveSuggestionImages } from '../../../utils/resolve-suggestion-images'
+import {
+  isQuickSuggestion,
+  missingQuickSuggestionFields,
+  type QuickSuggestionInput,
+} from '../../../../shared/utils/quick-suggestion'
 
 export default defineEventHandler(async (event) => {
   const id = getRouterParam(event, 'id')
@@ -34,6 +39,21 @@ export default defineEventHandler(async (event) => {
       status: suggestion.status,
     })
     throw createError({ statusCode: 400, message: `La sugerencia ya fue ${suggestion.status}` })
+  }
+
+  if (isQuickSuggestion(suggestion as QuickSuggestionInput)) {
+    const missingFields = missingQuickSuggestionFields(suggestion as QuickSuggestionInput)
+    if (missingFields.length) {
+      await logWarn(event, 'suggestions/approve', 'Quick suggestion incomplete', {
+        id,
+        missingFields,
+      })
+      throw createError({
+        statusCode: 422,
+        message: `Faltan datos: ${missingFields.join(', ')}`,
+        data: { missingFields },
+      })
+    }
   }
 
   // ── Claim this suggestion (and any group siblings) before doing anything

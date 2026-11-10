@@ -209,8 +209,25 @@ const buildScheduleText = (schedule: WizardSchedule): string =>
 const showRejectForm = ref(false)
 const rejectionReason = ref('')
 
+const isQuick = computed(() => !!props.suggestion && isQuickSuggestion(props.suggestion))
+const quickDetails = computed(() =>
+  props.suggestion ? quickSuggestionDetails(props.suggestion) : null
+)
+const quickMissingFields = computed(() =>
+  props.suggestion && isQuick.value ? missingQuickSuggestionFields(props.suggestion) : []
+)
+const isApproveBlocked = computed(() => quickMissingFields.value.length > 0)
+const quickGoogleUrl = computed(() =>
+  googleMapsSearchUrl(pickI18n(props.suggestion?.name_i18n), quickDetails.value?.where ?? null)
+)
+const quickOriginLabel = computed(() =>
+  quickDetails.value?.origin
+    ? t(`suggestionsSlideover.quickOrigins.${quickDetails.value.origin}`)
+    : null
+)
+
 const handleApprove = async () => {
-  if (!props.suggestion) return
+  if (!props.suggestion || isApproveBlocked.value) return
   await approve(props.suggestion.id)
   emit('approved')
   emit('close')
@@ -532,6 +549,9 @@ const pickI18n = (obj: Record<string, string> | null | undefined): string => {
               >
                 {{ suggestionTypeLabel }}
               </UBadge>
+              <UBadge v-if="isQuick" color="primary" variant="subtle" size="sm" icon="i-lucide-zap">
+                {{ t('suggestionsSlideover.quickBadge') }}
+              </UBadge>
             </div>
             <span class="text-xs text-(--ui-text-muted)">
               {{ formatDate(suggestion.created_at) }}
@@ -584,6 +604,83 @@ const pickI18n = (obj: Record<string, string> | null | undefined): string => {
               {{ t('suggestionsSlideover.retryTranslation') }}
             </UButton>
           </div>
+
+          <UAlert
+            v-if="isApproveBlocked && suggestion.status === 'pending'"
+            color="info"
+            variant="subtle"
+            icon="i-lucide-info"
+            :title="t('suggestionsSlideover.quickMissingTitle')"
+          >
+            <template #description>
+              <p class="text-sm">{{ t('suggestionsSlideover.quickMissingDescription') }}</p>
+              <ul class="mt-1 list-disc ps-5 text-sm">
+                <li v-for="field in quickMissingFields" :key="field">
+                  {{ t(`suggestionsSlideover.quickFields.${field}`) }}
+                </li>
+              </ul>
+              <div class="mt-2 flex flex-wrap gap-2">
+                <UButton
+                  size="xs"
+                  color="info"
+                  variant="outline"
+                  icon="i-lucide-map-pin"
+                  :to="quickGoogleUrl"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {{ t('suggestionsSlideover.completeFromGoogle') }}
+                </UButton>
+                <UButton size="xs" color="info" icon="i-lucide-pencil" @click="startEditing">
+                  {{ t('suggestionsSlideover.edit') }}
+                </UButton>
+              </div>
+            </template>
+          </UAlert>
+
+          <section
+            v-if="isQuick && quickDetails"
+            class="rounded-md border border-(--ui-border) px-3 py-2"
+            aria-labelledby="quick-user-wrote"
+          >
+            <h3
+              id="quick-user-wrote"
+              class="text-xs font-medium text-(--ui-text-muted) uppercase tracking-wide mb-2"
+            >
+              {{ t('suggestionsSlideover.userWroteLabel') }}
+            </h3>
+            <dl class="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-sm">
+              <template v-if="quickDetails.where">
+                <dt class="text-(--ui-text-muted)">{{ t('suggestionsSlideover.userWhere') }}</dt>
+                <dd>{{ quickDetails.where }}</dd>
+              </template>
+              <template v-if="quickDetails.link">
+                <dt class="text-(--ui-text-muted)">{{ t('suggestionsSlideover.userLink') }}</dt>
+                <dd class="break-all">
+                  <a
+                    :href="quickDetails.link"
+                    target="_blank"
+                    rel="noopener noreferrer nofollow"
+                    class="text-(--ui-primary) underline"
+                  >
+                    {{ quickDetails.link }}
+                  </a>
+                </dd>
+              </template>
+              <template v-if="quickDetails.why">
+                <dt class="text-(--ui-text-muted)">{{ t('suggestionsSlideover.userWhy') }}</dt>
+                <dd class="whitespace-pre-line">{{ quickDetails.why }}</dd>
+              </template>
+              <template v-if="quickOriginLabel">
+                <dt class="text-(--ui-text-muted)">{{ t('suggestionsSlideover.userOrigin') }}</dt>
+                <dd>{{ quickOriginLabel }}</dd>
+              </template>
+              <template v-if="quickDetails.locale">
+                <dt class="text-(--ui-text-muted)">{{ t('suggestionsSlideover.userLocale') }}</dt>
+                <dd>{{ quickDetails.locale.toUpperCase() }}</dd>
+              </template>
+            </dl>
+          </section>
 
           <!-- Posible duplicado — flag de dedup + acción de un clic para fusionar -->
           <UAlert
@@ -976,14 +1073,21 @@ const pickI18n = (obj: Record<string, string> | null | undefined): string => {
           >
             {{ t('suggestionsSlideover.reject') }}
           </UButton>
-          <UButton
-            color="success"
-            icon="i-lucide-check-circle"
-            :loading="actionLoading"
-            @click="handleApprove"
-          >
-            {{ t('suggestionsSlideover.approveAndCreate') }}
-          </UButton>
+          <UTooltip :text="t('suggestionsSlideover.approveBlocked')" :disabled="!isApproveBlocked">
+            <UButton
+              color="success"
+              icon="i-lucide-check-circle"
+              :loading="actionLoading"
+              :disabled="isApproveBlocked"
+              :aria-describedby="isApproveBlocked ? 'quick-approve-blocked' : undefined"
+              @click="handleApprove"
+            >
+              {{ t('suggestionsSlideover.approveAndCreate') }}
+            </UButton>
+          </UTooltip>
+          <span v-if="isApproveBlocked" id="quick-approve-blocked" class="sr-only">
+            {{ t('suggestionsSlideover.approveBlocked') }}
+          </span>
         </div>
       </div>
 

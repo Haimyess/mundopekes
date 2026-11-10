@@ -69,6 +69,7 @@ export const useSuggestions = () => {
   // "0 resultados" con duplicados/tipo reales en otra página.
   const suggestionTypeFilter = ref<'all' | SuggestionType>('all')
   const duplicateFilter = ref<'all' | 'true'>('all')
+  const sourceFilter = ref<'all' | 'quick' | 'wizard'>('all')
   const page = ref(1)
   const pageSize = ref(10)
 
@@ -91,6 +92,7 @@ export const useSuggestions = () => {
       if (isFreeFilter.value !== 'all') params.is_free = isFreeFilter.value
       if (suggestionTypeFilter.value !== 'all') params.suggestion_type = suggestionTypeFilter.value
       if (duplicateFilter.value !== 'all') params.flagged_possible_duplicate = duplicateFilter.value
+      if (sourceFilter.value !== 'all') params.source = sourceFilter.value
 
       const result = await $fetch<{ data: Suggestion[]; count: number }>('/api/suggestions', {
         params,
@@ -299,7 +301,15 @@ export const useSuggestions = () => {
 
   // Reset a página 1 cuando cambia cualquier filtro (dispara el watch de página)
   watch(
-    [statusFilter, categoryFilter, cityFilter, isFreeFilter, suggestionTypeFilter, duplicateFilter],
+    [
+      statusFilter,
+      categoryFilter,
+      cityFilter,
+      isFreeFilter,
+      suggestionTypeFilter,
+      duplicateFilter,
+      sourceFilter,
+    ],
     () => {
       if (!hasLoadedOnce.value) return
       if (page.value !== 1) page.value = 1
@@ -324,6 +334,7 @@ export const useSuggestions = () => {
     isFreeFilter,
     suggestionTypeFilter,
     duplicateFilter,
+    sourceFilter,
     page,
     pageSize,
     counts,
