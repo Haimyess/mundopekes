@@ -101,9 +101,9 @@ const providerSubmitDisabled = computed(
         />
       </div>
       <div class="contact-form__provider-link">
-        <NuxtLink to="/business" class="contact-form__register-link" @click="emit('cancel')">
+        <NuxtLinkLocale to="/business" class="contact-form__register-link" @click="emit('cancel')">
           {{ t('business.cta.resultsAction') }}
-        </NuxtLink>
+        </NuxtLinkLocale>
       </div>
     </template>
 

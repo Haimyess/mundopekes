@@ -53,10 +53,10 @@ useSeoMeta({
           <h2 id="business-claim-title" class="business-page__soon-title">
             {{ t('business.claim.title') }}
           </h2>
-          <NuxtLink to="/search" class="business-page__claim-link">
+          <NuxtLinkLocale to="/search" class="business-page__claim-link">
             {{ t('business.claim.action') }}
             <UiIcon name="i-hugeicons-arrow-right-01" :size="16" class="business-page__arrow" />
-          </NuxtLink>
+          </NuxtLinkLocale>
         </section>
       </div>
       <BusinessJoinForm class="business-page__form" />

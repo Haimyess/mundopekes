@@ -22,16 +22,16 @@ export function provideSearchDraft(initial: SearchState = {}): SearchDraft {
 
 export function useSearchState() {
   const route = useRoute()
-  const router = useRouter()
+  const { searchLinkFor, isOnSearchPage } = useSearchLink()
   const draft = inject(SEARCH_DRAFT_KEY, null)
-  const isSearchPage = computed(() => !draft && route.path === SEARCH_PATH)
+  const isSearchPage = computed(() => !draft && isOnSearchPage.value)
   const state = computed<SearchState>(() => {
     if (draft) return draft.state.value
     return isSearchPage.value ? parseSearchQuery(route.query) : {}
   })
 
   function linkTo(patch: Partial<SearchState>): string {
-    return router.resolve(toSearchLocation(patchSearchState(state.value, patch))).fullPath
+    return searchLinkFor(patchSearchState(state.value, patch))
   }
 
   return { state, isSearchPage, linkTo, draft }

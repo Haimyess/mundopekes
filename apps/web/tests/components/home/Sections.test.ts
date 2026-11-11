@@ -37,11 +37,7 @@ vi.mock('../../../node_modules/nuxt/dist/app/composables/asyncData.js', () => ({
 }))
 vi.mock('../../../node_modules/nuxt/dist/app/composables/router.js', async (importOriginal) => ({
   ...(await importOriginal<Record<string, unknown>>()),
-  useRouter: () => ({
-    resolve: (location: { path: string; query: Record<string, string> }) => ({
-      fullPath: `${location.path}?${new URLSearchParams(location.query).toString()}`,
-    }),
-  }),
+  useRoute: () => ({ path: '/', query: {} }),
 }))
 vi.mock('~/app/components/suggestions/SuggestionWizard.vue', async () => {
   const { defineComponent: define, h: render } = await import('vue')

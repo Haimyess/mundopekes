@@ -29,8 +29,10 @@ const { tc } = useI18nContent()
 const { getNavCategoriesWithChildren } = useCategories()
 const { open: openContact } = useContactForm()
 
-const isHomeActive = computed(() => route.path === '/')
-const isExploreActive = computed(() => route.path.startsWith('/search'))
+const getRouteBaseName = useRouteBaseName()
+const routeName = computed(() => getRouteBaseName(route))
+const isHomeActive = computed(() => routeName.value === 'index')
+const isExploreActive = computed(() => routeName.value === 'search')
 
 const categoriesOpen = ref(false)
 const loadingCategories = ref(false)
@@ -63,23 +65,23 @@ const wizardOpen = ref(false)
 
 <template>
   <nav class="pwa-bottom-nav" aria-label="Navegación principal">
-    <NuxtLink
+    <NuxtLinkLocale
       to="/"
       class="pwa-bottom-nav__item"
       :class="{ 'pwa-bottom-nav__item--active': isHomeActive }"
       :aria-label="t('nav.home')"
     >
       <UIcon name="i-heroicons-home" class="pwa-bottom-nav__icon" />
-    </NuxtLink>
+    </NuxtLinkLocale>
 
-    <NuxtLink
+    <NuxtLinkLocale
       to="/search"
       class="pwa-bottom-nav__item"
       :class="{ 'pwa-bottom-nav__item--active': isExploreActive }"
       :aria-label="t('nav.search')"
     >
       <UIcon name="i-heroicons-magnifying-glass" class="pwa-bottom-nav__icon" />
-    </NuxtLink>
+    </NuxtLinkLocale>
 
     <button
       type="button"
@@ -128,7 +130,7 @@ const wizardOpen = ref(false)
             </button>
 
             <div v-if="isCatOpen(cat.slug)" class="pwa-categories-sheet__sublist">
-              <NuxtLink
+              <NuxtLinkLocale
                 v-for="sub in cat.children"
                 :key="sub.slug"
                 :to="`/search?category=${sub.slug}`"
@@ -136,7 +138,7 @@ const wizardOpen = ref(false)
                 @click="categoriesOpen = false"
               >
                 {{ tc(sub.name_i18n) }}
-              </NuxtLink>
+              </NuxtLinkLocale>
             </div>
           </div>
         </div>

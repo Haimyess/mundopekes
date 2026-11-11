@@ -65,7 +65,7 @@ const hasMeta = computed(() => !!(cityName.value || categoryName.value))
 </script>
 
 <template>
-  <NuxtLink
+  <NuxtLinkLocale
     :to="`/activity/${activity.id}`"
     class="activity-card"
     :class="`activity-card--${variant}`"
@@ -133,7 +133,7 @@ const hasMeta = computed(() => !!(cityName.value || categoryName.value))
         </div>
       </div>
     </UiCard>
-  </NuxtLink>
+  </NuxtLinkLocale>
 </template>
 
 <style scoped>

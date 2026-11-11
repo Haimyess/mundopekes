@@ -20,9 +20,9 @@ const handleAcceptNecessaryOnly = () => acceptNecessaryOnly()
       <h2 :id="TITLE_ID" class="cookie-consent__title">{{ t('cookieConsent.title') }}</h2>
       <p :id="DESCRIPTION_ID" class="cookie-consent__description">
         {{ t('cookieConsent.description') }}
-        <NuxtLink to="/privacy" class="cookie-consent__link">
+        <NuxtLinkLocale to="/privacy" class="cookie-consent__link">
           {{ t('cookieConsent.privacyLink') }}
-        </NuxtLink>
+        </NuxtLinkLocale>
       </p>
     </div>
     <div class="cookie-consent__actions">

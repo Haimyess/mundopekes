@@ -11,11 +11,9 @@ interface Props {
 const props = withDefaults(defineProps<Props>(), { subtitle: undefined })
 
 const { t } = useI18n()
-const router = useRouter()
+const { searchLink } = useSearchLink()
 
-const seeAllLink = computed(
-  () => router.resolve({ path: SEARCH_PATH, query: props.section.query }).fullPath
-)
+const seeAllLink = computed(() => searchLink(props.section.query))
 const itemKey = (item: SearchResultItem) => `${item.kind}-${item.id}`
 </script>
 

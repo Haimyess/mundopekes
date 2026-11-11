@@ -6,17 +6,21 @@ const { t } = useI18n()
   <a href="#main-content" class="layout-header__skip">{{ t('layout.skipToContent') }}</a>
   <header class="layout-header">
     <div class="layout-header__bar">
-      <NuxtLink to="/" class="layout-header__brand" :aria-label="t('layout.home')">
+      <NuxtLinkLocale to="/" class="layout-header__brand" :aria-label="t('layout.home')">
         <LayoutLogo />
-      </NuxtLink>
+      </NuxtLinkLocale>
       <div class="layout-header__actions">
-        <NuxtLink to="/business" class="layout-header__business">
+        <NuxtLinkLocale to="/business" class="layout-header__business">
           {{ t('business.cta.header') }}
-        </NuxtLink>
+        </NuxtLinkLocale>
         <LayoutLanguageSheet />
-        <NuxtLink to="/search" class="layout-header__icon-link" :aria-label="t('layout.search')">
+        <NuxtLinkLocale
+          to="/search"
+          class="layout-header__icon-link"
+          :aria-label="t('layout.search')"
+        >
           <UiIcon name="i-hugeicons-search-01" :size="24" />
-        </NuxtLink>
+        </NuxtLinkLocale>
       </div>
     </div>
     <LayoutCategoryNav />

@@ -12,6 +12,12 @@ const mockNuxtState: Plugin = {
     if (id.includes('composables/state')) {
       return resolve(__dirname, 'tests/__mocks__/nuxt-state.ts')
     }
+    if (id.includes('@nuxtjs/i18n/dist/runtime/composables/index')) {
+      return resolve(__dirname, 'tests/__mocks__/i18n-routing.ts')
+    }
+    if (id.includes('@nuxtjs/i18n/dist/runtime/components/NuxtLinkLocale')) {
+      return resolve(__dirname, 'tests/__mocks__/NuxtLinkLocale.ts')
+    }
   },
 }
 

@@ -10,7 +10,7 @@ const FALLBACK_ICON = 'i-hugeicons-grid-view'
 const { t } = useI18n()
 const { tc } = useI18nContent()
 const { getNavCategoriesWithChildren } = useCategories()
-const router = useRouter()
+const { searchLink } = useSearchLink()
 
 const { data: categories } = await useAsyncData(
   'layout-nav-categories',
@@ -24,7 +24,7 @@ const tiles = computed(() =>
     name: tc(category.name_i18n),
     icon: category.icon ?? FALLBACK_ICON,
     count: props.counts[category.slug] ?? 0,
-    to: router.resolve({ path: SEARCH_PATH, query: { category: category.slug } }).fullPath,
+    to: searchLink({ category: category.slug }),
   }))
 )
 </script>

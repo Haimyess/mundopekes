@@ -48,7 +48,7 @@ const cityName = computed(() => props.activity?.place?.city?.name ?? null)
 </script>
 
 <template>
-  <NuxtLink :to="`/activity/${activity.id}`" class="map-card">
+  <NuxtLinkLocale :to="`/activity/${activity.id}`" class="map-card">
     <div class="map-card__image-wrap">
       <img
         v-if="imageUrl"
@@ -74,7 +74,7 @@ const cityName = computed(() => props.activity?.place?.city?.name ?? null)
         {{ cityName }}
       </p>
     </div>
-  </NuxtLink>
+  </NuxtLinkLocale>
 </template>
 
 <style scoped>

@@ -104,10 +104,10 @@ const handleClose = () => {
       </UiFormField>
       <div class="claim-sheet__terms">
         <UiCheckbox v-model="isTermsAccepted" :label="t('claim.acceptTerms')" />
-        <NuxtLink to="/terms" target="_blank" class="claim-sheet__terms-link">
+        <NuxtLinkLocale to="/terms" target="_blank" class="claim-sheet__terms-link">
           {{ t('claim.readTerms') }}
           <span class="claim-sheet__sr-only">{{ t('detail.opensNewTab') }}</span>
-        </NuxtLink>
+        </NuxtLinkLocale>
         <p v-if="errorFor('acceptTerms')" class="claim-sheet__error" role="alert">
           {{ errorFor('acceptTerms') }}
         </p>

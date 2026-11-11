@@ -5,9 +5,9 @@ const { t } = useI18n()
 <template>
   <aside class="business-results-cta" :aria-label="t('business.cta.footer')">
     <p class="business-results-cta__title">{{ t('business.cta.resultsTitle') }}</p>
-    <NuxtLink to="/business" class="business-results-cta__link">
+    <NuxtLinkLocale to="/business" class="business-results-cta__link">
       {{ t('business.cta.resultsAction') }}
-    </NuxtLink>
+    </NuxtLinkLocale>
   </aside>
 </template>
 

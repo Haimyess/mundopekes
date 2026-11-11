@@ -12,13 +12,11 @@ const props = defineProps<Props>()
 const emit = defineEmits<{ forget: [] }>()
 
 const { t } = useI18n()
-const router = useRouter()
+const { searchLink: toSearch } = useSearchLink()
 const { whenLabel, whereLabel, agesLabel } = useSearchLabels()
 
 const query = computed(() => toSearchQuery(props.family))
-const searchLink = computed(
-  () => router.resolve({ path: SEARCH_PATH, query: query.value }).fullPath
-)
+const searchLink = computed(() => toSearch(query.value))
 const summary = computed(() =>
   [
     agesLabel(props.family.ages),

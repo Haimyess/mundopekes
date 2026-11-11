@@ -21,7 +21,8 @@ const PROXIED_IMAGE_PREFIX = '/api/'
 const isImageOptimized = computed(() => !props.item.imageUrl?.startsWith(PROXIED_IMAGE_PREFIX))
 
 const title = computed(() => tc(props.item.title))
-const detailPath = computed(() => `/${props.item.kind}/${props.item.id}`)
+const localePath = useLocalePath()
+const detailPath = computed(() => localePath(`/${props.item.kind}/${props.item.id}`))
 
 const kindLabel = computed(() => {
   if (props.item.kind === 'activity') return t('results.kind.activity')

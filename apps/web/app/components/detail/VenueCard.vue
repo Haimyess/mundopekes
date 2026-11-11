@@ -20,7 +20,7 @@ const isImageOptimized = computed(() => !props.venue.imageUrl?.startsWith(PROXIE
 </script>
 
 <template>
-  <NuxtLink :to="`/place/${venue.id}`" class="venue-card">
+  <NuxtLinkLocale :to="`/place/${venue.id}`" class="venue-card">
     <span class="venue-card__media" aria-hidden="true">
       <NuxtImg
         v-if="venue.imageUrl && isImageOptimized"
@@ -46,7 +46,7 @@ const isImageOptimized = computed(() => !props.venue.imageUrl?.startsWith(PROXIE
       <span v-if="context" class="venue-card__context">{{ context }}</span>
     </span>
     <UiIcon name="i-hugeicons-arrow-right-01" :size="20" class="venue-card__chevron" />
-  </NuxtLink>
+  </NuxtLinkLocale>
 </template>
 
 <style scoped>

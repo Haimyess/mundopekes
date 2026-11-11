@@ -19,7 +19,7 @@
 
 <template>
   <header class="pwa-top-bar">
-    <NuxtLink to="/" class="pwa-top-bar__logo">MundoPekes</NuxtLink>
+    <NuxtLinkLocale to="/" class="pwa-top-bar__logo">MundoPekes</NuxtLinkLocale>
     <LayoutLanguageSelector />
   </header>
 </template>

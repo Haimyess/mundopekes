@@ -20,9 +20,11 @@
 import { useRoute } from 'nuxt/app'
 
 const route = useRoute()
-const isFullBleedRoute = computed(() => route.path === '/search')
+const getRouteBaseName = useRouteBaseName()
+const routeName = computed(() => getRouteBaseName(route))
+const isFullBleedRoute = computed(() => routeName.value === 'search')
 const hideBottomNav = computed(
-  () => route.path.startsWith('/activity/') || route.path.startsWith('/place/')
+  () => routeName.value === 'activity-id' || routeName.value === 'place-id'
 )
 </script>
 

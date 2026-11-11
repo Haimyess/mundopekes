@@ -22,9 +22,9 @@ const isSuggestionOpen = ref(false)
       <UiIcon name="i-hugeicons-store-01" :size="32" />
       <h2 class="home-ctas__title">{{ t('business.cta.homeTitle') }}</h2>
       <p class="home-ctas__text">{{ t('business.cta.homeText') }}</p>
-      <NuxtLink to="/business" class="home-ctas__action">
+      <NuxtLinkLocale to="/business" class="home-ctas__action">
         {{ t('business.cta.homeAction') }}
-      </NuxtLink>
+      </NuxtLinkLocale>
     </div>
   </section>
 </template>

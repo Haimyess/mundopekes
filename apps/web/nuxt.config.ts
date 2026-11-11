@@ -12,6 +12,9 @@ export default defineNuxtConfig({
     public: {
       mapboxToken: '',
       turnstileSiteKey: '',
+      i18n: {
+        baseUrl: '',
+      },
     },
   },
   routeRules: {
@@ -262,6 +265,8 @@ export default defineNuxtConfig({
     locales: CONTENT_LOCALE_META.map(({ code, name, file }) => ({
       code,
       name,
+      language: code,
+      dir: code === 'he' ? ('rtl' as const) : ('ltr' as const),
       files: [
         file,
         `../../../../packages/i18n/locales/web/${file}`,
@@ -270,6 +275,12 @@ export default defineNuxtConfig({
     })),
     langDir: 'locales', // ← Ahora apunta a la raíz
     defaultLocale: 'he',
-    strategy: 'no_prefix',
+    strategy: 'prefix_except_default',
+    detectBrowserLanguage: {
+      useCookie: true,
+      cookieKey: 'i18n_redirected',
+      redirectOn: 'root',
+      alwaysRedirect: false,
+    },
   },
 })

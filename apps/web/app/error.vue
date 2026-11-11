@@ -5,6 +5,9 @@ const props = defineProps<{ error: NuxtError }>()
 
 const { t } = useI18n()
 const route = useRoute()
+const localePath = useLocalePath()
+const { searchLink } = useSearchLink()
+const searchAction = computed(() => searchLink())
 
 const NOT_FOUND = 404
 const GONE = 410
@@ -21,7 +24,7 @@ useSeoMeta({
   robots: 'noindex, nofollow',
 })
 
-const handleHome = () => clearError({ redirect: '/' })
+const handleHome = () => clearError({ redirect: localePath('/') })
 const handleRetry = () => clearError({ redirect: route.fullPath })
 </script>
 
@@ -34,7 +37,7 @@ const handleRetry = () => clearError({ redirect: route.fullPath })
 
       <form
         v-if="isNotFound || isGone"
-        action="/search"
+        :action="searchAction"
         method="get"
         role="search"
         class="error-page__search"

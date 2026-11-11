@@ -15,11 +15,7 @@ vi.mock('~/app/composables/useI18nContent', () => ({
 }))
 vi.mock('../../../node_modules/nuxt/dist/app/composables/router.js', async (importOriginal) => ({
   ...(await importOriginal<Record<string, unknown>>()),
-  useRouter: () => ({
-    resolve: (location: { path: string; query: Record<string, string> }) => ({
-      fullPath: `${location.path}?${decodeURIComponent(new URLSearchParams(location.query).toString())}`,
-    }),
-  }),
+  useRoute: () => ({ path: '/', query: {} }),
 }))
 
 const FamilySection = (await import('~/app/components/home/FamilySection.vue')).default

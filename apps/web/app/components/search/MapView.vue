@@ -480,7 +480,7 @@ onBeforeUnmount(() => {
                      necesita el slot de LPopup para terminar de montar el
                      marker en el mapa. -->
                 <LPopup>
-                  <NuxtLink :to="`/activity/${item.point.activity.id}`" class="map-popup">
+                  <NuxtLinkLocale :to="`/activity/${item.point.activity.id}`" class="map-popup">
                     <div class="map-popup__img-wrap">
                       <img
                         v-if="imageFor(item.point.activity)"
@@ -499,7 +499,7 @@ onBeforeUnmount(() => {
                         {{ priceLabel(item.point.activity) }}
                       </span>
                     </div>
-                  </NuxtLink>
+                  </NuxtLinkLocale>
                 </LPopup>
               </LMarker>
             </template>

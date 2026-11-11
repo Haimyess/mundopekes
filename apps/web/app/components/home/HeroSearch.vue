@@ -23,7 +23,7 @@ const QUICK_FILTERS: readonly QuickFilter[] = [
 ]
 
 const { t } = useI18n()
-const router = useRouter()
+const { searchLink, searchLinkFor } = useSearchLink()
 const { family } = useFamily()
 const searchDraft = provideSearchDraft(family.value ?? {})
 
@@ -32,12 +32,11 @@ const quickFilters = computed(() =>
     key,
     icon,
     label: t(`home.quickFilters.${key}`),
-    to: router.resolve({ path: SEARCH_PATH, query }).fullPath,
+    to: searchLink(query),
   }))
 )
 
-const handleSubmit = () =>
-  navigateTo(router.resolve(toSearchLocation(searchDraft.state.value)).fullPath)
+const handleSubmit = () => navigateTo(searchLinkFor(searchDraft.state.value))
 </script>
 
 <template>

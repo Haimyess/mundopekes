@@ -39,6 +39,7 @@ const emit = defineEmits<{
 const drawerOpen = defineModel<boolean>('drawerOpen', { default: false })
 
 const router = useRouter()
+const localePath = useLocalePath()
 const { buildQueryFromFilters } = useActivityFilters()
 
 // ── Texto de búsqueda — search.vue no tenía un input propio (el buscador
@@ -57,7 +58,7 @@ watch(
 
 const pushSearch = useDebounceFn((value: string) => {
   const query = buildQueryFromFilters({ ...props.filters, search: value || undefined })
-  void router.push({ path: '/search', query })
+  void router.push(localePath({ path: '/search', query }))
 }, 400)
 
 function onSearchInput(value: string) {
