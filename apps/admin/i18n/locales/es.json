@@ -18,7 +18,8 @@
     "settingsGeneral": "General",
     "settingsNotifications": "Notificaciones",
     "settingsSecurity": "Seguridad",
-    "brand": "Admin"
+    "brand": "Admin",
+    "businessRequests": "Negocios: solicitudes"
   },
   "language": {
     "label": "Idioma"
@@ -1136,6 +1137,56 @@
       "club": "Con club",
       "credit-card": "Con tarjeta de crédito",
       "last-minute": "Último minuto"
+    }
+  },
+  "businessRequests": {
+    "title": "Solicitudes de negocios",
+    "totalBadge": "{total} en total",
+    "refresh": "Actualizar",
+    "empty": "No hay solicitudes con estos filtros",
+    "save": "Guardar",
+    "openPlace": "Ver la ficha del lugar",
+    "kinds": {
+      "all": "Todas",
+      "join": "Quiere sumarse",
+      "claim": "Reclama ficha"
+    },
+    "status": {
+      "all": "Todos los estados",
+      "pending": "Pendiente",
+      "contacted": "Contactado",
+      "approved": "Aprobado",
+      "rejected": "Rechazado"
+    },
+    "roles": {
+      "owner": "Dueño/a",
+      "manager": "Gerente",
+      "employee": "Empleado/a"
+    },
+    "columns": {
+      "date": "Fecha",
+      "kind": "Tipo",
+      "business": "Negocio",
+      "contact": "Contacto",
+      "status": "Estado"
+    },
+    "fields": {
+      "business": "Negocio",
+      "activityType": "Tipo de actividad",
+      "city": "Ciudad",
+      "contactName": "Nombre",
+      "role": "Relación",
+      "locale": "Idioma",
+      "phone": "Teléfono",
+      "email": "Correo",
+      "status": "Estado",
+      "notes": "Notas internas"
+    },
+    "toast": {
+      "loadError": "No se pudieron cargar las solicitudes",
+      "updateError": "No se pudo guardar",
+      "updated": "Solicitud actualizada",
+      "unknownError": "Error desconocido"
     }
   }
 }

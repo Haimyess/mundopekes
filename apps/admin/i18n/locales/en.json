@@ -18,7 +18,8 @@
     "settingsGeneral": "General",
     "settingsNotifications": "Notifications",
     "settingsSecurity": "Security",
-    "brand": "Admin"
+    "brand": "Admin",
+    "businessRequests": "Business requests"
   },
   "language": {
     "label": "Language"
@@ -1136,6 +1137,56 @@
       "club": "With a club",
       "credit-card": "With a credit card",
       "last-minute": "Last minute"
+    }
+  },
+  "businessRequests": {
+    "title": "Business requests",
+    "totalBadge": "{total} total",
+    "refresh": "Refresh",
+    "empty": "No requests match these filters",
+    "save": "Save",
+    "openPlace": "Open the place",
+    "kinds": {
+      "all": "All",
+      "join": "Wants to join",
+      "claim": "Claims listing"
+    },
+    "status": {
+      "all": "All statuses",
+      "pending": "Pending",
+      "contacted": "Contacted",
+      "approved": "Approved",
+      "rejected": "Rejected"
+    },
+    "roles": {
+      "owner": "Owner",
+      "manager": "Manager",
+      "employee": "Employee"
+    },
+    "columns": {
+      "date": "Date",
+      "kind": "Type",
+      "business": "Business",
+      "contact": "Contact",
+      "status": "Status"
+    },
+    "fields": {
+      "business": "Business",
+      "activityType": "Activity type",
+      "city": "City",
+      "contactName": "Name",
+      "role": "Role",
+      "locale": "Language",
+      "phone": "Phone",
+      "email": "Email",
+      "status": "Status",
+      "notes": "Internal notes"
+    },
+    "toast": {
+      "loadError": "Could not load the requests",
+      "updateError": "Could not save",
+      "updated": "Request updated",
+      "unknownError": "Unknown error"
     }
   }
 }

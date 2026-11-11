@@ -55,6 +55,12 @@ const links = computed(
           onSelect: onNavSelect,
         },
         {
+          label: t('nav.businessRequests'),
+          icon: 'i-lucide-handshake',
+          to: '/business-requests',
+          onSelect: onNavSelect,
+        },
+        {
           label: t('nav.monitoring'),
           icon: 'i-lucide-activity',
           to: '/analytics',
