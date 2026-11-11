@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest'
-import { parseWhen, resolveWhen, serializeWhen, type Occasion, type When } from '../src'
+import {
+  isEvergreenWhen,
+  parseWhen,
+  resolveWhen,
+  serializeWhen,
+  type Occasion,
+  type When,
+} from '../src'
 
 const OCCASIONS: Occasion[] = [{ key: 'hanukkah', startsOn: '2026-12-05', endsOn: '2026-12-12' }]
 const MONDAY = '2026-11-09'
@@ -75,5 +82,21 @@ describe('resolveWhen', () => {
 
   it('keeps fixed ranges as they are', () => {
     expect(resolve('fixed:2026-12-01/2026-12-03')).toEqual({ from: '2026-12-01', to: '2026-12-03' })
+  })
+})
+
+describe('isEvergreenWhen', () => {
+  it('treats weekend, Shabat and occasions as stable over time', () => {
+    expect(isEvergreenWhen({ kind: 'shortcut', shortcut: 'this-weekend' })).toBe(true)
+    expect(isEvergreenWhen({ kind: 'shortcut', shortcut: 'shabat' })).toBe(true)
+    expect(isEvergreenWhen({ kind: 'occasion', key: 'hanukkah' })).toBe(true)
+  })
+
+  it('treats relative days and fixed dates as short lived', () => {
+    expect(isEvergreenWhen({ kind: 'shortcut', shortcut: 'today' })).toBe(false)
+    expect(isEvergreenWhen({ kind: 'shortcut', shortcut: 'tomorrow' })).toBe(false)
+    expect(
+      isEvergreenWhen({ kind: 'fixed', range: { from: '2026-12-01', to: '2026-12-02' } })
+    ).toBe(false)
   })
 })

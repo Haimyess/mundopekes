@@ -13,6 +13,8 @@ export const WHEN_SHORTCUTS = ['today', 'tomorrow', 'this-weekend', 'shabat'] as
 
 export type WhenShortcut = (typeof WHEN_SHORTCUTS)[number]
 
+export const EVERGREEN_WHEN_SHORTCUTS: readonly WhenShortcut[] = ['this-weekend', 'shabat']
+
 export type When =
   | { kind: 'shortcut'; shortcut: WhenShortcut }
   | { kind: 'occasion'; key: string }
@@ -57,6 +59,11 @@ export function parseWhen(raw: string): When | null {
     return range ? { kind: 'fixed', range } : null
   }
   return null
+}
+
+export function isEvergreenWhen(when: When): boolean {
+  if (when.kind === 'occasion') return true
+  return when.kind === 'shortcut' && EVERGREEN_WHEN_SHORTCUTS.includes(when.shortcut)
 }
 
 export function serializeWhen(when: When): string {

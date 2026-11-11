@@ -16,7 +16,15 @@ export {
   UPCOMING_OCCASION_HORIZON_DAYS,
 } from './occasions'
 export type { Occasion } from './occasions'
-export { parseWhen, resolveWhen, serializeWhen, WHEN_LIMITS, WHEN_SHORTCUTS } from './when'
+export {
+  EVERGREEN_WHEN_SHORTCUTS,
+  isEvergreenWhen,
+  parseWhen,
+  resolveWhen,
+  serializeWhen,
+  WHEN_LIMITS,
+  WHEN_SHORTCUTS,
+} from './when'
 export type { When, WhenContext, WhenShortcut } from './when'
 export {
   AGE_FIT_MIN_FULL_MATCHES,
