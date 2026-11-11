@@ -8,12 +8,14 @@
     "categoriesNav": "Категории",
     "allCategories": "Все",
     "free": "Бесплатно",
-    "skipToContent": "Перейти к содержимому"
+    "skipToContent": "Перейти к содержимому",
+    "breadcrumbHome": "Главная"
   },
   "footer": {
     "tagline": "Чем заняться с детьми в Израиле — по возрасту, району и дню.",
     "nav": "Ссылки сайта",
     "groups": {
+      "cities": "По городам",
       "occasions": "По поводу",
       "mundopekes": "MundoPekes",
       "legal": "Правовая информация",
@@ -24,7 +26,11 @@
       "about": "О нас",
       "terms": "Условия",
       "privacy": "Конфиденциальность",
-      "cookies": "Файлы cookie"
+      "cookies": "Файлы cookie",
+      "shabat": "В этот шаббат",
+      "rainy": "Дождливые дни",
+      "hanukkah": "Ханука",
+      "summerBreak": "Летние каникулы"
     },
     "app": "Приложение · скоро",
     "appStore": "App Store",

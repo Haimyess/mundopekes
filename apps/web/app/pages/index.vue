@@ -24,6 +24,12 @@ const [{ data: home }, { data: categories }, { data: familyResults }] = await Pr
 
 const handleForgetFamily = () => forgetFamily()
 
+const { absoluteLocaleUrl } = useSiteUrl()
+
+useJsonLd('website', () =>
+  websiteSchema(SITE_NAME, absoluteLocaleUrl('/'), absoluteLocaleUrl(SEARCH_PATH))
+)
+
 useSeoMeta({
   title: () => t('home.seo.title'),
   description: () => t('home.seo.description'),

@@ -28,6 +28,47 @@ const description = computed(() =>
 const shareImage = computed(() => activity.value?.images.find((src) => src.startsWith('https://')))
 const shareUrl = useRequestURL().href
 
+const { absoluteLocaleUrl } = useSiteUrl()
+const activityUrl = computed(() =>
+  activity.value ? absoluteLocaleUrl(`/activity/${activity.value.id}`) : ''
+)
+
+useJsonLd('activity', () => {
+  if (!activity.value) return null
+  const venue = activity.value.venue
+  return attractionSchema({
+    name: title.value,
+    url: activityUrl.value,
+    description: description.value,
+    images: activity.value.images,
+    cityName: venue?.cityName ?? null,
+    address: venue?.address ?? null,
+    location: activity.value.location,
+    telephone: activity.value.contact.phone,
+    isFree: activity.value.isFree,
+    hours: activity.value.hours.weekly,
+    venue: venue ? { name: venueName.value, url: absoluteLocaleUrl(`/place/${venue.id}`) } : null,
+  })
+})
+
+useJsonLd('breadcrumbs', () => {
+  if (!activity.value) return null
+  const categoryCrumb =
+    activity.value.categorySlug && activity.value.categoryName
+      ? [
+          {
+            name: tc(activity.value.categoryName),
+            url: absoluteLocaleUrl(`${SEARCH_PATH}?category=${activity.value.categorySlug}`),
+          },
+        ]
+      : []
+  return breadcrumbSchema([
+    { name: t('layout.breadcrumbHome'), url: absoluteLocaleUrl('/') },
+    ...categoryCrumb,
+    { name: title.value, url: activityUrl.value },
+  ])
+})
+
 useSeoMeta({
   title: () => `${title.value} · MundoPekes`,
   description: () => description.value?.slice(0, DESCRIPTION_MAX_LENGTH) ?? '',

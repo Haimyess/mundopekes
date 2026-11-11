@@ -10,7 +10,27 @@ interface FooterGroup {
   links: FooterLink[]
 }
 
+const FOOTER_CITY_SLUGS = [
+  'tel-aviv',
+  'jerusalem',
+  'haifa',
+  'beer-sheva',
+  'rishon-lezion',
+  'netanya',
+  'herzliya',
+  'modiin',
+] as const
+
+const OCCASION_LINKS = [
+  { key: 'shabat', to: '/search?when=shabat' },
+  { key: 'rainy', to: '/search?category=indoor-juego' },
+  { key: 'free', to: '/search?free=true' },
+  { key: 'hanukkah', to: '/search?when=occasion:hanukkah' },
+  { key: 'summerBreak', to: '/search?when=occasion:summer-break' },
+] as const
+
 const { t } = useI18n()
+const { cityName } = useSearchLabels()
 const { locales, currentLocale, switchLocale } = useLanguageSwitch()
 const { resetConsent } = useCookieConsent()
 
@@ -19,9 +39,17 @@ const currentYear = new Date().getFullYear()
 const linkGroups = computed<FooterGroup[]>(() =>
   [
     {
+      label: t('footer.groups.cities'),
+      value: 'cities',
+      links: FOOTER_CITY_SLUGS.map((slug) => ({
+        label: cityName(slug) ?? slug,
+        to: `/search?where=city:${slug}`,
+      })),
+    },
+    {
       label: t('footer.groups.occasions'),
       value: 'occasions',
-      links: [{ label: t('footer.links.free'), to: '/search?free=true' }],
+      links: OCCASION_LINKS.map(({ key, to }) => ({ label: t(`footer.links.${key}`), to })),
     },
     {
       label: t('footer.groups.mundopekes'),
@@ -59,7 +87,9 @@ const handleCookiePreferences = () => resetConsent()
             <h2 class="layout-footer__heading">{{ group.label }}</h2>
             <ul class="layout-footer__links">
               <li v-for="link in group.links" :key="link.to">
-                <NuxtLink :to="link.to" class="layout-footer__link">{{ link.label }}</NuxtLink>
+                <NuxtLinkLocale :to="link.to" class="layout-footer__link">{{
+                  link.label
+                }}</NuxtLinkLocale>
               </li>
               <li v-if="group.value === 'legal'">
                 <button type="button" class="layout-footer__link" @click="handleCookiePreferences">
@@ -74,7 +104,9 @@ const handleCookiePreferences = () => resetConsent()
             <template #panel="{ item }">
               <ul class="layout-footer__links">
                 <li v-for="link in item.links" :key="link.to">
-                  <NuxtLink :to="link.to" class="layout-footer__link">{{ link.label }}</NuxtLink>
+                  <NuxtLinkLocale :to="link.to" class="layout-footer__link">{{
+                    link.label
+                  }}</NuxtLinkLocale>
                 </li>
                 <li v-if="item.value === 'legal'">
                   <button

@@ -87,6 +87,7 @@ const DYNAMIC_KEYS = [
     (key) => `home.quickFilters.${key}`
   ),
   ...['rateLimited', 'verification', 'generic'].map((key) => `forms.errors.${key}`),
+  ...['shabat', 'rainy', 'free', 'hanukkah', 'summerBreak'].map((key) => `footer.links.${key}`),
   ...['businessName', 'activityType', 'city', 'phone'].flatMap((field) => [
     `business.join.${field}`,
     `business.join.${field}Hint`,

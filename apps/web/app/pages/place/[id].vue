@@ -17,6 +17,33 @@ const description = computed(() =>
 )
 const shareImage = computed(() => place.value?.images.find((src) => src.startsWith('https://')))
 
+const { absoluteLocaleUrl } = useSiteUrl()
+
+useJsonLd('place', () => {
+  if (!place.value) return null
+  return attractionSchema({
+    name: name.value,
+    url: absoluteLocaleUrl(`/place/${place.value.id}`),
+    description: description.value,
+    images: place.value.images,
+    cityName: place.value.cityName,
+    address: place.value.address,
+    location: place.value.location,
+    telephone: place.value.contact.phone,
+    isFree: place.value.isFree,
+    hours: place.value.hours.weekly,
+  })
+})
+
+useJsonLd('breadcrumbs', () =>
+  place.value
+    ? breadcrumbSchema([
+        { name: t('layout.breadcrumbHome'), url: absoluteLocaleUrl('/') },
+        { name: name.value, url: absoluteLocaleUrl(`/place/${place.value.id}`) },
+      ])
+    : null
+)
+
 useSeoMeta({
   title: () => `${name.value} · MundoPekes`,
   description: () => description.value?.slice(0, DESCRIPTION_MAX_LENGTH) ?? '',

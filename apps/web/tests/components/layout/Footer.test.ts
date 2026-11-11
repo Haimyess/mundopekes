@@ -11,6 +11,7 @@ vi.mock('vue-i18n', () => ({
   useI18n: () => ({
     t: (key: string, params?: Record<string, unknown>) =>
       params ? `${key}:${JSON.stringify(params)}` : key,
+    locale: { value: 'es' },
   }),
 }))
 vi.mock('~/app/composables/useLanguageSwitch', () => ({
@@ -64,7 +65,7 @@ describe('LayoutFooter', () => {
     mockResetConsent.mockReset()
   })
 
-  it('only links to pages that exist', () => {
+  it('links to real pages and to city and occasion searches', () => {
     const hrefs = [
       ...new Set(
         mountFooter()
@@ -72,7 +73,25 @@ describe('LayoutFooter', () => {
           .map((link) => link.attributes('href'))
       ),
     ]
-    expect(hrefs.sort()).toEqual(['/about', '/business', '/privacy', '/search?free=true', '/terms'])
+    expect(hrefs).toEqual(
+      expect.arrayContaining([
+        '/about',
+        '/business',
+        '/privacy',
+        '/terms',
+        '/search?free=true',
+        '/search?when=shabat',
+        '/search?when=occasion:hanukkah',
+        '/search?where=city:tel-aviv',
+        '/search?where=city:modiin',
+      ])
+    )
+    expect(hrefs.filter((href) => href!.startsWith('/search?where=city:'))).toHaveLength(8)
+  })
+
+  it('names cities in the current language', () => {
+    const cityLink = mountFooter().find('a[href="/search?where=city:jerusalem"]')
+    expect(cityLink.text()).toBe('Jerusalén')
   })
 
   it('reopens cookie preferences from the cookies link', async () => {

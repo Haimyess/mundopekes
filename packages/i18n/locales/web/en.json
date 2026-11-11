@@ -8,12 +8,14 @@
     "categoriesNav": "Categories",
     "allCategories": "All",
     "free": "Free",
-    "skipToContent": "Skip to content"
+    "skipToContent": "Skip to content",
+    "breadcrumbHome": "Home"
   },
   "footer": {
     "tagline": "Things to do with kids in Israel, by age, area and day.",
     "nav": "Site links",
     "groups": {
+      "cities": "By city",
       "occasions": "By occasion",
       "mundopekes": "MundoPekes",
       "legal": "Legal",
@@ -24,7 +26,11 @@
       "about": "About us",
       "terms": "Terms",
       "privacy": "Privacy",
-      "cookies": "Cookies"
+      "cookies": "Cookies",
+      "shabat": "This Shabbat",
+      "rainy": "Rainy days",
+      "hanukkah": "Hanukkah",
+      "summerBreak": "Summer break"
     },
     "app": "App · coming soon",
     "appStore": "App Store",

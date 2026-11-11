@@ -4,6 +4,8 @@ import type { CategoryWithChildren } from '~/composables/useCategories'
 const { t } = useI18n()
 const { tc } = useI18nContent()
 const { trackSearch } = useTracking()
+const { searchLink } = useSearchLink()
+const clearFiltersLink = computed(() => searchLink())
 const { getNavCategoriesWithChildren } = useCategories()
 const [{ state, response, isLoading, hasError, refresh }, { data: categories }] = await Promise.all(
   [
@@ -57,14 +59,13 @@ watch(isNotFound, (notFound) => {
   if (notFound) showError(NOT_FOUND_ERROR)
 })
 
-const hasPersonalCriteria = computed(
-  () => !!(state.value.q || state.value.when || state.value.ages || state.value.sort)
-)
+const isIndexable = computed(() => isIndexableSearch(state.value))
 
 useSeoMeta({
   title,
   description: () => t('results.seo.description'),
-  robots: () => (hasPersonalCriteria.value || page.value > 1 ? 'noindex, follow' : undefined),
+  ogTitle: title,
+  robots: () => (isIndexable.value ? undefined : 'noindex, follow'),
 })
 
 const handleRetry = () => refresh()
@@ -95,7 +96,9 @@ watch(
           @highlight="handleHighlight"
         >
           <template #empty-actions>
-            <UiButton to="/search" variant="secondary">{{ t('results.empty.clear') }}</UiButton>
+            <UiButton :to="clearFiltersLink" variant="secondary">{{
+              t('results.empty.clear')
+            }}</UiButton>
           </template>
         </SearchResultList>
         <SearchPagination v-if="!isLoading && !hasError" :page="page" :page-count="pageCount" />

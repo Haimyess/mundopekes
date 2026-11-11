@@ -8,12 +8,14 @@
     "categoriesNav": "Categorías",
     "allCategories": "Todo",
     "free": "Gratis",
-    "skipToContent": "Saltar al contenido"
+    "skipToContent": "Saltar al contenido",
+    "breadcrumbHome": "Inicio"
   },
   "footer": {
     "tagline": "Qué hacer con chicos en Israel, por edad, zona y día.",
     "nav": "Enlaces del sitio",
     "groups": {
+      "cities": "Por ciudad",
       "occasions": "Por ocasión",
       "mundopekes": "MundoPekes",
       "legal": "Legal",
@@ -24,7 +26,11 @@
       "about": "Sobre nosotros",
       "terms": "Términos",
       "privacy": "Privacidad",
-      "cookies": "Cookies"
+      "cookies": "Cookies",
+      "shabat": "Este Shabat",
+      "rainy": "Días de lluvia",
+      "hanukkah": "Janucá",
+      "summerBreak": "Vacaciones de verano"
     },
     "app": "App · próximamente",
     "appStore": "App Store",

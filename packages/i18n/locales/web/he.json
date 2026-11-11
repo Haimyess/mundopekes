@@ -8,12 +8,14 @@
     "categoriesNav": "קטגוריות",
     "allCategories": "הכול",
     "free": "בחינם",
-    "skipToContent": "דילוג לתוכן"
+    "skipToContent": "דילוג לתוכן",
+    "breadcrumbHome": "דף הבית"
   },
   "footer": {
     "tagline": "מה עושים עם הילדים בישראל, לפי גיל, אזור ויום.",
     "nav": "קישורים באתר",
     "groups": {
+      "cities": "לפי עיר",
       "occasions": "לפי הזדמנות",
       "mundopekes": "MundoPekes",
       "legal": "מידע משפטי",
@@ -24,7 +26,11 @@
       "about": "עלינו",
       "terms": "תנאי שימוש",
       "privacy": "פרטיות",
-      "cookies": "עוגיות"
+      "cookies": "עוגיות",
+      "shabat": "השבת הזאת",
+      "rainy": "ימי גשם",
+      "hanukkah": "חנוכה",
+      "summerBreak": "החופש הגדול"
     },
     "app": "אפליקציה · בקרוב",
     "appStore": "App Store",
