@@ -242,6 +242,71 @@ export type Database = {
         }
         Relationships: []
       }
+      business_requests: {
+        Row: {
+          accepted_terms_at: string | null
+          activity_type: string | null
+          business_name: string
+          city: string | null
+          contact_name: string | null
+          created_at: string
+          email: string | null
+          id: string
+          kind: string
+          locale: string
+          notes: string | null
+          phone: string
+          place_id: string | null
+          role: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          accepted_terms_at?: string | null
+          activity_type?: string | null
+          business_name: string
+          city?: string | null
+          contact_name?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          kind: string
+          locale: string
+          notes?: string | null
+          phone: string
+          place_id?: string | null
+          role?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          accepted_terms_at?: string | null
+          activity_type?: string | null
+          business_name?: string
+          city?: string | null
+          contact_name?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          kind?: string
+          locale?: string
+          notes?: string | null
+          phone?: string
+          place_id?: string | null
+          role?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'business_requests_place_id_fkey'
+            columns: ['place_id']
+            isOneToOne: false
+            referencedRelation: 'places'
+            referencedColumns: ['id']
+          },
+        ]
+      }
       categories: {
         Row: {
           created_at: string | null

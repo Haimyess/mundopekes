@@ -5,6 +5,8 @@
     "tooLong": "Must be at most {max} characters",
     "invalidEmail": "Enter a valid email address",
     "invalidUrl": "Enter a valid link starting with http:// or https://",
+    "invalidPhone": "Enter a valid phone number, for example +972 50 123 4567",
+    "mustAccept": "You need to accept to continue",
     "invalidOption": "Select a valid option",
     "selectAtLeastOne": "Select at least one option",
     "invalidNumber": "Enter a valid number",

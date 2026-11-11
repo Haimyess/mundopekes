@@ -4,6 +4,8 @@ export const VALIDATION_ERRORS = {
   tooLong: 'validation.tooLong',
   invalidEmail: 'validation.invalidEmail',
   invalidUrl: 'validation.invalidUrl',
+  invalidPhone: 'validation.invalidPhone',
+  mustAccept: 'validation.mustAccept',
   invalidOption: 'validation.invalidOption',
   selectAtLeastOne: 'validation.selectAtLeastOne',
   invalidNumber: 'validation.invalidNumber',

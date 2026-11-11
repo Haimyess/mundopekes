@@ -5,6 +5,8 @@
     "tooLong": "ניתן להזין עד {max} תווים",
     "invalidEmail": "יש להזין כתובת אימייל תקינה",
     "invalidUrl": "יש להזין קישור תקין שמתחיל ב-http:// או https://",
+    "invalidPhone": "יש להזין מספר טלפון תקין, למשל 050-1234567",
+    "mustAccept": "יש לאשר כדי להמשיך",
     "invalidOption": "יש לבחור אפשרות תקינה",
     "selectAtLeastOne": "יש לבחור לפחות אפשרות אחת",
     "invalidNumber": "יש להזין מספר תקין",
