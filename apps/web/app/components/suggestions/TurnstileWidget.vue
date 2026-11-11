@@ -70,7 +70,7 @@ defineExpose({ reset })
   <div class="turnstile-widget">
     <div v-if="siteKey" ref="container" />
     <p v-if="!siteKey || hasLoadError" class="turnstile-widget__error" role="alert">
-      {{ t('quickSuggestion.verificationUnavailable') }}
+      {{ t('forms.verificationUnavailable') }}
     </p>
   </div>
 </template>

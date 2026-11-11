@@ -14,6 +14,9 @@ export default defineNuxtConfig({
       turnstileSiteKey: '',
     },
   },
+  routeRules: {
+    '/become-provider': { redirect: { to: '/business', statusCode: 301 } },
+  },
   compatibilityDate: '2025-07-15',
   devtools: { enabled: true },
 

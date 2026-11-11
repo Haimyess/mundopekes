@@ -72,7 +72,7 @@ describe('LayoutFooter', () => {
           .map((link) => link.attributes('href'))
       ),
     ]
-    expect(hrefs.sort()).toEqual(['/about', '/privacy', '/search?free=true', '/terms'])
+    expect(hrefs.sort()).toEqual(['/about', '/business', '/privacy', '/search?free=true', '/terms'])
   })
 
   it('reopens cookie preferences from the cookies link', async () => {

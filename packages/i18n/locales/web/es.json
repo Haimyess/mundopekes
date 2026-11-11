@@ -254,7 +254,8 @@
     "ctas": {
       "suggestTitle": "¿Conoces un buen plan?",
       "suggestText": "Cuéntanos y lo sumamos para que otras familias lo descubran.",
-      "suggestAction": "Sugerir un plan"
+      "suggestAction": "Sugerir un plan",
+      "label": "Sugerir un plan o sumar tu negocio"
     },
     "seo": {
       "title": "MundoPekes · Qué hacer con niños en Israel",
@@ -289,12 +290,95 @@
     "why": "¿Por qué te gusta? (opcional)",
     "whyHint": "Edades, precios, lo que más disfrutaron…",
     "submit": "Enviar sugerencia",
-    "thanks": "¡Gracias! La revisamos y, si encaja, la sumamos en unos días.",
+    "thanks": "¡Gracias! La revisamos y, si encaja, la sumamos en unos días."
+  },
+  "forms": {
     "verificationUnavailable": "No pudimos cargar la verificación anti-spam. Recarga la página e inténtalo de nuevo.",
     "errors": {
-      "rateLimited": "Enviaste muchas sugerencias seguidas. Inténtalo de nuevo en un rato.",
+      "rateLimited": "Enviaste demasiadas solicitudes seguidas. Inténtalo de nuevo en un rato.",
       "verification": "No pudimos verificar que no eres un robot. Inténtalo de nuevo.",
-      "generic": "No pudimos enviar la sugerencia. Inténtalo de nuevo."
+      "generic": "No pudimos enviarlo. Inténtalo de nuevo."
     }
+  },
+  "business": {
+    "seo": {
+      "title": "Para negocios: suma tu actividad gratis",
+      "description": "Publica gratis tu actividad para chicos en MundoPekes y aparece cuando las familias de tu zona buscan qué hacer."
+    },
+    "hero": {
+      "eyebrow": "Gratis · sin comisiones",
+      "title": "Que las familias de tu zona te encuentren",
+      "text": "Publica tu actividad gratis y aparece cuando los padres buscan qué hacer."
+    },
+    "benefitsTitle": "Qué incluye, gratis",
+    "benefits": {
+      "directory": {
+        "title": "Apareces en el directorio",
+        "text": "Las familias te encuentran por zona, edad y día."
+      },
+      "search": {
+        "title": "En las búsquedas",
+        "text": "Tu actividad sale en resultados y en el mapa."
+      },
+      "views": {
+        "title": "Cuántas familias te vieron",
+        "text": "Un número básico de vistas de tu ficha."
+      }
+    },
+    "soon": {
+      "badge": "Próximamente",
+      "title": "Planes Pro y Destacado",
+      "text": "Foto principal, botón de WhatsApp, promociones y más visibilidad. Te avisamos cuando estén."
+    },
+    "claim": {
+      "title": "¿Tu negocio ya está en MundoPekes?",
+      "action": "Búscalo y reclama la ficha"
+    },
+    "join": {
+      "title": "Quiero sumarme",
+      "businessName": "Nombre del negocio",
+      "businessNameHint": "Ej. Taller Barro y Color",
+      "activityType": "Tipo de actividad",
+      "activityTypeHint": "Taller, museo, parque…",
+      "city": "Ciudad",
+      "cityHint": "Ej. Tel Aviv",
+      "phone": "Teléfono o WhatsApp",
+      "phoneHint": "Ej. +972 50 123 4567",
+      "submit": "Enviar",
+      "note": "Revisamos tu solicitud y te contactamos para publicarla.",
+      "thanks": "¡Gracias! Revisamos tu solicitud y te contactamos para publicarla."
+    },
+    "cta": {
+      "header": "Súmate como negocio",
+      "footer": "Para negocios",
+      "resultsTitle": "¿Tienes un lugar para chicos?",
+      "resultsAction": "Súmalo gratis a MundoPekes",
+      "homeTitle": "Suma tu negocio gratis",
+      "homeText": "Llega a familias de tu zona.",
+      "homeAction": "Saber más"
+    }
+  },
+  "claim": {
+    "bannerTitle": "¿Es tu negocio?",
+    "bannerText": "Reclama esta ficha gratis para mantener tus datos al día.",
+    "action": "Reclamar ficha",
+    "title": "Reclamar ficha",
+    "description": "{place} · gratis. Verificamos que eres del negocio y te avisamos.",
+    "role": "Tu relación con el negocio",
+    "roles": {
+      "owner": "Dueño/a",
+      "manager": "Gerente",
+      "employee": "Empleado/a"
+    },
+    "name": "Nombre",
+    "nameHint": "Tu nombre",
+    "email": "Correo del negocio",
+    "emailHint": "Ej. nombre{'@'}tunegocio.co.il",
+    "phone": "Teléfono",
+    "phoneHint": "Ej. +972 50 123 4567",
+    "acceptTerms": "Acepto los términos para negocios",
+    "readTerms": "Leer los términos",
+    "submit": "Enviar solicitud",
+    "thanks": "Recibimos tu solicitud. Te escribimos al correo del negocio para verificarla."
   }
 }

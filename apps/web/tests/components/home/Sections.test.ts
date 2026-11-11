@@ -238,4 +238,14 @@ describe('HomeCtas', () => {
     await wrapper.get('button').trigger('click')
     expect(wrapper.get('[data-open]').attributes('data-open')).toBe('true')
   })
+
+  it('invites businesses to the business page', () => {
+    const wrapper = mount(Ctas, { global: { stubs: { ...STUBS, SuggestionsQuickSheet: true } } })
+    const link = wrapper.findAll('a').find((anchor) => anchor.attributes('href') === '/business')
+    expect(link?.text()).toBe('business.cta.homeAction')
+    expect(wrapper.findAll('h2').map((heading) => heading.text())).toEqual([
+      'home.ctas.suggestTitle',
+      'business.cta.homeTitle',
+    ])
+  })
 })

@@ -10,6 +10,9 @@ const { t } = useI18n()
         <LayoutLogo />
       </NuxtLink>
       <div class="layout-header__actions">
+        <NuxtLink to="/business" class="layout-header__business">
+          {{ t('business.cta.header') }}
+        </NuxtLink>
         <LayoutLanguageSheet />
         <NuxtLink to="/search" class="layout-header__icon-link" :aria-label="t('layout.search')">
           <UiIcon name="i-hugeicons-search-01" :size="24" />
@@ -59,6 +62,7 @@ const { t } = useI18n()
 }
 
 .layout-header__brand:focus-visible,
+.layout-header__business:focus-visible,
 .layout-header__icon-link:focus-visible {
   outline: var(--mp-focus-ring);
   outline-offset: 2px;
@@ -68,6 +72,22 @@ const { t } = useI18n()
   display: flex;
   align-items: center;
   gap: 8px;
+}
+
+.layout-header__business {
+  display: none;
+  align-items: center;
+  min-block-size: var(--mp-tap);
+  padding-inline: 14px;
+  border-radius: var(--mp-r-pill);
+  color: var(--mp-ink);
+  font-size: var(--mp-fs-body);
+  font-weight: var(--mp-fw-semibold);
+  text-decoration: none;
+}
+
+.layout-header__business:hover {
+  text-decoration: underline;
 }
 
 .layout-header__icon-link {
@@ -80,6 +100,10 @@ const { t } = useI18n()
 }
 
 @media (min-width: 1200px) {
+  .layout-header__business {
+    display: inline-flex;
+  }
+
   .layout-header__bar {
     max-inline-size: var(--mp-container);
     margin-inline: auto;

@@ -13,27 +13,18 @@ const isOpen = defineModel<boolean>('open', { default: false })
 const { t } = useI18n()
 const { form, token, status, failure, canSubmit, errorFor, touch, submit, reset } =
   useQuickSuggestion(props.origin)
-const turnstile = useTemplateRef<{ reset: () => void }>('turnstile')
+const verifiedSubmit = useTemplateRef<{ reset: () => void }>('verifiedSubmit')
 
 const isSuccess = computed(() => status.value === 'success')
-const failureMessage = computed(() =>
-  failure.value ? t(`quickSuggestion.errors.${failure.value}`) : null
-)
 
 watch(isOpen, (open) => {
   if (!open && isSuccess.value) reset()
 })
 
 const handleBlur = (field: QuickSuggestionField) => touch(field)
-const handleVerify = (value: string) => {
-  token.value = value
-}
-const handleTokenLost = () => {
-  token.value = null
-}
 const handleSubmit = async () => {
   const isSent = await submit()
-  if (!isSent) turnstile.value?.reset()
+  if (!isSent) verifiedSubmit.value?.reset()
 }
 const handleClose = () => {
   isOpen.value = false
@@ -50,11 +41,9 @@ const handleClose = () => {
     <template #trigger>
       <slot name="trigger" />
     </template>
-    <div v-if="isSuccess" class="quick-sheet__success" role="status">
-      <UiIcon name="i-hugeicons-checkmark-circle-02" :size="40" />
-      <p class="quick-sheet__thanks">{{ t('quickSuggestion.thanks') }}</p>
+    <FormSuccess v-if="isSuccess" :message="t('quickSuggestion.thanks')">
       <UiButton variant="secondary" @click="handleClose">{{ t('layout.close') }}</UiButton>
-    </div>
+    </FormSuccess>
     <form v-else class="quick-sheet__form" novalidate @submit.prevent="handleSubmit">
       <UiFormField
         :label="t('quickSuggestion.name')"
@@ -104,16 +93,14 @@ const handleClose = () => {
           @blur="handleBlur('why')"
         />
       </UiFormField>
-      <SuggestionsTurnstileWidget
-        ref="turnstile"
-        @verify="handleVerify"
-        @expire="handleTokenLost"
-        @fail="handleTokenLost"
+      <FormVerifiedSubmit
+        ref="verifiedSubmit"
+        v-model:token="token"
+        :label="t('quickSuggestion.submit')"
+        :failure="failure"
+        :is-submitting="status === 'submitting'"
+        :can-submit="canSubmit"
       />
-      <p v-if="failureMessage" class="quick-sheet__error" role="alert">{{ failureMessage }}</p>
-      <UiButton type="submit" block :loading="status === 'submitting'" :disabled="!canSubmit">
-        {{ t('quickSuggestion.submit') }}
-      </UiButton>
     </form>
   </UiSheet>
 </template>
@@ -123,27 +110,5 @@ const handleClose = () => {
   display: flex;
   flex-direction: column;
   gap: 16px;
-}
-
-.quick-sheet__error {
-  margin: 0;
-  color: var(--mp-coral-700);
-  font-size: var(--mp-fs-body-sm);
-}
-
-.quick-sheet__success {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
-  padding-block: 16px;
-  color: var(--mp-green);
-  text-align: center;
-}
-
-.quick-sheet__thanks {
-  margin: 0;
-  color: var(--mp-ink);
-  font-size: var(--mp-fs-body);
 }
 </style>

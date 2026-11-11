@@ -85,7 +85,7 @@ describe('SuggestionsTurnstileWidget', () => {
     const wrapper = mount(TurnstileWidget)
     document.getElementById('cf-turnstile-script')!.dispatchEvent(new Event('error'))
     await flushPromises()
-    expect(wrapper.get('[role="alert"]').text()).toBe('quickSuggestion.verificationUnavailable')
+    expect(wrapper.get('[role="alert"]').text()).toBe('forms.verificationUnavailable')
     expect(wrapper.emitted('fail')).toHaveLength(1)
   })
 
@@ -93,7 +93,7 @@ describe('SuggestionsTurnstileWidget', () => {
     runtimeConfig.public.turnstileSiteKey = ''
     const wrapper = mount(TurnstileWidget)
     await flushPromises()
-    expect(wrapper.get('[role="alert"]').text()).toBe('quickSuggestion.verificationUnavailable')
+    expect(wrapper.get('[role="alert"]').text()).toBe('forms.verificationUnavailable')
     expect(document.getElementById('cf-turnstile-script')).toBeNull()
   })
 })

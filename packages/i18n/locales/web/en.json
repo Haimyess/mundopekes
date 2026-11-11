@@ -254,7 +254,8 @@
     "ctas": {
       "suggestTitle": "Know a great plan?",
       "suggestText": "Tell us and we will add it so other families can find it.",
-      "suggestAction": "Suggest a plan"
+      "suggestAction": "Suggest a plan",
+      "label": "Suggest a plan or list your business"
     },
     "seo": {
       "title": "MundoPekes · Things to do with kids in Israel",
@@ -289,12 +290,95 @@
     "why": "Why do you like it? (optional)",
     "whyHint": "Ages, prices, what you enjoyed most…",
     "submit": "Send suggestion",
-    "thanks": "Thank you! We will review it and, if it fits, add it within a few days.",
+    "thanks": "Thank you! We will review it and, if it fits, add it within a few days."
+  },
+  "forms": {
     "verificationUnavailable": "We could not load the anti-spam check. Reload the page and try again.",
     "errors": {
-      "rateLimited": "You sent many suggestions in a row. Please try again later.",
+      "rateLimited": "You sent too many requests in a row. Please try again later.",
       "verification": "We could not verify that you are not a robot. Please try again.",
-      "generic": "We could not send your suggestion. Please try again."
+      "generic": "We could not send it. Please try again."
     }
+  },
+  "business": {
+    "seo": {
+      "title": "For businesses: list your activity for free",
+      "description": "List your kids activity on MundoPekes for free and show up when families nearby look for things to do."
+    },
+    "hero": {
+      "eyebrow": "Free · no commissions",
+      "title": "Let families in your area find you",
+      "text": "List your activity for free and show up when parents look for things to do."
+    },
+    "benefitsTitle": "What you get, for free",
+    "benefits": {
+      "directory": {
+        "title": "You are in the directory",
+        "text": "Families find you by area, age and day."
+      },
+      "search": {
+        "title": "In search results",
+        "text": "Your activity shows up in results and on the map."
+      },
+      "views": {
+        "title": "How many families saw you",
+        "text": "A basic count of views of your listing."
+      }
+    },
+    "soon": {
+      "badge": "Coming soon",
+      "title": "Pro and Featured plans",
+      "text": "Main photo, WhatsApp button, promotions and more visibility. We will let you know when they are ready."
+    },
+    "claim": {
+      "title": "Is your business already on MundoPekes?",
+      "action": "Find it and claim the listing"
+    },
+    "join": {
+      "title": "I want to join",
+      "businessName": "Business name",
+      "businessNameHint": "E.g. Clay & Color Workshop",
+      "activityType": "Type of activity",
+      "activityTypeHint": "Workshop, museum, park…",
+      "city": "City",
+      "cityHint": "E.g. Tel Aviv",
+      "phone": "Phone or WhatsApp",
+      "phoneHint": "E.g. +972 50 123 4567",
+      "submit": "Send",
+      "note": "We review your request and contact you to publish it.",
+      "thanks": "Thank you! We review your request and contact you to publish it."
+    },
+    "cta": {
+      "header": "Join as a business",
+      "footer": "For businesses",
+      "resultsTitle": "Do you run a place for kids?",
+      "resultsAction": "List it on MundoPekes for free",
+      "homeTitle": "List your business for free",
+      "homeText": "Reach families in your area.",
+      "homeAction": "Learn more"
+    }
+  },
+  "claim": {
+    "bannerTitle": "Is this your business?",
+    "bannerText": "Claim this listing for free to keep your details up to date.",
+    "action": "Claim listing",
+    "title": "Claim listing",
+    "description": "{place} · free. We verify that you are with the business and let you know.",
+    "role": "Your role at the business",
+    "roles": {
+      "owner": "Owner",
+      "manager": "Manager",
+      "employee": "Employee"
+    },
+    "name": "Name",
+    "nameHint": "Your name",
+    "email": "Business email",
+    "emailHint": "E.g. name{'@'}yourbusiness.co.il",
+    "phone": "Phone",
+    "phoneHint": "E.g. +972 50 123 4567",
+    "acceptTerms": "I accept the terms for businesses",
+    "readTerms": "Read the terms",
+    "submit": "Send request",
+    "thanks": "We received your request. We will write to the business email to verify it."
   }
 }

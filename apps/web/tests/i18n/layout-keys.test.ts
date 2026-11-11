@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
-import { VALIDATION_ERRORS } from '@mundopekes/schemas'
+import { BUSINESS_ROLES, VALIDATION_ERRORS } from '@mundopekes/schemas'
 import {
   SEARCH_AMENITIES,
   SEARCH_DISCOUNTS,
@@ -53,6 +53,12 @@ const SOURCES = [
   'components/search/FamilySavePrompt.vue',
   'components/suggestions/QuickSheet.vue',
   'components/suggestions/TurnstileWidget.vue',
+  'components/form/VerifiedSubmit.vue',
+  'components/business/JoinForm.vue',
+  'components/business/ClaimSheet.vue',
+  'components/business/ClaimBanner.vue',
+  'components/business/ResultsCta.vue',
+  'pages/business.vue',
   'composables/useSearchLabels.ts',
   'components/search/ResultCard.vue',
   'components/search/ResultList.vue',
@@ -80,7 +86,17 @@ const DYNAMIC_KEYS = [
   ...['rainy', 'hot', 'free', 'outdoor', 'openNow', 'babies'].map(
     (key) => `home.quickFilters.${key}`
   ),
-  ...['rateLimited', 'verification', 'generic'].map((key) => `quickSuggestion.errors.${key}`),
+  ...['rateLimited', 'verification', 'generic'].map((key) => `forms.errors.${key}`),
+  ...['businessName', 'activityType', 'city', 'phone'].flatMap((field) => [
+    `business.join.${field}`,
+    `business.join.${field}Hint`,
+  ]),
+  ...['name', 'email', 'phone'].flatMap((field) => [`claim.${field}`, `claim.${field}Hint`]),
+  ...BUSINESS_ROLES.map((role) => `claim.roles.${role}`),
+  ...['directory', 'search', 'views'].flatMap((key) => [
+    `business.benefits.${key}.title`,
+    `business.benefits.${key}.text`,
+  ]),
   ...['occasion', 'shabat', 'today'].flatMap((kind) => [
     `home.context.${kind}`,
     `home.context.${kind}Subtitle`,
@@ -136,5 +152,24 @@ describe('layout and search translations', () => {
       (key) => typeof resolveKey(catalog, key) !== 'string'
     )
     expect(missing).toEqual([])
+  })
+})
+
+const UNESCAPED_LINK_PATTERN = /@(?!['}])/
+
+const collectMessages = (catalog: Catalog, prefix = ''): [string, string][] =>
+  Object.entries(catalog).flatMap(([key, value]) =>
+    typeof value === 'string'
+      ? [[`${prefix}${key}`, value]]
+      : collectMessages(value, `${prefix}${key}.`)
+  )
+
+describe('web catalog message syntax', () => {
+  it.each(LOCALES)('escapes literal @ in %s so vue-i18n does not read it as a link', (locale) => {
+    const catalog = JSON.parse(readFileSync(resolve(CATALOG_DIR, `${locale}.json`), 'utf8'))
+    const unescaped = collectMessages(catalog)
+      .filter(([, message]) => UNESCAPED_LINK_PATTERN.test(message.replaceAll("{'@'}", '')))
+      .map(([key]) => key)
+    expect(unescaped).toEqual([])
   })
 })

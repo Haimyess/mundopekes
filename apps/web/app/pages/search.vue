@@ -99,6 +99,7 @@ watch(
           </template>
         </SearchResultList>
         <SearchPagination v-if="!isLoading && !hasError" :page="page" :page-count="pageCount" />
+        <BusinessResultsCta v-if="!isLoading && !hasError" />
       </div>
       <div class="search-page__map">
         <ClientOnly>

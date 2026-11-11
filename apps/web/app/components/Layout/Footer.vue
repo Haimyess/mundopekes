@@ -26,7 +26,10 @@ const linkGroups = computed<FooterGroup[]>(() =>
     {
       label: t('footer.groups.mundopekes'),
       value: 'mundopekes',
-      links: [{ label: t('footer.links.about'), to: '/about' }],
+      links: [
+        { label: t('footer.links.about'), to: '/about' },
+        { label: t('business.cta.footer'), to: '/business' },
+      ],
     },
     {
       label: t('footer.groups.legal'),

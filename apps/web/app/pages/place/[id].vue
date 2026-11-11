@@ -80,6 +80,7 @@ watch(
           :city-name="place.cityName"
         />
       </DetailSection>
+      <BusinessClaimBanner :place-id="place.id" :place-name="name" />
     </aside>
     <DetailActionBar :contact="place.contact" target-type="place" :target-id="place.id" />
   </article>

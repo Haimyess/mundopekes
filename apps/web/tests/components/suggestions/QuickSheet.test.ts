@@ -138,7 +138,7 @@ describe('SuggestionsQuickSheet', () => {
     await fillAndVerify(wrapper)
     await wrapper.get('form').trigger('submit')
     await flushPromises()
-    expect(wrapper.get('[role="alert"]').text()).toBe('quickSuggestion.errors.rateLimited')
+    expect(wrapper.get('[role="alert"]').text()).toBe('forms.errors.rateLimited')
     expect(mockWidgetReset).toHaveBeenCalledOnce()
     expect(submitButton(wrapper).attributes('disabled')).toBeDefined()
   })
