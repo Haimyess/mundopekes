@@ -42,6 +42,7 @@ const mockFrom = vi.fn((table: string) => {
 
 vi.mock('#supabase/server', () => ({
   serverSupabaseClient: vi.fn(async () => ({ from: mockFrom })),
+  serverSupabaseServiceRole: vi.fn(() => ({ from: mockFrom })),
 }))
 
 // ── Logger mock ────────────────────────────────────────────────────────────
