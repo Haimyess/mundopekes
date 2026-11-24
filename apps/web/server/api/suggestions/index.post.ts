@@ -1,6 +1,6 @@
 import { z } from 'zod'
 import { randomUUID } from 'node:crypto'
-import { serverSupabaseClient } from '#supabase/server'
+import { serverSupabaseClient, serverSupabaseServiceRole } from '#supabase/server'
 import { logError, logInfo } from '../../utils/logger'
 // findPlaceDuplicates / findExperienceDuplicates come from
 // layers/domain/server/utils/duplicate-detection.ts via Nitro's cross-layer
@@ -200,6 +200,9 @@ export default defineEventHandler(async (event) => {
   await checkRateLimit(event, 'suggestions/create', { limit: 5, windowSeconds: 3600 })
 
   const client = await serverSupabaseClient(event)
+  // Reads stay on the anon client (it only sees active content); writes go
+  // through service_role because RLS no longer lets anon insert suggestions.
+  const writer = serverSupabaseServiceRole(event)
   const raw = await readBody(event)
   const parsed = bodySchema.safeParse(raw)
 
@@ -257,7 +260,7 @@ export default defineEventHandler(async (event) => {
       })
     }
 
-    const { data, error } = await client.from('suggestions').insert(rows).select()
+    const { data, error } = await writer.from('suggestions').insert(rows).select()
 
     if (error) {
       await logError(event, 'suggestions/create', 'Failed to insert suggestions (existing place)', {
@@ -323,7 +326,7 @@ export default defineEventHandler(async (event) => {
     }
   })
 
-  const { data, error } = await client.from('suggestions').insert(rows).select()
+  const { data, error } = await writer.from('suggestions').insert(rows).select()
 
   if (error) {
     await logError(event, 'suggestions/create', 'Failed to insert suggestions', {
